@@ -128,4 +128,21 @@ public class RoleService {
         roleRepository.save(role);
         return true;
     }
+
+    public boolean revokePermissionFromRole(Long roleId, Long permissionId) {
+        Optional<Role> optRole = roleRepository.findById(roleId);
+        if (optRole.isEmpty()) {
+            return false;
+        }
+        Role role = optRole.get();
+        Permission permission = permissionRepository.findById(permissionId)
+                .orElseThrow(() -> new IllegalArgumentException("Permission not found"));
+        
+        boolean removed = role.getPermissions().remove(permission);
+        if (removed) {
+            roleRepository.save(role);
+            return true;
+        }
+        return false;
+    }
 }

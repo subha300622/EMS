@@ -19,6 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
+import java.util.LinkedHashMap;
 
 @RestController
 @RequestMapping("/api")
@@ -292,6 +295,41 @@ public class PayrollController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_005"));
         }
+    }
+
+    // ── 10b. BATCH PROCESS PAYROLL ───────────────────────────────────────────
+    @PostMapping("/payroll/process")
+    public ResponseEntity<?> processPayrollBatch(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody List<Long> ids) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
+        }
+
+        List<Payroll> processed = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        for (Long id : ids) {
+            try {
+                processed.add(payrollService.processPayroll(id));
+            } catch (Exception e) {
+                errors.add("ID " + id + ": " + e.getMessage());
+            }
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("processedCount", processed.size());
+        result.put("processedRecords", processed);
+        result.put("errors", errors);
+
+        return ResponseEntity.ok(ApiResponse.success("Batch payroll processing completed", result));
     }
 
     // ── 11. PAY PAYROLL ──────────────────────────────────────────────────────

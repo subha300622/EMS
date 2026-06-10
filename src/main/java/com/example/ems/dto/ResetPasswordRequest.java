@@ -2,9 +2,7 @@ package com.example.ems.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
 
-@Data
 public class ResetPasswordRequest {
 
     @NotBlank(message = "Reset token is required")
@@ -16,4 +14,13 @@ public class ResetPasswordRequest {
 
     @NotBlank(message = "Confirm password is required")
     private String confirmPassword;
+
+    public String getResetToken() { return resetToken; }
+    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
+
+    public String getNewPassword() { return newPassword; }
+    public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
+
+    public String getConfirmPassword() { return confirmPassword; }
+    public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
 }

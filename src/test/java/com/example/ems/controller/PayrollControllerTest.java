@@ -1,7 +1,6 @@
 package com.example.ems.controller;
 
 import com.example.ems.dto.PayrollGenerateRequest;
-import com.example.ems.dto.PayrollUpdateRequest;
 import com.example.ems.entity.Employee;
 import com.example.ems.entity.Payroll;
 import com.example.ems.entity.User;
@@ -24,11 +23,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -75,7 +72,8 @@ public class PayrollControllerTest {
         emp.setId(1L);
         emp.setFullName("John Doe");
 
-        Payroll p = new Payroll(1L, emp, 6, 2026, BigDecimal.valueOf(5000), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(5000), "GENERATED", null, null);
+        Payroll p = new Payroll(1L, emp, 6, 2026, BigDecimal.valueOf(5000), BigDecimal.ZERO, BigDecimal.ZERO,
+                BigDecimal.valueOf(5000), "GENERATED", null, null);
 
         when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
         when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
@@ -84,9 +82,9 @@ public class PayrollControllerTest {
         when(payrollService.generatePayroll(6, 2026)).thenReturn(List.of(p));
 
         mockMvc.perform(post("/api/payroll/generate")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].month").value(6))
@@ -106,7 +104,8 @@ public class PayrollControllerTest {
         employee.setId(1L);
         employee.setEmail(email);
 
-        Payroll p = new Payroll(1L, employee, 6, 2026, BigDecimal.valueOf(5000), BigDecimal.ZERO, BigDecimal.ZERO, BigDecimal.valueOf(5000), "PAID", null, null);
+        Payroll p = new Payroll(1L, employee, 6, 2026, BigDecimal.valueOf(5000), BigDecimal.ZERO, BigDecimal.ZERO,
+                BigDecimal.valueOf(5000), "PAID", null, null);
 
         when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
         when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
@@ -115,7 +114,7 @@ public class PayrollControllerTest {
         when(payrollService.getPayrollByEmployeeId(1L)).thenReturn(List.of(p));
 
         mockMvc.perform(get("/api/payroll/my")
-                        .header("Authorization", token))
+                .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[0].status").value("PAID"));

@@ -1,6 +1,7 @@
 package com.example.ems.service;
 
 import com.example.ems.dto.RegisterRequest;
+import com.example.ems.dto.UserUpdateRequest;
 import com.example.ems.entity.User;
 import com.example.ems.entity.Role;
 import com.example.ems.repository.UserRepository;
@@ -221,5 +222,22 @@ public class UserService {
             return getAllUsers();
         }
         return userRepository.searchUsers(query.trim());
+    }
+
+    public User updateUserProfile(Long id, UserUpdateRequest request) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setFullName(request.getFullName());
+        user.setMobileNumber(request.getMobileNumber());
+        user.setDepartment(request.getDepartment());
+        user.setLocation(request.getLocation());
+        return userRepository.save(user);
+    }
+
+    public void resetUserPassword(Long id, String newPassword) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
     }
 }

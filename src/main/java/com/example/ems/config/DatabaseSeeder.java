@@ -69,8 +69,13 @@ public class DatabaseSeeder implements CommandLineRunner {
         rolePermissionsMap.put("SUPER_ADMIN", Arrays.asList(
             "system.manage", "role.manage", "permission.manage",
             "user.create", "user.read", "user.update", "user.delete",
-            "employee.create", "employee.read", "employee.update", "employee.delete",
-            "attendance.manage", "leave.manage", "payroll.manage", "reports.view"
+            "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
+            "attendance.read", "attendance.manage", "attendance.team.read", "attendance.self.read",
+            "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve", "leave.self.read",
+            "payroll.read", "payroll.manage", "salary.manage", "payslip.read",
+            "reports.view", "reports.hr", "reports.finance", "reports.manager",
+            "recruitment.manage", "task.assign", "performance.review", "expense.manage",
+            "profile.read", "profile.update"
         ));
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(

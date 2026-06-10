@@ -58,6 +58,16 @@ public class LeaveService {
         return leaveTypeRepository.save(leaveType);
     }
 
+    public Optional<LeaveType> getLeaveTypeById(Long id) {
+        return leaveTypeRepository.findById(id);
+    }
+
+    public void deleteLeaveType(Long id) {
+        LeaveType leaveType = leaveTypeRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Leave type not found"));
+        leaveTypeRepository.delete(leaveType);
+    }
+
     public LeaveType deactivateLeaveType(Long id) {
         LeaveType leaveType = leaveTypeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Leave type not found"));

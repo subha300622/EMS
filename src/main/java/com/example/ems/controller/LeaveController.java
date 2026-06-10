@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api")
@@ -53,7 +53,8 @@ public class LeaveController {
     }
 
     private Employee resolveEmployee(User currentUser) {
-        if (currentUser == null) return null;
+        if (currentUser == null)
+            return null;
         return employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
     }
 
@@ -99,10 +100,12 @@ public class LeaveController {
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "leave.approve")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'leave.read', 'leave.approve', or 'leave.manage' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error(
+                            "Access Denied: Requires 'leave.read', 'leave.approve', or 'leave.manage' permission.",
+                            "AUTH_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Leave records retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("Leave records retrieved successfully",
                 leaveService.getAllLeaves()));
     }
 
@@ -126,7 +129,7 @@ public class LeaveController {
 
         Employee employee = resolveEmployee(currentUser);
         boolean isOwner = employee != null && leave.getEmployee().getId().equals(employee.getId());
-        boolean hasAccess = isOwner 
+        boolean hasAccess = isOwner
                 || roleService.hasPermission(currentUser.getWorkEmail(), "leave.read")
                 || roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")
                 || roleService.hasPermission(currentUser.getWorkEmail(), "leave.approve");
@@ -156,7 +159,7 @@ public class LeaveController {
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("My leaves retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("My leaves retrieved successfully",
                 leaveService.getLeavesByEmployeeId(employee.getId())));
     }
 
@@ -185,7 +188,7 @@ public class LeaveController {
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("My leave balance retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("My leave balance retrieved successfully",
                 leaveService.getLeaveBalance(employee.getId())));
     }
 
@@ -208,7 +211,8 @@ public class LeaveController {
         }
 
         Employee manager = resolveEmployee(currentUser);
-        boolean isTheirManager = manager != null && employee.getManager() != null && employee.getManager().getId().equals(manager.getId());
+        boolean isTheirManager = manager != null && employee.getManager() != null
+                && employee.getManager().getId().equals(manager.getId());
         boolean hasAccess = isTheirManager
                 || roleService.hasPermission(currentUser.getWorkEmail(), "leave.read")
                 || roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")
@@ -217,10 +221,11 @@ public class LeaveController {
 
         if (!hasAccess) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires permission to read employee leaves.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires permission to read employee leaves.",
+                            "AUTH_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Employee leaves retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("Employee leaves retrieved successfully",
                 leaveService.getLeavesByEmployeeId(employeeId)));
     }
 
@@ -244,8 +249,9 @@ public class LeaveController {
                     .body(ErrorResponse.error("Access Denied: Requires approval permissions.", "AUTH_002"));
         }
 
-        // Return all pending leaves. (Managers can filter in frontend or we can return all)
-        return ResponseEntity.ok(ApiResponse.success("Pending leaves retrieved successfully", 
+        // Return all pending leaves. (Managers can filter in frontend or we can return
+        // all)
+        return ResponseEntity.ok(ApiResponse.success("Pending leaves retrieved successfully",
                 leaveService.getPendingLeaves()));
     }
 
@@ -266,7 +272,7 @@ public class LeaveController {
                     .body(ErrorResponse.error("Access Denied: Requires read permissions.", "AUTH_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Leave statistics retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("Leave statistics retrieved successfully",
                 leaveService.getLeaveStats()));
     }
 
@@ -403,7 +409,7 @@ public class LeaveController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Leave types retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("Leave types retrieved successfully",
                 leaveService.getAllLeaveTypes()));
     }
 
@@ -456,5 +462,71 @@ public class LeaveController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LVT_003"));
         }
+    }
+
+    // ── 17. GET LEAVE TYPE BY ID ──────────────────────────────────────────────
+    @GetMapping("/leave-types/{id}")
+    public ResponseEntity<?> getLeaveTypeById(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Optional<LeaveType> typeOpt = leaveService.getLeaveTypeById(id);
+        if (typeOpt.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Leave type not found with ID: " + id, "LVT_004"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Leave type retrieved successfully", typeOpt.get()));
+    }
+
+    // ── 18. DELETE LEAVE TYPE ──────────────────────────────────────────────────
+    @DeleteMapping("/leave-types/{id}")
+    public ResponseEntity<?> deleteLeaveType(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'leave.manage' permission.", "AUTH_002"));
+        }
+
+        try {
+            leaveService.deleteLeaveType(id);
+            return ResponseEntity.ok(ApiResponse.success("Leave type deleted successfully", null));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error(e.getMessage(), "LVT_005"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Cannot delete leave type: " + e.getMessage(), "LVT_006"));
+        }
+    }
+
+    // ── 19. GET LEAVE CALENDAR ───────────────────────────────────────────────
+    @GetMapping("/leave-calendar")
+    public ResponseEntity<?> getLeaveCalendar(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        // Leave calendar is available to all authenticated users, showing active leaves
+        return ResponseEntity.ok(ApiResponse.success("Leave calendar retrieved successfully",
+                leaveService.getAllLeaves()));
     }
 }

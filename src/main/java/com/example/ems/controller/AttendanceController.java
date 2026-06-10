@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api")
 @CrossOrigin("*")
@@ -288,5 +290,105 @@ public class AttendanceController {
 
         return ResponseEntity.ok(ApiResponse.success("Attendance stats retrieved successfully", 
                 attendanceService.getAttendanceStats(employeeId)));
+    }
+
+    // ── 11. GET ATTENDANCE DASHBOARD ──────────────────────────────────────────
+    @GetMapping("/attendance/dashboard")
+    public ResponseEntity<?> getAttendanceDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.read")
+                && !roleService.hasPermission(currentUser.getWorkEmail(), "attendance.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.read' or 'attendance.manage' permission.", "AUTH_002"));
+        }
+
+        List<Attendance> todayRecords = attendanceService.getTodayAllAttendance();
+        long present = todayRecords.stream().filter(a -> "PRESENT".equalsIgnoreCase(a.getStatus())).count();
+        long late = todayRecords.stream().filter(a -> "LATE".equalsIgnoreCase(a.getStatus())).count();
+        long absent = todayRecords.stream().filter(a -> "ABSENT".equalsIgnoreCase(a.getStatus())).count();
+        long halfDay = todayRecords.stream().filter(a -> "HALF_DAY".equalsIgnoreCase(a.getStatus())).count();
+
+        java.util.Map<String, Object> dash = new java.util.LinkedHashMap<>();
+        dash.put("totalCheckedInToday", todayRecords.size());
+        dash.put("present", present);
+        dash.put("late", late);
+        dash.put("absent", absent);
+        dash.put("halfDay", halfDay);
+
+        return ResponseEntity.ok(ApiResponse.success("Attendance dashboard retrieved", dash));
+    }
+
+    // ── 12. GET MONTHLY ATTENDANCE GRID ───────────────────────────────────────
+    @GetMapping("/attendance/monthly")
+    public ResponseEntity<?> getMonthlyAttendance(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) Integer month,
+            @RequestParam(required = false) Integer year) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.read")
+                && !roleService.hasPermission(currentUser.getWorkEmail(), "attendance.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.read' or 'attendance.manage' permission.", "AUTH_002"));
+        }
+
+        int targetMonth = month != null ? month : java.time.LocalDate.now().getMonthValue();
+        int targetYear = year != null ? year : java.time.LocalDate.now().getYear();
+
+        List<Attendance> all = attendanceService.getAllAttendanceRecords().stream()
+                .filter(a -> a.getDate().getMonthValue() == targetMonth && a.getDate().getYear() == targetYear)
+                .collect(java.util.stream.Collectors.toList());
+
+        return ResponseEntity.ok(ApiResponse.success("Monthly attendance records retrieved", all));
+    }
+
+    // ── 13. EXPORT ATTENDANCE ────────────────────────────────────────────────
+    @GetMapping("/attendance/export")
+    public ResponseEntity<?> exportAttendance(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.read")
+                && !roleService.hasPermission(currentUser.getWorkEmail(), "attendance.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.read' or 'attendance.manage' permission.", "AUTH_002"));
+        }
+
+        List<Attendance> list = attendanceService.getAllAttendanceRecords();
+        StringBuilder csv = new StringBuilder("ID,Employee Name,Date,Status,Punch In,Punch Out,Notes\n");
+        for (Attendance a : list) {
+            csv.append(a.getId()).append(",")
+               .append(a.getEmployee().getFullName()).append(",")
+               .append(a.getDate()).append(",")
+               .append(a.getStatus()).append(",")
+               .append(a.getPunchInTime() != null ? a.getPunchInTime() : "").append(",")
+               .append(a.getPunchOutTime() != null ? a.getPunchOutTime() : "").append(",")
+               .append(a.getNotes() != null ? a.getNotes() : "").append("\n");
+        }
+
+        byte[] data = csv.toString().getBytes();
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDispositionFormData("attachment", "attendance.csv");
+        headers.setContentLength(data.length);
+
+        return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 }

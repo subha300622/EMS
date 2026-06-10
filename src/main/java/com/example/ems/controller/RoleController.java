@@ -192,6 +192,86 @@ public class RoleController {
         }
     }
 
+    // ── Get Role By ID ───────────────────────────────────────────────────────
+    @GetMapping("/roles/{id}")
+    public ResponseEntity<?> getRoleById(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "role.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'role.manage' permission.", "AUTH_002"));
+        }
+
+        return roleService.getRoleById(id)
+                .<ResponseEntity<?>>map(role -> ResponseEntity.ok(ApiResponse.success("Role retrieved successfully", role)))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ErrorResponse.error("Role not found with ID: " + id, "ROLE_002")));
+    }
+
+    // ── Get Permissions for Role ─────────────────────────────────────────────
+    @GetMapping("/roles/{id}/permissions")
+    public ResponseEntity<?> getRolePermissions(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "role.manage")
+                && !roleService.hasPermission(currentUser.getWorkEmail(), "permission.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role management permissions.", "AUTH_002"));
+        }
+
+        Role role = roleService.getRoleById(id).orElse(null);
+        if (role == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Role not found with ID: " + id, "ROLE_002"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Permissions for role retrieved successfully", role.getPermissions()));
+    }
+
+    // ── Revoke Permission from Role ──────────────────────────────────────────
+    @DeleteMapping("/roles/{id}/permissions/{permissionId}")
+    public ResponseEntity<?> revokePermission(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id,
+            @PathVariable Long permissionId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "role.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'role.manage' permission.", "AUTH_002"));
+        }
+
+        try {
+            boolean revoked = roleService.revokePermissionFromRole(id, permissionId);
+            if (revoked) {
+                return ResponseEntity.ok(ApiResponse.success("Permission revoked successfully from role"));
+            } else {
+                return ResponseEntity.badRequest().body(ErrorResponse.error("Role not found or permission was not assigned to this role", "ROLE_006"));
+            }
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ROLE_005"));
+        }
+    }
+
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);

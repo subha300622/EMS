@@ -123,4 +123,17 @@ public class EmployeeService {
     public List<Employee> getEmployeesByManager(Long managerId) {
         return employeeRepository.findByManagerId(managerId);
     }
+
+    public List<Employee> searchEmployees(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return getAllEmployees();
+        }
+        String q = query.trim().toLowerCase();
+        return employeeRepository.findAll().stream()
+                .filter(e -> e.getFullName().toLowerCase().contains(q)
+                        || e.getEmail().toLowerCase().contains(q)
+                        || (e.getDepartment() != null && e.getDepartment().toLowerCase().contains(q))
+                        || (e.getLocation() != null && e.getLocation().toLowerCase().contains(q)))
+                .collect(java.util.stream.Collectors.toList());
+    }
 }
