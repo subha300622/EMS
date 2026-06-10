@@ -1,16 +1,18 @@
 package com.example.ems.service;
 
-import com.example.ems.entity.PasswordResetToken;
+import com.example.ems.entity.OtpRedisToken;
 import com.example.ems.entity.User;
-import com.example.ems.repository.PasswordResetTokenRepository;
 import com.example.ems.repository.UserRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -28,17 +30,27 @@ public class OtpService {
     private static final int RESEND_COOLDOWN_SECONDS   = 60;
 
     @Autowired private UserRepository userRepository;
-    @Autowired private PasswordResetTokenRepository tokenRepository;
     @Autowired private EmailService emailService;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
+    @Autowired private StringRedisTemplate redisTemplate;
+
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    // Helper: Redis Key formatters
+    private String getOtpKey(String email) {
+        return "otp:" + email.trim().toLowerCase();
+    }
+
+    private String getResetTokenKey(String token) {
+        return "reset:" + token.trim();
+    }
 
     // ──────────────────────────────────────────────────────────────────────
-    //  STEP 1: Forgot Password — generate & send OTP
+    //  STEP 1: Forgot Password — generate & send OTP (Redis-backed)
     // ──────────────────────────────────────────────────────────────────────
 
     public Map<String, String> forgotPassword(String email) {
         Map<String, String> response = new LinkedHashMap<>();
-        // Security: always return same message to prevent email enumeration
         String safeMessage = "If the email exists, a reset code has been sent.";
 
         Optional<User> optUser = userRepository.findByWorkEmail(email);
@@ -47,20 +59,23 @@ public class OtpService {
             return response;
         }
 
-        User user = optUser.get();
+        String otpKey = getOtpKey(email);
 
-        // Check 60-second resend cooldown
-        Optional<PasswordResetToken> existing = tokenRepository.findByUser(user);
-        if (existing.isPresent()) {
-            PasswordResetToken old = existing.get();
-            long secondsSinceCreated = java.time.Duration.between(
-                    old.getCreatedAt(), LocalDateTime.now()).getSeconds();
-            if (secondsSinceCreated < RESEND_COOLDOWN_SECONDS) {
-                long wait = RESEND_COOLDOWN_SECONDS - secondsSinceCreated;
-                response.put("message", "Please wait " + wait + " seconds before requesting another OTP.");
-                return response;
+        // Check 60-second cooldown from Redis
+        String existingJson = redisTemplate.opsForValue().get(otpKey);
+        if (existingJson != null) {
+            try {
+                OtpRedisToken existingToken = objectMapper.readValue(existingJson, OtpRedisToken.class);
+                LocalDateTime createdAt = LocalDateTime.parse(existingToken.getCreatedAt());
+                long secondsSinceCreated = Duration.between(createdAt, LocalDateTime.now()).getSeconds();
+                if (secondsSinceCreated < RESEND_COOLDOWN_SECONDS) {
+                    long wait = RESEND_COOLDOWN_SECONDS - secondsSinceCreated;
+                    response.put("message", "Please wait " + wait + " seconds before requesting another OTP.");
+                    return response;
+                }
+            } catch (Exception e) {
+                log.warn("Failed to parse existing OTP token from Redis: {}", e.getMessage());
             }
-            tokenRepository.delete(old);
         }
 
         // Generate 6-digit OTP using SecureRandom
@@ -70,27 +85,24 @@ public class OtpService {
         log.info("====================================");
         String otpHash = passwordEncoder.encode(otp);
 
-        PasswordResetToken token = new PasswordResetToken();
-        token.setUser(user);
-        token.setOtpHash(otpHash);
-        token.setExpiresAt(LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
-        token.setCreatedAt(LocalDateTime.now());
-        tokenRepository.save(token);
+        // Save OtpRedisToken JSON in Redis
+        OtpRedisToken token = new OtpRedisToken(otpHash, 0, false, LocalDateTime.now().toString());
+        try {
+            String json = objectMapper.writeValueAsString(token);
+            redisTemplate.opsForValue().set(otpKey, json, Duration.ofMinutes(OTP_EXPIRY_MINUTES));
+        } catch (Exception e) {
+            log.error("Failed to write OTP token to Redis: {}", e.getMessage());
+            response.put("message", "Failed to initialize OTP. Please try again.");
+            return response;
+        }
 
         try {
             log.info("=== Attempting to send OTP email to: {} ===", email);
             emailService.sendOtpEmail(email, otp);
             log.info("=== OTP email sent successfully to: {} ===", email);
         } catch (Exception e) {
-            tokenRepository.delete(token);
-            log.error("=== FAILED to send OTP to: {} ===", email);
-            log.error("Exception type: {}", e.getClass().getName());
-            log.error("Exception message: {}", e.getMessage());
-            if (e.getCause() != null) {
-                log.error("Caused by: {}", e.getCause().getMessage());
-            }
-            response.put("message", "Failed to send OTP. Error: " + e.getMessage());
-            return response;
+            log.warn("=== FAILED to send OTP email to: {} (keeping token in Redis for local testing) ===", email);
+            log.warn("Exception message: {}", e.getMessage());
         }
 
         response.put("message", safeMessage);
@@ -98,7 +110,7 @@ public class OtpService {
     }
 
     // ──────────────────────────────────────────────────────────────────────
-    //  STEP 2: Verify OTP — returns short-lived reset token
+    //  STEP 2: Verify OTP — returns short-lived reset token (Redis-backed)
     // ──────────────────────────────────────────────────────────────────────
 
     public Map<String, Object> verifyOtp(String email, String otp) {
@@ -111,49 +123,68 @@ public class OtpService {
             return response;
         }
 
-        User user = optUser.get();
-        Optional<PasswordResetToken> optToken = tokenRepository.findByUser(user);
-
-        if (optToken.isEmpty()) {
+        String otpKey = getOtpKey(email);
+        String json = redisTemplate.opsForValue().get(otpKey);
+        if (json == null) {
             response.put("verified", false);
             response.put("message", "No active OTP found. Please request a new one.");
             return response;
         }
 
-        PasswordResetToken token = optToken.get();
-
-        // Check OTP expiry
-        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
-            tokenRepository.delete(token);
+        OtpRedisToken token;
+        try {
+            token = objectMapper.readValue(json, OtpRedisToken.class);
+        } catch (Exception e) {
+            log.error("Failed to parse OTP token from Redis during verification: {}", e.getMessage());
             response.put("verified", false);
-            response.put("message", "OTP has expired. Please request a new one.");
+            response.put("message", "Error verifying OTP. Please request a new one.");
             return response;
         }
 
-        // Check max attempts
+        // Check attempts
         if (token.getAttemptCount() >= MAX_OTP_ATTEMPTS) {
-            tokenRepository.delete(token);
+            redisTemplate.delete(otpKey);
             response.put("verified", false);
             response.put("message", "Too many incorrect attempts. Please request a new OTP.");
             return response;
         }
 
-        // Verify OTP hash
+        // Match OTP hash
         if (!passwordEncoder.matches(otp, token.getOtpHash())) {
             token.setAttemptCount(token.getAttemptCount() + 1);
-            tokenRepository.save(token);
             int remaining = MAX_OTP_ATTEMPTS - token.getAttemptCount();
-            response.put("verified", false);
-            response.put("message", "Incorrect OTP. " + remaining + " attempt(s) remaining.");
+            if (remaining <= 0) {
+                redisTemplate.delete(otpKey);
+                response.put("verified", false);
+                response.put("message", "Too many incorrect attempts. Please request a new OTP.");
+            } else {
+                try {
+                    String updatedJson = objectMapper.writeValueAsString(token);
+                    // Keep the remaining TTL
+                    Long ttl = redisTemplate.getExpire(otpKey);
+                    if (ttl != null && ttl > 0) {
+                        redisTemplate.opsForValue().set(otpKey, updatedJson, Duration.ofSeconds(ttl));
+                    } else {
+                        redisTemplate.opsForValue().set(otpKey, updatedJson, Duration.ofMinutes(OTP_EXPIRY_MINUTES));
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to update attempts in Redis: {}", e.getMessage());
+                }
+                response.put("verified", false);
+                response.put("message", "Incorrect OTP. " + remaining + " attempt(s) remaining.");
+            }
             return response;
         }
 
-        // OTP correct — generate short-lived reset token (5 min)
+        // Correct OTP -> issue short-lived reset token (stored in Redis)
         String resetToken = UUID.randomUUID().toString();
-        token.setVerified(true);
-        token.setResetToken(resetToken);
-        token.setResetTokenExpiresAt(LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
-        tokenRepository.save(token);
+        String resetTokenKey = getResetTokenKey(resetToken);
+
+        // Store email mapping to token, expires in 5 minutes
+        redisTemplate.opsForValue().set(resetTokenKey, email, Duration.ofMinutes(RESET_TOKEN_EXPIRY_MINUTES));
+        
+        // Remove OTP from Redis
+        redisTemplate.delete(otpKey);
 
         log.info("OTP verified for: {}. Reset token issued.", email);
 
@@ -167,46 +198,40 @@ public class OtpService {
     // ──────────────────────────────────────────────────────────────────────
 
     public Map<String, String> resendOtp(String email) {
-        // Resend uses same logic as forgotPassword (cooldown is enforced inside)
         return forgotPassword(email);
     }
 
     // ──────────────────────────────────────────────────────────────────────
-    //  STEP 3: Reset Password — validate reset token, BCrypt new password
+    //  STEP 3: Reset Password — validate reset token (Redis-backed)
     // ──────────────────────────────────────────────────────────────────────
 
     public Map<String, String> resetPassword(String resetToken, String newPassword) {
         Map<String, String> response = new LinkedHashMap<>();
 
-        Optional<PasswordResetToken> optToken = tokenRepository.findByResetToken(resetToken);
+        String resetTokenKey = getResetTokenKey(resetToken);
+        String email = redisTemplate.opsForValue().get(resetTokenKey);
 
-        if (optToken.isEmpty()) {
+        if (email == null) {
             response.put("message", "Invalid or expired reset token.");
             return response;
         }
 
-        PasswordResetToken token = optToken.get();
-
-        if (!token.isVerified()) {
-            response.put("message", "OTP not verified. Please verify your OTP first.");
+        Optional<User> optUser = userRepository.findByWorkEmail(email);
+        if (optUser.isEmpty()) {
+            redisTemplate.delete(resetTokenKey);
+            response.put("message", "User account not found.");
             return response;
         }
 
-        if (token.getResetTokenExpiresAt().isBefore(LocalDateTime.now())) {
-            tokenRepository.delete(token);
-            response.put("message", "Reset token has expired. Please start the process again.");
-            return response;
-        }
-
-        // BCrypt hash the new password and update the user
-        User user = token.getUser();
+        // BCrypt hash and save user
+        User user = optUser.get();
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // Delete the token — single use, logout all sessions
-        tokenRepository.delete(token);
+        // Remove token from Redis
+        redisTemplate.delete(resetTokenKey);
 
-        log.info("Password reset successfully for user: {}", user.getWorkEmail());
+        log.info("Password reset successfully for user: {}", email);
 
         response.put("message", "Password reset successfully. Please login with your new password.");
         return response;

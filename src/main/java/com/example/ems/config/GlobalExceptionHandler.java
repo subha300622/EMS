@@ -1,45 +1,35 @@
 package com.example.ems.config;
 
+import com.example.ems.dto.ErrorResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.stream.Collectors;
 
-/**
- * Catches validation errors globally and returns clean, user-friendly JSON
- * instead of the default Spring Boot error page with stack traces.
- */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * Handles @Valid / @Validated failures (e.g. @Email, @NotBlank, @Pattern).
-     * Returns: { "field": "errorMessage", ... }
-     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationErrors(
+    public ResponseEntity<ErrorResponse> handleValidationErrors(
             MethodArgumentNotValidException ex) {
 
-        Map<String, String> errors = new HashMap<>();
+        String errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .collect(Collectors.joining(", "));
 
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error("Validation failed: " + errors, "VAL_001"));
     }
 
-    /**
-     * Catches any other unexpected exception and returns a safe generic message.
-     */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
-        Map<String, String> error = new HashMap<>();
-        error.put("error", "An unexpected error occurred. Please try again.");
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) throws Exception {
+        if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
+            throw ex;
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ErrorResponse.error("An unexpected error occurred: " + ex.getMessage(), "SYS_500"));
     }
 }
