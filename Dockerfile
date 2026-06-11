@@ -1,5 +1,6 @@
-# Java 25
-FROM eclipse-temurin:25-jdk
+# Java 21 LTS
+FROM eclipse-temurin:21-jdk
+
 
 WORKDIR /app
 
