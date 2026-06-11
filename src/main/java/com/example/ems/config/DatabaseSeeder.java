@@ -1,11 +1,16 @@
 package com.example.ems.config;
 
-import com.example.ems.entity.Permission;
-import com.example.ems.entity.Role;
-import com.example.ems.entity.User;
-import com.example.ems.repository.PermissionRepository;
-import com.example.ems.repository.RoleRepository;
-import com.example.ems.repository.UserRepository;
+import com.example.ems.attendance.entity.Attendance;
+import com.example.ems.auth.entity.Permission;
+import com.example.ems.auth.entity.Role;
+import com.example.ems.auth.entity.User;
+import com.example.ems.auth.repository.PermissionRepository;
+import com.example.ems.auth.repository.RoleRepository;
+import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.leave.entity.Leave;
+import com.example.ems.payroll.entity.Payroll;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,7 +38,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         // 1. Seed Permissions
         List<String> permissionNames = Arrays.asList(
             // User Management
-            "user.create", "user.read", "user.update", "user.delete",
+            "user.create", "user.read", "user.update", "user.delete", "user.manage",
             // Employee Management
             "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
             // Attendance
@@ -67,7 +72,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         Map<String, List<String>> rolePermissionsMap = new HashMap<>();
         
         rolePermissionsMap.put("SUPER_ADMIN", Arrays.asList(
-            "system.manage", "role.manage", "permission.manage",
+            "system.manage", "role.manage", "permission.manage", "user.manage",
             "user.create", "user.read", "user.update", "user.delete",
             "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
             "attendance.read", "attendance.manage", "attendance.team.read", "attendance.self.read",
@@ -79,6 +84,7 @@ public class DatabaseSeeder implements CommandLineRunner {
         ));
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(
+            "user.manage",
             "user.create", "user.read", "user.update",
             "employee.create", "employee.read", "employee.update",
             "attendance.manage", "leave.manage", "reports.view"

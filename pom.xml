@@ -158,4 +158,5 @@
 		</plugins>
 	</build>
 
+	<!-- Force classpath rebuild to sync IDE language server -->
 </project>
