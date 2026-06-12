@@ -12,7 +12,7 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.entity.EmployeeDocument;
 import com.example.ems.employee.repository.EmployeeDocumentRepository;
 import com.example.ems.employee.service.EmployeeService;
-import com.example.ems.leave.entity.Leave;
+
 import com.example.ems.leave.service.LeaveService;
 import com.example.ems.security.service.JwtService;
 

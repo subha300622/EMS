@@ -7,7 +7,7 @@ import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.employee.entity.Employee;
+
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

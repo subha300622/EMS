@@ -1,6 +1,6 @@
 package com.example.ems.recruitment.dto;
 
-import com.example.ems.recruitment.entity.Candidate;
+
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;

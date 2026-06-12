@@ -1,6 +1,6 @@
 package com.example.ems.auth.dto;
 
-import com.example.ems.employee.entity.Department;
+
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;

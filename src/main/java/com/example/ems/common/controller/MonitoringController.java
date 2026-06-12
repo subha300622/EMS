@@ -3,7 +3,7 @@ package com.example.ems.common.controller;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.employee.entity.Employee;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.RedisConnection;

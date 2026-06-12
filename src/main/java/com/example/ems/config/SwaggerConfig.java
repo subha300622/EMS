@@ -1,6 +1,6 @@
 package com.example.ems.config;
 
-import com.example.ems.employee.entity.Employee;
+
 
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;

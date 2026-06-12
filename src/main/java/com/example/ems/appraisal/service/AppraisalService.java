@@ -24,7 +24,7 @@ import com.example.ems.appraisal.repository.IncrementRepository;
 import com.example.ems.appraisal.repository.SalaryRevisionRepository;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.employee.entity.Department;
+
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 

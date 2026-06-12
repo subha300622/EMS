@@ -1,7 +1,7 @@
 package com.example.ems.recruitment.dto;
 
-import com.example.ems.recruitment.entity.Candidate;
-import com.example.ems.recruitment.entity.Job;
+
+
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

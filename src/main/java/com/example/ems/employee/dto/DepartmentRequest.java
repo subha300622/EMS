@@ -1,6 +1,6 @@
 package com.example.ems.employee.dto;
 
-import com.example.ems.employee.entity.Department;
+
 
 import jakarta.validation.constraints.NotBlank;
 

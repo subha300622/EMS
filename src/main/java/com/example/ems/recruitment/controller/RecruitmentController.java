@@ -17,9 +17,9 @@ import com.example.ems.recruitment.dto.OfferRequest;
 import com.example.ems.recruitment.dto.OfferResponse;
 import com.example.ems.recruitment.dto.RecruitmentDashboardResponse;
 import com.example.ems.recruitment.entity.Candidate;
-import com.example.ems.recruitment.entity.Interview;
-import com.example.ems.recruitment.entity.Job;
-import com.example.ems.recruitment.entity.Offer;
+
+
+
 import com.example.ems.recruitment.service.RecruitmentService;
 import com.example.ems.security.service.JwtService;
 

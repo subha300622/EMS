@@ -36,8 +36,8 @@ public class AppraisalController {
     private AppraisalService appraisalService;
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private EmployeeRepository employeeRepository;
+
+
     @Autowired
     private JwtService jwtService;
     @Autowired

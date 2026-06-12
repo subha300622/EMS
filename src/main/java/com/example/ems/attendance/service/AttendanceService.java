@@ -6,7 +6,7 @@ import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.attendance.repository.AttendanceRepository;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
-import com.example.ems.leave.entity.Leave;
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

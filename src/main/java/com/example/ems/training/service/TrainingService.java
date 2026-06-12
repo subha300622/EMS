@@ -47,7 +47,7 @@ public class TrainingService {
     @Autowired private TrainingAssessmentSubmissionRepository submissionRepository;
     @Autowired private TrainingCertificateRepository certificateRepository;
     @Autowired private EmployeeRepository employeeRepository;
-    @Autowired private UserRepository userRepository;
+
 
     // ── 1. DASHBOARD ────────────────────────────────────────────────────────
     @Cacheable(value = "trainingDashboard", key = "'stats'")

@@ -1,6 +1,6 @@
 package com.example.ems.leave.dto;
 
-import com.example.ems.leave.entity.Leave;
+
 
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;

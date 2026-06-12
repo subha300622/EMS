@@ -3,7 +3,7 @@ package com.example.ems.auth.controller;
 import com.example.ems.auth.dto.AssignPermissionsRequest;
 import com.example.ems.auth.dto.AssignRoleRequest;
 import com.example.ems.auth.dto.RoleRequest;
-import com.example.ems.auth.entity.Permission;
+
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;

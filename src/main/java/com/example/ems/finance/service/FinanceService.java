@@ -1,6 +1,6 @@
 package com.example.ems.finance.service;
 
-import com.example.ems.employee.entity.Employee;
+
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.expense.entity.Expense;
 import com.example.ems.expense.repository.ExpenseRepository;
@@ -27,8 +27,8 @@ public class FinanceService {
     @Autowired
     private PayrollRepository payrollRepository;
 
-    @Autowired
-    private EmployeeRepository employeeRepository;
+
+
 
     // ── 1. DASHBOARD DATA ──────────────────────────────────────────────────
     public Map<String, Object> getDashboardData() {

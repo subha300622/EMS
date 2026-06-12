@@ -1,15 +1,15 @@
 package com.example.ems.config;
 
-import com.example.ems.attendance.entity.Attendance;
+
 import com.example.ems.auth.entity.Permission;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.PermissionRepository;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.employee.entity.Employee;
-import com.example.ems.leave.entity.Leave;
-import com.example.ems.payroll.entity.Payroll;
+
+
+
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
