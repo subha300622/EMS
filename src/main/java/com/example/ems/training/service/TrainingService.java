@@ -1,6 +1,5 @@
 package com.example.ems.training.service;
 
-import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.training.dto.TrainingAssessmentRequest;
@@ -40,14 +39,20 @@ import java.util.stream.Collectors;
 @Service
 public class TrainingService {
 
-    @Autowired private TrainingCourseRepository courseRepository;
-    @Autowired private TrainingSessionRepository sessionRepository;
-    @Autowired private TrainingEnrollmentRepository enrollmentRepository;
-    @Autowired private TrainingAttendanceRepository attendanceRepository;
-    @Autowired private TrainingAssessmentSubmissionRepository submissionRepository;
-    @Autowired private TrainingCertificateRepository certificateRepository;
-    @Autowired private EmployeeRepository employeeRepository;
-
+    @Autowired
+    private TrainingCourseRepository courseRepository;
+    @Autowired
+    private TrainingSessionRepository sessionRepository;
+    @Autowired
+    private TrainingEnrollmentRepository enrollmentRepository;
+    @Autowired
+    private TrainingAttendanceRepository attendanceRepository;
+    @Autowired
+    private TrainingAssessmentSubmissionRepository submissionRepository;
+    @Autowired
+    private TrainingCertificateRepository certificateRepository;
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
     // ── 1. DASHBOARD ────────────────────────────────────────────────────────
     @Cacheable(value = "trainingDashboard", key = "'stats'")
@@ -149,9 +154,11 @@ public class TrainingService {
     @CacheEvict(value = "trainingDashboard", allEntries = true)
     public TrainingEnrollmentResponse enrollEmployee(TrainingEnrollmentRequest request) {
         Employee emp = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
         TrainingSession session = sessionRepository.findById(request.getSessionId())
-                .orElseThrow(() -> new IllegalArgumentException("Session not found with ID: " + request.getSessionId()));
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Session not found with ID: " + request.getSessionId()));
 
         // Enforce capacity check
         int currentEnrolled = enrollmentRepository.findBySessionId(session.getId()).size();
@@ -160,7 +167,8 @@ public class TrainingService {
         }
 
         // Check if already enrolled in active status
-        Optional<TrainingEnrollment> existing = enrollmentRepository.findByEmployeeIdAndSessionId(emp.getId(), session.getId());
+        Optional<TrainingEnrollment> existing = enrollmentRepository.findByEmployeeIdAndSessionId(emp.getId(),
+                session.getId());
         if (existing.isPresent() && !"WITHDRAWN".equals(existing.get().getStatus())) {
             throw new IllegalArgumentException("Employee is already enrolled in this session.");
         }
@@ -179,7 +187,8 @@ public class TrainingService {
 
     public List<TrainingEnrollmentResponse> getMyEnrollments(String employeeEmail) {
         Employee emp = employeeRepository.findByEmail(employeeEmail).orElse(null);
-        if (emp == null) return List.of();
+        if (emp == null)
+            return List.of();
 
         return enrollmentRepository.findByEmployeeId(emp.getId()).stream().map(enrollment -> {
             TrainingEnrollmentResponse resp = new TrainingEnrollmentResponse(enrollment);
@@ -204,8 +213,10 @@ public class TrainingService {
     @Transactional
     @CacheEvict(value = "trainingDashboard", allEntries = true)
     public Map<String, Object> submitAttendance(Long sessionId, TrainingAttendanceRequest request) {
-        TrainingEnrollment enrollment = enrollmentRepository.findByEmployeeIdAndSessionId(request.getEmployeeId(), sessionId)
-                .orElseThrow(() -> new IllegalArgumentException("Enrollment not found for employee ID: " + request.getEmployeeId() + " in session ID: " + sessionId));
+        TrainingEnrollment enrollment = enrollmentRepository
+                .findByEmployeeIdAndSessionId(request.getEmployeeId(), sessionId)
+                .orElseThrow(() -> new IllegalArgumentException("Enrollment not found for employee ID: "
+                        + request.getEmployeeId() + " in session ID: " + sessionId));
 
         TrainingAttendance attendance = new TrainingAttendance();
         attendance.setEnrollment(enrollment);
@@ -224,8 +235,7 @@ public class TrainingService {
         return Map.of(
                 "attendanceId", attendance.getId(),
                 "status", attendance.getStatus(),
-                "progressPercent", progress
-        );
+                "progressPercent", progress);
     }
 
     // ── 6. ASSESSMENTS ───────────────────────────────────────────────────────
@@ -272,8 +282,7 @@ public class TrainingService {
                 "score", score,
                 "grade", grade,
                 "status", enrollment.getStatus(),
-                "certificateNumber", certNum != null ? certNum : "N/A"
-        );
+                "certificateNumber", certNum != null ? certNum : "N/A");
     }
 
     // ── 7. CERTIFICATE ───────────────────────────────────────────────────────
@@ -294,7 +303,10 @@ public class TrainingService {
         data.put("totalCoursesCount", totalCourses);
         data.put("totalEnrollmentsCount", totalEnrollments);
         data.put("completedEnrollmentsCount", completedEnrollments);
-        data.put("completionRate", totalEnrollments > 0 ? Math.round(((double) completedEnrollments / totalEnrollments) * 100.0 * 100.0) / 100.0 : 0.0);
+        data.put("completionRate",
+                totalEnrollments > 0
+                        ? Math.round(((double) completedEnrollments / totalEnrollments) * 100.0 * 100.0) / 100.0
+                        : 0.0);
 
         return data;
     }
@@ -324,14 +336,16 @@ public class TrainingService {
                 // Delete dependent enrollments, attendance, certificates for session
                 List<TrainingEnrollment> enrolls = enrollmentRepository.findBySessionId(session.getId());
                 for (TrainingEnrollment enroll : enrolls) {
-                    certificateRepository.findByEnrollmentId(enroll.getId()).ifPresent(c -> certificateRepository.delete(c));
+                    certificateRepository.findByEnrollmentId(enroll.getId())
+                            .ifPresent(c -> certificateRepository.delete(c));
                     submissionRepository.findAll().stream()
                             .filter(sub -> sub.getEnrollment().getId().equals(enroll.getId()))
                             .forEach(sub -> submissionRepository.delete(sub));
                     enrollmentRepository.delete(enroll);
                 }
                 attendanceRepository.findAll().stream()
-                        .filter(att -> att.getEnrollment() != null && att.getEnrollment().getSession().getId().equals(session.getId()))
+                        .filter(att -> att.getEnrollment() != null
+                                && att.getEnrollment().getSession().getId().equals(session.getId()))
                         .forEach(att -> attendanceRepository.delete(att));
                 sessionRepository.delete(session);
             }

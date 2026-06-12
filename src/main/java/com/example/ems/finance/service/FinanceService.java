@@ -1,7 +1,5 @@
 package com.example.ems.finance.service;
 
-
-import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.expense.entity.Expense;
 import com.example.ems.expense.repository.ExpenseRepository;
 import com.example.ems.payroll.entity.Payroll;
@@ -26,9 +24,6 @@ public class FinanceService {
 
     @Autowired
     private PayrollRepository payrollRepository;
-
-
-
 
     // ── 1. DASHBOARD DATA ──────────────────────────────────────────────────
     public Map<String, Object> getDashboardData() {
@@ -93,8 +88,8 @@ public class FinanceService {
             String monthName = targetDate.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
 
             BigDecimal monthlyExpenses = expenses.stream()
-                    .filter(e -> "APPROVED".equalsIgnoreCase(e.getStatus()) 
-                            && e.getExpenseDate().getMonthValue() == targetMonth 
+                    .filter(e -> "APPROVED".equalsIgnoreCase(e.getStatus())
+                            && e.getExpenseDate().getMonthValue() == targetMonth
                             && e.getExpenseDate().getYear() == targetYear)
                     .map(Expense::getAmount)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -105,7 +100,7 @@ public class FinanceService {
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal totalOutbound = monthlyExpenses.add(monthlyPayroll);
-            
+
             // Mock revenue = outbound * 1.5 + base buffer to make it realistic
             BigDecimal mockRevenue = totalOutbound.multiply(new BigDecimal("1.5"));
             if (mockRevenue.compareTo(BigDecimal.ZERO) == 0) {
@@ -150,7 +145,8 @@ public class FinanceService {
             map.put("amount", p.getNetPay());
             map.put("status", p.getStatus());
             map.put("date", p.getGeneratedAt());
-            map.put("reference", "EMP: " + (p.getEmployee().getEmployeeId() != null ? p.getEmployee().getEmployeeId() : ""));
+            map.put("reference",
+                    "EMP: " + (p.getEmployee().getEmployeeId() != null ? p.getEmployee().getEmployeeId() : ""));
             map.put("employeeName", p.getEmployee().getFullName());
             txns.add(map);
         }
@@ -179,15 +175,14 @@ public class FinanceService {
         Map<String, BigDecimal> grouped = approvedExpenses.stream()
                 .collect(Collectors.groupingBy(
                         e -> e.getCategory().getName(),
-                        Collectors.reducing(BigDecimal.ZERO, Expense::getAmount, BigDecimal::add)
-                ));
+                        Collectors.reducing(BigDecimal.ZERO, Expense::getAmount, BigDecimal::add)));
 
         List<Map<String, Object>> result = new ArrayList<>();
         for (Map.Entry<String, BigDecimal> entry : grouped.entrySet()) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("category", entry.getKey());
             row.put("amount", entry.getValue());
-            
+
             BigDecimal pct = BigDecimal.ZERO;
             if (total.compareTo(BigDecimal.ZERO) > 0) {
                 pct = entry.getValue()
@@ -208,10 +203,12 @@ public class FinanceService {
         List<Payroll> payrolls = payrollRepository.findAll();
 
         BigDecimal totalBasic = payrolls.stream().map(Payroll::getBasicSalary).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalAllowances = payrolls.stream().map(Payroll::getAllowances).reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal totalDeductions = payrolls.stream().map(Payroll::getDeductions).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalAllowances = payrolls.stream().map(Payroll::getAllowances).reduce(BigDecimal.ZERO,
+                BigDecimal::add);
+        BigDecimal totalDeductions = payrolls.stream().map(Payroll::getDeductions).reduce(BigDecimal.ZERO,
+                BigDecimal::add);
         BigDecimal totalNetPay = payrolls.stream().map(Payroll::getNetPay).reduce(BigDecimal.ZERO, BigDecimal::add);
-        
+
         long employeeCount = payrolls.stream()
                 .map(p -> p.getEmployee().getId())
                 .distinct()
@@ -250,7 +247,7 @@ public class FinanceService {
         List<Payroll> payrolls = payrollRepository.findAll().stream()
                 .filter(p -> pendingPayrollStatuses.contains(p.getStatus().toUpperCase()))
                 .toList();
-        
+
         for (Payroll p : payrolls) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", "PAY-" + p.getId());

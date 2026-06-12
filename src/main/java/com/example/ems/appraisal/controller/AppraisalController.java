@@ -14,7 +14,6 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
 import jakarta.validation.Valid;
@@ -36,7 +35,6 @@ public class AppraisalController {
     private AppraisalService appraisalService;
     @Autowired
     private UserRepository userRepository;
-
 
     @Autowired
     private JwtService jwtService;
