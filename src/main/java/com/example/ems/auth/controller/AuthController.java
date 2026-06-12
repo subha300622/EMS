@@ -105,7 +105,8 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest request) {
         String result = userService.register(request);
         if (result.startsWith("Registration Successful!")) {
-            return ResponseEntity.ok(ApiResponse.success(result));
+            User user = userRepository.findByWorkEmail(request.getWorkEmail()).orElse(null);
+            return ResponseEntity.ok(ApiResponse.success(result, user));
         } else {
             return ResponseEntity.badRequest().body(ErrorResponse.error(result, "AUTH_016"));
         }
@@ -282,7 +283,7 @@ public class AuthController {
         Map<String, Object> roleMap = null;
         List<String> permissions = new java.util.ArrayList<>();
         if (user.getRole() != null) {
-            roleMap = Map.of("id", user.getRole().getId(), "name", user.getRole().getName());
+            roleMap = Map.of("roleId", user.getRole().getId(), "name", user.getRole().getName());
             permissions = user.getRole().getPermissions().stream()
                     .map(Permission::getName)
                     .collect(Collectors.toList());

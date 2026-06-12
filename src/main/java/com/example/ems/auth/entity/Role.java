@@ -1,6 +1,7 @@
 package com.example.ems.auth.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,6 +11,7 @@ public class Role {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("roleId")
     private Long id;
 
     @Column(unique = true, nullable = false)

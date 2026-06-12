@@ -1,6 +1,7 @@
 package com.example.ems.auth.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "permissions")
@@ -8,6 +9,7 @@ public class Permission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("permissionId")
     private Long id;
 
     @Column(unique = true, nullable = false)

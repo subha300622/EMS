@@ -109,7 +109,7 @@ public class UserService {
         userRepository.save(user);
 
         log.info("New user registered: {} ({})", user.getWorkEmail(), userId);
-        return "Registration Successful! Your User ID: " + userId + " | Role: " + user.getRole().getName();
+        return "Registration Successful! Your User ID: " + userId + " | Role ID: " + user.getRole().getId();
     }
 
     public java.util.List<User> getAllUsers() {

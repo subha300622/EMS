@@ -71,14 +71,15 @@ public class AuthServiceUnitTest {
 
     @Test
     public void testRegisterDynamicRoleFromEmailPrefix() {
+        String testEmail = "finance@company.com";
         RegisterRequest req = new RegisterRequest();
         req.setFullName("Test User");
-        req.setWorkEmail("finance@company.com");
+        req.setWorkEmail(testEmail);
         req.setPassword("password123");
         req.setConfirmPassword("password123");
         req.setRequestedRole("EMPLOYEE"); // Requested role is EMPLOYEE, but email prefix is finance
 
-        when(userRepository.existsByWorkEmail("finance@company.com")).thenReturn(false);
+        when(userRepository.existsByWorkEmail(testEmail)).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hashed_password");
         
         // Mock save returning user to get ID (usually JPA generates it, we mock setting it on user object)
@@ -90,7 +91,7 @@ public class AuthServiceUnitTest {
 
         String result = userService.register(req);
         assertTrue(result.contains("Registration Successful!"));
-        assertTrue(result.contains("Role: FINANCE"));
+        assertTrue(result.contains("Role ID: 5"));
     }
 
     @Test
@@ -112,19 +113,20 @@ public class AuthServiceUnitTest {
 
         String result = userService.register(req);
         assertTrue(result.contains("Registration Successful!"));
-        assertTrue(result.contains("Role: HR"));
+        assertTrue(result.contains("Role ID: 3"));
     }
 
     @Test
     public void testCreateUserDynamicRoleFromEmailPrefix() {
+        String testEmail = "hr@company.com";
         UserCreateRequest req = new UserCreateRequest();
         req.setFullName("Created User");
-        req.setWorkEmail("hr@company.com");
+        req.setWorkEmail(testEmail);
         req.setPassword("password123");
         req.setConfirmPassword("password123");
         req.setRole("EMPLOYEE"); // Overridden by hr prefix
 
-        when(userRepository.existsByWorkEmail("hr@company.com")).thenReturn(false);
+        when(userRepository.existsByWorkEmail(testEmail)).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hashed_password");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
