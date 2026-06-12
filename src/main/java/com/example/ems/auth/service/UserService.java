@@ -59,23 +59,35 @@ public class UserService {
             return "Employee ID is already in use";
         }
 
-        String reqRole = request.getRequestedRole();
-        if (reqRole == null || reqRole.trim().isEmpty()) {
-            return "Requested role is required";
-        }
-
-        String normalizedRole = reqRole.trim().toUpperCase().replace(" ", "_");
-        if (normalizedRole.equals("SUPERADMIN")) {
-            normalizedRole = "SUPER_ADMIN";
-        }
-
-        Optional<Role> optRole = roleRepository.findByName(normalizedRole);
-        if (optRole.isEmpty()) {
-            optRole = roleRepository.findByName(reqRole);
+        Optional<Role> optRole = Optional.empty();
+        String workEmail = request.getWorkEmail();
+        if (workEmail != null && workEmail.endsWith("@company.com")) {
+            String prefix = workEmail.substring(0, workEmail.indexOf("@")).trim().toUpperCase().replace(" ", "_");
+            if (prefix.equals("SUPERADMIN")) {
+                prefix = "SUPER_ADMIN";
+            }
+            optRole = roleRepository.findByName(prefix);
         }
 
         if (optRole.isEmpty()) {
-            return "Role '" + reqRole + "' does not exist in the system. Registration aborted.";
+            String reqRole = request.getRequestedRole();
+            if (reqRole == null || reqRole.trim().isEmpty()) {
+                return "Requested role is required";
+            }
+
+            String normalizedRole = reqRole.trim().toUpperCase().replace(" ", "_");
+            if (normalizedRole.equals("SUPERADMIN")) {
+                normalizedRole = "SUPER_ADMIN";
+            }
+
+            optRole = roleRepository.findByName(normalizedRole);
+            if (optRole.isEmpty()) {
+                optRole = roleRepository.findByName(reqRole);
+            }
+        }
+
+        if (optRole.isEmpty()) {
+            return "Role does not exist in the system. Registration aborted.";
         }
 
         User user = new User();
@@ -122,19 +134,33 @@ public class UserService {
             throw new IllegalArgumentException("Employee ID is already in use");
         }
 
-        String reqRole = request.getRole();
-        String normalizedRole = reqRole.trim().toUpperCase().replace(" ", "_");
-        if (normalizedRole.equals("SUPERADMIN")) {
-            normalizedRole = "SUPER_ADMIN";
+        Optional<Role> optRole = Optional.empty();
+        String workEmail = request.getWorkEmail();
+        if (workEmail != null && workEmail.endsWith("@company.com")) {
+            String prefix = workEmail.substring(0, workEmail.indexOf("@")).trim().toUpperCase().replace(" ", "_");
+            if (prefix.equals("SUPERADMIN")) {
+                prefix = "SUPER_ADMIN";
+            }
+            optRole = roleRepository.findByName(prefix);
         }
 
-        Optional<Role> optRole = roleRepository.findByName(normalizedRole);
         if (optRole.isEmpty()) {
-            optRole = roleRepository.findByName(reqRole);
+            String reqRole = request.getRole();
+            if (reqRole != null) {
+                String normalizedRole = reqRole.trim().toUpperCase().replace(" ", "_");
+                if (normalizedRole.equals("SUPERADMIN")) {
+                    normalizedRole = "SUPER_ADMIN";
+                }
+
+                optRole = roleRepository.findByName(normalizedRole);
+                if (optRole.isEmpty()) {
+                    optRole = roleRepository.findByName(reqRole);
+                }
+            }
         }
 
         if (optRole.isEmpty()) {
-            throw new IllegalArgumentException("Role '" + reqRole + "' does not exist");
+            throw new IllegalArgumentException("Role does not exist");
         }
 
         User user = new User();

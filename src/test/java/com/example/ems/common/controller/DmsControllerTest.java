@@ -1,8 +1,6 @@
 package com.example.ems.common.controller;
 
 import com.example.ems.auth.entity.User;
-import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.DmsDashboardResponse;
 import com.example.ems.common.dto.DmsDocumentAuditLogResponse;
 import com.example.ems.common.dto.DmsDocumentRequest;
@@ -14,10 +12,7 @@ import com.example.ems.common.dto.DmsDocumentVersionResponse;
 import com.example.ems.common.dto.DmsSignatureCompleteRequest;
 import com.example.ems.common.dto.DmsSignatureRequest;
 import com.example.ems.common.dto.DmsSignatureResponse;
-import com.example.ems.common.service.DmsService;
 import com.example.ems.employee.entity.Employee;
-import com.example.ems.employee.repository.EmployeeRepository;
-import com.example.ems.security.service.JwtService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,13 +20,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,11 +40,16 @@ public class DmsControllerTest {
     private MockMvc mockMvc;
     private ObjectMapper objectMapper = new ObjectMapper();
 
-    @Mock private com.example.ems.common.service.DmsService dmsService;
-    @Mock private com.example.ems.auth.repository.UserRepository userRepository;
-    @Mock private com.example.ems.employee.repository.EmployeeRepository employeeRepository;
-    @Mock private com.example.ems.security.service.JwtService jwtService;
-    @Mock private com.example.ems.auth.service.RoleService roleService;
+    @Mock
+    private com.example.ems.common.service.DmsService dmsService;
+    @Mock
+    private com.example.ems.auth.repository.UserRepository userRepository;
+    @Mock
+    private com.example.ems.employee.repository.EmployeeRepository employeeRepository;
+    @Mock
+    private com.example.ems.security.service.JwtService jwtService;
+    @Mock
+    private com.example.ems.auth.service.RoleService roleService;
 
     @InjectMocks
     private com.example.ems.common.controller.DmsController dmsController;
@@ -491,8 +488,7 @@ public class DmsControllerTest {
 
         Map<String, Object> body = Map.of(
                 "employeeId", 2L,
-                "comments", "Please sign the contract"
-        );
+                "comments", "Please sign the contract");
 
         DmsSignatureResponse resp = new DmsSignatureResponse();
         resp.setId(80L);
@@ -515,14 +511,14 @@ public class DmsControllerTest {
 
         Map<String, Object> body = Map.of(
                 "status", "SIGNED",
-                "comments", "Signed off"
-        );
+                "comments", "Signed off");
 
         DmsSignatureResponse resp = new DmsSignatureResponse();
         resp.setId(80L);
         resp.setStatus("SIGNED");
 
-        when(dmsService.completeSignature(eq(10L), any(DmsSignatureCompleteRequest.class), eq(empEmail))).thenReturn(resp);
+        when(dmsService.completeSignature(eq(10L), any(DmsSignatureCompleteRequest.class), eq(empEmail)))
+                .thenReturn(resp);
 
         mockMvc.perform(post("/api/v1/documents/10/signature-request")
                 .header("Authorization", "Bearer " + token)
@@ -540,8 +536,7 @@ public class DmsControllerTest {
 
         Map<String, Object> reports = Map.of(
                 "reportType", "general",
-                "totalDocumentsCount", 10L
-        );
+                "totalDocumentsCount", 10L);
 
         when(dmsService.getReports("general")).thenReturn(reports);
 

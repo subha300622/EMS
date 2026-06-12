@@ -6,7 +6,6 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.employee.entity.Employee;
 import com.example.ems.offboarding.dto.ExitInterviewFeedbackRequest;
 import com.example.ems.offboarding.dto.ExitInterviewRequest;
 import com.example.ems.offboarding.dto.HandoverRequest;
@@ -15,7 +14,6 @@ import com.example.ems.offboarding.dto.OffboardingRequest;
 import com.example.ems.offboarding.dto.OffboardingResponse;
 import com.example.ems.offboarding.dto.OffboardingTaskResponse;
 import com.example.ems.offboarding.dto.SettlementRequest;
-import com.example.ems.offboarding.entity.Offboarding;
 import com.example.ems.offboarding.service.OffboardingService;
 import com.example.ems.security.service.JwtService;
 
@@ -119,12 +117,14 @@ public class OffboardingController {
             return ResponseEntity.ok(ApiResponse.success("Offboarding records list retrieved successfully", list));
         } else {
             // For standard employees, return only their own offboarding record
-            OffboardingResponse selfRecord = offboardingService.getOffboardingByEmployeeEmail(currentUser.getWorkEmail()).orElse(null);
+            OffboardingResponse selfRecord = offboardingService
+                    .getOffboardingByEmployeeEmail(currentUser.getWorkEmail()).orElse(null);
             if (selfRecord == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("No active offboarding record found for your account.", "OFB_002"));
             }
-            return ResponseEntity.ok(ApiResponse.success("Offboarding record retrieved successfully", List.of(selfRecord)));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Offboarding record retrieved successfully", List.of(selfRecord)));
         }
     }
 
@@ -174,7 +174,8 @@ public class OffboardingController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Offboarding record not found with ID: " + id, "OFB_002"));
         }
-        return ResponseEntity.ok(ApiResponse.success("Offboarding profile successfully approved by HR manager", response));
+        return ResponseEntity
+                .ok(ApiResponse.success("Offboarding profile successfully approved by HR manager", response));
     }
 
     // ── 6. GET TASKS ────────────────────────────────────────────────────────
@@ -225,7 +226,8 @@ public class OffboardingController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Offboarding task not found with ID: " + taskId, "OFB_004"));
         }
-        return ResponseEntity.ok(ApiResponse.success("Offboarding task status updated to " + status.toUpperCase(), updated));
+        return ResponseEntity
+                .ok(ApiResponse.success("Offboarding task status updated to " + status.toUpperCase(), updated));
     }
 
     // ── 7. RETURN ASSET ─────────────────────────────────────────────────────
@@ -269,7 +271,8 @@ public class OffboardingController {
 
         try {
             OffboardingResponse response = offboardingService.processSettlement(request);
-            return ResponseEntity.ok(ApiResponse.success("Final settlement statements calculated and cleared", response));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Final settlement statements calculated and cleared", response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "OFB_007"));
         }
@@ -299,7 +302,8 @@ public class OffboardingController {
         }
 
         OffboardingResponse completed = offboardingService.completeOffboarding(id).orElse(null);
-        return ResponseEntity.ok(ApiResponse.success("Employee offboarding marked as completed (Pending HR approval)", completed));
+        return ResponseEntity
+                .ok(ApiResponse.success("Employee offboarding marked as completed (Pending HR approval)", completed));
     }
 
     @PatchMapping("/offboarding-records/{id}/reject")
@@ -390,7 +394,8 @@ public class OffboardingController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Exit interview schedule not found with ID: " + id, "OFB_010"));
         }
-        return ResponseEntity.ok(ApiResponse.success("Exit interview feedback and questionnaire answers saved", response));
+        return ResponseEntity
+                .ok(ApiResponse.success("Exit interview feedback and questionnaire answers saved", response));
     }
 
     // ── 12. REVOKE ACCESS ───────────────────────────────────────────────────
@@ -410,7 +415,8 @@ public class OffboardingController {
 
         try {
             Map<String, Object> response = offboardingService.revokeAccess(id);
-            return ResponseEntity.ok(ApiResponse.success("Employee system accounts access successfully deactivated", response));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Employee system accounts access successfully deactivated", response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "OFB_002"));
         }
@@ -432,7 +438,8 @@ public class OffboardingController {
         }
 
         Map<String, Object> data = offboardingService.getReportData(reportType);
-        return ResponseEntity.ok(ApiResponse.success("Offboarding exit statistics reports generated successfully", data));
+        return ResponseEntity
+                .ok(ApiResponse.success("Offboarding exit statistics reports generated successfully", data));
     }
 
     @GetMapping("/offboarding-records/analytics")
@@ -449,6 +456,7 @@ public class OffboardingController {
         }
 
         Map<String, Object> data = offboardingService.getAnalyticsData();
-        return ResponseEntity.ok(ApiResponse.success("Offboarding exit satisfaction and analytics indices compiled", data));
+        return ResponseEntity
+                .ok(ApiResponse.success("Offboarding exit satisfaction and analytics indices compiled", data));
     }
 }

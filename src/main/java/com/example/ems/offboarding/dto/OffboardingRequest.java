@@ -1,7 +1,5 @@
 package com.example.ems.offboarding.dto;
 
-import com.example.ems.employee.entity.Employee;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -16,12 +14,27 @@ public class OffboardingRequest {
 
     private LocalDate exitDate;
 
-    public Long getEmployeeId() { return employeeId; }
-    public void setEmployeeId(Long employeeId) { this.employeeId = employeeId; }
+    public Long getEmployeeId() {
+        return employeeId;
+    }
 
-    public String getReason() { return reason; }
-    public void setReason(String reason) { this.reason = reason; }
+    public void setEmployeeId(Long employeeId) {
+        this.employeeId = employeeId;
+    }
 
-    public LocalDate getExitDate() { return exitDate; }
-    public void setExitDate(LocalDate exitDate) { this.exitDate = exitDate; }
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+
+    public LocalDate getExitDate() {
+        return exitDate;
+    }
+
+    public void setExitDate(LocalDate exitDate) {
+        this.exitDate = exitDate;
+    }
 }

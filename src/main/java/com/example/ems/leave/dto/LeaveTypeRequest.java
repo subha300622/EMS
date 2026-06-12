@@ -1,7 +1,5 @@
 package com.example.ems.leave.dto;
 
-import com.example.ems.leave.entity.Leave;
-
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -17,7 +15,8 @@ public class LeaveTypeRequest {
     @Min(value = 0, message = "Default days cannot be negative")
     private Integer defaultDays;
 
-    public LeaveTypeRequest() {}
+    public LeaveTypeRequest() {
+    }
 
     public LeaveTypeRequest(String name, String description, Integer defaultDays) {
         this.name = name;

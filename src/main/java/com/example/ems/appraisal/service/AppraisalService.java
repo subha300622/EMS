@@ -289,6 +289,63 @@ public class AppraisalService {
         });
     }
 
+    public org.springframework.data.domain.Page<IncrementResponse> getSalaryRevisions(String status, org.springframework.data.domain.Pageable pageable) {
+        org.springframework.data.domain.Page<Increment> page;
+        if (status != null && !status.trim().isEmpty()) {
+            page = incrementRepository.findByStatus(status.trim().toUpperCase(), pageable);
+        } else {
+            page = incrementRepository.findAll(pageable);
+        }
+        return page.map(IncrementResponse::new);
+    }
+
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Optional<IncrementResponse> updateIncrement(Long id, IncrementRequest request) {
+        return incrementRepository.findById(id).map(inc -> {
+            if (request.getIncrementPercentage() != null) {
+                BigDecimal percent = request.getIncrementPercentage();
+                BigDecimal currentSalary = inc.getCurrentSalary();
+                BigDecimal amount = currentSalary.multiply(percent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal newSalary = currentSalary.add(amount);
+                
+                inc.setIncrementPercentage(percent);
+                inc.setIncrementAmount(amount);
+                inc.setNewSalary(newSalary);
+            }
+            if (request.getEffectiveDate() != null) {
+                inc.setEffectiveDate(request.getEffectiveDate());
+            }
+            inc.setUpdatedAt(LocalDateTime.now());
+            return new IncrementResponse(incrementRepository.save(inc));
+        });
+    }
+
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Optional<IncrementResponse> rejectIncrement(Long id, String rejectedByEmail) {
+        User user = userRepository.findByWorkEmail(rejectedByEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + rejectedByEmail));
+
+        Employee manager = null;
+        if (user.getEmployeeId() != null) {
+            manager = employeeRepository.findById(Long.parseLong(user.getEmployeeId())).orElse(null);
+        }
+
+        Employee finalManager = manager;
+        return incrementRepository.findById(id).map(inc -> {
+            inc.setStatus("REJECTED");
+            inc.setApprovedBy(finalManager);
+            inc.setApprovedAt(LocalDateTime.now());
+            inc.setUpdatedAt(LocalDateTime.now());
+            return new IncrementResponse(incrementRepository.save(inc));
+        });
+    }
+
+    public Optional<IncrementResponse> getIncrementById(Long id) {
+        return incrementRepository.findById(id).map(IncrementResponse::new);
+    }
+
     public List<SalaryRevisionResponse> getSalaryRevisions(Long employeeId) {
         return revisionRepository.findByEmployeeIdOrderByEffectiveDateDesc(employeeId).stream()
                 .map(SalaryRevisionResponse::new)

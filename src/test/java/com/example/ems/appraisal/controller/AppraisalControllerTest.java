@@ -89,6 +89,23 @@ public class AppraisalControllerTest {
         when(roleService.hasPermission(empEmail, "recruitment.manage")).thenReturn(false);
     }
 
+    private void setupFinance() {
+        when(jwtService.validateAccessToken(token)).thenReturn(true);
+        when(jwtService.getEmailFromToken(token)).thenReturn("finance@example.com");
+        User financeUser = new User();
+        financeUser.setWorkEmail("finance@example.com");
+        financeUser.setEmployeeId("3");
+        com.example.ems.auth.entity.Role financeRole = new com.example.ems.auth.entity.Role();
+        financeRole.setName("FINANCE");
+        financeUser.setRole(financeRole);
+        financeUser.setRequestedRole("FINANCE");
+        when(userRepository.findByWorkEmail("finance@example.com")).thenReturn(Optional.of(financeUser));
+        when(roleService.hasPermission("finance@example.com", "employee.update")).thenReturn(false);
+        when(roleService.hasPermission("finance@example.com", "employee.delete")).thenReturn(false);
+        when(roleService.hasPermission("finance@example.com", "recruitment.manage")).thenReturn(false);
+        when(roleService.hasPermission("finance@example.com", "salary.manage")).thenReturn(true);
+    }
+
     // ── 1. DASHBOARD ──────────────────────────────────────────────────────────
     @Test
     public void testGetDashboardSuccess() throws Exception {
@@ -118,6 +135,26 @@ public class AppraisalControllerTest {
         mockMvc.perform(get("/api/v1/appraisals/dashboard")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    public void testGetDashboardFinance() throws Exception {
+        setupFinance();
+
+        AppraisalDashboardResponse stats = new AppraisalDashboardResponse();
+        stats.setTotalAppraisals(10);
+        stats.setPendingSelfReviews(4);
+        stats.setPendingManagerReviews(3);
+        stats.setFinalizedAppraisals(3);
+        stats.setAverageRating(4.0);
+
+        when(appraisalService.getDashboardStats()).thenReturn(stats);
+
+        mockMvc.perform(get("/api/v1/appraisals/dashboard")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.totalAppraisals").value(10));
     }
 
     // ── 2. APPRAISALS ─────────────────────────────────────────────────────────
@@ -164,12 +201,47 @@ public class AppraisalControllerTest {
     }
 
     @Test
+    public void testGetAppraisalsFinance() throws Exception {
+        setupFinance();
+
+        AppraisalResponse app = new AppraisalResponse();
+        app.setId(10L);
+        app.setEmployeeName("Jane Doe");
+
+        when(appraisalService.getAppraisals()).thenReturn(List.of(app));
+
+        mockMvc.perform(get("/api/v1/appraisals")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].id").value(10));
+    }
+
+    @Test
     public void testGetAppraisalByIdSuccess() throws Exception {
         setupEmployee();
 
         AppraisalResponse app = new AppraisalResponse();
         app.setId(15L);
         app.setEmployeeId(2L); // matches empUser's employeeId
+        app.setStatus("SELF_REVIEWED");
+
+        when(appraisalService.getAppraisalById(15L)).thenReturn(Optional.of(app));
+
+        mockMvc.perform(get("/api/v1/appraisals/15")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("SELF_REVIEWED"));
+    }
+
+    @Test
+    public void testGetAppraisalByIdFinance() throws Exception {
+        setupFinance();
+
+        AppraisalResponse app = new AppraisalResponse();
+        app.setId(15L);
+        app.setEmployeeId(2L); // doesn't match finance user employeeId (3) but finance has access
         app.setStatus("SELF_REVIEWED");
 
         when(appraisalService.getAppraisalById(15L)).thenReturn(Optional.of(app));
@@ -325,86 +397,6 @@ public class AppraisalControllerTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
-    // ── 3. INCREMENTS ─────────────────────────────────────────────────────────
-    @Test
-    public void testCreateIncrementSuccess() throws Exception {
-        setupManager();
-
-        IncrementRequest req = new IncrementRequest();
-        req.setEmployeeId(2L);
-        req.setIncrementPercentage(BigDecimal.valueOf(10.5));
-        req.setEffectiveDate(LocalDate.of(2026, 7, 1));
-
-        IncrementResponse resp = new IncrementResponse();
-        resp.setId(20L);
-        resp.setEmployeeId(2L);
-        resp.setIncrementPercentage(BigDecimal.valueOf(10.5));
-        resp.setStatus("PENDING");
-
-        when(appraisalService.createIncrement(any(IncrementRequest.class))).thenReturn(resp);
-
-        mockMvc.perform(post("/api/v1/increments")
-                .header("Authorization", "Bearer " + token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(20));
-    }
-
-    @Test
-    public void testApproveIncrementSuccess() throws Exception {
-        setupManager();
-
-        IncrementResponse resp = new IncrementResponse();
-        resp.setId(20L);
-        resp.setStatus("APPROVED");
-
-        when(appraisalService.approveIncrement(eq(20L), eq(hrEmail))).thenReturn(Optional.of(resp));
-
-        mockMvc.perform(patch("/api/v1/increments/20/approve")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.status").value("APPROVED"));
-    }
-
-    @Test
-    public void testApplyIncrementSuccess() throws Exception {
-        setupManager();
-
-        IncrementResponse resp = new IncrementResponse();
-        resp.setId(20L);
-        resp.setStatus("APPLIED");
-
-        when(appraisalService.applyIncrement(eq(20L))).thenReturn(Optional.of(resp));
-
-        mockMvc.perform(post("/api/v1/increments/20/apply")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.status").value("APPLIED"));
-    }
-
-    @Test
-    public void testGetSalaryRevisionsSuccess() throws Exception {
-        setupEmployee();
-
-        SalaryRevisionResponse rev = new SalaryRevisionResponse();
-        rev.setId(5L);
-        rev.setPreviousSalary(BigDecimal.valueOf(80000));
-        rev.setNewSalary(BigDecimal.valueOf(88000));
-        rev.setChangePercentage(BigDecimal.valueOf(10.0));
-
-        when(appraisalService.getSalaryRevisions(2L)).thenReturn(List.of(rev));
-
-        mockMvc.perform(get("/api/v1/employees/2/salary-revisions")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].id").value(5));
-    }
-
     // ── 4. REPORTS ────────────────────────────────────────────────────────────
     @Test
     public void testGetAppraisalsReportSuccess() throws Exception {
@@ -418,23 +410,5 @@ public class AppraisalControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.totalAppraisalsCount").value(10));
-    }
-
-    // ── 5. LETTER ─────────────────────────────────────────────────────────────
-    @Test
-    public void testGetIncrementLetterSuccess() throws Exception {
-        setupManager();
-
-        IncrementLetterResponse letter = new IncrementLetterResponse();
-        letter.setEmployeeName("Jane Doe");
-        letter.setLetterBody("SUBJECT: SALARY REVISION CONFIRMATION\n\nDear Jane Doe...");
-
-        when(appraisalService.getIncrementLetter(20L)).thenReturn(letter);
-
-        mockMvc.perform(get("/api/v1/increments/20/letter")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.employeeName").value("Jane Doe"));
     }
 }

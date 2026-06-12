@@ -25,7 +25,6 @@ import com.example.ems.offboarding.repository.OffboardingHandoverRepository;
 import com.example.ems.offboarding.repository.OffboardingRepository;
 import com.example.ems.offboarding.repository.OffboardingSettlementRepository;
 import com.example.ems.offboarding.repository.OffboardingTaskRepository;
-import com.example.ems.recruitment.entity.Interview;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
@@ -68,8 +67,10 @@ public class OffboardingService {
 
     private OffboardingResponse buildResponse(Offboarding offboarding) {
         List<OffboardingTask> tasks = offboardingTaskRepository.findByOffboardingId(offboarding.getId());
-        List<OffboardingAssetReturn> assetReturns = offboardingAssetReturnRepository.findByOffboardingId(offboarding.getId());
-        List<OffboardingSettlement> settlements = offboardingSettlementRepository.findByOffboardingId(offboarding.getId());
+        List<OffboardingAssetReturn> assetReturns = offboardingAssetReturnRepository
+                .findByOffboardingId(offboarding.getId());
+        List<OffboardingSettlement> settlements = offboardingSettlementRepository
+                .findByOffboardingId(offboarding.getId());
         List<OffboardingHandover> handovers = offboardingHandoverRepository.findByOffboardingId(offboarding.getId());
         List<ExitInterview> exitInterviews = exitInterviewRepository.findByOffboardingId(offboarding.getId());
         return new OffboardingResponse(offboarding, tasks, assetReturns, settlements, handovers, exitInterviews);
@@ -112,11 +113,13 @@ public class OffboardingService {
     @CacheEvict(value = "offboardingDashboard", allEntries = true)
     public OffboardingResponse createOffboarding(OffboardingRequest request) {
         Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
 
         Optional<Offboarding> existing = offboardingRepository.findByEmployeeId(request.getEmployeeId());
         if (existing.isPresent()) {
-            throw new IllegalStateException("Offboarding process already active for employee: " + employee.getFullName());
+            throw new IllegalStateException(
+                    "Offboarding process already active for employee: " + employee.getFullName());
         }
 
         Offboarding offboarding = new Offboarding();
@@ -135,16 +138,16 @@ public class OffboardingService {
 
     private void createDefaultTasks(Offboarding offboarding) {
         String[] titles = {
-            "Return Corporate Laptop & Badges",
-            "Assign Knowledge Handover",
-            "Schedule Exit Interview meeting",
-            "Generate Final Settlement Statement"
+                "Return Corporate Laptop & Badges",
+                "Assign Knowledge Handover",
+                "Schedule Exit Interview meeting",
+                "Generate Final Settlement Statement"
         };
         String[] descriptions = {
-            "Hardware return check: Company laptop, charger, screen, and ID cards.",
-            "Schedule a session with your supervisor to handover critical tasks and documentation.",
-            "A standard conversation with HR before leaving regarding feedback.",
-            "Finance check for pending payments, gratuity, and severance calculations."
+                "Hardware return check: Company laptop, charger, screen, and ID cards.",
+                "Schedule a session with your supervisor to handover critical tasks and documentation.",
+                "A standard conversation with HR before leaving regarding feedback.",
+                "Finance check for pending payments, gratuity, and severance calculations."
         };
 
         for (int i = 0; i < titles.length; i++) {
@@ -220,7 +223,7 @@ public class OffboardingService {
             } else {
                 task.setCompletedAt(null);
             }
-            
+
             // Auto transition Offboarding state if modified
             Offboarding ob = task.getOffboarding();
             if ("PENDING".equalsIgnoreCase(ob.getStatus())) {
@@ -237,7 +240,8 @@ public class OffboardingService {
     @CacheEvict(value = "offboardingDashboard", allEntries = true)
     public OffboardingResponse recordAssetReturn(AssetReturnRequest request) {
         Offboarding offboarding = offboardingRepository.findById(request.getOffboardingId())
-                .orElseThrow(() -> new IllegalArgumentException("Offboarding record not found with ID: " + request.getOffboardingId()));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Offboarding record not found with ID: " + request.getOffboardingId()));
 
         OffboardingAssetReturn ret = new OffboardingAssetReturn();
         ret.setOffboarding(offboarding);
@@ -260,7 +264,8 @@ public class OffboardingService {
     @CacheEvict(value = "offboardingDashboard", allEntries = true)
     public OffboardingResponse processSettlement(SettlementRequest request) {
         Offboarding offboarding = offboardingRepository.findById(request.getOffboardingId())
-                .orElseThrow(() -> new IllegalArgumentException("Offboarding record not found with ID: " + request.getOffboardingId()));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Offboarding record not found with ID: " + request.getOffboardingId()));
 
         BigDecimal total = request.getGratuity()
                 .add(request.getSeverance())
@@ -291,10 +296,12 @@ public class OffboardingService {
     @CacheEvict(value = "offboardingDashboard", allEntries = true)
     public OffboardingResponse recordHandover(HandoverRequest request) {
         Offboarding offboarding = offboardingRepository.findById(request.getOffboardingId())
-                .orElseThrow(() -> new IllegalArgumentException("Offboarding record not found with ID: " + request.getOffboardingId()));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Offboarding record not found with ID: " + request.getOffboardingId()));
 
         Employee recipient = employeeRepository.findById(request.getRecipientId())
-                .orElseThrow(() -> new IllegalArgumentException("Recipient Employee not found with ID: " + request.getRecipientId()));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Recipient Employee not found with ID: " + request.getRecipientId()));
 
         OffboardingHandover h = new OffboardingHandover();
         h.setOffboarding(offboarding);
@@ -316,7 +323,8 @@ public class OffboardingService {
     @CacheEvict(value = "offboardingDashboard", allEntries = true)
     public OffboardingResponse scheduleExitInterview(ExitInterviewRequest request) {
         Offboarding offboarding = offboardingRepository.findById(request.getOffboardingId())
-                .orElseThrow(() -> new IllegalArgumentException("Offboarding record not found with ID: " + request.getOffboardingId()));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Offboarding record not found with ID: " + request.getOffboardingId()));
 
         ExitInterview exit = new ExitInterview();
         exit.setOffboarding(offboarding);
@@ -341,7 +349,7 @@ public class OffboardingService {
             exit.setReasonsForLeaving(request.getReasonsForLeaving());
             exit.setRating(request.getRating());
             exit.setStatus("COMPLETED");
-            
+
             exitInterviewRepository.save(exit);
             return buildResponse(exit.getOffboarding());
         });

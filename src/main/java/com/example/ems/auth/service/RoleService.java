@@ -166,4 +166,40 @@ public class RoleService {
         }
         return false;
     }
+
+    /**
+     * Resolves a role ID by its name dynamically to avoid hardcoding role IDs.
+     */
+    public Long getRoleIdByName(String roleName) {
+        if (roleName == null) return null;
+        return roleRepository.findByName(roleName).map(Role::getId).orElse(null);
+    }
+
+    /**
+     * Checks if user has a role matching the resolved role ID.
+     */
+    public boolean hasRole(User user, String roleName) {
+        if (user == null || user.getRole() == null || roleName == null) {
+            return false;
+        }
+        Long targetRoleId = getRoleIdByName(roleName);
+        return targetRoleId != null && targetRoleId.equals(user.getRole().getId());
+    }
+
+    /**
+     * Checks if the user's role authority (hierarchical level) is greater than or equal to the target role.
+     * Greater authority level corresponds to a smaller or equal role ID in the database.
+     */
+    public boolean hasRoleOrGreater(User user, String targetRoleName) {
+        if (user == null || user.getRole() == null || targetRoleName == null) {
+            return false;
+        }
+        Long userRoleId = user.getRole().getId();
+        Long targetRoleId = getRoleIdByName(targetRoleName);
+        if (userRoleId == null || targetRoleId == null) {
+            return false;
+        }
+        return userRoleId <= targetRoleId;
+    }
 }
+

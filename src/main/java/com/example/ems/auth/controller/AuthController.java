@@ -19,6 +19,7 @@ import com.example.ems.auth.repository.InvitationRepository;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.OtpService;
+import com.example.ems.auth.service.RoleService;
 import com.example.ems.auth.service.SessionService;
 import com.example.ems.auth.service.UserService;
 import com.example.ems.common.dto.ApiResponse;
@@ -69,6 +70,9 @@ public class AuthController {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private RoleService roleService;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -394,8 +398,7 @@ public class AuthController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        String inviterRole = inviter.getRole() != null ? inviter.getRole().getName() : inviter.getRequestedRole();
-        if (!"SUPER_ADMIN".equalsIgnoreCase(inviterRole) && !"ADMIN".equalsIgnoreCase(inviterRole)) {
+        if (!roleService.hasRole(inviter, "SUPER_ADMIN") && !roleService.hasRole(inviter, "ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Only Super Admin and Admin can invite employees", "AUTH_002"));
         }
