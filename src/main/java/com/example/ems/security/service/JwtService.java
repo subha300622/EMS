@@ -18,8 +18,8 @@ public class JwtService {
     private static final String SECRET_STRING = "jwtSecretKeyForEmsBackendDevelopmentShouldBeLongAndSecure32Bytes!";
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
 
-    // Access Token validity: 15 minutes
-    private static final long ACCESS_TOKEN_EXPIRATION_MS = 15 * 60 * 1000L;
+    // Access Token validity: 24 hours
+    private static final long ACCESS_TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000L;
 
     public String generateAccessToken(String userId, String email, String role) {
         Map<String, Object> claims = new HashMap<>();

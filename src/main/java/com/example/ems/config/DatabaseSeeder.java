@@ -7,6 +7,10 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.PermissionRepository;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.employee.repository.EmployeeRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 
@@ -31,6 +35,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     private PermissionRepository permissionRepository;
 
     @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
     @Override
@@ -53,7 +60,27 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "system.manage", "role.manage", "permission.manage",
                 // Additional
                 "recruitment.manage", "task.assign", "performance.review", "expense.manage",
-                "profile.read", "profile.update");
+                "profile.read", "profile.update",
+                // Onboarding Self-Service
+                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
+                "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
+                // Enterprise Self-Service Permissions
+                "employee.dashboard.read",
+                "employee.profile.read", "employee.profile.update",
+                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit",
+                "employee.attendance.read", "employee.attendance.create",
+                "employee.leave.create", "employee.leave.read", "employee.leave.cancel",
+                "employee.payslip.read", "employee.payslip.download",
+                "employee.document.read", "employee.document.upload", "employee.document.delete",
+                "employee.asset.read", "employee.asset.request",
+                "employee.expense.create", "employee.expense.read", "employee.expense.update",
+                "employee.performance.read", "employee.performance.self-review.submit",
+                "employee.training.read", "employee.training.complete",
+                "employee.notification.read", "employee.notification.update",
+                "employee.support-ticket.create", "employee.support-ticket.read", "employee.support-ticket.update",
+                "employee.goal.read", "employee.goal.update",
+                "employee.schedule.read",
+                "employee.announcement.read");
 
         Map<String, Permission> permissionMap = new HashMap<>();
         for (String permName : permissionNames) {
@@ -79,7 +106,25 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "payroll.read", "payroll.manage", "salary.manage", "payslip.read",
                 "reports.view", "reports.hr", "reports.finance", "reports.manager",
                 "recruitment.manage", "task.assign", "performance.review", "expense.manage",
-                "profile.read", "profile.update"));
+                "profile.read", "profile.update",
+                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
+                "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
+                "employee.dashboard.read",
+                "employee.profile.read", "employee.profile.update",
+                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit",
+                "employee.attendance.read", "employee.attendance.create",
+                "employee.leave.create", "employee.leave.read", "employee.leave.cancel",
+                "employee.payslip.read", "employee.payslip.download",
+                "employee.document.read", "employee.document.upload", "employee.document.delete",
+                "employee.asset.read", "employee.asset.request",
+                "employee.expense.create", "employee.expense.read", "employee.expense.update",
+                "employee.performance.read", "employee.performance.self-review.submit",
+                "employee.training.read", "employee.training.complete",
+                "employee.notification.read", "employee.notification.update",
+                "employee.support-ticket.create", "employee.support-ticket.read", "employee.support-ticket.update",
+                "employee.goal.read", "employee.goal.update",
+                "employee.schedule.read",
+                "employee.announcement.read"));
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(
                 "user.manage",
@@ -102,7 +147,25 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         rolePermissionsMap.put("EMPLOYEE", Arrays.asList(
                 "profile.read", "profile.update", "attendance.self.read",
-                "leave.create", "leave.self.read", "payslip.read"));
+                "leave.create", "leave.self.read", "payslip.read",
+                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
+                "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
+                "employee.dashboard.read",
+                "employee.profile.read", "employee.profile.update",
+                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit",
+                "employee.attendance.read", "employee.attendance.create",
+                "employee.leave.create", "employee.leave.read", "employee.leave.cancel",
+                "employee.payslip.read", "employee.payslip.download",
+                "employee.document.read", "employee.document.upload", "employee.document.delete",
+                "employee.asset.read", "employee.asset.request",
+                "employee.expense.create", "employee.expense.read", "employee.expense.update",
+                "employee.performance.read", "employee.performance.self-review.submit",
+                "employee.training.read", "employee.training.complete",
+                "employee.notification.read", "employee.notification.update",
+                "employee.support-ticket.create", "employee.support-ticket.read", "employee.support-ticket.update",
+                "employee.goal.read", "employee.goal.update",
+                "employee.schedule.read",
+                "employee.announcement.read"));
 
         Map<String, Role> roleMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : rolePermissionsMap.entrySet()) {
@@ -188,6 +251,30 @@ public class DatabaseSeeder implements CommandLineRunner {
                     }
                 }
             }
+        }
+
+        // 5. Ensure all users have fully-populated Employee records (no null values)
+        for (User u : userRepository.findAll()) {
+            Employee emp = employeeRepository.findByEmail(u.getWorkEmail())
+                    .orElseGet(Employee::new);
+            
+            emp.setFullName(u.getFullName());
+            emp.setEmail(u.getWorkEmail());
+            emp.setEmployeeId(u.getUserId());
+            if (emp.getPhone() == null) emp.setPhone(u.getMobileNumber() != null ? u.getMobileNumber() : "1234567890");
+            if (emp.getGender() == null) emp.setGender("MALE");
+            if (emp.getDob() == null) emp.setDob(LocalDate.of(1990, 1, 1));
+            if (emp.getAddress() == null) emp.setAddress("123 Corporate Way");
+            if (emp.getEmergencyContact() == null) emp.setEmergencyContact("9876543210");
+            if (emp.getDepartment() == null) emp.setDepartment(u.getDepartment() != null ? u.getDepartment() : "Engineering");
+            if (emp.getDesignation() == null) emp.setDesignation(u.getRole() != null ? u.getRole().getName() : "Software Engineer");
+            if (emp.getAnnualSalary() == null) emp.setAnnualSalary(BigDecimal.valueOf(85000));
+            if (emp.getJoiningDate() == null) emp.setJoiningDate(LocalDate.of(2026, 6, 10));
+            if (emp.getLocation() == null) emp.setLocation(u.getLocation() != null ? u.getLocation() : "Headquarters");
+            if (emp.getEmploymentType() == null) emp.setEmploymentType("FULL_TIME");
+            if (emp.getStatus() == null || emp.getStatus().isBlank()) emp.setStatus("ACTIVE");
+            
+            employeeRepository.save(emp);
         }
     }
 }

@@ -237,7 +237,15 @@ public class RoleController {
         }
 
         try {
-            boolean assigned = roleService.assignPermissionsToRole(roleId, request.getPermissions());
+            boolean assigned;
+            if (request.getPermissionIds() != null && !request.getPermissionIds().isEmpty()) {
+                assigned = roleService.assignPermissionIdsToRole(roleId, request.getPermissionIds());
+            } else if (request.getPermissions() != null && !request.getPermissions().isEmpty()) {
+                assigned = roleService.assignPermissionsToRole(roleId, request.getPermissions());
+            } else {
+                return ResponseEntity.badRequest().body(ErrorResponse.error("Permissions list or Permission IDs list cannot be empty", "ROLE_005"));
+            }
+
             if (assigned) {
                 return ResponseEntity.ok(ApiResponse.success("Permissions assigned successfully to role"));
             } else {

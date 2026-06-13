@@ -143,12 +143,9 @@ public class AuthController {
                 604800
         );
 
-        List<String> permissions = new java.util.ArrayList<>();
-        if (user.getRole() != null) {
-            permissions = user.getRole().getPermissions().stream()
-                    .map(Permission::getName)
-                    .collect(Collectors.toList());
-        }
+        List<String> permissions = roleService.getEffectivePermissions(user).stream()
+                .map(Permission::getName)
+                .collect(Collectors.toList());
 
         LoginResponse.UserData userData = new LoginResponse.UserData(
                 user.getUserId(),
@@ -281,13 +278,12 @@ public class AuthController {
         }
 
         Map<String, Object> roleMap = null;
-        List<String> permissions = new java.util.ArrayList<>();
         if (user.getRole() != null) {
             roleMap = Map.of("roleId", user.getRole().getId(), "name", user.getRole().getName());
-            permissions = user.getRole().getPermissions().stream()
-                    .map(Permission::getName)
-                    .collect(Collectors.toList());
         }
+        List<String> permissions = roleService.getEffectivePermissions(user).stream()
+                .map(Permission::getName)
+                .collect(Collectors.toList());
 
         Map<String, Object> userData = new java.util.HashMap<>();
         userData.put("id", user.getId());

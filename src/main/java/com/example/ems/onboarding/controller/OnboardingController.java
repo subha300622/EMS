@@ -22,8 +22,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.onboarding.entity.Onboarding;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -489,5 +492,157 @@ public class OnboardingController {
 
         Map<String, Object> response = onboardingService.triggerNotification(body);
         return ResponseEntity.ok(ApiResponse.success("Onboarding reminder alert triggered", response));
+    }
+
+    // ── 14. EMPLOYEE MY ONBOARDING APIs ──────────────────────────────────────
+    @GetMapping({"/onboarding/me", "/employee/onboarding/me"})
+    public ResponseEntity<?> getMyOnboardingDetails(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.read")
+                && !roleService.hasPermission(currentUser.getWorkEmail(), "employee.onboarding.read.self")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires onboarding.self.read or employee.onboarding.read.self permission.", "AUTH_002"));
+        }
+
+        Employee employee = onboardingService.getOrCreateEmployeeForUser(currentUser);
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+        
+        List<OnboardingTaskResponse> taskResponses = onboardingService.getTasks(onboarding.getId());
+        int totalSteps = taskResponses.size();
+        int completedSteps = (int) taskResponses.stream()
+                .filter(t -> "COMPLETED".equalsIgnoreCase(t.getStatus()))
+                .count();
+
+        Map<String, Object> response = new java.util.HashMap<>();
+        response.put("employeeId", employee.getEmployeeId());
+        response.put("fullName", employee.getFullName());
+        response.put("department", employee.getDepartment() != null ? employee.getDepartment() : "N/A");
+        response.put("joiningDate", employee.getJoiningDate() != null ? employee.getJoiningDate().toString() : "2026-06-10");
+        response.put("onboardingStatus", onboarding.getStatus());
+        response.put("completedSteps", completedSteps);
+        response.put("totalSteps", totalSteps);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/onboarding/me/profile")
+    public ResponseEntity<?> updateMyOnboardingProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, String> body) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.update")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires onboarding.self.update permission.", "AUTH_002"));
+        }
+
+        Employee employee = onboardingService.getOrCreateEmployeeForUser(currentUser);
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+
+        Map<String, Object> fields = new java.util.HashMap<>();
+        if (body.containsKey("phoneNumber")) {
+            fields.put("phone", body.get("phoneNumber"));
+        }
+        if (body.containsKey("address")) {
+            fields.put("address", body.get("address"));
+        }
+        if (body.containsKey("emergencyContact")) {
+            fields.put("emergencyContact", body.get("emergencyContact"));
+        }
+
+        onboardingService.updateOnboardingProfile(onboarding.getId(), fields);
+
+        return ResponseEntity.ok(Map.of("message", "Onboarding profile updated successfully"));
+    }
+
+    @PostMapping(value = "/onboarding/me/documents", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadMyOnboardingDocument(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam("documentType") String documentType,
+            @RequestParam("file") MultipartFile file) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.document.upload")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires onboarding.document.upload permission.", "AUTH_002"));
+        }
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error("Document file is empty", "VAL_001"));
+        }
+
+        Employee employee = onboardingService.getOrCreateEmployeeForUser(currentUser);
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+
+        String downloadUrl = "http://localhost:8080/api/documents/download/" + System.currentTimeMillis();
+        onboardingService.addDocument(
+                onboarding.getId(), documentType, file.getOriginalFilename(), file.getContentType(), downloadUrl);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "message", "Document uploaded successfully",
+                "verificationStatus", "PENDING"
+        ));
+    }
+
+    @GetMapping("/onboarding/me/documents")
+    public ResponseEntity<?> getMyOnboardingDocuments(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.document.read.self")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires onboarding.document.read.self permission.", "AUTH_002"));
+        }
+
+        Employee employee = onboardingService.getOrCreateEmployeeForUser(currentUser);
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+
+        List<OnboardingDocumentResponse> docs = onboardingService.getDocuments(onboarding.getId());
+        List<Map<String, Object>> mappedDocs = docs.stream().map(d -> {
+            Map<String, Object> m = new java.util.HashMap<>();
+            m.put("documentType", d.getDocumentType() != null ? d.getDocumentType() : d.getFileName());
+            m.put("status", d.getVerificationStatus());
+            return m;
+        }).collect(Collectors.toList());
+
+        return ResponseEntity.ok(Map.of("documents", mappedDocs));
+    }
+
+    @PostMapping("/onboarding/me/submit")
+    public ResponseEntity<?> submitMyOnboarding(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.submit")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires onboarding.self.submit permission.", "AUTH_002"));
+        }
+
+        Employee employee = onboardingService.getOrCreateEmployeeForUser(currentUser);
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+
+        onboardingService.submitOnboarding(onboarding.getId());
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Onboarding submitted successfully",
+                "status", "UNDER_REVIEW"
+        ));
     }
 }

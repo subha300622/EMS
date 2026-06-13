@@ -9,6 +9,7 @@ public class OnboardingDocumentResponse {
     private String fileName;
     private String fileType;
     private String downloadUrl;
+    private String documentType;
     private String verificationStatus;
     private String verificationNotes;
     private LocalDateTime uploadedAt;
@@ -20,6 +21,7 @@ public class OnboardingDocumentResponse {
         this.fileName = doc.getFileName();
         this.fileType = doc.getFileType();
         this.downloadUrl = doc.getDownloadUrl();
+        this.documentType = doc.getDocumentType();
         this.verificationStatus = doc.getVerificationStatus();
         this.verificationNotes = doc.getVerificationNotes();
         this.uploadedAt = doc.getUploadedAt();
@@ -45,4 +47,7 @@ public class OnboardingDocumentResponse {
 
     public LocalDateTime getUploadedAt() { return uploadedAt; }
     public void setUploadedAt(LocalDateTime uploadedAt) { this.uploadedAt = uploadedAt; }
+
+    public String getDocumentType() { return documentType; }
+    public void setDocumentType(String documentType) { this.documentType = documentType; }
 }

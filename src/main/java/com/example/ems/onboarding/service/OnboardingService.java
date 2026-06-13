@@ -1,5 +1,6 @@
 package com.example.ems.onboarding.service;
 
+import com.example.ems.auth.entity.User;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.onboarding.dto.OnboardingAssetRequest;
@@ -189,6 +190,7 @@ public class OnboardingService {
         if (fields.containsKey("phone")) emp.setPhone((String) fields.get("phone"));
         if (fields.containsKey("gender")) emp.setGender((String) fields.get("gender"));
         if (fields.containsKey("address")) emp.setAddress((String) fields.get("address"));
+        if (fields.containsKey("emergencyContact")) emp.setEmergencyContact((String) fields.get("emergencyContact"));
         if (fields.containsKey("location")) emp.setLocation((String) fields.get("location"));
         if (fields.containsKey("dob")) {
             String dobStr = (String) fields.get("dob");
@@ -210,11 +212,18 @@ public class OnboardingService {
     @Transactional
     @CacheEvict(value = "onboardingDashboard", allEntries = true)
     public OnboardingDocumentResponse addDocument(Long onboardingId, String fileName, String contentType, String downloadUrl) {
+        return addDocument(onboardingId, null, fileName, contentType, downloadUrl);
+    }
+
+    @Transactional
+    @CacheEvict(value = "onboardingDashboard", allEntries = true)
+    public OnboardingDocumentResponse addDocument(Long onboardingId, String documentType, String fileName, String contentType, String downloadUrl) {
         Onboarding onboarding = onboardingRepository.findById(onboardingId)
                 .orElseThrow(() -> new IllegalArgumentException("Onboarding not found with ID: " + onboardingId));
 
         OnboardingDocument doc = new OnboardingDocument();
         doc.setOnboarding(onboarding);
+        doc.setDocumentType(documentType);
         doc.setFileName(fileName);
         doc.setFileType(contentType);
         doc.setDownloadUrl(downloadUrl);
@@ -378,5 +387,47 @@ public class OnboardingService {
         result.put("subject", body.getOrDefault("subject", "Onboarding Welcome Alert"));
         result.put("recipient", body.get("recipient"));
         return result;
+    }
+
+    @Transactional
+    public Employee getOrCreateEmployeeForUser(User user) {
+        return employeeRepository.findByEmail(user.getWorkEmail())
+                .orElseGet(() -> {
+                    Employee employee = new Employee();
+                    employee.setFullName(user.getFullName());
+                    employee.setEmail(user.getWorkEmail());
+                    employee.setEmployeeId(user.getUserId() != null ? user.getUserId() : "EMP" + String.format("%03d", user.getId()));
+                    employee.setDepartment(user.getDepartment());
+                    employee.setLocation(user.getLocation());
+                    employee.setStatus("ACTIVE");
+                    return employeeRepository.save(employee);
+                });
+    }
+
+    @Transactional
+    public Onboarding getOrCreateOnboardingForEmployee(Employee employee) {
+        return onboardingRepository.findByEmployeeEmail(employee.getEmail())
+                .orElseGet(() -> {
+                    Onboarding onboarding = new Onboarding();
+                    onboarding.setEmployee(employee);
+                    onboarding.setStatus("PENDING");
+                    onboarding.setStartDate(LocalDate.now());
+                    
+                    Onboarding saved = onboardingRepository.save(onboarding);
+                    createDefaultTasks(saved);
+                    createDefaultTrainings(saved);
+                    return saved;
+                });
+    }
+
+    @Transactional
+    @CacheEvict(value = "onboardingDashboard", allEntries = true)
+    public Optional<OnboardingResponse> submitOnboarding(Long id) {
+        return onboardingRepository.findById(id).map(onboarding -> {
+            onboarding.setStatus("UNDER_REVIEW");
+            onboarding.setCompletionDate(LocalDate.now());
+            onboarding.setUpdatedAt(LocalDateTime.now());
+            return buildResponse(onboardingRepository.save(onboarding));
+        });
     }
 }

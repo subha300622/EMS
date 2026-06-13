@@ -34,6 +34,8 @@ public class Employee {
 
     private String address;
 
+    private String emergencyContact;
+
     private String department;
 
     private String designation;
@@ -99,4 +101,7 @@ public class Employee {
 
     public Employee getManager() { return manager; }
     public void setManager(Employee manager) { this.manager = manager; }
+
+    public String getEmergencyContact() { return emergencyContact; }
+    public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
 }

@@ -29,6 +29,23 @@ public class RoleService {
     private PermissionRepository permissionRepository;
 
     /**
+     * Resolves the effective permissions for a user. If the user's role has no permissions
+     * mapped, it falls back to the standard 'EMPLOYEE' permissions.
+     */
+    public Set<Permission> getEffectivePermissions(User user) {
+        if (user == null || user.getRole() == null) {
+            return new HashSet<>();
+        }
+        Set<Permission> perms = user.getRole().getPermissions();
+        if (perms == null || perms.isEmpty()) {
+            return roleRepository.findByName("EMPLOYEE")
+                    .map(Role::getPermissions)
+                    .orElse(new HashSet<>());
+        }
+        return perms;
+    }
+
+    /**
      * Checks if a user has a specific permission in the database.
      */
     public boolean hasPermission(String email, String permissionName) {
@@ -39,11 +56,7 @@ public class RoleService {
         if (optUser.isEmpty()) {
             return false;
         }
-        User user = optUser.get();
-        if (user.getRole() == null || user.getRole().getPermissions() == null) {
-            return false;
-        }
-        return user.getRole().getPermissions().stream()
+        return getEffectivePermissions(optUser.get()).stream()
                 .anyMatch(permission -> permission.getName().equalsIgnoreCase(permissionName));
     }
 
@@ -142,6 +155,25 @@ public class RoleService {
         for (String name : permissionNames) {
             Permission permission = permissionRepository.findByName(name)
                     .orElseThrow(() -> new IllegalArgumentException("Permission '" + name + "' does not exist"));
+            permissionSet.add(permission);
+        }
+
+        role.setPermissions(permissionSet);
+        roleRepository.save(role);
+        return true;
+    }
+
+    public boolean assignPermissionIdsToRole(Long roleId, List<Long> permissionIds) {
+        Optional<Role> optRole = roleRepository.findById(roleId);
+        if (optRole.isEmpty()) {
+            return false;
+        }
+        Role role = optRole.get();
+
+        Set<Permission> permissionSet = new HashSet<>();
+        for (Long id : permissionIds) {
+            Permission permission = permissionRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Permission with ID '" + id + "' does not exist"));
             permissionSet.add(permission);
         }
 

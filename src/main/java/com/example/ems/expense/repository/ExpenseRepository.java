@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByStatus(String status);
+    List<Expense> findByEmployeeId(Long employeeId);
 }

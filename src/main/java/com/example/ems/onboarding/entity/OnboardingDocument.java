@@ -22,6 +22,8 @@ public class OnboardingDocument {
 
     private String downloadUrl;
 
+    private String documentType;
+
     @Column(nullable = false)
     private String verificationStatus = "PENDING"; // PENDING, VERIFIED, REJECTED
 
@@ -53,4 +55,7 @@ public class OnboardingDocument {
 
     public LocalDateTime getUploadedAt() { return uploadedAt; }
     public void setUploadedAt(LocalDateTime uploadedAt) { this.uploadedAt = uploadedAt; }
+
+    public String getDocumentType() { return documentType; }
+    public void setDocumentType(String documentType) { this.documentType = documentType; }
 }
