@@ -336,6 +336,10 @@ public class TrainingService {
                 // Delete dependent enrollments, attendance, certificates for session
                 List<TrainingEnrollment> enrolls = enrollmentRepository.findBySessionId(session.getId());
                 for (TrainingEnrollment enroll : enrolls) {
+                    // Delete dependent attendance records first
+                    List<TrainingAttendance> attendances = attendanceRepository.findByEnrollmentId(enroll.getId());
+                    attendanceRepository.deleteAll(attendances);
+
                     certificateRepository.findByEnrollmentId(enroll.getId())
                             .ifPresent(c -> certificateRepository.delete(c));
                     submissionRepository.findAll().stream()
@@ -343,10 +347,6 @@ public class TrainingService {
                             .forEach(sub -> submissionRepository.delete(sub));
                     enrollmentRepository.delete(enroll);
                 }
-                attendanceRepository.findAll().stream()
-                        .filter(att -> att.getEnrollment() != null
-                                && att.getEnrollment().getSession().getId().equals(session.getId()))
-                        .forEach(att -> attendanceRepository.delete(att));
                 sessionRepository.delete(session);
             }
             courseRepository.deleteById(id);
