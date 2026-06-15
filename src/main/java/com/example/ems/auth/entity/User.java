@@ -41,8 +41,26 @@ public class User {
 
     private String status = "ACTIVE";
 
+    @Column(name = "created_at", updatable = false)
+    private java.time.Instant createdAt;
+
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+        }
+    }
+
+    public java.time.Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.Instant createdAt) {
+        this.createdAt = createdAt;
+    }
 
     public User() {}
 

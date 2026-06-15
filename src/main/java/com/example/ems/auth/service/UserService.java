@@ -227,8 +227,12 @@ public class UserService {
         return user;
     }
 
-    public Optional<User> updateUser(Long id, UserUpdateRequest request) {
-        return userRepository.findById(id).map(user -> {
+    public Optional<User> getUserByUserId(String userId) {
+        return userRepository.findByUserId(userId);
+    }
+
+    public Optional<User> updateUserByUserId(String userId, UserUpdateRequest request) {
+        return userRepository.findByUserId(userId).map(user -> {
             if (request.getEmployeeId() != null && !request.getEmployeeId().isBlank()
                     && !request.getEmployeeId().equalsIgnoreCase(user.getEmployeeId())
                     && userRepository.existsByEmployeeId(request.getEmployeeId())) {
@@ -236,23 +240,26 @@ public class UserService {
             }
             user.setFullName(request.getFullName());
             user.setMobileNumber(request.getMobileNumber());
-            user.setEmployeeId(request.getEmployeeId());
+            if (request.getEmployeeId() != null) {
+                user.setEmployeeId(request.getEmployeeId());
+            }
             user.setDepartment(request.getDepartment());
             user.setLocation(request.getLocation());
             return userRepository.save(user);
         });
     }
 
-    public boolean deleteUser(Long id) {
-        if (userRepository.existsById(id)) {
-            userRepository.deleteById(id);
+    public boolean deleteUserByUserId(String userId) {
+        Optional<User> optUser = userRepository.findByUserId(userId);
+        if (optUser.isPresent()) {
+            userRepository.delete(optUser.get());
             return true;
         }
         return false;
     }
 
-    public boolean updateUserRole(Long id, String roleName) {
-        Optional<User> optUser = userRepository.findById(id);
+    public boolean updateUserRoleByUserId(String userId, String roleName) {
+        Optional<User> optUser = userRepository.findByUserId(userId);
         if (optUser.isEmpty()) {
             return false;
         }
@@ -278,8 +285,8 @@ public class UserService {
         return true;
     }
 
-    public boolean removeUserRole(Long id) {
-        Optional<User> optUser = userRepository.findById(id);
+    public boolean removeUserRoleByUserId(String userId) {
+        Optional<User> optUser = userRepository.findByUserId(userId);
         if (optUser.isEmpty()) {
             return false;
         }
@@ -290,9 +297,8 @@ public class UserService {
         return true;
     }
 
-
-    public boolean updateUserStatus(Long id, String status) {
-        Optional<User> optUser = userRepository.findById(id);
+    public boolean updateUserStatusByUserId(String userId, String status) {
+        Optional<User> optUser = userRepository.findByUserId(userId);
         if (optUser.isEmpty()) {
             return false;
         }
@@ -309,18 +315,17 @@ public class UserService {
         return userRepository.searchUsers(query.trim());
     }
 
-    public User updateUserProfile(Long id, UserUpdateRequest request) {
+    public User updateUserProfile(Long id, com.example.ems.auth.dto.ProfileUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setFullName(request.getFullName());
         user.setMobileNumber(request.getMobileNumber());
-        user.setDepartment(request.getDepartment());
         user.setLocation(request.getLocation());
         return userRepository.save(user);
     }
 
-    public void resetUserPassword(Long id, String newPassword) {
-        User user = userRepository.findById(id)
+    public void resetUserPasswordByUserId(String userId, String newPassword) {
+        User user = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
