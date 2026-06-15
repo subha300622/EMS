@@ -5,7 +5,6 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.payroll.dto.PayrollGenerateRequest;
 import com.example.ems.payroll.dto.PayrollUpdateRequest;
@@ -55,7 +54,6 @@ public class PayrollController {
         return null;
     }
 
-
     // ── 1. GENERATE PAYROLL (FINANCE / ADMIN) ────────────────────────────────
     @PostMapping("/payroll-runs")
     public ResponseEntity<?> generatePayroll(
@@ -75,9 +73,9 @@ public class PayrollController {
 
         List<Payroll> generated = payrollService.generatePayroll(request.getMonth(), request.getYear());
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Payroll generated successfully. Records created: " + generated.size(), generated));
+                .body(ApiResponse.success("Payroll generated successfully. Records created: " + generated.size(),
+                        generated));
     }
-
 
     // ── 4. GET ALL PAYROLL RECORDS (HR / FINANCE / ADMIN) ────────────────────
     @GetMapping("/payroll-runs")
@@ -93,10 +91,11 @@ public class PayrollController {
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
+                            "AUTH_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Payroll records retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("Payroll records retrieved successfully",
                 payrollService.getAllPayroll()));
     }
 
@@ -115,11 +114,13 @@ public class PayrollController {
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
+                            "AUTH_002"));
         }
 
         return payrollService.getPayrollById(id)
-                .<ResponseEntity<?>>map(p -> ResponseEntity.ok(ApiResponse.success("Payroll record retrieved successfully", p)))
+                .<ResponseEntity<?>>map(
+                        p -> ResponseEntity.ok(ApiResponse.success("Payroll record retrieved successfully", p)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("Payroll record not found with ID: " + id, "PR_001")));
     }
@@ -139,10 +140,11 @@ public class PayrollController {
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
+                            "AUTH_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Employee payroll records retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("Employee payroll records retrieved successfully",
                 payrollService.getPayrollByEmployeeId(employeeId)));
     }
 
@@ -321,10 +323,11 @@ public class PayrollController {
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
+                            "AUTH_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Payroll statistics retrieved successfully", 
+        return ResponseEntity.ok(ApiResponse.success("Payroll statistics retrieved successfully",
                 payrollService.getPayrollStats()));
     }
 
@@ -372,22 +375,24 @@ public class PayrollController {
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
+                            "AUTH_002"));
         }
 
         List<Payroll> list = payrollService.getAllPayroll();
-        StringBuilder csv = new StringBuilder("ID,Employee ID,Employee Name,Month,Year,Basic Salary,Allowances,Deductions,Net Pay,Status\n");
+        StringBuilder csv = new StringBuilder(
+                "ID,Employee ID,Employee Name,Month,Year,Basic Salary,Allowances,Deductions,Net Pay,Status\n");
         for (Payroll p : list) {
             csv.append(p.getId()).append(",")
-               .append(p.getEmployee().getEmployeeId() != null ? p.getEmployee().getEmployeeId() : "").append(",")
-               .append(p.getEmployee().getFullName()).append(",")
-               .append(p.getMonth()).append(",")
-               .append(p.getYear()).append(",")
-               .append(p.getBasicSalary()).append(",")
-               .append(p.getAllowances()).append(",")
-               .append(p.getDeductions()).append(",")
-               .append(p.getNetPay()).append(",")
-               .append(p.getStatus()).append("\n");
+                    .append(p.getEmployee().getEmployeeId() != null ? p.getEmployee().getEmployeeId() : "").append(",")
+                    .append(p.getEmployee().getFullName()).append(",")
+                    .append(p.getMonth()).append(",")
+                    .append(p.getYear()).append(",")
+                    .append(p.getBasicSalary()).append(",")
+                    .append(p.getAllowances()).append(",")
+                    .append(p.getDeductions()).append(",")
+                    .append(p.getNetPay()).append(",")
+                    .append(p.getStatus()).append("\n");
         }
 
         byte[] data = csv.toString().getBytes();
