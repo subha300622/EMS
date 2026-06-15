@@ -404,6 +404,7 @@ public class TrainingControllerTest {
         TrainingSessionResponse session = new TrainingSessionResponse();
         session.setId(1L);
         session.setTrainerName("Alice");
+        session.setScheduleDate(LocalDate.of(2026, 6, 15));
 
         when(trainingService.getSessions()).thenReturn(List.of(session));
 
@@ -513,7 +514,7 @@ public class TrainingControllerTest {
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].id").value(10L));
+                .andExpect(jsonPath("$.data[0].enrollmentId").value(10L));
     }
 
     @Test
@@ -711,6 +712,7 @@ public class TrainingControllerTest {
         TrainingCertificateResponse response = new TrainingCertificateResponse();
         response.setId(1L);
         response.setEmployeeName("John Doe");
+        response.setIssueDate(LocalDate.of(2026, 6, 15));
 
         when(trainingService.getCertificate(10L)).thenReturn(Optional.of(response));
 
@@ -728,6 +730,7 @@ public class TrainingControllerTest {
         TrainingCertificateResponse response = new TrainingCertificateResponse();
         response.setId(1L);
         response.setEmployeeName("John Doe");
+        response.setIssueDate(LocalDate.of(2026, 6, 15));
 
         when(trainingService.getCertificate(10L)).thenReturn(Optional.of(response));
 
@@ -750,6 +753,7 @@ public class TrainingControllerTest {
         TrainingCertificateResponse response = new TrainingCertificateResponse();
         response.setId(1L);
         response.setEmployeeName("John Doe"); // Certificate is for John Doe
+        response.setIssueDate(LocalDate.of(2026, 6, 15));
 
         when(trainingService.getCertificate(10L)).thenReturn(Optional.of(response));
 
