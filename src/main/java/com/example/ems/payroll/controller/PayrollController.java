@@ -5,7 +5,6 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.payroll.dto.PayrollGenerateRequest;
 import com.example.ems.payroll.dto.PayrollUpdateRequest;
 import com.example.ems.payroll.entity.Payroll;
@@ -36,9 +35,6 @@ public class PayrollController {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private EmployeeRepository employeeRepository;
 
     @Autowired
     private JwtService jwtService;

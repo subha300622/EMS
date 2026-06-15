@@ -5,16 +5,16 @@ import jakarta.validation.constraints.NotNull;
 public class TrainingEnrollmentRequest {
 
     @NotNull(message = "Employee ID is required")
-    private Long employeeId;
+    private String employeeId;
 
     @NotNull(message = "Session ID is required")
     private Long sessionId;
 
-    public Long getEmployeeId() {
+    public String getEmployeeId() {
         return employeeId;
     }
 
-    public void setEmployeeId(Long employeeId) {
+    public void setEmployeeId(String employeeId) {
         this.employeeId = employeeId;
     }
 

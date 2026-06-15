@@ -9,8 +9,6 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.dto.EmployeeRequest;
 import com.example.ems.employee.entity.Employee;
-import com.example.ems.employee.entity.EmployeeDocument;
-import com.example.ems.employee.repository.EmployeeDocumentRepository;
 import com.example.ems.employee.service.EmployeeService;
 
 import com.example.ems.leave.service.LeaveService;
@@ -38,9 +36,6 @@ public class EmployeeController {
 
     @Autowired
     private JwtService jwtService;
-
-    @Autowired
-    private EmployeeDocumentRepository employeeDocumentRepository;
 
     @Autowired
     private AttendanceService attendanceService;

@@ -153,7 +153,7 @@ public class TrainingService {
     @Transactional
     @CacheEvict(value = "trainingDashboard", allEntries = true)
     public TrainingEnrollmentResponse enrollEmployee(TrainingEnrollmentRequest request) {
-        Employee emp = employeeRepository.findById(request.getEmployeeId())
+        Employee emp = employeeRepository.findByEmployeeId(request.getEmployeeId())
                 .orElseThrow(
                         () -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
         TrainingSession session = sessionRepository.findById(request.getSessionId())
@@ -213,8 +213,12 @@ public class TrainingService {
     @Transactional
     @CacheEvict(value = "trainingDashboard", allEntries = true)
     public Map<String, Object> submitAttendance(Long sessionId, TrainingAttendanceRequest request) {
+        Employee emp = employeeRepository.findByEmployeeId(request.getEmployeeId())
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
+
         TrainingEnrollment enrollment = enrollmentRepository
-                .findByEmployeeIdAndSessionId(request.getEmployeeId(), sessionId)
+                .findByEmployeeIdAndSessionId(emp.getId(), sessionId)
                 .orElseThrow(() -> new IllegalArgumentException("Enrollment not found for employee ID: "
                         + request.getEmployeeId() + " in session ID: " + sessionId));
 

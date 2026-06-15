@@ -9,7 +9,6 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.leave.dto.LeaveRequest;
 import com.example.ems.leave.dto.LeaveTypeRequest;
-import com.example.ems.leave.dto.LeaveActionRequest;
 import com.example.ems.leave.entity.Leave;
 import com.example.ems.leave.entity.LeaveType;
 import com.example.ems.leave.service.LeaveService;

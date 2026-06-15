@@ -420,7 +420,7 @@ public class TrainingControllerTest {
         setupManager();
 
         TrainingEnrollmentRequest request = new TrainingEnrollmentRequest();
-        request.setEmployeeId(2L);
+        request.setEmployeeId("2");
         request.setSessionId(1L);
 
         TrainingEnrollmentResponse response = new TrainingEnrollmentResponse();
@@ -445,7 +445,7 @@ public class TrainingControllerTest {
         setupEmployee(); // User empUser has employeeId = "2"
 
         TrainingEnrollmentRequest request = new TrainingEnrollmentRequest();
-        request.setEmployeeId(2L);
+        request.setEmployeeId("2");
         request.setSessionId(1L);
 
         TrainingEnrollmentResponse response = new TrainingEnrollmentResponse();
@@ -469,7 +469,7 @@ public class TrainingControllerTest {
         setupEmployee(); // empUser employeeId is "2"
 
         TrainingEnrollmentRequest request = new TrainingEnrollmentRequest();
-        request.setEmployeeId(3L); // trying to enroll employee 3
+        request.setEmployeeId("3"); // trying to enroll employee 3
         request.setSessionId(1L);
 
         mockMvc.perform(post("/api/v1/trainings/enrollments")
@@ -485,7 +485,7 @@ public class TrainingControllerTest {
         setupManager();
 
         TrainingEnrollmentRequest request = new TrainingEnrollmentRequest();
-        request.setEmployeeId(2L);
+        request.setEmployeeId("2");
         request.setSessionId(1L);
 
         when(trainingService.enrollEmployee(any(TrainingEnrollmentRequest.class)))
@@ -586,7 +586,7 @@ public class TrainingControllerTest {
         setupManager();
 
         TrainingAttendanceRequest request = new TrainingAttendanceRequest();
-        request.setEmployeeId(2L);
+        request.setEmployeeId("2");
         request.setAttendanceDate(LocalDate.of(2026, 6, 15));
         request.setStatus("PRESENT");
 
@@ -612,7 +612,7 @@ public class TrainingControllerTest {
         setupEmployee();
 
         TrainingAttendanceRequest request = new TrainingAttendanceRequest();
-        request.setEmployeeId(2L);
+        request.setEmployeeId("2");
         request.setAttendanceDate(LocalDate.of(2026, 6, 15));
         request.setStatus("PRESENT");
 
@@ -628,7 +628,7 @@ public class TrainingControllerTest {
         setupManager();
 
         TrainingAttendanceRequest request = new TrainingAttendanceRequest();
-        request.setEmployeeId(2L);
+        request.setEmployeeId("2");
         request.setAttendanceDate(LocalDate.of(2026, 6, 15));
         request.setStatus("PRESENT");
 

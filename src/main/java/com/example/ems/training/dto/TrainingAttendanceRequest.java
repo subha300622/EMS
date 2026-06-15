@@ -7,7 +7,7 @@ import java.time.LocalDate;
 public class TrainingAttendanceRequest {
 
     @NotNull(message = "Employee ID is required")
-    private Long employeeId;
+    private String employeeId;
 
     @NotNull(message = "Attendance date is required")
     private LocalDate attendanceDate;
@@ -15,11 +15,11 @@ public class TrainingAttendanceRequest {
     @NotBlank(message = "Attendance status is required")
     private String status; // PRESENT, ABSENT, LATE
 
-    public Long getEmployeeId() {
+    public String getEmployeeId() {
         return employeeId;
     }
 
-    public void setEmployeeId(Long employeeId) {
+    public void setEmployeeId(String employeeId) {
         this.employeeId = employeeId;
     }
 
