@@ -10,7 +10,6 @@ import com.example.ems.employee.entity.EmployeeDocument;
 import com.example.ems.employee.repository.EmployeeDocumentRepository;
 import com.example.ems.employee.entity.SupportTicket;
 import com.example.ems.employee.repository.SupportTicketRepository;
-import com.example.ems.employee.entity.Announcement;
 import com.example.ems.employee.repository.AnnouncementRepository;
 import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.attendance.entity.Attendance;
@@ -317,9 +316,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.onboarding.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.onboarding.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -358,9 +357,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.onboarding.update")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.update")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.onboarding.update' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.update' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -398,9 +397,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.onboarding.document.upload")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.document.upload")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.onboarding.document.upload' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.document.upload' permission.", "AUTH_002"));
         }
 
         if (file.isEmpty()) {
@@ -439,9 +438,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.onboarding.document.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.document.read.self")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.onboarding.document.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.document.read.self' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -472,9 +471,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.onboarding.submit")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.submit")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.onboarding.submit' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.submit' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -503,9 +502,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.attendance.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.attendance.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -651,9 +650,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.leave.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "leave.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.leave.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'leave.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -707,9 +706,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.payslip.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "payslip.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.payslip.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'payslip.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -794,9 +793,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.document.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "document.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.document.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'document.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -891,9 +890,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.asset.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.asset.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'asset.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -1034,9 +1033,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.expense.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "expense.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.expense.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'expense.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -1111,9 +1110,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.performance.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "performance.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.performance.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'performance.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -1404,9 +1403,9 @@ public class EmployeeSelfServiceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.goal.read")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "goal.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.goal.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'goal.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);

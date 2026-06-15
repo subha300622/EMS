@@ -22,12 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -93,32 +91,5 @@ public class LeaveControllerTest {
                 .andExpect(jsonPath("$.message").value("Leave request submitted successfully"))
                 .andExpect(jsonPath("$.data.reason").value("Vacation"))
                 .andExpect(jsonPath("$.data.status").value("PENDING"));
-    }
-
-    @Test
-    public void testGetMyLeaveBalance() throws Exception {
-        String token = "Bearer mock-token";
-        String email = "john.doe@example.com";
-
-        User user = new User();
-        user.setWorkEmail(email);
-
-        Employee employee = new Employee();
-        employee.setId(1L);
-        employee.setEmail(email);
-
-        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
-        when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
-        when(userRepository.findByWorkEmail(email)).thenReturn(Optional.of(user));
-        when(employeeRepository.findByEmail(email)).thenReturn(Optional.of(employee));
-        when(leaveService.getLeaveBalance(1L)).thenReturn(Map.of("Sick Leave", Map.of("total", 10, "used", 2, "remaining", 8)));
-
-        mockMvc.perform(get("/api/v1/leaves/my/balance")
-                        .header("Authorization", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data['Sick Leave'].total").value(10))
-                .andExpect(jsonPath("$.data['Sick Leave'].used").value(2))
-                .andExpect(jsonPath("$.data['Sick Leave'].remaining").value(8));
     }
 }

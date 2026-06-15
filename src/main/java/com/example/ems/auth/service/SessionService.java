@@ -194,4 +194,11 @@ public class SessionService {
         }
         log.info("All sessions revoked for user: {}", userId);
     }
+
+    public boolean isSessionActive(String userId, String sessionId) {
+        if (userId == null || sessionId == null) {
+            return false;
+        }
+        return Boolean.TRUE.equals(redisTemplate.hasKey(getUserSessionKey(userId, sessionId)));
+    }
 }

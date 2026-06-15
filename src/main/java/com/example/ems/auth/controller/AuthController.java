@@ -124,16 +124,17 @@ public class AuthController {
         User user = optUser.get();
         String roleName = user.getRole() != null ? user.getRole().getName() : user.getRequestedRole();
         
-        // Generate Tokens
-        String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName);
-        
-        // Create session in Redis
+        // Create session in Redis first so we can bind sessionId to the access token
         SessionService.SessionMetadata session = sessionService.createSession(
                 user.getUserId(),
                 user.getWorkEmail(),
                 httpRequest.getHeader("User-Agent"),
                 getClientIp(httpRequest)
         );
+
+        // Generate Tokens linked to this session
+        String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName, session.getSessionId());
+
 
         LoginResponse.TokenData tokenData = new LoginResponse.TokenData(
                 accessToken,
@@ -147,7 +148,12 @@ public class AuthController {
                 .map(Permission::getName)
                 .collect(Collectors.toList());
 
+        Long employeeDbId = employeeRepository.findByEmail(user.getWorkEmail())
+                .map(Employee::getId)
+                .orElse(null);
+
         LoginResponse.UserData userData = new LoginResponse.UserData(
+                employeeDbId,
                 user.getUserId(),
                 user.getFullName(),
                 user.getWorkEmail(),
@@ -188,7 +194,7 @@ public class AuthController {
         User user = optUser.get();
         String roleName = user.getRole() != null ? user.getRole().getName() : user.getRequestedRole();
         
-        String newAccessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName);
+        String newAccessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName, session.getSessionId());
         
         return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", Map.of(
                 "accessToken", newAccessToken,
@@ -474,6 +480,25 @@ public class AuthController {
         String userId = "EMP" + String.format("%03d", user.getId());
         user.setUserId(userId);
         userRepository.save(user);
+
+        Employee emp = employeeRepository.findByEmail(user.getWorkEmail())
+                .orElseGet(Employee::new);
+        emp.setFullName(user.getFullName());
+        emp.setEmail(user.getWorkEmail());
+        emp.setEmployeeId(userId);
+        if (emp.getPhone() == null) emp.setPhone("1234567890");
+        if (emp.getGender() == null) emp.setGender("MALE");
+        if (emp.getDob() == null) emp.setDob(java.time.LocalDate.of(1990, 1, 1));
+        if (emp.getAddress() == null) emp.setAddress("123 Corporate Way");
+        if (emp.getEmergencyContact() == null) emp.setEmergencyContact("9876543210");
+        if (emp.getDepartment() == null) emp.setDepartment("Engineering");
+        if (emp.getDesignation() == null) emp.setDesignation(user.getRole() != null ? user.getRole().getName() : "Software Engineer");
+        if (emp.getAnnualSalary() == null) emp.setAnnualSalary(java.math.BigDecimal.valueOf(85000));
+        if (emp.getJoiningDate() == null) emp.setJoiningDate(java.time.LocalDate.of(2026, 6, 10));
+        if (emp.getLocation() == null) emp.setLocation("Headquarters");
+        if (emp.getEmploymentType() == null) emp.setEmploymentType("FULL_TIME");
+        if (emp.getStatus() == null || emp.getStatus().isBlank()) emp.setStatus("ACTIVE");
+        employeeRepository.save(emp);
 
         invitation.setAccepted(true);
         invitationRepository.save(invitation);

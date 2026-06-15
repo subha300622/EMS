@@ -6,6 +6,7 @@ import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.employee.repository.EmployeeRepository;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,9 @@ public class AuthServiceUnitTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private EmployeeRepository employeeRepository;
 
     @Mock
     private RoleRepository roleRepository;

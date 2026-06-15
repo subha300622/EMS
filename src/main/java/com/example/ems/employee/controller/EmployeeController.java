@@ -229,78 +229,6 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success("Search completed successfully", results));
     }
 
-    // ── 8. Get Documents ─────────────────────────────────────────────────────
-    @GetMapping("/employees/{id}/documents")
-    public ResponseEntity<?> getEmployeeDocuments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = employeeService.getEmployeeById(id).orElse(null);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
-        }
-
-        // Check permission: HR/Admin or self
-        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(employee.getEmail());
-        boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
-        if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's documents.", "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("Employee documents list retrieved", 
-                employeeDocumentRepository.findByEmployeeId(id)));
-    }
-
-    // ── 9. Upload Document (Simulated) ──────────────────────────────────────
-    @PostMapping("/employees/{id}/documents")
-    public ResponseEntity<?> uploadEmployeeDocument(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id,
-            @RequestBody java.util.Map<String, Object> body) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = employeeService.getEmployeeById(id).orElse(null);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
-        }
-
-        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(employee.getEmail());
-        boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.write");
-        if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot upload documents for this employee.", "AUTH_002"));
-        }
-
-        String fileName = (String) body.getOrDefault("fileName", "document.pdf");
-        String fileType = (String) body.getOrDefault("fileType", "application/pdf");
-        Long fileSize = ((Number) body.getOrDefault("fileSize", 1024L)).longValue();
-
-        EmployeeDocument doc = new EmployeeDocument();
-        doc.setEmployee(employee);
-        doc.setFileName(fileName);
-        doc.setFileType(fileType);
-        doc.setFileSize(fileSize);
-        doc.setDownloadUrl("http://localhost:8080/api/documents/download/" + System.currentTimeMillis());
-        doc.setUploadedAt(java.time.LocalDateTime.now());
-
-        EmployeeDocument saved = employeeDocumentRepository.save(doc);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Document uploaded successfully (Simulated)", saved));
-    }
 
     // ── 10. Get Salary Details ───────────────────────────────────────────────
     @GetMapping("/employees/{id}/salary")
@@ -443,33 +371,6 @@ public class EmployeeController {
         }
     }
 
-    @GetMapping("/employees/{id}/attendance")
-    public ResponseEntity<?> getEmployeeAttendance(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = employeeService.getEmployeeById(id).orElse(null);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
-        }
-
-        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(employee.getEmail());
-        boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
-        if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's attendance.", "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("Employee attendance list retrieved successfully",
-                attendanceService.getAttendanceByEmployeeId(id)));
-    }
 
     @GetMapping("/employees/{id}/payroll")
     public ResponseEntity<?> getEmployeePayroll(

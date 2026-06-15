@@ -1,8 +1,11 @@
 package com.example.ems.security.service;
 
+import com.example.ems.auth.service.SessionService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
@@ -14,6 +17,10 @@ import java.util.Map;
 @Service
 public class JwtService {
 
+    @Autowired
+    @Lazy
+    private SessionService sessionService;
+
     // A secure 256-bit key for HMAC-SHA
     private static final String SECRET_STRING = "jwtSecretKeyForEmsBackendDevelopmentShouldBeLongAndSecure32Bytes!";
     private final SecretKey key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
@@ -22,9 +29,16 @@ public class JwtService {
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000L;
 
     public String generateAccessToken(String userId, String email, String role) {
+        return generateAccessToken(userId, email, role, null);
+    }
+
+    public String generateAccessToken(String userId, String email, String role, String sessionId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("role", role);
+        if (sessionId != null) {
+            claims.put("sessionId", sessionId);
+        }
 
         return Jwts.builder()
                 .claims(claims)
@@ -37,10 +51,19 @@ public class JwtService {
 
     public boolean validateAccessToken(String token) {
         try {
-            Jwts.parser()
+            Claims claims = Jwts.parser()
                 .verifyWith(key)
                 .build()
-                .parseSignedClaims(token);
+                .parseSignedClaims(token)
+                .getPayload();
+            
+            String sessionId = claims.get("sessionId", String.class);
+            String userId = claims.get("userId", String.class);
+            if (sessionId != null && userId != null) {
+                if (sessionService != null) {
+                    return sessionService.isSessionActive(userId, sessionId);
+                }
+            }
             return true;
         } catch (Exception e) {
             return false;

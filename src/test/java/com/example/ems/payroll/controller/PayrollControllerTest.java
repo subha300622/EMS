@@ -97,34 +97,6 @@ public class PayrollControllerTest {
     }
 
     @Test
-    public void testGetMyPayrollSuccess() throws Exception {
-        String token = "Bearer mock-token";
-        String email = "john.doe@example.com";
-
-        User user = new User();
-        user.setWorkEmail(email);
-
-        Employee employee = new Employee();
-        employee.setId(1L);
-        employee.setEmail(email);
-
-        Payroll p = new Payroll(1L, employee, 6, 2026, BigDecimal.valueOf(5000), BigDecimal.ZERO, BigDecimal.ZERO,
-                BigDecimal.valueOf(5000), "PAID", null, null);
-
-        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
-        when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
-        when(userRepository.findByWorkEmail(email)).thenReturn(Optional.of(user));
-        when(employeeRepository.findByEmail(email)).thenReturn(Optional.of(employee));
-        when(payrollService.getPayrollByEmployeeId(1L)).thenReturn(List.of(p));
-
-        mockMvc.perform(get("/api/v1/payroll-runs/my")
-                .header("Authorization", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].status").value("PAID"));
-    }
-
-    @Test
     public void testDeletePayrollSuccess() throws Exception {
         String token = "Bearer mock-token";
         String email = "admin@example.com";

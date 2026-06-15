@@ -62,6 +62,7 @@ public class AttendanceController {
     @PostMapping("/attendance/check-in")
     public ResponseEntity<?> checkIn(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "employeeId", required = false) Long employeeId,
             @RequestBody(required = false) CheckInRequest request) {
 
         User currentUser = resolveUser(authHeader);
@@ -70,10 +71,18 @@ public class AttendanceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        Employee employee = resolveEmployee(currentUser);
+        Employee employee = null;
+        if (employeeId != null) {
+            employee = employeeRepository.findById(employeeId).orElse(null);
+        }
+
+        if (employee == null) {
+            employee = resolveEmployee(currentUser);
+        }
+
         if (employee == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+                    .body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -90,6 +99,7 @@ public class AttendanceController {
     @PostMapping("/attendance/check-out")
     public ResponseEntity<?> checkOut(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "employeeId", required = false) Long employeeId,
             @RequestBody(required = false) CheckOutRequest request) {
 
         User currentUser = resolveUser(authHeader);
@@ -98,10 +108,18 @@ public class AttendanceController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        Employee employee = resolveEmployee(currentUser);
+        Employee employee = null;
+        if (employeeId != null) {
+            employee = employeeRepository.findById(employeeId).orElse(null);
+        }
+
+        if (employee == null) {
+            employee = resolveEmployee(currentUser);
+        }
+
         if (employee == null) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+                    .body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -113,27 +131,6 @@ public class AttendanceController {
         }
     }
 
-    // ── 3. GET MY ATTENDANCE FOR TODAY ───────────────────────────────────────
-    @GetMapping("/attendance/my")
-    public ResponseEntity<?> getMyTodayAttendance(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return attendanceService.getTodayAttendance(employee)
-                .<ResponseEntity<?>>map(record -> ResponseEntity.ok(ApiResponse.success("Today's attendance retrieved", record)))
-                .orElseGet(() -> ResponseEntity.ok(ApiResponse.success("No attendance record for today", null)));
-    }
 
     // ── 4. GET MY ATTENDANCE HISTORY ─────────────────────────────────────────
     @GetMapping("/attendance/my/history")

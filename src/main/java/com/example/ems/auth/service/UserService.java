@@ -7,6 +7,10 @@ import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.employee.repository.EmployeeRepository;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 import org.slf4j.Logger;
@@ -25,6 +29,7 @@ public class UserService {
     @Autowired private UserRepository userRepository;
     @Autowired private RoleRepository roleRepository;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
+    @Autowired private EmployeeRepository employeeRepository;
 
     // ──────────────────────────────────────────
     //  LOGIN — compares BCrypt-hashed password
@@ -108,7 +113,26 @@ public class UserService {
         user.setUserId(userId);
         userRepository.save(user);
 
-        log.info("New user registered: {} ({})", user.getWorkEmail(), userId);
+        Employee emp = employeeRepository.findByEmail(user.getWorkEmail())
+                .orElseGet(Employee::new);
+        emp.setFullName(user.getFullName());
+        emp.setEmail(user.getWorkEmail());
+        emp.setEmployeeId(userId);
+        if (emp.getPhone() == null) emp.setPhone(user.getMobileNumber() != null && !user.getMobileNumber().isBlank() ? user.getMobileNumber() : "1234567890");
+        if (emp.getGender() == null) emp.setGender("MALE");
+        if (emp.getDob() == null) emp.setDob(LocalDate.of(1990, 1, 1));
+        if (emp.getAddress() == null) emp.setAddress("123 Corporate Way");
+        if (emp.getEmergencyContact() == null) emp.setEmergencyContact("9876543210");
+        if (emp.getDepartment() == null) emp.setDepartment(user.getDepartment() != null && !user.getDepartment().isBlank() ? user.getDepartment() : "Engineering");
+        if (emp.getDesignation() == null) emp.setDesignation(user.getRole() != null ? user.getRole().getName() : "Software Engineer");
+        if (emp.getAnnualSalary() == null) emp.setAnnualSalary(BigDecimal.valueOf(85000));
+        if (emp.getJoiningDate() == null) emp.setJoiningDate(LocalDate.of(2026, 6, 10));
+        if (emp.getLocation() == null) emp.setLocation(user.getLocation() != null && !user.getLocation().isBlank() ? user.getLocation() : "Headquarters");
+        if (emp.getEmploymentType() == null) emp.setEmploymentType("FULL_TIME");
+        if (emp.getStatus() == null || emp.getStatus().isBlank()) emp.setStatus("ACTIVE");
+        employeeRepository.save(emp);
+
+        log.info("New user registered: {} ({}) and employee profile created", user.getWorkEmail(), userId);
         return "Registration Successful! Your User ID: " + userId + " | Role ID: " + user.getRole().getId();
     }
 
@@ -180,6 +204,25 @@ public class UserService {
         String userId = "EMP" + String.format("%03d", user.getId());
         user.setUserId(userId);
         userRepository.save(user);
+
+        Employee emp = employeeRepository.findByEmail(user.getWorkEmail())
+                .orElseGet(Employee::new);
+        emp.setFullName(user.getFullName());
+        emp.setEmail(user.getWorkEmail());
+        emp.setEmployeeId(userId);
+        if (emp.getPhone() == null) emp.setPhone(user.getMobileNumber() != null && !user.getMobileNumber().isBlank() ? user.getMobileNumber() : "1234567890");
+        if (emp.getGender() == null) emp.setGender("MALE");
+        if (emp.getDob() == null) emp.setDob(LocalDate.of(1990, 1, 1));
+        if (emp.getAddress() == null) emp.setAddress("123 Corporate Way");
+        if (emp.getEmergencyContact() == null) emp.setEmergencyContact("9876543210");
+        if (emp.getDepartment() == null) emp.setDepartment(user.getDepartment() != null && !user.getDepartment().isBlank() ? user.getDepartment() : "Engineering");
+        if (emp.getDesignation() == null) emp.setDesignation(user.getRole() != null ? user.getRole().getName() : "Software Engineer");
+        if (emp.getAnnualSalary() == null) emp.setAnnualSalary(BigDecimal.valueOf(85000));
+        if (emp.getJoiningDate() == null) emp.setJoiningDate(LocalDate.of(2026, 6, 10));
+        if (emp.getLocation() == null) emp.setLocation(user.getLocation() != null && !user.getLocation().isBlank() ? user.getLocation() : "Headquarters");
+        if (emp.getEmploymentType() == null) emp.setEmploymentType("FULL_TIME");
+        if (emp.getStatus() == null || emp.getStatus().isBlank()) emp.setStatus("ACTIVE");
+        employeeRepository.save(emp);
 
         return user;
     }

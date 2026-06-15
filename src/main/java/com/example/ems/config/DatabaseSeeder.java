@@ -53,7 +53,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Leave Management
                 "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve", "leave.self.read",
                 // Payroll
-                "payroll.read", "payroll.manage", "salary.manage", "payslip.read",
+                "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
                 // Reports
                 "reports.view", "reports.hr", "reports.finance", "reports.manager",
                 // System
@@ -64,6 +64,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Onboarding Self-Service
                 "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
+                // New Self Service Permissions
+                "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read", "asset.self.read",
                 // Enterprise Self-Service Permissions
                 "employee.dashboard.read",
                 "employee.profile.read", "employee.profile.update",
@@ -103,12 +105,13 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
                 "attendance.read", "attendance.manage", "attendance.team.read", "attendance.self.read",
                 "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve", "leave.self.read",
-                "payroll.read", "payroll.manage", "salary.manage", "payslip.read",
+                "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
                 "reports.view", "reports.hr", "reports.finance", "reports.manager",
                 "recruitment.manage", "task.assign", "performance.review", "expense.manage",
                 "profile.read", "profile.update",
                 "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
+                "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read", "asset.self.read",
                 "employee.dashboard.read",
                 "employee.profile.read", "employee.profile.update",
                 "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit",
@@ -147,9 +150,10 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         rolePermissionsMap.put("EMPLOYEE", Arrays.asList(
                 "profile.read", "profile.update", "attendance.self.read",
-                "leave.create", "leave.self.read", "payslip.read",
+                "leave.create", "leave.self.read", "payslip.read", "payslip.self.read",
                 "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
+                "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read", "asset.self.read",
                 "employee.dashboard.read",
                 "employee.profile.read", "employee.profile.update",
                 "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit",

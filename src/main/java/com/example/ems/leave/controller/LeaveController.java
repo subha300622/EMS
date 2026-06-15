@@ -9,6 +9,7 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.leave.dto.LeaveRequest;
 import com.example.ems.leave.dto.LeaveTypeRequest;
+import com.example.ems.leave.dto.LeaveActionRequest;
 import com.example.ems.leave.entity.Leave;
 import com.example.ems.leave.entity.LeaveType;
 import com.example.ems.leave.service.LeaveService;
@@ -143,92 +144,7 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Leave request retrieved successfully", leave));
     }
 
-    // ── 4. GET MY LEAVES ──────────────────────────────────────────────────────
-    @GetMapping("/leaves/my")
-    public ResponseEntity<?> getMyLeaves(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("My leaves retrieved successfully",
-                leaveService.getLeavesByEmployeeId(employee.getId())));
-    }
-
-    // ── 5. GET MY LEAVE HISTORY ───────────────────────────────────────────────
-    @GetMapping("/leaves/my/history")
-    public ResponseEntity<?> getMyLeaveHistory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        return getMyLeaves(authHeader);
-    }
-
-    // ── 6. GET MY LEAVE BALANCE ───────────────────────────────────────────────
-    @GetMapping("/leaves/my/balance")
-    public ResponseEntity<?> getMyLeaveBalance(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("My leave balance retrieved successfully",
-                leaveService.getLeaveBalance(employee.getId())));
-    }
-
-    // ── 7. GET LEAVES OF EMPLOYEE ─────────────────────────────────────────────
-    @GetMapping("/leaves/employee/{employeeId}")
-    public ResponseEntity<?> getLeavesByEmployee(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = employeeRepository.findById(employeeId).orElse(null);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee not found with ID: " + employeeId, "EMP_001"));
-        }
-
-        Employee manager = resolveEmployee(currentUser);
-        boolean isTheirManager = manager != null && employee.getManager() != null
-                && employee.getManager().getId().equals(manager.getId());
-        boolean hasAccess = isTheirManager
-                || roleService.hasPermission(currentUser.getWorkEmail(), "leave.read")
-                || roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")
-                || roleService.hasPermission(currentUser.getWorkEmail(), "leave.approve")
-                || roleService.hasPermission(currentUser.getWorkEmail(), "leave.team.approve");
-
-        if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires permission to read employee leaves.",
-                            "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("Employee leaves retrieved successfully",
-                leaveService.getLeavesByEmployeeId(employeeId)));
-    }
 
     // ── 8. GET PENDING LEAVES (MANAGERS / ADMIN / HR) ──────────────────────────
     @GetMapping("/leaves/pending")
@@ -278,10 +194,10 @@ public class LeaveController {
     }
 
     // ── 10. APPROVE LEAVE ─────────────────────────────────────────────────────
-    @PutMapping("/leaves/{id}/approve")
+    @PutMapping("/leaves/approve")
     public ResponseEntity<?> approveLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @RequestParam(value = "leaveId") Long leaveId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -305,7 +221,7 @@ public class LeaveController {
         }
 
         try {
-            Leave record = leaveService.approveLeave(id, approver);
+            Leave record = leaveService.approveLeave(leaveId, approver);
             return ResponseEntity.ok(ApiResponse.success("Leave request approved successfully", record));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LV_003"));
@@ -313,10 +229,10 @@ public class LeaveController {
     }
 
     // ── 11. REJECT LEAVE ─────────────────────────────────────────────────────
-    @PutMapping("/leaves/{id}/reject")
+    @PutMapping("/leaves/reject")
     public ResponseEntity<?> rejectLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @RequestParam(value = "leaveId") Long leaveId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -340,7 +256,7 @@ public class LeaveController {
         }
 
         try {
-            Leave record = leaveService.rejectLeave(id, approver);
+            Leave record = leaveService.rejectLeave(leaveId, approver);
             return ResponseEntity.ok(ApiResponse.success("Leave request rejected successfully", record));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LV_004"));
@@ -348,10 +264,10 @@ public class LeaveController {
     }
 
     // ── 12. CANCEL LEAVE ─────────────────────────────────────────────────────
-    @PutMapping("/leaves/{id}/cancel")
+    @PutMapping("/leaves/cancel")
     public ResponseEntity<?> cancelLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @RequestParam(value = "leaveId") Long leaveId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -366,10 +282,36 @@ public class LeaveController {
         }
 
         try {
-            Leave record = leaveService.cancelLeave(id, employee);
+            Leave record = leaveService.cancelLeave(leaveId, employee);
             return ResponseEntity.ok(ApiResponse.success("Leave request cancelled successfully", record));
         } catch (IllegalArgumentException | SecurityException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LV_005"));
+        }
+    }
+
+    // ── 12b. DELETE LEAVE ─────────────────────────────────────────────────────
+    @DeleteMapping("/leaves")
+    public ResponseEntity<?> deleteLeave(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "leaveId") Long leaveId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'leave.manage' permission.", "AUTH_002"));
+        }
+
+        try {
+            leaveService.deleteLeave(leaveId);
+            return ResponseEntity.ok(ApiResponse.success("Leave request deleted successfully"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error(e.getMessage(), "LV_002"));
         }
     }
 

@@ -129,6 +129,12 @@ public class LeaveService {
         return leaveRepository.findByEmployeeId(employeeId);
     }
 
+    public void deleteLeave(Long id) {
+        Leave leave = leaveRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Leave request not found"));
+        leaveRepository.delete(leave);
+    }
+
     public List<Leave> getPendingLeaves() {
         return leaveRepository.findByStatus("PENDING");
     }

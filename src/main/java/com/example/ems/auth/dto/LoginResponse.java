@@ -136,6 +136,7 @@ public class LoginResponse {
     }
 
     public static class UserData {
+        private Long id;
         private String employeeId;
         private String name;
         private String email;
@@ -146,7 +147,8 @@ public class LoginResponse {
 
         public UserData() {}
 
-        public UserData(String employeeId, String name, String email, String role, List<String> permissions, String status, String lastLogin) {
+        public UserData(Long id, String employeeId, String name, String email, String role, List<String> permissions, String status, String lastLogin) {
+            this.id = id;
             this.employeeId = employeeId;
             this.name = name;
             this.email = email;
@@ -154,6 +156,14 @@ public class LoginResponse {
             this.permissions = permissions;
             this.status = status;
             this.lastLogin = lastLogin;
+        }
+
+        public Long getId() {
+            return id;
+        }
+
+        public void setId(Long id) {
+            this.id = id;
         }
 
         public String getEmployeeId() {

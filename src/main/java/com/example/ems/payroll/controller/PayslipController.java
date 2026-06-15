@@ -58,26 +58,6 @@ public class PayslipController {
         return employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
     }
 
-    // ── 1. GET MY PAYSLIPS ───────────────────────────────────────────────────
-    @GetMapping("/payslips/my")
-    public ResponseEntity<?> getMyPayslips(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("My payslips retrieved successfully", 
-                payslipService.getPayslipsByEmployeeId(employee.getId())));
-    }
 
     // ── 2. GET PAYSLIP BY ID ──────────────────────────────────────────────────
     @GetMapping("/payslips/{id}")

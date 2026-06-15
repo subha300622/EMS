@@ -55,10 +55,6 @@ public class PayrollController {
         return null;
     }
 
-    private Employee resolveEmployee(User currentUser) {
-        if (currentUser == null) return null;
-        return employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
-    }
 
     // ── 1. GENERATE PAYROLL (FINANCE / ADMIN) ────────────────────────────────
     @PostMapping("/payroll-runs")
@@ -82,53 +78,6 @@ public class PayrollController {
                 .body(ApiResponse.success("Payroll generated successfully. Records created: " + generated.size(), generated));
     }
 
-    // ── 2. GET MY PAYROLL HISTORY ────────────────────────────────────────────
-    @GetMapping("/payroll-runs/my")
-    public ResponseEntity<?> getMyPayroll(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("My payroll history retrieved successfully", 
-                payrollService.getPayrollByEmployeeId(employee.getId())));
-    }
-
-    // ── 3. GET MY PAYROLL BY ID ──────────────────────────────────────────────
-    @GetMapping("/payroll-runs/my/{id}")
-    public ResponseEntity<?> getMyPayrollById(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Payroll payroll = payrollService.getPayrollById(id).orElse(null);
-        if (payroll == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Payroll record not found with ID: " + id, "PR_001"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null || !payroll.getEmployee().getId().equals(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this payroll record.", "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("Payroll record retrieved successfully", payroll));
-    }
 
     // ── 4. GET ALL PAYROLL RECORDS (HR / FINANCE / ADMIN) ────────────────────
     @GetMapping("/payroll-runs")
