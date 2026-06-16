@@ -1,17 +1,6 @@
 package com.example.ems.appraisal.service;
 
-import com.example.ems.appraisal.dto.AppraisalCycleResponse;
-import com.example.ems.appraisal.dto.AppraisalDashboardResponse;
-import com.example.ems.appraisal.dto.AppraisalFinalizeRequest;
-import com.example.ems.appraisal.dto.AppraisalManagerReviewRequest;
-import com.example.ems.appraisal.dto.AppraisalRequest;
-import com.example.ems.appraisal.dto.AppraisalResponse;
-import com.example.ems.appraisal.dto.AppraisalSelfReviewRequest;
-import com.example.ems.appraisal.dto.IncrementLetterResponse;
-import com.example.ems.appraisal.dto.IncrementPolicyResponse;
-import com.example.ems.appraisal.dto.IncrementRequest;
-import com.example.ems.appraisal.dto.IncrementResponse;
-import com.example.ems.appraisal.dto.SalaryRevisionResponse;
+import com.example.ems.appraisal.dto.*;
 import com.example.ems.appraisal.entity.Appraisal;
 import com.example.ems.appraisal.entity.AppraisalCycle;
 import com.example.ems.appraisal.entity.Increment;
@@ -204,6 +193,146 @@ public class AppraisalService {
         });
     }
 
+    // ── 2.1 NEW SALARY REVISION BUSINESS METHODS ─────────────────────────────
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Increment createIncrement(NewIncrementRequest request) {
+        Employee emp = employeeRepository.findByEmployeeId(request.getEmployeeId())
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
+
+        Appraisal appraisal = null;
+        if (request.getAppraisalId() != null) {
+            appraisal = appraisalRepository.findById(request.getAppraisalId()).orElse(null);
+        }
+
+        BigDecimal currentSalary = emp.getAnnualSalary() != null ? emp.getAnnualSalary() : BigDecimal.ZERO;
+        BigDecimal percent = request.getIncrementPercentage();
+        BigDecimal amount = currentSalary.multiply(percent).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        BigDecimal newSalary = currentSalary.add(amount);
+
+        Increment inc = new Increment();
+        inc.setEmployee(emp);
+        inc.setAppraisal(appraisal);
+        inc.setCurrentSalary(currentSalary);
+        inc.setIncrementPercentage(percent);
+        inc.setIncrementAmount(amount);
+        inc.setNewSalary(newSalary);
+        inc.setEffectiveDate(request.getEffectiveDate());
+        inc.setReason(request.getReason());
+        inc.setStatus("PENDING");
+
+        return incrementRepository.save(inc);
+    }
+
+    public Optional<Increment> getIncrementEntityById(Long id) {
+        return incrementRepository.findById(id);
+    }
+
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Optional<Increment> updateIncrement(Long id, BigDecimal incrementPercentage, LocalDate effectiveDate, String reason) {
+        return incrementRepository.findById(id).map(inc -> {
+            if (incrementPercentage != null) {
+                BigDecimal currentSalary = inc.getCurrentSalary();
+                BigDecimal amount = currentSalary.multiply(incrementPercentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal newSalary = currentSalary.add(amount);
+                
+                inc.setIncrementPercentage(incrementPercentage);
+                inc.setIncrementAmount(amount);
+                inc.setNewSalary(newSalary);
+            }
+            if (effectiveDate != null) {
+                inc.setEffectiveDate(effectiveDate);
+            }
+            if (reason != null) {
+                inc.setReason(reason);
+            }
+            inc.setUpdatedAt(LocalDateTime.now());
+            return incrementRepository.save(inc);
+        });
+    }
+
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Optional<Increment> approveIncrementEntity(Long id, String approvedByEmail) {
+        User user = userRepository.findByWorkEmail(approvedByEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + approvedByEmail));
+
+        Employee manager = null;
+        if (user.getEmployeeId() != null) {
+            manager = employeeRepository.findByEmployeeId(user.getEmployeeId()).orElse(null);
+        }
+
+        Employee finalManager = manager;
+        return incrementRepository.findById(id).map(inc -> {
+            inc.setStatus("APPROVED");
+            inc.setApprovedBy(finalManager);
+            inc.setApprovedAt(LocalDateTime.now());
+            inc.setUpdatedAt(LocalDateTime.now());
+            return incrementRepository.save(inc);
+        });
+    }
+
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Optional<Increment> rejectIncrementEntity(Long id, String rejectedByEmail, String reason) {
+        User user = userRepository.findByWorkEmail(rejectedByEmail)
+                .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + rejectedByEmail));
+
+        Employee manager = null;
+        if (user.getEmployeeId() != null) {
+            manager = employeeRepository.findByEmployeeId(user.getEmployeeId()).orElse(null);
+        }
+
+        Employee finalManager = manager;
+        return incrementRepository.findById(id).map(inc -> {
+            inc.setStatus("REJECTED");
+            inc.setApprovedBy(finalManager);
+            inc.setApprovedAt(LocalDateTime.now());
+            inc.setReason(reason);
+            inc.setUpdatedAt(LocalDateTime.now());
+            return incrementRepository.save(inc);
+        });
+    }
+
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Optional<Increment> applyIncrementEntity(Long id) {
+        return incrementRepository.findById(id).map(inc -> {
+            Employee emp = inc.getEmployee();
+            BigDecimal previousSalary = emp.getAnnualSalary() != null ? emp.getAnnualSalary() : BigDecimal.ZERO;
+            
+            // 1. Update employee salary
+            emp.setAnnualSalary(inc.getNewSalary());
+            employeeRepository.save(emp);
+
+            // 2. Create Salary Revision Log
+            SalaryRevision revision = new SalaryRevision();
+            revision.setEmployee(emp);
+            revision.setPreviousSalary(previousSalary);
+            revision.setNewSalary(inc.getNewSalary());
+            revision.setChangePercentage(inc.getIncrementPercentage());
+            revision.setEffectiveDate(inc.getEffectiveDate());
+            
+            String reasonText = inc.getReason();
+            if (reasonText == null || reasonText.trim().isEmpty()) {
+                String ratingStr = inc.getAppraisal() != null && inc.getAppraisal().getFinalRating() != null
+                        ? " (Final Rating: " + inc.getAppraisal().getFinalRating() + ")"
+                        : "";
+                reasonText = "Annual Appraisal Increment" + ratingStr;
+            }
+            revision.setReason(reasonText);
+            revisionRepository.save(revision);
+
+            // 3. Update Increment Status
+            inc.setStatus("APPLIED");
+            inc.setAppliedAt(LocalDateTime.now());
+            inc.setUpdatedAt(LocalDateTime.now());
+
+            return incrementRepository.save(inc);
+        });
+    }
+
     // ── 3. INCREMENTS ────────────────────────────────────────────────────────
     @Transactional
     @CacheEvict(value = "appraisalDashboard", allEntries = true)
@@ -351,6 +480,11 @@ public class AppraisalService {
                 .map(SalaryRevisionResponse::new)
                 .collect(Collectors.toList());
     }
+
+    public List<SalaryRevision> getSalaryRevisionEntities(Long employeeId) {
+        return revisionRepository.findByEmployeeIdOrderByEffectiveDateDesc(employeeId);
+    }
+
 
     public List<AppraisalCycleResponse> getAppraisalCycles() {
         return cycleRepository.findAll().stream()

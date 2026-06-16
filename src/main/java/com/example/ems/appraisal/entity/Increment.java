@@ -55,6 +55,8 @@ public class Increment {
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    private String reason;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -96,4 +98,7 @@ public class Increment {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
 }

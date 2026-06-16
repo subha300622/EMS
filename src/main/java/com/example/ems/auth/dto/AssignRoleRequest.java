@@ -1,19 +1,23 @@
 package com.example.ems.auth.dto;
 
-
-
-import jakarta.validation.constraints.NotBlank;
-
 public class AssignRoleRequest {
 
-    @NotBlank(message = "Role is required")
     private String role;
+    private String roleName;
 
     public String getRole() {
-        return role;
+        return roleName != null ? roleName : role;
     }
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getRoleName() {
+        return roleName;
+    }
+
+    public void setRoleName(String roleName) {
+        this.roleName = roleName;
     }
 }

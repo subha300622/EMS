@@ -19,6 +19,16 @@ public class Role {
 
     private String description;
 
+    @Column(name = "created_at", updatable = false)
+    private java.time.Instant createdAt;
+
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+        }
+    }
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "role_permissions",
@@ -58,6 +68,14 @@ public class Role {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public java.time.Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(java.time.Instant createdAt) {
+        this.createdAt = createdAt;
     }
 
     public Set<Permission> getPermissions() {
