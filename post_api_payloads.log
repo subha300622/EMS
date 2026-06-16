@@ -2631,3 +2631,135 @@ Status:           201
 {"permissionId":90,"name":"TEMP_PERM_27495","description":"Temporary permission for testing"}
 ======================================================================
 
+======================================================================
+Timestamp:        2026-06-16T10:25:01.485063311
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "$pw"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:01Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:01.640214439
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "$pw"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:01Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:01.790255129
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "$pw"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:01Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:01.939923679
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "$pw"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:01Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:02.089220760
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "$pw"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:02Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:02.241474846
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "$pw"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:02Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:12.087820603
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "Password123"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:12Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:12.237501306
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "Password@123"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:12Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:12.389821466
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "Admin@123"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:12Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:12.538916386
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:12Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:12.688984859
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "1234567"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-16T04:55:12Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T10:25:12.847564779
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email": "onboard_emp_1781340790@company.com", "password": "password123"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-16T04:55:12Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiI5NmM0OTg3Ni0yNTY5LTQ0YzgtOWI4Yi02NDE5ZGVmNjJmMjEiLCJ1c2VySWQiOiJFTVAwMjgiLCJzdWIiOiJvbmJvYXJkX2VtcF8xNzgxMzQwNzkwQGNvbXBhbnkuY29tIiwiaWF0IjoxNzgxNTg1NzEyLCJleHAiOjE3ODE2NzIxMTJ9.s4Aou2sPKVBkZdHkJwz1JzlrVEfjbpuuNhX6QEgeiRm0F9z6311kTdsrXloG5R8okj9HeUQCdaHzBVwWJnzKww","refreshToken":"899fd224-fcf8-4d64-94a9-98091078cb6f","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":30,"employeeId":"EMP028","name":"John Doe 1781340790","email":"onboard_emp_1781340790@company.com","role":"EMPLOYEE","permissions":["employee.onboarding.read","employee.onboarding.update","employee.document.delete","employee.support-ticket.update","profile.update","employee.attendance.read","employee.onboarding.document.upload","onboarding.self.update","employee.schedule.read","payslip.self.read","onboarding.document.upload","employee.payslip.download","goal.self.read","employee.profile.update","employee.leave.create","employee.goal.read","employee.notification.read","employee.training.complete","employee.payslip.read","employee.asset.read","employee.document.upload","employee.asset.request","employee.onboarding.read.self","employee.expense.create","employee.announcement.read","asset.self.read","leave.create","employee.document.read","leave.self.read","employee.profile.read","performance.self.read","employee.dashboard.read","attendance.self.read","employee.onboarding.submit","employee.expense.read","payslip.read","expense.self.read","onboarding.document.read.self","employee.performance.read","employee.training.read","employee.attendance.create","employee.notification.update","employee.support-ticket.read","employee.expense.update","employee.support-ticket.create","onboarding.self.read","employee.leave.read","employee.performance.self-review.submit","profile.read","employee.onboarding.document.read","employee.leave.cancel","document.self.read","employee.goal.update","onboarding.self.submit"],"status":"ACTIVE","lastLogin":"2026-06-16T04:55:12Z"}}}
+======================================================================
+
