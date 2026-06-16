@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.ArrayList;
 import com.example.ems.employee.entity.Employee;
 
 @Entity
@@ -56,6 +58,30 @@ public class Expense {
 
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    @Column(unique = true)
+    private String expenseNumber;
+
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'INR'")
+    private String currency = "INR";
+
+    private String projectCode;
+
+    @Column(nullable = false, columnDefinition = "varchar(255) default 'NOT_PAID'")
+    private String reimbursementStatus = "NOT_PAID";
+
+    private LocalDateTime submittedAt;
+
+    private String expectedPaymentMonth;
+
+    @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<MyExpenseReceipt> receipts = new ArrayList<>();
+
+    @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<MyExpenseApprovalStep> approvalFlow = new ArrayList<>();
+
+    @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<MyExpenseTimelineEvent> timelineEvents = new ArrayList<>();
 
     public Expense() {}
 
@@ -195,5 +221,77 @@ public class Expense {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getExpenseNumber() {
+        return expenseNumber;
+    }
+
+    public void setExpenseNumber(String expenseNumber) {
+        this.expenseNumber = expenseNumber;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public String getProjectCode() {
+        return projectCode;
+    }
+
+    public void setProjectCode(String projectCode) {
+        this.projectCode = projectCode;
+    }
+
+    public String getReimbursementStatus() {
+        return reimbursementStatus;
+    }
+
+    public void setReimbursementStatus(String reimbursementStatus) {
+        this.reimbursementStatus = reimbursementStatus;
+    }
+
+    public LocalDateTime getSubmittedAt() {
+        return submittedAt;
+    }
+
+    public void setSubmittedAt(LocalDateTime submittedAt) {
+        this.submittedAt = submittedAt;
+    }
+
+    public String getExpectedPaymentMonth() {
+        return expectedPaymentMonth;
+    }
+
+    public void setExpectedPaymentMonth(String expectedPaymentMonth) {
+        this.expectedPaymentMonth = expectedPaymentMonth;
+    }
+
+    public List<MyExpenseReceipt> getReceipts() {
+        return receipts;
+    }
+
+    public void setReceipts(List<MyExpenseReceipt> receipts) {
+        this.receipts = receipts;
+    }
+
+    public List<MyExpenseApprovalStep> getApprovalFlow() {
+        return approvalFlow;
+    }
+
+    public void setApprovalFlow(List<MyExpenseApprovalStep> approvalFlow) {
+        this.approvalFlow = approvalFlow;
+    }
+
+    public List<MyExpenseTimelineEvent> getTimelineEvents() {
+        return timelineEvents;
+    }
+
+    public void setTimelineEvents(List<MyExpenseTimelineEvent> timelineEvents) {
+        this.timelineEvents = timelineEvents;
     }
 }
