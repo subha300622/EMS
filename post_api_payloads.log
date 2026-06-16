@@ -3585,3 +3585,70 @@ Status:           200
 {"success":true,"message":"Self-assessment submitted","timestamp":"2026-06-16T10:07:08Z","data":{"message":"Self-assessment submitted successfully","status":"SUBMITTED","submittedAt":"2026-06-16T15:37:08.038888005","summary":["Rating: 5","Achievements: 1"]}}
 ======================================================================
 
+======================================================================
+Timestamp:        2026-06-16T15:46:47.901257830
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-16T10:16:47Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiJmMmI3ZmRmMC1iOWZmLTQ2OWItYjNmYS0xNzVkOTMwYmQ2OGYiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTYwNTAwNywiZXhwIjoxNzgxNjkxNDA3fQ.5pZhvB0iCn_CRlBc_dQIWzEo6UQoPSspVLrMrsygAEk-h1ABzlRTOQRsu_4txH7tMahlk_jsPtVR-5czcMR_qw","refreshToken":"ab428c01-4d4f-4402-9b70-e955340e39a1","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["employee.notification.read","employee.asset.request","employee.performance.self-review.submit","onboarding.document.upload","employee.expense.create","employee.notification.update","onboarding.document.read.self","profile.update","employee.onboarding.document.read","employee.dashboard.read","leave.create","employee.payslip.read","schedule.self.read","document.self.read","employee.expense.read","goal.self.read","employee.document.delete","employee.performance.read","employee.goal.read","schedule.self.notification.read","employee.announcement.read","performance.self.feedback.read","employee.expense.update","schedule.self.timeline.read","employee.support-ticket.read","performance.self.history.read","expense.self.read","profile.read","leave.self.read","onboarding.self.update","employee.onboarding.read","onboarding.self.read","employee.asset.read","employee.leave.cancel","payslip.read","employee.leave.create","employee.support-ticket.create","performance.self.goal.update","employee.training.complete","employee.training.read","employee.onboarding.document.upload","employee.onboarding.update","performance.self.read","schedule.self.availability.update","employee.leave.read","employee.schedule.read","employee.payslip.download","performance.self.assessment.submit","employee.document.read","employee.attendance.create","employee.goal.update","employee.support-ticket.update","employee.document.upload","attendance.self.read","employee.onboarding.submit","employee.profile.read","employee.attendance.read","onboarding.self.submit","employee.profile.update","asset.self.read","schedule.self.change.create","payslip.self.read","employee.onboarding.read.self"],"status":"ACTIVE","lastLogin":"2026-06-16T10:16:47Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:46:48.392943452
+URI:              /api/v1/my-schedule/change-requests
+User:             employee@company.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+{
+    "currentShiftId": 101,
+    "requestedShiftId": 102,
+    "requestedDate": "2026-06-20",
+    "requestType": "SHIFT_CHANGE",
+    "reason": "Personal appointment"
+  }
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Change request submitted","timestamp":"2026-06-16T10:16:48Z","data":{"requestId":2,"requestNumber":"SCR-2026-0002","status":"PENDING_MANAGER_APPROVAL","submittedAt":"2026-06-16T15:46:48.38274597Z","message":"Schedule change request submitted successfully"}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:48:52.232560474
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-16T10:18:52Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiI0NGIyMWFkYy02N2UwLTRmOWEtYTc3My03NGYwMGIzZDVkYzIiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTYwNTEzMiwiZXhwIjoxNzgxNjkxNTMyfQ.CqbDu3FTqWP37hzoRzjJAx3AKt8LtM22OTAAXTrCGYYVxPTSeqt0badGXzQop3JmNyJuKsUuqGFz3bulSw-HDw","refreshToken":"9430dedb-41d4-4a52-8d95-dc9b79e9d6b7","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["employee.leave.create","employee.onboarding.submit","employee.expense.create","employee.notification.read","employee.schedule.read","profile.read","performance.self.feedback.read","schedule.self.availability.update","employee.support-ticket.read","goal.self.read","schedule.self.timeline.read","employee.onboarding.read.self","onboarding.document.upload","performance.self.goal.update","profile.update","employee.dashboard.read","onboarding.self.update","employee.onboarding.document.read","employee.asset.read","employee.attendance.read","employee.document.delete","employee.goal.update","employee.performance.self-review.submit","payslip.read","employee.document.read","employee.onboarding.update","attendance.self.read","employee.notification.update","payslip.self.read","employee.expense.read","asset.self.read","employee.attendance.create","employee.leave.read","leave.self.read","employee.announcement.read","employee.training.read","employee.onboarding.read","employee.profile.update","employee.leave.cancel","onboarding.self.read","employee.support-ticket.create","onboarding.document.read.self","employee.goal.read","performance.self.history.read","performance.self.assessment.submit","employee.onboarding.document.upload","performance.self.read","schedule.self.change.create","employee.expense.update","employee.support-ticket.update","employee.payslip.download","schedule.self.notification.read","employee.performance.read","onboarding.self.submit","employee.profile.read","employee.asset.request","schedule.self.read","employee.payslip.read","employee.document.upload","document.self.read","employee.training.complete","leave.create","expense.self.read"],"status":"ACTIVE","lastLogin":"2026-06-16T10:18:52Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:49:41.998206468
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-16T10:19:41Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiI4MzZmYWEyOC01YWE3LTQzMTUtODQxNC0yY2Q3ODIwMzU1NmEiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTYwNTE4MSwiZXhwIjoxNzgxNjkxNTgxfQ.gi_OByzLhQqCtdclghaPCW5YLHrVVF2BIKT9hKHXCM0sSBr4JEs_lej4xperl_OgoxYO42cvSrXjNEJP9xoHEQ","refreshToken":"7338b1fe-df96-4232-b7e3-3a17665ac09c","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["employee.support-ticket.read","onboarding.self.update","employee.onboarding.update","payslip.self.read","employee.dashboard.read","employee.performance.read","employee.onboarding.read.self","employee.expense.update","leave.self.read","employee.training.complete","performance.self.read","performance.self.history.read","employee.expense.read","employee.notification.update","employee.goal.update","employee.document.read","employee.schedule.read","employee.document.delete","employee.payslip.read","payslip.read","employee.support-ticket.create","employee.document.upload","employee.onboarding.read","employee.asset.request","employee.training.read","employee.support-ticket.update","schedule.self.read","employee.asset.read","employee.expense.create","employee.leave.cancel","asset.self.read","performance.self.assessment.submit","employee.profile.update","goal.self.read","employee.performance.self-review.submit","expense.self.read","employee.leave.read","performance.self.goal.update","schedule.self.availability.update","employee.leave.create","leave.create","employee.profile.read","schedule.self.notification.read","employee.onboarding.document.upload","performance.self.feedback.read","profile.update","employee.attendance.create","schedule.self.change.create","employee.onboarding.document.read","employee.announcement.read","employee.payslip.download","onboarding.self.read","onboarding.document.upload","employee.onboarding.submit","document.self.read","attendance.self.read","employee.attendance.read","employee.notification.read","employee.goal.read","onboarding.self.submit","profile.read","schedule.self.timeline.read","onboarding.document.read.self"],"status":"ACTIVE","lastLogin":"2026-06-16T10:19:41Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:49:42.314024317
+URI:              /api/v1/my-schedule/change-requests
+User:             employee@company.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+{
+    "currentShiftId": 101,
+    "requestedShiftId": 102,
+    "requestedDate": "2026-06-20",
+    "requestType": "SHIFT_CHANGE",
+    "reason": "Personal appointment"
+  }
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Change request submitted","timestamp":"2026-06-16T10:19:42Z","data":{"requestId":3,"requestNumber":"SCR-2026-0003","status":"PENDING_MANAGER_APPROVAL","submittedAt":"2026-06-16T15:49:42.302405712Z","message":"Schedule change request submitted successfully"}}
+======================================================================
+

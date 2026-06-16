@@ -41,6 +41,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     private com.example.ems.performance.service.MyPerformanceService performanceService;
 
     @Autowired
+    private com.example.ems.schedule.service.MyScheduleService scheduleService;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
     @Override
@@ -88,7 +91,9 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.announcement.read",
                 // My Performance Permissions
                 "performance.self.goal.update", "performance.self.assessment.submit", 
-                "performance.self.feedback.read", "performance.self.history.read");
+                "performance.self.feedback.read", "performance.self.history.read",
+                "schedule.self.read", "schedule.self.change.create", "schedule.self.availability.update",
+                "schedule.self.notification.read", "schedule.self.timeline.read");
 
         Map<String, Permission> permissionMap = new HashMap<>();
         for (String permName : permissionNames) {
@@ -179,7 +184,9 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.schedule.read",
                 "employee.announcement.read",
                 "performance.self.goal.update", "performance.self.assessment.submit", 
-                "performance.self.feedback.read", "performance.self.history.read"));
+                "performance.self.feedback.read", "performance.self.history.read",
+                "schedule.self.read", "schedule.self.change.create", "schedule.self.availability.update",
+                "schedule.self.notification.read", "schedule.self.timeline.read"));
 
         Map<String, Role> roleMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : rolePermissionsMap.entrySet()) {
@@ -286,5 +293,8 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         // 6. Seed Performance Module Data for employee@company.com
         performanceService.seedPerformanceData("employee@company.com");
+
+        // 7. Seed Schedule Module Data for employee@company.com
+        scheduleService.seedScheduleData("employee@company.com");
     }
 }
