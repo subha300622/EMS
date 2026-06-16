@@ -153,7 +153,7 @@ public class AuthController {
                 .orElse(null);
 
         LoginResponse.UserData userData = new LoginResponse.UserData(
-                employeeDbId,
+                user.getId(),
                 user.getUserId(),
                 user.getFullName(),
                 user.getWorkEmail(),
