@@ -61,7 +61,12 @@ public class JwtService {
             String userId = claims.get("userId", String.class);
             if (sessionId != null && userId != null) {
                 if (sessionService != null) {
-                    return sessionService.isSessionActive(userId, sessionId);
+                    try {
+                        return sessionService.isSessionActive(userId, sessionId);
+                    } catch (Exception e) {
+                        // Redis is unreachable on hosted deployment; fallback to JWT validation
+                        return true;
+                    }
                 }
             }
             return true;
