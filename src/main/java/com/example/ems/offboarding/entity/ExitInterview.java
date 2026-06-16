@@ -15,11 +15,14 @@ public class ExitInterview {
     @JoinColumn(name = "offboarding_id", nullable = false)
     private Offboarding offboarding;
 
-    @Column(nullable = false)
     private LocalDate interviewDate;
 
-    @Column(nullable = false)
     private String interviewerName;
+
+    private String preferredTime;
+
+    @Column(columnDefinition = "TEXT")
+    private String comments;
 
     @Column(nullable = false)
     private String status = "SCHEDULED"; // SCHEDULED, COMPLETED
@@ -43,6 +46,12 @@ public class ExitInterview {
 
     public String getInterviewerName() { return interviewerName; }
     public void setInterviewerName(String interviewerName) { this.interviewerName = interviewerName; }
+
+    public String getPreferredTime() { return preferredTime; }
+    public void setPreferredTime(String preferredTime) { this.preferredTime = preferredTime; }
+
+    public String getComments() { return comments; }
+    public void setComments(String comments) { this.comments = comments; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

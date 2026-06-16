@@ -3,6 +3,7 @@ package com.example.ems.offboarding.entity;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "offboarding_settlements")
@@ -26,6 +27,10 @@ public class OffboardingSettlement {
     private String paymentStatus = "PENDING"; // PENDING, PAID
 
     private LocalDateTime processedAt;
+
+    private BigDecimal leaveEncashment = BigDecimal.ZERO;
+    private BigDecimal reimbursements = BigDecimal.ZERO;
+    private LocalDate expectedSettlementDate;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -53,4 +58,13 @@ public class OffboardingSettlement {
 
     public LocalDateTime getProcessedAt() { return processedAt; }
     public void setProcessedAt(LocalDateTime processedAt) { this.processedAt = processedAt; }
+
+    public BigDecimal getLeaveEncashment() { return leaveEncashment; }
+    public void setLeaveEncashment(BigDecimal leaveEncashment) { this.leaveEncashment = leaveEncashment; }
+
+    public BigDecimal getReimbursements() { return reimbursements; }
+    public void setReimbursements(BigDecimal reimbursements) { this.reimbursements = reimbursements; }
+
+    public LocalDate getExpectedSettlementDate() { return expectedSettlementDate; }
+    public void setExpectedSettlementDate(LocalDate expectedSettlementDate) { this.expectedSettlementDate = expectedSettlementDate; }
 }

@@ -25,6 +25,17 @@ public class Offboarding {
 
     private LocalDate exitDate;
 
+    private String reasonCategory;
+
+    @Column(columnDefinition = "TEXT")
+    private String comments;
+
+    private LocalDate resignationDate;
+
+    private LocalDate requestedLastWorkingDay;
+
+    private String currentStage;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -45,6 +56,21 @@ public class Offboarding {
 
     public LocalDate getExitDate() { return exitDate; }
     public void setExitDate(LocalDate exitDate) { this.exitDate = exitDate; }
+
+    public String getReasonCategory() { return reasonCategory; }
+    public void setReasonCategory(String reasonCategory) { this.reasonCategory = reasonCategory; }
+
+    public String getComments() { return comments; }
+    public void setComments(String comments) { this.comments = comments; }
+
+    public LocalDate getResignationDate() { return resignationDate; }
+    public void setResignationDate(LocalDate resignationDate) { this.resignationDate = resignationDate; }
+
+    public LocalDate getRequestedLastWorkingDay() { return requestedLastWorkingDay; }
+    public void setRequestedLastWorkingDay(LocalDate requestedLastWorkingDay) { this.requestedLastWorkingDay = requestedLastWorkingDay; }
+
+    public String getCurrentStage() { return currentStage; }
+    public void setCurrentStage(String currentStage) { this.currentStage = currentStage; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

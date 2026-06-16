@@ -28,6 +28,14 @@ public class OffboardingTask {
 
     private LocalDateTime completedAt;
 
+    private String assignedTo = "EMPLOYEE"; // EMPLOYEE, IT, HR, FINANCE, etc.
+
+    private Boolean actionRequired = false;
+
+    private String allowedActions; // Comma-separated allowed actions
+
+    private Long assetId;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -48,4 +56,16 @@ public class OffboardingTask {
 
     public LocalDateTime getCompletedAt() { return completedAt; }
     public void setCompletedAt(LocalDateTime completedAt) { this.completedAt = completedAt; }
+
+    public String getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(String assignedTo) { this.assignedTo = assignedTo; }
+
+    public Boolean getActionRequired() { return actionRequired; }
+    public void setActionRequired(Boolean actionRequired) { this.actionRequired = actionRequired; }
+
+    public String getAllowedActions() { return allowedActions; }
+    public void setAllowedActions(String allowedActions) { this.allowedActions = allowedActions; }
+
+    public Long getAssetId() { return assetId; }
+    public void setAssetId(Long assetId) { this.assetId = assetId; }
 }
