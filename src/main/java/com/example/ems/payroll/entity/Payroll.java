@@ -43,9 +43,24 @@ public class Payroll {
 
     private LocalDateTime processedAt;
 
-    public Payroll() {}
+    private BigDecimal hra = BigDecimal.ZERO;
+    private BigDecimal specialAllowance = BigDecimal.ZERO;
+    private BigDecimal performanceBonus = BigDecimal.ZERO;
+    private BigDecimal providentFund = BigDecimal.ZERO;
+    private BigDecimal professionalTax = BigDecimal.ZERO;
+    private BigDecimal incomeTax = BigDecimal.ZERO;
+    private String paymentMode = "BANK_TRANSFER";
+    private String transactionReference;
+    private Integer workingDays = 30;
+    private Integer paidDays = 30;
+    private String financialYear = "FY 2025-26";
 
-    public Payroll(Long id, Employee employee, Integer month, Integer year, BigDecimal basicSalary, BigDecimal allowances, BigDecimal deductions, BigDecimal netPay, String status, LocalDateTime generatedAt, LocalDateTime processedAt) {
+    public Payroll() {
+    }
+
+    public Payroll(Long id, Employee employee, Integer month, Integer year, BigDecimal basicSalary,
+            BigDecimal allowances, BigDecimal deductions, BigDecimal netPay, String status, LocalDateTime generatedAt,
+            LocalDateTime processedAt) {
         this.id = id;
         this.employee = employee;
         this.month = month;
@@ -145,5 +160,93 @@ public class Payroll {
 
     public void setProcessedAt(LocalDateTime processedAt) {
         this.processedAt = processedAt;
+    }
+
+    public BigDecimal getHra() {
+        return hra;
+    }
+
+    public void setHra(BigDecimal hra) {
+        this.hra = hra;
+    }
+
+    public BigDecimal getSpecialAllowance() {
+        return specialAllowance;
+    }
+
+    public void setSpecialAllowance(BigDecimal specialAllowance) {
+        this.specialAllowance = specialAllowance;
+    }
+
+    public BigDecimal getPerformanceBonus() {
+        return performanceBonus;
+    }
+
+    public void setPerformanceBonus(BigDecimal performanceBonus) {
+        this.performanceBonus = performanceBonus;
+    }
+
+    public BigDecimal getProvidentFund() {
+        return providentFund;
+    }
+
+    public void setProvidentFund(BigDecimal providentFund) {
+        this.providentFund = providentFund;
+    }
+
+    public BigDecimal getProfessionalTax() {
+        return professionalTax;
+    }
+
+    public void setProfessionalTax(BigDecimal professionalTax) {
+        this.professionalTax = professionalTax;
+    }
+
+    public BigDecimal getIncomeTax() {
+        return incomeTax;
+    }
+
+    public void setIncomeTax(BigDecimal incomeTax) {
+        this.incomeTax = incomeTax;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
+    }
+
+    public String getTransactionReference() {
+        return transactionReference;
+    }
+
+    public void setTransactionReference(String transactionReference) {
+        this.transactionReference = transactionReference;
+    }
+
+    public Integer getWorkingDays() {
+        return workingDays;
+    }
+
+    public void setWorkingDays(Integer workingDays) {
+        this.workingDays = workingDays;
+    }
+
+    public Integer getPaidDays() {
+        return paidDays;
+    }
+
+    public void setPaidDays(Integer paidDays) {
+        this.paidDays = paidDays;
+    }
+
+    public String getFinancialYear() {
+        return financialYear;
+    }
+
+    public void setFinancialYear(String financialYear) {
+        this.financialYear = financialYear;
     }
 }

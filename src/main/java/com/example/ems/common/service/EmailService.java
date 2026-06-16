@@ -94,7 +94,7 @@ public class EmailService {
 
     // ── Internal helper ──────────────────────────────────────────────────────
 
-    private void sendEmail(String toEmail, String subject, String html) {
+    public void sendEmail(String toEmail, String subject, String html) {
         Resend resend = new Resend(apiKey);
 
         CreateEmailOptions params = CreateEmailOptions.builder()
