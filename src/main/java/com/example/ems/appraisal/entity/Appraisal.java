@@ -44,6 +44,21 @@ public class Appraisal {
     @Column(nullable = false)
     private String status = "PENDING"; // PENDING, SELF_REVIEWED, MANAGER_REVIEWED, FINALIZED
 
+    @ElementCollection
+    @CollectionTable(name = "appraisal_achievements", joinColumns = @JoinColumn(name = "appraisal_id"))
+    @Column(name = "achievement")
+    private java.util.List<String> achievements = new java.util.ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "appraisal_strengths", joinColumns = @JoinColumn(name = "appraisal_id"))
+    @Column(name = "strength")
+    private java.util.List<String> strengths = new java.util.ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "appraisal_improvement_areas", joinColumns = @JoinColumn(name = "appraisal_id"))
+    @Column(name = "improvement_area")
+    private java.util.List<String> improvementAreas = new java.util.ArrayList<>();
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -160,5 +175,29 @@ public class Appraisal {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public java.util.List<String> getAchievements() {
+        return achievements;
+    }
+
+    public void setAchievements(java.util.List<String> achievements) {
+        this.achievements = achievements;
+    }
+
+    public java.util.List<String> getStrengths() {
+        return strengths;
+    }
+
+    public void setStrengths(java.util.List<String> strengths) {
+        this.strengths = strengths;
+    }
+
+    public java.util.List<String> getImprovementAreas() {
+        return improvementAreas;
+    }
+
+    public void setImprovementAreas(java.util.List<String> improvementAreas) {
+        this.improvementAreas = improvementAreas;
     }
 }

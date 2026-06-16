@@ -14,4 +14,5 @@ public interface IncrementRepository extends JpaRepository<Increment, Long> {
     List<Increment> findByEmployeeId(Long employeeId);
     List<Increment> findByStatus(String status);
     Page<Increment> findByStatus(String status, Pageable pageable);
+    List<Increment> findByEmployeeEmail(String email);
 }

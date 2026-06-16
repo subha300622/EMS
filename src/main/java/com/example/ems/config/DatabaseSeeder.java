@@ -38,6 +38,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     private EmployeeRepository employeeRepository;
 
     @Autowired
+    private com.example.ems.performance.service.MyPerformanceService performanceService;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
     @Override
@@ -82,7 +85,10 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.support-ticket.create", "employee.support-ticket.read", "employee.support-ticket.update",
                 "employee.goal.read", "employee.goal.update",
                 "employee.schedule.read",
-                "employee.announcement.read");
+                "employee.announcement.read",
+                // My Performance Permissions
+                "performance.self.goal.update", "performance.self.assessment.submit", 
+                "performance.self.feedback.read", "performance.self.history.read");
 
         Map<String, Permission> permissionMap = new HashMap<>();
         for (String permName : permissionNames) {
@@ -127,7 +133,9 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.support-ticket.create", "employee.support-ticket.read", "employee.support-ticket.update",
                 "employee.goal.read", "employee.goal.update",
                 "employee.schedule.read",
-                "employee.announcement.read"));
+                "employee.announcement.read",
+                "performance.self.goal.update", "performance.self.assessment.submit", 
+                "performance.self.feedback.read", "performance.self.history.read"));
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(
                 "user.manage",
@@ -169,7 +177,9 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.support-ticket.create", "employee.support-ticket.read", "employee.support-ticket.update",
                 "employee.goal.read", "employee.goal.update",
                 "employee.schedule.read",
-                "employee.announcement.read"));
+                "employee.announcement.read",
+                "performance.self.goal.update", "performance.self.assessment.submit", 
+                "performance.self.feedback.read", "performance.self.history.read"));
 
         Map<String, Role> roleMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : rolePermissionsMap.entrySet()) {
@@ -196,7 +206,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             roleMap.put(roleName, role);
         }
 
-        // 3. Seed Default Users dynamically based on roles (except super admin which uses emssuperadmin@gmail.com / Admin@123)
+        // 3. Seed Default Users
         for (Role role : roleMap.values()) {
             String email;
             String password;
@@ -237,7 +247,7 @@ public class DatabaseSeeder implements CommandLineRunner {
             }
         }
 
-        // 4. Migrate existing users with legacy role strings to database roles
+        // 4. Migrate existing users
         List<User> allUsers = userRepository.findAll();
         for (User user : allUsers) {
             if (user.getRole() == null && user.getRequestedRole() != null) {
@@ -246,18 +256,11 @@ public class DatabaseSeeder implements CommandLineRunner {
                 if (targetRole != null) {
                     user.setRole(targetRole);
                     userRepository.save(user);
-                    System.out.println("Migrated user " + user.getWorkEmail() + " to role " + targetRole.getName());
-                } else {
-                    // Try exact mapping fallback
-                    if (reqRole.equals("SUPERADMIN")) {
-                        user.setRole(roleMap.get("SUPER_ADMIN"));
-                        userRepository.save(user);
-                    }
                 }
             }
         }
 
-        // 5. Ensure all users have fully-populated Employee records (no null values)
+        // 5. Ensure all users have fully-populated Employee records
         for (User u : userRepository.findAll()) {
             Employee emp = employeeRepository.findByEmail(u.getWorkEmail())
                     .orElseGet(Employee::new);
@@ -280,5 +283,8 @@ public class DatabaseSeeder implements CommandLineRunner {
             
             employeeRepository.save(emp);
         }
+
+        // 6. Seed Performance Module Data for employee@company.com
+        performanceService.seedPerformanceData("employee@company.com");
     }
 }

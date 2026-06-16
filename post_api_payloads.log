@@ -3480,3 +3480,108 @@ Status:           200
 {"success":true,"message":"Expense claim submitted successfully","timestamp":"2026-06-16T09:12:49Z","data":{"expenseId":40,"expenseNumber":"EXP-2026-FCCC1290","status":"PENDING_MANAGER_APPROVAL","submittedAt":"2026-06-16T14:42:48.989201527","message":"Expense claim submitted successfully"}}
 ======================================================================
 
+======================================================================
+Timestamp:        2026-06-16T15:32:46.271239149
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-16T10:02:46Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiI1MmE0ZDVmZi1kMjM2LTQ2ZjYtODQ5ZS05ZGUzNDEzMzY5YTEiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTYwNDE2NiwiZXhwIjoxNzgxNjkwNTY2fQ.Tv2p0Ym3EIfAdqBm9tTXS0H9_8vfMMhXmgFo9WdbVwJ3GmgNtrXGLtpR_AMMTE1tsQ5zYNI5IvF0r6FwqekKdg","refreshToken":"4db28e82-f5b7-44b0-8b2a-7bc12f06998a","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["profile.update","employee.profile.update","employee.performance.read","performance.self.history.read","employee.document.delete","employee.asset.request","employee.goal.update","onboarding.self.submit","employee.leave.cancel","attendance.self.read","employee.onboarding.document.upload","expense.self.read","payslip.read","employee.payslip.read","employee.onboarding.update","employee.profile.read","goal.self.read","employee.expense.update","employee.notification.read","onboarding.document.read.self","employee.support-ticket.create","employee.onboarding.read","employee.support-ticket.update","leave.self.read","employee.dashboard.read","employee.schedule.read","employee.notification.update","employee.onboarding.read.self","employee.payslip.download","asset.self.read","profile.read","employee.attendance.create","employee.expense.create","employee.expense.read","employee.performance.self-review.submit","performance.self.goal.update","employee.asset.read","employee.goal.read","employee.training.read","employee.onboarding.document.read","employee.attendance.read","performance.self.assessment.submit","onboarding.self.update","leave.create","employee.support-ticket.read","performance.self.feedback.read","employee.announcement.read","document.self.read","performance.self.read","employee.document.upload","onboarding.self.read","employee.document.read","payslip.self.read","employee.leave.read","employee.onboarding.submit","employee.leave.create","employee.training.complete","onboarding.document.upload"],"status":"ACTIVE","lastLogin":"2026-06-16T10:02:46Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:32:57.472099233
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-16T10:02:57Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiJlN2Y0Mjc2ZC02NjA5LTRlOWUtODY0ZC05NDk5ODM5MTg3NTkiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTYwNDE3NywiZXhwIjoxNzgxNjkwNTc3fQ.aRcIRCtsGrcEAJ5B0-SlBtgFLpAS606b7QgRQ7w_KWlREAU2kdxyDBbf5kz_O-eyPiBjbsso119wsGGa76rVmw","refreshToken":"035c3d3e-5095-465c-94ef-37ecc70a4b08","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["employee.profile.read","employee.document.read","employee.goal.read","employee.onboarding.document.upload","onboarding.self.read","employee.training.complete","employee.attendance.create","employee.notification.read","employee.support-ticket.read","employee.document.delete","employee.onboarding.update","performance.self.read","profile.update","payslip.self.read","employee.payslip.read","asset.self.read","onboarding.document.upload","employee.performance.self-review.submit","employee.document.upload","leave.create","onboarding.document.read.self","employee.expense.create","employee.leave.create","employee.onboarding.read.self","attendance.self.read","employee.profile.update","employee.onboarding.submit","employee.support-ticket.update","employee.announcement.read","employee.expense.update","employee.schedule.read","employee.expense.read","employee.notification.update","employee.payslip.download","employee.asset.request","performance.self.goal.update","payslip.read","employee.goal.update","onboarding.self.submit","employee.leave.read","employee.training.read","performance.self.feedback.read","profile.read","onboarding.self.update","employee.support-ticket.create","employee.asset.read","employee.performance.read","leave.self.read","employee.leave.cancel","document.self.read","employee.onboarding.read","employee.onboarding.document.read","expense.self.read","performance.self.history.read","employee.attendance.read","performance.self.assessment.submit","employee.dashboard.read","goal.self.read"],"status":"ACTIVE","lastLogin":"2026-06-16T10:02:57Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:32:57.896521849
+URI:              /api/v1/my-performance/reviews/4/self-assessment
+User:             employee@company.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+{
+      "selfRating": 4,
+      "selfReview": "Consistently exceeded sprint velocity targets, took lead on documents self-service module.",
+      "achievements": [
+        "Completed documents module on time",
+        "Assisted team with unit test migration"
+      ],
+      "strengths": [
+        "Backend systems design",
+        "Thorough testing"
+      ],
+      "improvementAreas": [
+        "Public presentations"
+      ]
+    }
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Self-assessment submitted","timestamp":"2026-06-16T10:02:57Z","data":{"message":"Self-assessment submitted successfully","status":"SUBMITTED","submittedAt":"2026-06-16T15:32:57.875104029","summary":["Rating: 4","Achievements: 2"]}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:35:00.426465276
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-16T10:05:00Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiI0NjQwNGU3Mi03ODExLTQyYjAtYWI2NC05ZTY2ZTIyYzZhNjMiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTYwNDMwMCwiZXhwIjoxNzgxNjkwNzAwfQ.bDer-k43xy6Wl8gzQeUtKJQ2i7yMJCIj5L2TtMDRhcojgUWtnJtw_fSfTFuYDw2a4GzojcEUAeJkFU0DdiXrmg","refreshToken":"422f2739-6ef8-47f1-9c2a-d28509d5db5d","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["expense.self.read","onboarding.self.submit","employee.expense.update","employee.attendance.create","employee.announcement.read","goal.self.read","leave.create","employee.onboarding.document.read","employee.asset.request","employee.onboarding.read","employee.expense.create","performance.self.history.read","performance.self.read","employee.training.read","employee.document.read","employee.support-ticket.update","profile.update","employee.leave.create","onboarding.self.read","employee.dashboard.read","employee.document.delete","employee.profile.read","employee.attendance.read","onboarding.self.update","employee.performance.self-review.submit","payslip.read","employee.goal.read","employee.onboarding.update","profile.read","employee.expense.read","payslip.self.read","employee.leave.read","employee.leave.cancel","employee.notification.read","employee.asset.read","employee.onboarding.document.upload","employee.profile.update","asset.self.read","employee.support-ticket.create","onboarding.document.read.self","performance.self.goal.update","employee.onboarding.read.self","performance.self.feedback.read","employee.schedule.read","employee.support-ticket.read","leave.self.read","performance.self.assessment.submit","employee.notification.update","employee.goal.update","document.self.read","employee.payslip.read","employee.onboarding.submit","employee.training.complete","onboarding.document.upload","attendance.self.read","employee.document.upload","employee.performance.read","employee.payslip.download"],"status":"ACTIVE","lastLogin":"2026-06-16T10:05:00Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:35:00.846182621
+URI:              /api/v1/my-performance/reviews/4/self-assessment
+User:             employee@company.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+{
+      "selfRating": 4,
+      "selfReview": "Consistently exceeded sprint velocity targets, took lead on documents self-service module.",
+      "achievements": [
+        "Completed documents module on time",
+        "Assisted team with unit test migration"
+      ],
+      "strengths": [
+        "Backend systems design",
+        "Thorough testing"
+      ],
+      "improvementAreas": [
+        "Public presentations"
+      ]
+    }
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Self-assessment submitted","timestamp":"2026-06-16T10:05:00Z","data":{"message":"Self-assessment submitted successfully","status":"SUBMITTED","submittedAt":"2026-06-16T15:35:00.826393965","summary":["Rating: 4","Achievements: 2"]}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:36:01.651956986
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-16T10:06:01Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiJlMWNlYTg2Yy0yMGUyLTRkM2ItYTA4Yi1kYzZjZTFjOWUxNmQiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTYwNDM2MSwiZXhwIjoxNzgxNjkwNzYxfQ.Mgp_uGJ4IlVLQxt4sqTShQ12tX_Ypj0uEMUKUogpeuxm8IIkc9WIlL744RzphHE4tc-Echu6wEaAVmLObUuQog","refreshToken":"be63ef25-1961-4ce2-a0a4-34e2b67f1bf4","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["onboarding.document.read.self","employee.payslip.read","employee.onboarding.update","performance.self.feedback.read","onboarding.self.read","employee.onboarding.document.upload","employee.expense.read","onboarding.document.upload","employee.profile.read","employee.performance.read","employee.onboarding.document.read","employee.training.read","onboarding.self.submit","employee.performance.self-review.submit","employee.expense.update","employee.attendance.create","payslip.read","employee.leave.create","performance.self.assessment.submit","employee.goal.read","expense.self.read","employee.onboarding.read","employee.support-ticket.read","leave.create","document.self.read","employee.document.upload","leave.self.read","onboarding.self.update","employee.notification.read","performance.self.goal.update","employee.attendance.read","employee.profile.update","asset.self.read","employee.support-ticket.create","performance.self.history.read","employee.schedule.read","employee.announcement.read","employee.onboarding.read.self","employee.notification.update","employee.training.complete","employee.document.read","profile.update","employee.dashboard.read","attendance.self.read","profile.read","employee.goal.update","employee.asset.read","performance.self.read","employee.support-ticket.update","payslip.self.read","employee.expense.create","employee.payslip.download","employee.onboarding.submit","employee.leave.cancel","employee.asset.request","employee.leave.read","employee.document.delete","goal.self.read"],"status":"ACTIVE","lastLogin":"2026-06-16T10:06:01Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-16T15:37:08.050524755
+URI:              /api/v1/my-performance/reviews/4/self-assessment
+User:             employee@company.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"selfRating": 5, "selfReview": "Great performance this review cycle.", "achievements": ["Completed performance self-service portal API"], "strengths": ["Self-starter", "API Design"], "improvementAreas": ["Kubernetes deployment"]}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Self-assessment submitted","timestamp":"2026-06-16T10:07:08Z","data":{"message":"Self-assessment submitted successfully","status":"SUBMITTED","submittedAt":"2026-06-16T15:37:08.038888005","summary":["Rating: 5","Achievements: 1"]}}
+======================================================================
+
