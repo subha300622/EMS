@@ -1,8 +1,10 @@
 package com.example.ems.employee.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "employees", indexes = {
@@ -52,7 +54,23 @@ public class Employee {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "manager_id")
+    @JsonIgnoreProperties({"manager", "team"})
     private Employee manager;
+
+    private String workMode = "OFFICE";
+
+    private String profileImage;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "team_id")
+    @JsonIgnoreProperties("manager")
+    private MyTeam team;
+
+    private String availability = "AVAILABLE";
+
+    private String currentStatus = "WORKING";
+
+    private LocalDateTime lastActiveAt = LocalDateTime.now();
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -104,4 +122,22 @@ public class Employee {
 
     public String getEmergencyContact() { return emergencyContact; }
     public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
+
+    public String getWorkMode() { return workMode; }
+    public void setWorkMode(String workMode) { this.workMode = workMode; }
+
+    public String getProfileImage() { return profileImage; }
+    public void setProfileImage(String profileImage) { this.profileImage = profileImage; }
+
+    public MyTeam getTeam() { return team; }
+    public void setTeam(MyTeam team) { this.team = team; }
+
+    public String getAvailability() { return availability; }
+    public void setAvailability(String availability) { this.availability = availability; }
+
+    public String getCurrentStatus() { return currentStatus; }
+    public void setCurrentStatus(String currentStatus) { this.currentStatus = currentStatus; }
+
+    public LocalDateTime getLastActiveAt() { return lastActiveAt; }
+    public void setLastActiveAt(LocalDateTime lastActiveAt) { this.lastActiveAt = lastActiveAt; }
 }

@@ -71,45 +71,13 @@ public class EmployeeController {
         }
     }
 
-    @GetMapping("/employees")
-    public ResponseEntity<?> getAllEmployees(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    // Commented out to prevent conflict with EmployeeDirectoryController
+    // @GetMapping("/employees")
+    // public ResponseEntity<?> getAllEmployees(...)
 
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("Employees list retrieved successfully", employeeService.getAllEmployees()));
-    }
-
-    @GetMapping("/employees/{id}")
-    public ResponseEntity<?> getEmployeeById(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
-        }
-
-        return employeeService.getEmployeeById(id)
-                .<ResponseEntity<?>>map(emp -> ResponseEntity.ok(ApiResponse.success("Employee details retrieved successfully", emp)))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002")));
-    }
+    // Commented out to prevent conflict with EmployeeDirectoryController
+    // @GetMapping("/employees/{id}")
+    // public ResponseEntity<?> getEmployeeById(...)
 
     @PutMapping("/employees/{id}")
     public ResponseEntity<?> updateEmployee(
@@ -203,26 +171,9 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success("Employees for manager retrieved successfully", list));
     }
 
-    // ── 7. Search Employees ──────────────────────────────────────────────────
-    @GetMapping("/employees/search")
-    public ResponseEntity<?> searchEmployees(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(value = "query", required = false) String query) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
-        }
-
-        java.util.List<Employee> results = employeeService.searchEmployees(query);
-        return ResponseEntity.ok(ApiResponse.success("Search completed successfully", results));
-    }
+    // Commented out to prevent conflict with EmployeeDirectoryController
+    // @GetMapping("/employees/search")
+    // public ResponseEntity<?> searchEmployees(...)
 
 
     // ── 10. Get Salary Details ───────────────────────────────────────────────

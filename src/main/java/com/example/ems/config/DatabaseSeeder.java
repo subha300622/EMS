@@ -44,7 +44,13 @@ public class DatabaseSeeder implements CommandLineRunner {
     private com.example.ems.schedule.service.MyScheduleService scheduleService;
 
     @Autowired
+    private com.example.ems.employee.service.MyEmployeeDirectoryService directoryService;
+
+    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private com.example.ems.support.service.MySupportService supportService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -93,7 +99,11 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "performance.self.goal.update", "performance.self.assessment.submit", 
                 "performance.self.feedback.read", "performance.self.history.read",
                 "schedule.self.read", "schedule.self.change.create", "schedule.self.availability.update",
-                "schedule.self.notification.read", "schedule.self.timeline.read");
+                "schedule.self.notification.read", "schedule.self.timeline.read",
+                "employee.directory.read", "employee.message.create", "employee.contact.read",
+                "employee.team.hierarchy.read", "employee.directory.manage", "employee.report.read",
+                // Support Ticket Permissions
+                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close");
 
         Map<String, Permission> permissionMap = new HashMap<>();
         for (String permName : permissionNames) {
@@ -140,7 +150,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.schedule.read",
                 "employee.announcement.read",
                 "performance.self.goal.update", "performance.self.assessment.submit", 
-                "performance.self.feedback.read", "performance.self.history.read"));
+                "performance.self.feedback.read", "performance.self.history.read",
+                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close"));
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(
                 "user.manage",
@@ -155,7 +166,9 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         rolePermissionsMap.put("MANAGER", Arrays.asList(
                 "employee.team.read", "attendance.team.read", "leave.team.approve",
-                "task.assign", "performance.review"));
+                "task.assign", "performance.review",
+                "employee.directory.read", "employee.profile.read", "employee.message.create",
+                "employee.contact.read", "employee.team.hierarchy.read"));
 
         rolePermissionsMap.put("FINANCE", Arrays.asList(
                 "payroll.read", "payroll.manage", "expense.manage",
@@ -186,7 +199,10 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "performance.self.goal.update", "performance.self.assessment.submit", 
                 "performance.self.feedback.read", "performance.self.history.read",
                 "schedule.self.read", "schedule.self.change.create", "schedule.self.availability.update",
-                "schedule.self.notification.read", "schedule.self.timeline.read"));
+                "schedule.self.notification.read", "schedule.self.timeline.read",
+                "employee.directory.read", "employee.profile.read", "employee.message.create",
+                "employee.contact.read",
+                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close"));
 
         Map<String, Role> roleMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : rolePermissionsMap.entrySet()) {
@@ -296,5 +312,11 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         // 7. Seed Schedule Module Data for employee@company.com
         scheduleService.seedScheduleData("employee@company.com");
+
+        // 8. Seed Employee Directory Module Data for employee@company.com
+        directoryService.seedDirectoryData("employee@company.com");
+
+        // 9. Seed Support Ticket Module Data for employee@company.com
+        supportService.seedSupportData("employee@company.com");
     }
 }
