@@ -7,6 +7,7 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.schedule.dto.*;
 import com.example.ems.schedule.service.MyScheduleService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/my-schedule")
 @CrossOrigin("*")
+@Tag(name = "My Schedule")
 public class MyScheduleController {
 
     @Autowired

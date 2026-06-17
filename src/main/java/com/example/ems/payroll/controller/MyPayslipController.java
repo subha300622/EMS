@@ -9,6 +9,7 @@ import com.example.ems.payroll.dto.*;
 import com.example.ems.payroll.service.MyPayslipService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/my-payslips")
 @CrossOrigin("*")
+@Tag(name = "My Payslips")
 public class MyPayslipController {
 
     @Autowired

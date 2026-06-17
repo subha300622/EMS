@@ -9,17 +9,19 @@ import com.example.ems.finance.entity.FinanceOnboarding;
 import com.example.ems.finance.service.FinanceOnboardingService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/finance/onboarding")
+@RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Finance")
 public class FinanceOnboardingController {
 
     @Autowired

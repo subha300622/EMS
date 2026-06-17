@@ -6,61 +6,35 @@ import com.example.ems.auth.service.RoleService;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
-import com.example.ems.employee.entity.EmployeeDocument;
-import com.example.ems.employee.repository.EmployeeDocumentRepository;
-import com.example.ems.employee.entity.SupportTicket;
 import com.example.ems.employee.repository.SupportTicketRepository;
 import com.example.ems.employee.repository.AnnouncementRepository;
 import com.example.ems.attendance.service.AttendanceService;
-import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.leave.service.LeaveService;
-import com.example.ems.leave.entity.Leave;
-import com.example.ems.leave.entity.LeaveType;
-import com.example.ems.leave.repository.LeaveTypeRepository;
 import com.example.ems.leave.repository.LeaveRepository;
-import com.example.ems.leave.dto.LeaveRequest;
-import com.example.ems.payroll.service.PayslipService;
-import com.example.ems.payroll.entity.Payslip;
-import com.example.ems.expense.entity.Expense;
-import com.example.ems.expense.repository.ExpenseRepository;
-import com.example.ems.expense.entity.ExpenseCategory;
-import com.example.ems.expense.repository.ExpenseCategoryRepository;
 import com.example.ems.performance.entity.PerformanceReview;
 import com.example.ems.performance.repository.PerformanceReviewRepository;
-import com.example.ems.performance.entity.PerformanceGoal;
-import com.example.ems.performance.repository.PerformanceGoalRepository;
-import com.example.ems.training.service.TrainingService;
-import com.example.ems.training.repository.TrainingEnrollmentRepository;
-import com.example.ems.training.entity.TrainingEnrollment;
-import com.example.ems.training.dto.TrainingAssessmentRequest;
-import com.example.ems.common.service.NotificationService;
-import com.example.ems.common.entity.Notification;
 import com.example.ems.onboarding.service.OnboardingService;
 import com.example.ems.onboarding.entity.Onboarding;
 import com.example.ems.onboarding.entity.OnboardingAsset;
 import com.example.ems.onboarding.repository.OnboardingAssetRepository;
 import com.example.ems.onboarding.dto.OnboardingTaskResponse;
-import com.example.ems.onboarding.dto.OnboardingDocumentResponse;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "My Profile")
 public class EmployeeSelfServiceController {
 
     @Autowired
@@ -76,9 +50,6 @@ public class EmployeeSelfServiceController {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private EmployeeDocumentRepository employeeDocumentRepository;
-
-    @Autowired
     private SupportTicketRepository supportTicketRepository;
 
     @Autowired
@@ -91,34 +62,10 @@ public class EmployeeSelfServiceController {
     private LeaveService leaveService;
 
     @Autowired
-    private LeaveTypeRepository leaveTypeRepository;
-
-    @Autowired
     private LeaveRepository leaveRepository;
 
     @Autowired
-    private PayslipService payslipService;
-
-    @Autowired
-    private ExpenseRepository expenseRepository;
-
-    @Autowired
-    private ExpenseCategoryRepository expenseCategoryRepository;
-
-    @Autowired
     private PerformanceReviewRepository performanceReviewRepository;
-
-    @Autowired
-    private PerformanceGoalRepository performanceGoalRepository;
-
-    @Autowired
-    private TrainingService trainingService;
-
-    @Autowired
-    private TrainingEnrollmentRepository trainingEnrollmentRepository;
-
-    @Autowired
-    private NotificationService notificationService;
 
     @Autowired
     private OnboardingService onboardingService;
@@ -319,286 +266,14 @@ public class EmployeeSelfServiceController {
     }
 
     // ── 3. MY ONBOARDING ─────────────────────────────────────────────────────
-    @GetMapping("/employees/me/onboarding")
-    public ResponseEntity<?> getMyOnboardingDetails(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.read' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        List<OnboardingTaskResponse> taskResponses = onboardingService.getTasks(onboarding.getId());
-        int totalSteps = taskResponses.size();
-        int completedSteps = (int) taskResponses.stream()
-                .filter(t -> "COMPLETED".equalsIgnoreCase(t.getStatus()))
-                .count();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("employeeId", employee.getEmployeeId());
-        response.put("fullName", employee.getFullName());
-        response.put("department", employee.getDepartment() != null ? employee.getDepartment() : "Engineering");
-        response.put("joiningDate",
-                employee.getJoiningDate() != null ? employee.getJoiningDate().toString() : "2026-06-10");
-        response.put("onboardingStatus", onboarding.getStatus());
-        response.put("completedSteps", completedSteps);
-        response.put("totalSteps", totalSteps);
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PutMapping("/employees/me/onboarding")
-    public ResponseEntity<?> updateMyOnboardingProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> body) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.update' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-
-        Map<String, Object> fields = new HashMap<>();
-        if (body.containsKey("phoneNumber")) {
-            fields.put("phone", body.get("phoneNumber"));
-        }
-        if (body.containsKey("address")) {
-            fields.put("address", body.get("address"));
-        }
-        if (body.containsKey("emergencyContact")) {
-            fields.put("emergencyContact", body.get("emergencyContact"));
-        }
-
-        onboardingService.updateOnboardingProfile(onboarding.getId(), fields);
-        return ResponseEntity.ok(Map.of("message", "Onboarding profile updated successfully"));
-    }
-
-    @PostMapping(value = "/employees/me/onboarding/documents", consumes = "multipart/form-data")
-    public ResponseEntity<?> uploadMyOnboardingDocument(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam("documentType") String documentType,
-            @RequestParam("file") MultipartFile file) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.document.upload")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.document.upload' permission.",
-                            "AUTH_002"));
-        }
-
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Document file is empty", "VAL_001"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        String downloadUrl = "http://localhost:8080/api/documents/download/" + System.currentTimeMillis();
-
-        try {
-            onboardingService.addDocument(
-                    onboarding.getId(), documentType, file.getOriginalFilename(), file.getContentType(), downloadUrl);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "VAL_002"));
-        }
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
-                "message", "Document uploaded successfully",
-                "verificationStatus", "PENDING"));
-    }
-
-    @GetMapping("/employees/me/onboarding/documents")
-    public ResponseEntity<?> getMyOnboardingDocuments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.document.read.self")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.document.read.self' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        List<OnboardingDocumentResponse> docs = onboardingService.getDocuments(onboarding.getId());
-        List<Map<String, Object>> mappedDocs = docs.stream().map(d -> {
-            Map<String, Object> m = new HashMap<>();
-            m.put("documentType", d.getDocumentType() != null ? d.getDocumentType() : d.getFileName());
-            m.put("status", d.getVerificationStatus());
-            return m;
-        }).collect(Collectors.toList());
-
-        return ResponseEntity.ok(Map.of("documents", mappedDocs));
-    }
-
-    @PostMapping("/employees/me/onboarding/submit")
-    public ResponseEntity<?> submitMyOnboarding(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.submit")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.submit' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        onboardingService.submitOnboarding(onboarding.getId());
-
-        return ResponseEntity.ok(Map.of(
-                "message", "Onboarding submitted successfully",
-                "status", "UNDER_REVIEW"));
-    }
+    // Moved to OnboardingController under /api/v1/onboarding/my
 
     // ── 6. PAYSLIPS ──────────────────────────────────────────────────────────
-    @GetMapping("/employees/me/payslips")
-    public ResponseEntity<?> getMyPayslips(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "payslip.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payslip.self.read' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        List<Payslip> list = payslipService.getPayslipsByEmployeeId(employee.getId());
-        List<Map<String, Object>> mapped = list.stream().map(ps -> {
-            Map<String, Object> m = new HashMap<>();
-            m.put("id", ps.getId());
-            m.put("payslipNumber", ps.getPayslipNumber());
-            m.put("month", ps.getPayroll().getMonth());
-            m.put("year", ps.getPayroll().getYear());
-            m.put("basicSalary", ps.getPayroll().getBasicSalary());
-            m.put("allowances", ps.getPayroll().getAllowances());
-            m.put("deductions", ps.getPayroll().getDeductions());
-            m.put("netPay", ps.getPayroll().getNetPay());
-            m.put("status", ps.getPayroll().getStatus());
-            return m;
-        }).collect(Collectors.toList());
-
-        return ResponseEntity.ok(ApiResponse.success("My payslips retrieved successfully", mapped));
-    }
-
-    @GetMapping("/employees/me/payslips/{id}/download")
-    public ResponseEntity<?> downloadPayslip(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.payslip.download")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.payslip.download' permission.",
-                            "AUTH_002"));
-        }
-
-        Payslip ps = payslipService.getPayslipById(id).orElse(null);
-        if (ps == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Payslip not found", "PS_001"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null || !ps.getPayroll().getEmployee().getId().equals(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot download this payslip.", "AUTH_002"));
-        }
-
-        // Generate simulated CSV file content
-        StringBuilder csv = new StringBuilder();
-        csv.append("Payslip Number,").append(ps.getPayslipNumber()).append("\n");
-        csv.append("Employee Name,").append(ps.getPayroll().getEmployee().getFullName()).append("\n");
-        csv.append("Period,").append(ps.getPayroll().getMonth()).append("/").append(ps.getPayroll().getYear())
-                .append("\n");
-        csv.append("Basic Salary,").append(ps.getPayroll().getBasicSalary()).append("\n");
-        csv.append("Allowances,").append(ps.getPayroll().getAllowances()).append("\n");
-        csv.append("Deductions,").append(ps.getPayroll().getDeductions()).append("\n");
-        csv.append("Net Pay,").append(ps.getPayroll().getNetPay()).append("\n");
-
-        byte[] data = csv.toString().getBytes();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDispositionFormData("attachment", "payslip-" + id + ".csv");
-        headers.setContentLength(data.length);
-
-        return new ResponseEntity<>(data, headers, HttpStatus.OK);
-    }
+    // Redundant with MyPayslipController
 
     // ── 8. ASSET MANAGEMENT ──────────────────────────────────────────────────
     @GetMapping("/employees/me/assets")
+    @Tag(name = "My Assets")
     public ResponseEntity<?> getMyAssets(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
@@ -625,6 +300,7 @@ public class EmployeeSelfServiceController {
     }
 
     @PostMapping("/employees/me/assets/{id}/request")
+    @Tag(name = "My Assets")
     public ResponseEntity<?> requestAssetService(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
@@ -673,161 +349,11 @@ public class EmployeeSelfServiceController {
     }
 
     // ── 9. EXPENSE MANAGEMENT ────────────────────────────────────────────────
-    @PostMapping("/employees/me/expenses")
-    public ResponseEntity<?> submitExpense(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, Object> body) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.expense.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.expense.create' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        try {
-            String title = body.get("title").toString();
-            BigDecimal amount = new BigDecimal(body.get("amount").toString());
-            LocalDate expenseDate = LocalDate
-                    .parse(body.getOrDefault("expenseDate", LocalDate.now().toString()).toString());
-            String description = body.containsKey("description") ? body.get("description").toString() : "";
-
-            Long categoryId = null;
-            if (body.containsKey("categoryId")) {
-                categoryId = Long.valueOf(body.get("categoryId").toString());
-            }
-
-            ExpenseCategory category = null;
-            if (categoryId != null) {
-                category = expenseCategoryRepository.findById(categoryId).orElse(null);
-            }
-
-            if (category == null) {
-                String catName = body.containsKey("categoryName") ? body.get("categoryName").toString() : "General";
-                category = expenseCategoryRepository.findByName(catName)
-                        .orElseGet(() -> {
-                            ExpenseCategory c = new ExpenseCategory();
-                            c.setName(catName);
-                            c.setDescription("Auto-created category from self-service");
-                            return expenseCategoryRepository.save(c);
-                        });
-            }
-
-            Expense expense = new Expense();
-            expense.setEmployee(employee);
-            expense.setTitle(title);
-            expense.setAmount(amount);
-            expense.setExpenseDate(expenseDate);
-            expense.setDescription(description);
-            expense.setCategory(category);
-            expense.setStatus("PENDING");
-            expense.setCreatedAt(LocalDateTime.now());
-            expense.setUpdatedAt(LocalDateTime.now());
-
-            Expense saved = expenseRepository.save(expense);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Expense submitted successfully", saved));
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EXP_001"));
-        }
-    }
-
-    @GetMapping("/employees/me/expenses")
-    public ResponseEntity<?> getMyExpenses(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "expense.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'expense.self.read' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(expenseRepository.findByEmployeeId(employee.getId()));
-    }
-
-    @PutMapping("/employees/me/expenses/{id}")
-    public ResponseEntity<?> updateExpense(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id,
-            @RequestBody Map<String, Object> body) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.expense.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.expense.update' permission.",
-                            "AUTH_002"));
-        }
-
-        Expense expense = expenseRepository.findById(id).orElse(null);
-        if (expense == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Expense not found", "EXP_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null || !expense.getEmployee().getId().equals(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot modify this expense.", "AUTH_002"));
-        }
-
-        if (!"PENDING".equalsIgnoreCase(expense.getStatus())) {
-            return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("Cannot update expense with status: " + expense.getStatus(), "EXP_003"));
-        }
-
-        try {
-            if (body.containsKey("title"))
-                expense.setTitle(body.get("title").toString());
-            if (body.containsKey("amount"))
-                expense.setAmount(new BigDecimal(body.get("amount").toString()));
-            if (body.containsKey("expenseDate"))
-                expense.setExpenseDate(LocalDate.parse(body.get("expenseDate").toString()));
-            if (body.containsKey("description"))
-                expense.setDescription(body.get("description").toString());
-
-            if (body.containsKey("categoryId")) {
-                Long catId = Long.valueOf(body.get("categoryId").toString());
-                expenseCategoryRepository.findById(catId).ifPresent(expense::setCategory);
-            }
-
-            expense.setUpdatedAt(LocalDateTime.now());
-            Expense saved = expenseRepository.save(expense);
-            return ResponseEntity.ok(ApiResponse.success("Expense updated successfully", saved));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EXP_004"));
-        }
-    }
+    // Redundant with MyExpenseController
 
     // ── 10. PERFORMANCE REVIEW ───────────────────────────────────────────────
     @GetMapping("/employees/me/performance")
+    @Tag(name = "My Performance")
     public ResponseEntity<?> getMyReviews(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
@@ -853,6 +379,7 @@ public class EmployeeSelfServiceController {
     }
 
     @PostMapping("/employees/me/performance/{id}/self-review")
+    @Tag(name = "My Performance")
     public ResponseEntity<?> submitSelfReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
@@ -900,181 +427,14 @@ public class EmployeeSelfServiceController {
     }
 
     // ── 12. NOTIFICATIONS ────────────────────────────────────────────────────
-    @GetMapping("/employees/me/notifications")
-    public ResponseEntity<?> getMyNotifications(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.notification.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.notification.read' permission.",
-                            "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(notificationService.getNotificationsForUser(currentUser.getId()));
-    }
-
-    @PutMapping("/employees/me/notifications/{id}/read")
-    public ResponseEntity<?> markNotificationAsRead(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.notification.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.notification.update' permission.",
-                            "AUTH_002"));
-        }
-
-        Notification n = notificationService.getNotificationById(id).orElse(null);
-        if (n == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Notification not found", "NT_001"));
-        }
-
-        if (!n.getUser().getId().equals(currentUser.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot modify this notification.", "AUTH_002"));
-        }
-
-        try {
-            Notification updated = notificationService.markAsRead(id);
-            return ResponseEntity.ok(ApiResponse.success("Notification marked as read", updated));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "NT_002"));
-        }
-    }
+    // Moved to NotificationController under /api/v1/notifications/my
 
     // ── 13. SUPPORT & HELPDESK ───────────────────────────────────────────────
-    @PostMapping("/employees/me/support-tickets")
-    public ResponseEntity<?> createSupportTicket(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> body) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.support-ticket.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.create' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        String title = body.get("title");
-        String description = body.get("description");
-        String category = body.get("category");
-
-        if (title == null || title.isBlank() || description == null || description.isBlank()) {
-            return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("Title and description are required", "VAL_001"));
-        }
-
-        SupportTicket ticket = new SupportTicket();
-        ticket.setEmployeeId(employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getEmail());
-        ticket.setTitle(title);
-        ticket.setDescription(description);
-        ticket.setCategory(category != null ? category : "IT Support");
-        ticket.setStatus("OPEN");
-        ticket.setCreatedAt(LocalDateTime.now());
-        ticket.setUpdatedAt(LocalDateTime.now());
-
-        SupportTicket saved = supportTicketRepository.save(ticket);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Support ticket created successfully", saved));
-    }
-
-    @GetMapping("/employees/me/support-tickets")
-    public ResponseEntity<?> getMySupportTickets(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.support-ticket.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.read' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        String empId = employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getEmail();
-        return ResponseEntity.ok(supportTicketRepository.findByEmployeeId(empId));
-    }
-
-    @PutMapping("/employees/me/support-tickets/{id}")
-    public ResponseEntity<?> updateSupportTicket(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.support-ticket.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.update' permission.",
-                            "AUTH_002"));
-        }
-
-        SupportTicket ticket = supportTicketRepository.findById(id).orElse(null);
-        if (ticket == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Support ticket not found", "ST_001"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        String empId = employee != null
-                ? (employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getEmail())
-                : "";
-        if (employee == null || !ticket.getEmployeeId().equalsIgnoreCase(empId)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot modify this ticket.", "AUTH_002"));
-        }
-
-        if (body.containsKey("status")) {
-            ticket.setStatus(body.get("status").toUpperCase());
-        }
-        if (body.containsKey("description")) {
-            ticket.setDescription(body.get("description"));
-        }
-        ticket.setUpdatedAt(LocalDateTime.now());
-
-        SupportTicket saved = supportTicketRepository.save(ticket);
-        return ResponseEntity.ok(ApiResponse.success("Support ticket updated successfully", saved));
-    }
+    // Redundant with MySupportController
 
     // ── 15. SCHEDULE ─────────────────────────────────────────────────────────
     @GetMapping("/employees/me/schedule")
+    @Tag(name = "My Schedule")
     public ResponseEntity<?> getMyWorkSchedule(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
@@ -1100,23 +460,5 @@ public class EmployeeSelfServiceController {
         return ResponseEntity.ok(schedule);
     }
 
-    // ── 16. COMPANY ANNOUNCEMENTS ───────────────────────────────────────────
-    @GetMapping("/announcements")
-    public ResponseEntity<?> getCompanyAnnouncements(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.announcement.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.announcement.read' permission.",
-                            "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(announcementRepository.findByActiveTrueOrderByPublishedDateDesc());
-    }
 }

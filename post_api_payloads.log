@@ -4827,3 +4827,359 @@ Status:           400
 {"success":false,"message":"Validation failed: subject: Subject is required","errorCode":"VAL_001","timestamp":"2026-06-17T06:56:52Z"}
 ======================================================================
 
+======================================================================
+Timestamp:        2026-06-17T13:01:39.382702916
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"emssuperadmin@gmail.com","password":"Admin@123"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-17T07:31:39Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiU1VQRVJfQURNSU4iLCJzZXNzaW9uSWQiOiJkZGZmYTEzYS1lZDRiLTQzMTMtOTI1OC0zNjY2MzYxNjI3MDMiLCJ1c2VySWQiOiJFTVAwMDUiLCJzdWIiOiJlbXNzdXBlcmFkbWluQGdtYWlsLmNvbSIsImlhdCI6MTc4MTY4MTQ5OSwiZXhwIjoxNzgxNzY3ODk5fQ.FBAzUWG97vYFPqqW8uu3AjUYudAJzP2XUDmxjNEDbR14QbPeXN63TB-lh42fi04Q7iD38dnioEMlZgOoHlR1Zw","refreshToken":"0c06b34d-e4bd-4962-8d40-32ad1988aba6","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":5,"employeeId":"EMP005","name":"Super Admin","email":"emssuperadmin@gmail.com","role":"SUPER_ADMIN","permissions":["employee.profile.update","attendance.self.read","employee.expense.update","employee.announcement.read","employee.read","system.manage","leave.read","reports.manager","employee.document.read","settings.language.read","performance.self.history.read","goal.self.update","user.delete","support.self.read","expense.manage","payslip.self.read","employee.payslip.read","support.self.close","goal.submit","employee.document.delete","employee.goal.read","employee.notification.read","settings.data.export","employee.attendance.create","settings.privacy.update","goal.create","employee.notification.update","performance.self.goal.update","goal.read","employee.document.upload","employee.training.read","performance.self.read","employee.attendance.read","attendance.manage","performance.review","employee.onboarding.update","onboarding.document.upload","goal.reject","recruitment.manage","settings.security.update","payroll.manage","onboarding.document.read.self","reports.hr","leave.create","reports.finance","onboarding.self.submit","leave.self.read","leave.approve","user.manage","expense.self.read","employee.dashboard.read","settings.appearance.read","employee.delete","salary.manage","settings.self.read","reports.view","document.self.read","goal.update","settings.appearance.update","employee.support-ticket.read","settings.devices.read","employee.leave.create","payslip.read","employee.support-ticket.create","task.assign","employee.create","employee.performance.self-review.submit","settings.notifications.read","permission.manage","employee.leave.read","settings.language.update","employee.team.read","employee.asset.request","employee.goal.update","employee.payslip.download","onboarding.self.read","goal.analytics.read","performance.self.assessment.submit","employee.expense.read","employee.leave.cancel","goal.self.read","settings.support.read","settings.support.create","employee.onboarding.document.upload","employee.profile.read","leave.manage","support.self.create","employee.training.complete","goal.approve","attendance.team.read","settings.security.read","role.manage","leave.team.approve","settings.privacy.read","user.create","user.read","goal.delete","payroll.read","user.update","employee.schedule.read","performance.self.feedback.read","employee.onboarding.submit","employee.onboarding.read","employee.onboarding.document.read","attendance.read","asset.self.read","employee.support-ticket.update","employee.performance.read","employee.onboarding.read.self","employee.expense.create","employee.asset.read","support.self.comment.create","settings.notifications.update","onboarding.self.update","employee.update","settings.devices.remove"],"status":"ACTIVE","lastLogin":"2026-06-17T07:31:39Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:01:39.557353026
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@5"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-17T07:31:39Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:01:39.726074144
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-17T07:31:39Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiJjZTZiZjdmNi04MGE0LTQyYmYtYmVmNC0xZWYwMmViOGE3Y2IiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTY4MTQ5OSwiZXhwIjoxNzgxNzY3ODk5fQ.zKoRAhoRk8CgCALI58bfs-2QiyaVrV0UrAQrIvHze2Ajj6oTaG6sHuCtIGq5chC6uHROCjsvOIQQfygOP53GAw","refreshToken":"bcf4e553-a38d-4383-b28d-b868c3521a35","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["settings.security.update","employee.expense.update","leave.self.read","settings.devices.read","employee.onboarding.read.self","performance.self.history.read","performance.self.feedback.read","employee.performance.read","employee.dashboard.read","employee.leave.create","goal.submit","settings.notifications.read","employee.profile.update","expense.self.read","employee.document.delete","employee.asset.read","onboarding.self.read","onboarding.self.submit","employee.contact.read","settings.support.read","schedule.self.timeline.read","asset.self.read","support.self.read","performance.self.goal.update","employee.expense.create","employee.leave.read","leave.create","goal.self.read","employee.document.upload","settings.devices.remove","employee.onboarding.update","settings.privacy.read","employee.onboarding.document.upload","employee.expense.read","employee.goal.update","attendance.self.read","settings.language.read","employee.message.create","support.self.close","goal.self.update","employee.attendance.create","employee.performance.self-review.submit","employee.payslip.read","settings.security.read","employee.notification.read","schedule.self.notification.read","employee.support-ticket.update","employee.announcement.read","employee.support-ticket.create","settings.data.export","employee.training.complete","employee.leave.cancel","employee.attendance.read","employee.schedule.read","employee.onboarding.document.read","document.self.read","employee.notification.update","settings.language.update","settings.notifications.update","settings.privacy.update","performance.self.assessment.submit","settings.self.read","employee.onboarding.read","employee.payslip.download","support.self.comment.create","onboarding.self.update","employee.directory.read","support.self.create","schedule.self.availability.update","settings.support.create","employee.support-ticket.read","employee.asset.request","employee.profile.read","employee.goal.read","settings.appearance.update","settings.appearance.read","payslip.self.read","onboarding.document.upload","onboarding.document.read.self","employee.training.read","employee.document.read","schedule.self.read","schedule.self.change.create","employee.onboarding.submit","performance.self.read"],"status":"ACTIVE","lastLogin":"2026-06-17T07:31:39Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:01:40.021641314
+URI:              /api/v1/attendance/me/check-in
+User:             employee@company.com
+Status:           201
+------------------------------- REQUEST ------------------------------
+{"location":"Office"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Checked in successfully","timestamp":"2026-06-17T07:31:40Z","data":{"date":"2026-06-17","employee":{"address":"123 Corporate Way","annualSalary":85000.00,"availability":"AVAILABLE","currentStatus":"WORKING","department":"Engineering","designation":"Senior Frontend Developer","dob":"1990-01-01","email":"employee@company.com","emergencyContact":"9876543210","employeeId":"EMP010","employmentType":"FULL_TIME","fullName":"Arjun Mehta","gender":"MALE","id":28,"joiningDate":"2026-06-10","lastActiveAt":null,"location":"Headquarters","manager":{"address":"123 Corporate Way","annualSalary":85000.00,"availability":null,"currentStatus":null,"department":"Engineering","designation":"Frontend Manager","dob":"1990-01-01","email":"manager@company.com","emergencyContact":"9876543210","employeeId":"EMP011","employmentType":"FULL_TIME","fullName":"Rajan Kumar","gender":"MALE","id":29,"joiningDate":"2026-06-10","lastActiveAt":null,"location":"Headquarters","phone":"5550010","profileImage":null,"status":"ACTIVE","workMode":"OFFICE"},"phone":"5550009","profileImage":null,"status":"ACTIVE","team":{"id":2,"teamName":"Frontend Team","department":"Engineering"},"workMode":"OFFICE"},"id":32,"notes":null,"punchInTime":"13:01:40.001998426","punchOutTime":null,"status":"Late","workingHours":null}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:01:41.345756253
+URI:              /api/v1/payroll-runs
+User:             emssuperadmin@gmail.com
+Status:           201
+------------------------------- REQUEST ------------------------------
+{"month":6,"year":2026}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Payroll generated successfully. Records created: 0","timestamp":"2026-06-17T07:31:41Z","data":[]}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:01:41.383866537
+URI:              /api/v1/payroll-runs/1/process
+User:             emssuperadmin@gmail.com
+Status:           400
+------------------------------- REQUEST ------------------------------
+[Empty]
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Cannot transition status to PROCESSED. Current status is PAID, expected: APPROVED","errorCode":"PR_005","timestamp":"2026-06-17T07:31:41Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:01:41.457917904
+URI:              /api/v1/trainings/1/complete
+User:             employee@company.com
+Status:           403
+------------------------------- REQUEST ------------------------------
+[Empty]
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Access Denied: You are not enrolled in this training.","errorCode":"AUTH_002","timestamp":"2026-06-17T07:31:41Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:01:56.773827773
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"emssuperadmin@gmail.com","password":"Admin@123"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-17T07:31:56Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiU1VQRVJfQURNSU4iLCJzZXNzaW9uSWQiOiIwOWNjOWVlYS1hM2FjLTQyNGQtOTVmNC04MWQ1OGRkZjdlOGUiLCJ1c2VySWQiOiJFTVAwMDUiLCJzdWIiOiJlbXNzdXBlcmFkbWluQGdtYWlsLmNvbSIsImlhdCI6MTc4MTY4MTUxNiwiZXhwIjoxNzgxNzY3OTE2fQ.s7VNfFzw3g3aCh9hwrdHdC_QICxQQ6sRqzQaVOkVaP9r4RpN5eBoQiK_bHv4tVxhFEhYNOQawgKLKskCcUVhCQ","refreshToken":"448f0d80-2c97-4191-877b-d8885a15374b","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":5,"employeeId":"EMP005","name":"Super Admin","email":"emssuperadmin@gmail.com","role":"SUPER_ADMIN","permissions":["settings.privacy.read","employee.performance.self-review.submit","employee.support-ticket.update","role.manage","employee.goal.update","onboarding.self.read","goal.self.read","employee.dashboard.read","employee.notification.update","employee.announcement.read","reports.view","settings.notifications.read","employee.profile.read","system.manage","employee.leave.cancel","user.read","employee.leave.create","reports.manager","permission.manage","employee.support-ticket.read","goal.update","settings.support.read","employee.onboarding.update","employee.asset.request","performance.review","support.self.comment.create","performance.self.assessment.submit","settings.self.read","onboarding.document.read.self","employee.create","support.self.read","employee.delete","payroll.read","settings.devices.remove","employee.onboarding.submit","user.manage","employee.expense.read","employee.expense.create","leave.approve","employee.document.read","settings.security.update","performance.self.feedback.read","asset.self.read","reports.hr","employee.payslip.read","employee.training.read","employee.support-ticket.create","settings.appearance.read","employee.goal.read","employee.document.delete","settings.privacy.update","employee.onboarding.document.upload","employee.performance.read","expense.manage","employee.payslip.download","performance.self.read","leave.manage","performance.self.history.read","goal.delete","settings.appearance.update","onboarding.document.upload","onboarding.self.update","employee.attendance.read","goal.analytics.read","settings.notifications.update","attendance.self.read","salary.manage","employee.expense.update","employee.profile.update","leave.team.approve","goal.reject","employee.notification.read","leave.create","user.delete","employee.asset.read","expense.self.read","goal.create","employee.onboarding.read","reports.finance","employee.onboarding.read.self","payroll.manage","task.assign","settings.devices.read","employee.onboarding.document.read","payslip.self.read","goal.self.update","document.self.read","settings.language.update","onboarding.self.submit","leave.read","recruitment.manage","performance.self.goal.update","employee.schedule.read","employee.update","user.update","employee.document.upload","support.self.close","attendance.manage","employee.leave.read","settings.language.read","leave.self.read","user.create","attendance.read","goal.approve","attendance.team.read","employee.training.complete","settings.security.read","goal.read","payslip.read","employee.attendance.create","support.self.create","employee.team.read","settings.support.create","settings.data.export","employee.read","goal.submit"],"status":"ACTIVE","lastLogin":"2026-06-17T07:31:56Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:03:13.182028268
+URI:              /api/v1/payroll-runs
+User:             emssuperadmin@gmail.com
+Status:           201
+------------------------------- REQUEST ------------------------------
+{"month":6,"year":2026}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Payroll generated successfully. Records created: 0","timestamp":"2026-06-17T07:33:13Z","data":[]}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:04:19.599230293
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"emssuperadmin@gmail.com","password":"Admin@123"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-17T07:34:19Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiU1VQRVJfQURNSU4iLCJzZXNzaW9uSWQiOiIyNWIwZWFkMC0yZjcxLTQwMWYtODQ5Zi1iZWYwNWM5NDRjNzMiLCJ1c2VySWQiOiJFTVAwMDUiLCJzdWIiOiJlbXNzdXBlcmFkbWluQGdtYWlsLmNvbSIsImlhdCI6MTc4MTY4MTY1OSwiZXhwIjoxNzgxNzY4MDU5fQ.dCXJnPT4q3IHB7wU5--Ni3bjRQGChzUdP0npHBbYRx68nCJGBEZ8BouKSRlhORZZamMykuS2dSCFfT9BaYDkvA","refreshToken":"5a6c2a29-9682-4589-af3f-daa33dcd198a","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":5,"employeeId":"EMP005","name":"Super Admin","email":"emssuperadmin@gmail.com","role":"SUPER_ADMIN","permissions":["employee.read","employee.support-ticket.update","employee.schedule.read","user.read","settings.language.update","expense.self.read","role.manage","employee.onboarding.update","reports.hr","employee.expense.create","employee.training.read","settings.security.update","employee.notification.read","user.manage","system.manage","employee.onboarding.submit","performance.self.feedback.read","employee.team.read","settings.data.export","salary.manage","employee.announcement.read","employee.expense.update","payslip.read","employee.profile.read","onboarding.self.submit","performance.self.assessment.submit","support.self.close","employee.onboarding.read.self","employee.asset.request","employee.goal.read","employee.delete","settings.language.read","onboarding.document.read.self","task.assign","employee.profile.update","payroll.manage","settings.self.read","goal.self.update","document.self.read","settings.notifications.read","user.update","settings.support.create","employee.dashboard.read","leave.manage","permission.manage","goal.reject","goal.delete","employee.leave.cancel","goal.self.read","goal.analytics.read","employee.onboarding.document.read","onboarding.self.read","employee.document.read","employee.support-ticket.create","employee.training.complete","settings.devices.read","onboarding.document.upload","goal.submit","performance.self.history.read","employee.document.upload","employee.document.delete","onboarding.self.update","settings.privacy.read","employee.update","reports.view","employee.performance.self-review.submit","goal.update","employee.notification.update","leave.self.read","expense.manage","settings.devices.remove","employee.support-ticket.read","employee.create","goal.approve","employee.attendance.read","attendance.team.read","attendance.read","employee.attendance.create","settings.support.read","employee.onboarding.read","user.delete","employee.leave.read","employee.payslip.read","attendance.manage","attendance.self.read","employee.onboarding.document.upload","settings.appearance.update","payroll.read","payslip.self.read","recruitment.manage","support.self.create","support.self.comment.create","leave.create","reports.manager","support.self.read","reports.finance","employee.performance.read","employee.asset.read","settings.appearance.read","user.create","leave.read","performance.self.read","goal.read","employee.leave.create","employee.payslip.download","employee.goal.update","goal.create","settings.security.read","settings.privacy.update","performance.review","asset.self.read","leave.team.approve","employee.expense.read","leave.approve","performance.self.goal.update","settings.notifications.update"],"status":"ACTIVE","lastLogin":"2026-06-17T07:34:19Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:04:19.766025688
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-17T07:34:19Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiJkYzdkZjA0NC04N2FhLTQyZWMtOTQ0OS1mMGU1YzIyYmE5OTYiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTY4MTY1OSwiZXhwIjoxNzgxNzY4MDU5fQ.HnjBBdpMYr2divZ-iX8aq6OBzP4wS73W0ZeufDXrKYdMaiHi-BUd10dUyHMj_RaAeySKKu8WKrPo_MCA9FvztA","refreshToken":"c70c91ee-eafe-452e-99cd-3020e04bddcd","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["employee.onboarding.read","performance.self.feedback.read","leave.create","employee.onboarding.document.upload","employee.goal.update","goal.submit","employee.directory.read","settings.devices.read","employee.asset.request","employee.attendance.create","payslip.self.read","settings.self.read","settings.language.read","employee.expense.read","employee.performance.self-review.submit","performance.self.assessment.submit","goal.self.update","employee.leave.cancel","employee.contact.read","settings.appearance.read","employee.profile.read","employee.document.upload","performance.self.read","onboarding.document.read.self","employee.support-ticket.create","settings.language.update","employee.payslip.read","expense.self.read","employee.document.read","schedule.self.notification.read","settings.support.create","onboarding.self.update","schedule.self.change.create","employee.onboarding.update","employee.profile.update","asset.self.read","settings.data.export","settings.notifications.update","onboarding.document.upload","employee.attendance.read","employee.support-ticket.read","settings.appearance.update","document.self.read","support.self.create","employee.message.create","settings.notifications.read","employee.expense.create","schedule.self.read","support.self.close","leave.self.read","employee.notification.update","performance.self.history.read","onboarding.self.submit","settings.security.update","employee.dashboard.read","employee.leave.create","goal.self.read","employee.asset.read","schedule.self.timeline.read","performance.self.goal.update","employee.onboarding.document.read","employee.training.complete","settings.support.read","employee.goal.read","employee.expense.update","employee.training.read","employee.notification.read","settings.security.read","employee.payslip.download","schedule.self.availability.update","support.self.comment.create","employee.performance.read","employee.leave.read","employee.document.delete","employee.support-ticket.update","support.self.read","employee.onboarding.read.self","settings.privacy.update","employee.announcement.read","employee.schedule.read","onboarding.self.read","attendance.self.read","employee.onboarding.submit","settings.privacy.read","settings.devices.remove"],"status":"ACTIVE","lastLogin":"2026-06-17T07:34:19Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:04:19.911901265
+URI:              /api/v1/attendance/me/check-in
+User:             employee@company.com
+Status:           400
+------------------------------- REQUEST ------------------------------
+{"location":"Office"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Already checked in today","errorCode":"ATT_001","timestamp":"2026-06-17T07:34:19Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:04:24.081437259
+URI:              /api/v1/payroll-runs/6/process
+User:             emssuperadmin@gmail.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+[Empty]
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Payroll status updated to PROCESSED","timestamp":"2026-06-17T07:34:24Z","data":{"id":6,"employee":{"address":"123 Corporate Way","annualSalary":85000.00,"availability":null,"currentStatus":null,"department":"Admin","designation":"ADMIN","dob":"1990-01-01","email":"admin@company.com","emergencyContact":"9876543210","employeeId":"EMP013","employmentType":"FULL_TIME","fullName":"Admin User","gender":"MALE","id":17,"joiningDate":"2026-06-10","lastActiveAt":null,"location":"Headquarters","manager":null,"phone":"5550012","profileImage":null,"status":"ACTIVE","team":null,"workMode":null},"month":6,"year":2026,"basicSalary":7083.33,"allowances":0.00,"deductions":0.00,"netPay":7083.33,"status":"PROCESSED","generatedAt":"2026-06-13T15:05:23.508488","processedAt":null,"financialYear":null,"hra":null,"incomeTax":null,"paidDays":null,"paymentMode":null,"performanceBonus":null,"professionalTax":null,"providentFund":null,"specialAllowance":null,"transactionReference":null,"workingDays":null}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:04:32.558950297
+URI:              /api/v1/attendance/me/check-in
+User:             emssuperadmin@gmail.com
+Status:           201
+------------------------------- REQUEST ------------------------------
+{"location":"Office"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Checked in successfully","timestamp":"2026-06-17T07:34:32Z","data":{"date":"2026-06-17","employee":{"address":"Bangalore, Karnataka","annualSalary":85000.00,"availability":null,"currentStatus":null,"department":"Engineering","designation":"Software Engineer","dob":"1990-01-01","email":"emssuperadmin@gmail.com","emergencyContact":"9876543213","employeeId":"EMP005","employmentType":"FULL_TIME","fullName":"Super Admin","gender":"MALE","id":1,"joiningDate":"2026-06-10","lastActiveAt":null,"location":"Headquarters","manager":null,"phone":"9876543212","profileImage":null,"status":"ACTIVE","team":null,"workMode":null},"id":33,"notes":null,"punchInTime":"13:04:32.546088876","punchOutTime":null,"status":"Late","workingHours":null}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T13:10:37.946998759
+URI:              /api/v1/attendance/me/check-out
+User:             emssuperadmin@gmail.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+[Empty]
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Checked out successfully","timestamp":"2026-06-17T07:40:37Z","data":{"date":"2026-06-17","employee":{"address":"Bangalore, Karnataka","annualSalary":85000.00,"availability":null,"currentStatus":null,"department":"Engineering","designation":"Software Engineer","dob":"1990-01-01","email":"emssuperadmin@gmail.com","emergencyContact":"9876543213","employeeId":"EMP005","employmentType":"FULL_TIME","fullName":"Super Admin","gender":"MALE","id":1,"joiningDate":"2026-06-10","lastActiveAt":null,"location":"Headquarters","manager":null,"phone":"9876543212","profileImage":null,"status":"ACTIVE","team":null,"workMode":null},"id":33,"notes":null,"punchInTime":"13:04:33","punchOutTime":"13:10:37.94077858","status":"Late","workingHours":"0h 06m"}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:01:06.282702751
+URI:              /api/v1/trainings/sessions
+User:             emssuperadmin@gmail.com
+Status:           400
+------------------------------- REQUEST ------------------------------
+{
+    "courseId": 1,
+    "trainerName": "Expert Trainer",
+    "startDate": "2026-06-20T10:00:00Z",
+    "endDate": "2026-06-25T17:00:00Z",
+    "location": "Online",
+    "capacity": 50
+  }
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Validation failed: scheduleDate: Schedule date is required","errorCode":"VAL_001","timestamp":"2026-06-17T08:31:06Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:01:56.160483273
+URI:              /api/v1/trainings/sessions
+User:             emssuperadmin@gmail.com
+Status:           201
+------------------------------- REQUEST ------------------------------
+{
+    "courseId": 1,
+    "trainerName": "Expert Trainer",
+    "scheduleDate": "2026-06-20",
+    "startTime": "10:00",
+    "endTime": "17:00",
+    "location": "Online",
+    "capacity": 50
+  }
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Training session scheduled successfully","timestamp":"2026-06-17T08:31:56Z","data":{"sessionId":8,"courseId":1,"courseTitle":"Spring Boot Basics","trainerName":"Expert Trainer","scheduleDate":"2026-06-20","capacity":50,"enrolledCount":0}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:03:04.301959623
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"emssuperadmin@gmail.com","password":"Admin@123"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-17T08:33:04Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiU1VQRVJfQURNSU4iLCJzZXNzaW9uSWQiOiJjY2RmNWI3Ni1jMGU2LTQ4MTYtYjFiYy0wOTk1NTdiNTI0MGUiLCJ1c2VySWQiOiJFTVAwMDUiLCJzdWIiOiJlbXNzdXBlcmFkbWluQGdtYWlsLmNvbSIsImlhdCI6MTc4MTY4NTE4NCwiZXhwIjoxNzgxNzcxNTg0fQ.aVYpIS9eOtWC3IxJOl2IVShQDv3GAY20jYlMPuVt2x546XRgI1p3QOQA-nppj1fAsjaWJ4M-WavfeKKNPVZCKA","refreshToken":"157ef471-ae5d-4d30-99ac-dac7805a5f7d","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":5,"employeeId":"EMP005","name":"Super Admin","email":"emssuperadmin@gmail.com","role":"SUPER_ADMIN","permissions":["employee.performance.self-review.submit","employee.goal.update","user.create","employee.notification.read","attendance.self.read","payroll.manage","settings.notifications.read","employee.attendance.create","employee.asset.read","employee.profile.update","settings.notifications.update","leave.create","payslip.read","performance.self.feedback.read","user.manage","onboarding.document.read.self","performance.self.history.read","performance.self.assessment.submit","goal.create","user.update","support.self.close","user.delete","employee.onboarding.document.upload","employee.performance.read","settings.support.read","attendance.team.read","performance.self.goal.update","employee.leave.cancel","settings.language.update","onboarding.self.read","settings.support.create","role.manage","employee.leave.read","settings.privacy.read","employee.onboarding.document.read","reports.hr","goal.self.read","settings.devices.read","attendance.read","settings.self.read","employee.expense.read","reports.manager","employee.document.read","employee.team.read","employee.dashboard.read","employee.profile.read","employee.asset.request","support.self.create","payslip.self.read","employee.expense.update","onboarding.document.upload","employee.notification.update","employee.schedule.read","goal.submit","expense.self.read","expense.manage","employee.create","recruitment.manage","employee.delete","employee.announcement.read","user.read","employee.payslip.read","employee.onboarding.update","settings.security.update","permission.manage","onboarding.self.submit","employee.onboarding.submit","employee.update","employee.training.read","goal.approve","employee.document.upload","employee.training.complete","settings.language.read","employee.support-ticket.update","settings.devices.remove","reports.view","goal.self.update","document.self.read","goal.reject","employee.goal.read","asset.self.read","settings.data.export","employee.payslip.download","employee.leave.create","employee.support-ticket.read","employee.attendance.read","goal.analytics.read","settings.appearance.update","payroll.read","performance.review","settings.security.read","employee.read","leave.manage","reports.finance","settings.privacy.update","attendance.manage","goal.delete","support.self.comment.create","leave.team.approve","leave.self.read","leave.approve","employee.onboarding.read.self","support.self.read","leave.read","salary.manage","goal.update","employee.onboarding.read","employee.support-ticket.create","performance.self.read","onboarding.self.update","employee.expense.create","task.assign","settings.appearance.read","goal.read","system.manage","employee.document.delete"],"status":"ACTIVE","lastLogin":"2026-06-17T08:33:04Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:03:04.473177803
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@2"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-17T08:33:04Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiRU1QTE9ZRUUiLCJzZXNzaW9uSWQiOiJkMDVlMGZlZS1jY2MzLTQ2OWEtOTdkNC00NWZhZWFiYzg3NWIiLCJ1c2VySWQiOiJFTVAwMTAiLCJzdWIiOiJlbXBsb3llZUBjb21wYW55LmNvbSIsImlhdCI6MTc4MTY4NTE4NCwiZXhwIjoxNzgxNzcxNTg0fQ.KGo8HhPFVkVyTpvtTb-H3rnQjUEgtVR32I5ftOSQcvrL8z6cTvJXPcxQxH9WuvKbkzYDhiZRcvrQCz9WVVLC6Q","refreshToken":"f8a13567-e57a-4893-b837-e1d450822b76","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":10,"employeeId":"EMP010","name":"Employee User","email":"employee@company.com","role":"EMPLOYEE","permissions":["schedule.self.timeline.read","employee.attendance.read","employee.expense.create","support.self.create","employee.leave.create","employee.profile.read","settings.support.read","document.self.read","onboarding.document.upload","settings.language.read","settings.security.update","settings.self.read","settings.devices.remove","expense.self.read","employee.goal.update","support.self.comment.create","settings.notifications.read","employee.document.delete","employee.attendance.create","employee.performance.read","employee.payslip.download","settings.data.export","settings.privacy.update","employee.payslip.read","payslip.self.read","performance.self.goal.update","employee.profile.update","goal.self.update","employee.support-ticket.update","employee.asset.request","schedule.self.notification.read","employee.goal.read","schedule.self.read","onboarding.self.update","support.self.close","employee.performance.self-review.submit","employee.onboarding.submit","employee.support-ticket.create","employee.training.read","employee.support-ticket.read","employee.announcement.read","performance.self.read","employee.onboarding.read.self","goal.submit","employee.expense.update","employee.message.create","performance.self.assessment.submit","employee.notification.read","employee.leave.read","settings.appearance.read","employee.onboarding.document.read","employee.schedule.read","leave.self.read","performance.self.history.read","settings.appearance.update","employee.training.complete","employee.document.upload","schedule.self.availability.update","employee.notification.update","settings.support.create","onboarding.self.submit","employee.dashboard.read","employee.onboarding.update","employee.onboarding.document.upload","onboarding.document.read.self","settings.notifications.update","employee.document.read","employee.asset.read","asset.self.read","employee.expense.read","performance.self.feedback.read","goal.self.read","settings.privacy.read","settings.language.update","employee.onboarding.read","employee.contact.read","employee.directory.read","attendance.self.read","support.self.read","schedule.self.change.create","settings.security.read","employee.leave.cancel","settings.devices.read","leave.create","onboarding.self.read"],"status":"ACTIVE","lastLogin":"2026-06-17T08:33:04Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:03:04.604304785
+URI:              /api/v1/attendance/me/check-in
+User:             employee@company.com
+Status:           400
+------------------------------- REQUEST ------------------------------
+{"location":"Office"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Already checked in today","errorCode":"ATT_001","timestamp":"2026-06-17T08:33:04Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:03:08.970392206
+URI:              /api/v1/payroll-runs/7/process
+User:             emssuperadmin@gmail.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+[Empty]
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Payroll status updated to PROCESSED","timestamp":"2026-06-17T08:33:08Z","data":{"id":7,"employee":{"address":"123 Corporate Way","annualSalary":85000.00,"availability":null,"currentStatus":null,"department":"QA","designation":"EMPLOYEE","dob":"1990-01-01","email":"regtest@company.com","emergencyContact":"9876543210","employeeId":"EMP007","employmentType":"FULL_TIME","fullName":"Register Test User","gender":"MALE","id":18,"joiningDate":"2026-06-10","lastActiveAt":null,"location":"Headquarters","manager":null,"phone":"0987654321","profileImage":null,"status":"ACTIVE","team":null,"workMode":null},"month":6,"year":2026,"basicSalary":7083.33,"allowances":0.00,"deductions":0.00,"netPay":7083.33,"status":"PROCESSED","generatedAt":"2026-06-13T15:05:23.513943","processedAt":null,"financialYear":null,"hra":null,"incomeTax":null,"paidDays":null,"paymentMode":null,"performanceBonus":null,"professionalTax":null,"providentFund":null,"specialAllowance":null,"transactionReference":null,"workingDays":null}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:05:07.975605074
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           200
+------------------------------- REQUEST ------------------------------
+{"email":"emssuperadmin@gmail.com","password":"Admin@123"}
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Login successful","timestamp":"2026-06-17T08:35:07Z","data":{"tokens":{"accessToken":"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlIjoiU1VQRVJfQURNSU4iLCJzZXNzaW9uSWQiOiJmZWQwYTVlNS0xOWQ5LTQ4ODMtODU1YS02N2U2OGNlYmY1Y2UiLCJ1c2VySWQiOiJFTVAwMDUiLCJzdWIiOiJlbXNzdXBlcmFkbWluQGdtYWlsLmNvbSIsImlhdCI6MTc4MTY4NTMwNywiZXhwIjoxNzgxNzcxNzA3fQ.pYSZ0GhjLhHxQ90rfI7PqQlUlkOCvFyQngRxq4kkjL0tD3KWhOEtFq6vlBZ-RF-IxeUfcors2dATndl44ShDgQ","refreshToken":"7e761272-a6d6-4dca-86c2-96e12d06f25b","tokenType":"Bearer","accessTokenExpiresIn":900,"refreshTokenExpiresIn":604800},"user":{"id":5,"employeeId":"EMP005","name":"Super Admin","email":"emssuperadmin@gmail.com","role":"SUPER_ADMIN","permissions":["employee.onboarding.read","goal.reject","attendance.read","goal.analytics.read","salary.manage","reports.manager","employee.leave.read","settings.devices.remove","employee.team.read","employee.document.read","recruitment.manage","employee.performance.self-review.submit","employee.schedule.read","settings.appearance.read","employee.performance.read","reports.finance","settings.notifications.update","goal.self.update","payroll.manage","support.self.close","settings.devices.read","employee.profile.read","employee.notification.update","leave.self.read","employee.support-ticket.read","goal.read","leave.create","employee.leave.cancel","employee.expense.update","employee.payslip.download","reports.view","employee.onboarding.document.upload","settings.privacy.update","onboarding.document.upload","employee.support-ticket.create","performance.self.read","support.self.read","onboarding.self.submit","employee.asset.request","settings.security.update","support.self.comment.create","employee.attendance.read","attendance.team.read","employee.document.upload","employee.goal.read","employee.payslip.read","performance.self.goal.update","settings.security.read","user.manage","leave.approve","goal.self.read","employee.document.delete","settings.language.read","performance.self.assessment.submit","leave.read","attendance.self.read","employee.expense.read","performance.review","employee.onboarding.read.self","employee.asset.read","task.assign","settings.data.export","permission.manage","document.self.read","leave.team.approve","employee.training.read","employee.dashboard.read","settings.privacy.read","employee.notification.read","goal.submit","user.update","expense.self.read","employee.onboarding.update","settings.notifications.read","payslip.read","employee.read","employee.onboarding.submit","employee.attendance.create","payslip.self.read","reports.hr","settings.self.read","asset.self.read","settings.appearance.update","system.manage","employee.leave.create","goal.delete","settings.support.create","leave.manage","user.create","user.delete","onboarding.document.read.self","employee.onboarding.document.read","support.self.create","onboarding.self.update","employee.expense.create","settings.support.read","performance.self.feedback.read","attendance.manage","role.manage","employee.profile.update","employee.goal.update","goal.update","employee.support-ticket.update","onboarding.self.read","settings.language.update","expense.manage","employee.create","user.read","payroll.read","employee.training.complete","employee.announcement.read","goal.create","employee.delete","employee.update","performance.self.history.read","goal.approve"],"status":"ACTIVE","lastLogin":"2026-06-17T08:35:07Z"}}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:05:08.143000514
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email":"employee@company.com","password":"employee@5"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-17T08:35:08Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:05:08.266237072
+URI:              /api/v1/attendance/me/check-out
+User:             emssuperadmin@gmail.com
+Status:           400
+------------------------------- REQUEST ------------------------------
+[Empty]
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Already checked out today","errorCode":"ATT_002","timestamp":"2026-06-17T08:35:08Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:05:08.297576062
+URI:              /api/v1/attendance/me/check-in
+User:             emssuperadmin@gmail.com
+Status:           400
+------------------------------- REQUEST ------------------------------
+{"location":"Office"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Already checked in today","errorCode":"ATT_001","timestamp":"2026-06-17T08:35:08Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:05:12.290541145
+URI:              /api/v1/payroll-runs/8/process
+User:             emssuperadmin@gmail.com
+Status:           200
+------------------------------- REQUEST ------------------------------
+[Empty]
+------------------------------ RESPONSE ------------------------------
+{"success":true,"message":"Payroll status updated to PROCESSED","timestamp":"2026-06-17T08:35:12Z","data":{"id":8,"employee":{"address":"123 Corporate Way","annualSalary":30000.00,"availability":null,"currentStatus":null,"department":"IT","designation":"admin","dob":"1990-01-01","email":"david@company.com","emergencyContact":"9876543210","employeeId":"EMP006","employmentType":"FULL_TIME","fullName":"David","gender":"MALE","id":2,"joiningDate":"2025-06-10","lastActiveAt":null,"location":"Headquarters","manager":{"address":"Bangalore, Karnataka","annualSalary":85000.00,"availability":null,"currentStatus":null,"department":"Engineering","designation":"Software Engineer","dob":"1990-01-01","email":"emssuperadmin@gmail.com","emergencyContact":"9876543213","employeeId":"EMP005","employmentType":"FULL_TIME","fullName":"Super Admin","gender":"MALE","id":1,"joiningDate":"2026-06-10","lastActiveAt":null,"location":"Headquarters","phone":"9876543212","profileImage":null,"status":"ACTIVE","workMode":null},"phone":"1234567890","profileImage":null,"status":"ACTIVE","team":null,"workMode":null},"month":6,"year":2026,"basicSalary":2500.00,"allowances":0.00,"deductions":0.00,"netPay":2500.00,"status":"PROCESSED","generatedAt":"2026-06-13T15:05:23.519016","processedAt":null,"financialYear":null,"hra":null,"incomeTax":null,"paidDays":null,"paymentMode":null,"performanceBonus":null,"professionalTax":null,"providentFund":null,"specialAllowance":null,"transactionReference":null,"workingDays":null}}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:05:12.551753949
+URI:              /api/v1/trainings/enrollments
+User:             emssuperadmin@gmail.com
+Status:           400
+------------------------------- REQUEST ------------------------------
+{"sessionId":1}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Validation failed: employeeId: Employee ID is required","errorCode":"VAL_001","timestamp":"2026-06-17T08:35:12Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T14:05:33.640181031
+URI:              /api/v1/trainings/enrollments
+User:             emssuperadmin@gmail.com
+Status:           400
+------------------------------- REQUEST ------------------------------
+{"sessionId":8}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Validation failed: employeeId: Employee ID is required","errorCode":"VAL_001","timestamp":"2026-06-17T08:35:33Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T15:37:17.858816390
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email":"admin@example.com","password":"admin123"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-17T10:07:17Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T15:37:31.026486287
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email":"admin@example.com","password":"admin123"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-17T10:07:31Z"}
+======================================================================
+
+======================================================================
+Timestamp:        2026-06-17T15:37:42.237476242
+URI:              /api/v1/auth/login
+User:             Anonymous
+Status:           401
+------------------------------- REQUEST ------------------------------
+{"email":"superadmin@ems.com","password":"SuperAdmin@123"}
+------------------------------ RESPONSE ------------------------------
+{"success":false,"message":"Invalid credentials","errorCode":"AUTH_001","timestamp":"2026-06-17T10:07:42Z"}
+======================================================================
+

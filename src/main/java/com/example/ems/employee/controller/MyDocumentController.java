@@ -9,7 +9,7 @@ import com.example.ems.employee.dto.*;
 import com.example.ems.employee.entity.MyEmployeeDocument;
 import com.example.ems.employee.service.MyDocumentService;
 import com.example.ems.security.service.JwtService;
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,6 +23,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/v1/my-documents")
 @CrossOrigin("*")
+@Tag(name = "My Documents")
 public class MyDocumentController {
 
     @Autowired

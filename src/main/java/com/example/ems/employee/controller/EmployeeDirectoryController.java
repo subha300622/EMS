@@ -8,6 +8,7 @@ import com.example.ems.employee.dto.*;
 import com.example.ems.employee.service.MyEmployeeDirectoryService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/directory")
 @CrossOrigin("*")
+@Tag(name = "Directory")
 public class EmployeeDirectoryController {
 
     @Autowired

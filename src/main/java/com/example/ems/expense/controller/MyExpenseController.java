@@ -13,6 +13,7 @@ import com.example.ems.expense.repository.ExpenseRepository;
 import com.example.ems.expense.repository.MyExpenseReceiptRepository;
 import com.example.ems.expense.service.MyExpenseService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -31,6 +32,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/my-expenses")
 @CrossOrigin("*")
+@Tag(name = "My Expenses")
 public class MyExpenseController {
 
     @Autowired

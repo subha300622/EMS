@@ -7,9 +7,8 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.performance.dto.*;
 import com.example.ems.performance.service.MyPerformanceService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/my-performance")
 @CrossOrigin("*")
+@Tag(name = "My Performance")
 public class MyPerformanceController {
 
     @Autowired

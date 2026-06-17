@@ -16,6 +16,7 @@ import com.example.ems.payroll.entity.Payroll;
 import com.example.ems.payroll.repository.PayrollRepository;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -25,8 +26,9 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/reports")
 @CrossOrigin("*")
+@Tag(name = "Reports")
 public class DashboardReportController {
 
     @Autowired

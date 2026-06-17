@@ -17,6 +17,7 @@ import com.example.ems.offboarding.dto.SettlementRequest;
 import com.example.ems.offboarding.service.OffboardingService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -29,6 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Offboarding")
 public class OffboardingController {
 
     @Autowired

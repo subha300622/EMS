@@ -11,6 +11,7 @@ import com.example.ems.settings.dto.SupportTicketRequest;
 import com.example.ems.settings.service.MySettingsService;
 import com.example.ems.support.dto.CreateTicketResponse;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -28,6 +29,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/my-settings")
 @CrossOrigin("*")
+@Tag(name = "Settings")
 public class MySettingsController {
 
     @Autowired

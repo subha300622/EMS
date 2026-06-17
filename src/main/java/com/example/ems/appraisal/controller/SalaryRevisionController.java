@@ -14,6 +14,7 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -29,6 +30,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Salary Revisions")
 public class SalaryRevisionController {
 
     @Autowired

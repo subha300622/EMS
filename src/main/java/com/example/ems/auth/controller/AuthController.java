@@ -29,6 +29,7 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/auth")
 @CrossOrigin("*")
+@Tag(name = "Authentication")
 public class AuthController {
 
     @Autowired
@@ -123,26 +125,24 @@ public class AuthController {
 
         User user = optUser.get();
         String roleName = user.getRole() != null ? user.getRole().getName() : user.getRequestedRole();
-        
+
         // Create session in Redis first so we can bind sessionId to the access token
         SessionService.SessionMetadata session = sessionService.createSession(
                 user.getUserId(),
                 user.getWorkEmail(),
                 httpRequest.getHeader("User-Agent"),
-                getClientIp(httpRequest)
-        );
+                getClientIp(httpRequest));
 
         // Generate Tokens linked to this session
-        String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName, session.getSessionId());
-
+        String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName,
+                session.getSessionId());
 
         LoginResponse.TokenData tokenData = new LoginResponse.TokenData(
                 accessToken,
                 session.getRefreshToken(),
                 "Bearer",
                 900,
-                604800
-        );
+                604800);
 
         List<String> permissions = roleService.getEffectivePermissions(user).stream()
                 .map(Permission::getName)
@@ -156,11 +156,11 @@ public class AuthController {
                 roleName,
                 permissions,
                 "ACTIVE",
-                Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString()
-        );
+                Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString());
 
         LoginResponse.LoginData loginData = new LoginResponse.LoginData(tokenData, userData);
-        LoginResponse responseBody = new LoginResponse(true, "Login successful", Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(), loginData);
+        LoginResponse responseBody = new LoginResponse(true, "Login successful",
+                Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(), loginData);
 
         return ResponseEntity.ok(responseBody);
     }
@@ -189,14 +189,14 @@ public class AuthController {
 
         User user = optUser.get();
         String roleName = user.getRole() != null ? user.getRole().getName() : user.getRequestedRole();
-        
-        String newAccessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName, session.getSessionId());
-        
+
+        String newAccessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName,
+                session.getSessionId());
+
         return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", Map.of(
                 "accessToken", newAccessToken,
                 "refreshToken", session.getRefreshToken(),
-                "expiresIn", 900
-        )));
+                "expiresIn", 900)));
     }
 
     // ── 4. FORGOT PASSWORD ───────────────────────────────────────────────────
@@ -222,8 +222,7 @@ public class AuthController {
         }
         return ResponseEntity.ok(ApiResponse.success("OTP verified successfully", Map.of(
                 "resetToken", result.get("resetToken"),
-                "expiresIn", 600
-        )));
+                "expiresIn", 600)));
     }
 
     // ── 6. RESET PASSWORD ───────────────────────────────────────────
@@ -262,7 +261,7 @@ public class AuthController {
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
-        
+
         sessionService.revokeAllSessions(user.getUserId());
 
         return ResponseEntity.ok(ApiResponse.success("Password changed successfully"));
@@ -312,8 +311,7 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Token is valid", Map.of(
                 "valid", true,
                 "employeeId", user.getUserId(),
-                "email", user.getWorkEmail()
-        )));
+                "email", user.getWorkEmail())));
     }
 
     // ── 9. RESEND OTP ───────────────────────────────────────────────────────
@@ -399,21 +397,25 @@ public class AuthController {
 
         if (!roleService.hasRole(inviter, "SUPER_ADMIN") && !roleService.hasRole(inviter, "ADMIN")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Only Super Admin and Admin can invite employees", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Only Super Admin and Admin can invite employees",
+                            "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
+                .orElseThrow(
+                        () -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
 
         Role role = roleRepository.findById(request.getRoleId())
                 .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + request.getRoleId()));
 
         if (userRepository.existsByWorkEmail(employee.getEmail())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee email is already registered", "AUTH_006"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Employee email is already registered", "AUTH_006"));
         }
 
         if (invitationRepository.existsByEmail(employee.getEmail())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("An active invitation already exists for this employee", "AUTH_007"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("An active invitation already exists for this employee", "AUTH_007"));
         }
 
         String token = UUID.randomUUID().toString();
@@ -442,7 +444,8 @@ public class AuthController {
 
         Invitation invitation = optInvitation.get();
         if (invitation.isAccepted()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Invitation has already been accepted", "AUTH_009"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Invitation has already been accepted", "AUTH_009"));
         }
 
         if (invitation.getExpiredAt().isBefore(LocalDateTime.now())) {
@@ -462,7 +465,8 @@ public class AuthController {
             optRole = roleRepository.findByName(invitation.getRole());
         }
         if (optRole.isEmpty()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Role '" + invitation.getRole() + "' does not exist", "AUTH_011"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Role '" + invitation.getRole() + "' does not exist", "AUTH_011"));
         }
 
         User user = new User();
@@ -482,18 +486,30 @@ public class AuthController {
         emp.setFullName(user.getFullName());
         emp.setEmail(user.getWorkEmail());
         emp.setEmployeeId(userId);
-        if (emp.getPhone() == null) emp.setPhone("1234567890");
-        if (emp.getGender() == null) emp.setGender("MALE");
-        if (emp.getDob() == null) emp.setDob(java.time.LocalDate.of(1990, 1, 1));
-        if (emp.getAddress() == null) emp.setAddress("123 Corporate Way");
-        if (emp.getEmergencyContact() == null) emp.setEmergencyContact("9876543210");
-        if (emp.getDepartment() == null) emp.setDepartment("Engineering");
-        if (emp.getDesignation() == null) emp.setDesignation(user.getRole() != null ? user.getRole().getName() : "Software Engineer");
-        if (emp.getAnnualSalary() == null) emp.setAnnualSalary(java.math.BigDecimal.valueOf(85000));
-        if (emp.getJoiningDate() == null) emp.setJoiningDate(java.time.LocalDate.of(2026, 6, 10));
-        if (emp.getLocation() == null) emp.setLocation("Headquarters");
-        if (emp.getEmploymentType() == null) emp.setEmploymentType("FULL_TIME");
-        if (emp.getStatus() == null || emp.getStatus().isBlank()) emp.setStatus("ACTIVE");
+        if (emp.getPhone() == null)
+            emp.setPhone("1234567890");
+        if (emp.getGender() == null)
+            emp.setGender("MALE");
+        if (emp.getDob() == null)
+            emp.setDob(java.time.LocalDate.of(1990, 1, 1));
+        if (emp.getAddress() == null)
+            emp.setAddress("123 Corporate Way");
+        if (emp.getEmergencyContact() == null)
+            emp.setEmergencyContact("9876543210");
+        if (emp.getDepartment() == null)
+            emp.setDepartment("Engineering");
+        if (emp.getDesignation() == null)
+            emp.setDesignation(user.getRole() != null ? user.getRole().getName() : "Software Engineer");
+        if (emp.getAnnualSalary() == null)
+            emp.setAnnualSalary(java.math.BigDecimal.valueOf(85000));
+        if (emp.getJoiningDate() == null)
+            emp.setJoiningDate(java.time.LocalDate.of(2026, 6, 10));
+        if (emp.getLocation() == null)
+            emp.setLocation("Headquarters");
+        if (emp.getEmploymentType() == null)
+            emp.setEmploymentType("FULL_TIME");
+        if (emp.getStatus() == null || emp.getStatus().isBlank())
+            emp.setStatus("ACTIVE");
         employeeRepository.save(emp);
 
         invitation.setAccepted(true);
@@ -501,7 +517,6 @@ public class AuthController {
 
         return ResponseEntity.ok(ApiResponse.success("Account activated successfully", Map.of(
                 "employeeId", userId,
-                "status", "ACTIVE"
-        )));
+                "status", "ACTIVE")));
     }
 }

@@ -3,9 +3,10 @@ package com.example.ems.onboarding.controller;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
-import com.example.ems.onboarding.dto.OnboardingDashboardResponse;
-import com.example.ems.onboarding.dto.OnboardingRequest;
-import com.example.ems.onboarding.dto.OnboardingResponse;
+import com.example.ems.onboarding.entity.Onboarding;
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.onboarding.dto.*;
 import com.example.ems.onboarding.service.OnboardingService;
 import com.example.ems.security.service.JwtService;
 
@@ -21,12 +22,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -47,6 +50,9 @@ public class OnboardingControllerTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private EmployeeRepository employeeRepository;
+
     @InjectMocks
     private OnboardingController onboardingController;
 
@@ -55,6 +61,116 @@ public class OnboardingControllerTest {
         MockitoAnnotations.openMocks(this);
         objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
         mockMvc = MockMvcBuilders.standaloneSetup(onboardingController).build();
+    }
+
+    @Test
+    public void testGetMyOnboardingDetailsSuccess() throws Exception {
+        String testEmail = "johndoe@example.com";
+        User user = new User();
+        user.setWorkEmail(testEmail);
+
+        Employee employee = new Employee();
+        employee.setId(1L);
+        employee.setEmployeeId("EMP001");
+        employee.setEmail(testEmail);
+        employee.setFullName("John Doe");
+
+        Onboarding onboarding = new Onboarding();
+        onboarding.setId(10L);
+        onboarding.setStatus("PENDING");
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(testEmail);
+        when(userRepository.findByWorkEmail(testEmail)).thenReturn(Optional.of(user));
+        when(employeeRepository.findByEmail(testEmail)).thenReturn(Optional.of(employee));
+        when(onboardingService.getOrCreateOnboardingForEmployee(any())).thenReturn(onboarding);
+        when(onboardingService.getTasks(10L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/onboarding/my")
+                .header("Authorization", "Bearer mock-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.employeeId").value("EMP001"));
+    }
+
+    @Test
+    public void testUpdateMyOnboardingProfileSuccess() throws Exception {
+        String testEmail = "johndoe@example.com";
+        User user = new User();
+        user.setWorkEmail(testEmail);
+
+        Employee employee = new Employee();
+        employee.setId(1L);
+        employee.setEmail(testEmail);
+
+        Onboarding onboarding = new Onboarding();
+        onboarding.setId(10L);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(testEmail);
+        when(userRepository.findByWorkEmail(testEmail)).thenReturn(Optional.of(user));
+        when(employeeRepository.findByEmail(testEmail)).thenReturn(Optional.of(employee));
+        when(onboardingService.getOrCreateOnboardingForEmployee(any())).thenReturn(onboarding);
+
+        mockMvc.perform(put("/api/v1/onboarding/my")
+                .header("Authorization", "Bearer mock-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"phone\": \"1234567890\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Onboarding profile updated successfully"));
+    }
+
+    @Test
+    public void testGetMyOnboardingDocumentsSuccess() throws Exception {
+        String testEmail = "johndoe@example.com";
+        User user = new User();
+        user.setWorkEmail(testEmail);
+
+        Employee employee = new Employee();
+        employee.setId(1L);
+        employee.setEmail(testEmail);
+
+        Onboarding onboarding = new Onboarding();
+        onboarding.setId(10L);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(testEmail);
+        when(userRepository.findByWorkEmail(testEmail)).thenReturn(Optional.of(user));
+        when(employeeRepository.findByEmail(testEmail)).thenReturn(Optional.of(employee));
+        when(onboardingService.getOrCreateOnboardingForEmployee(any())).thenReturn(onboarding);
+        when(onboardingService.getDocuments(10L)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/v1/onboarding/my/documents")
+                .header("Authorization", "Bearer mock-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    public void testSubmitMyOnboardingSuccess() throws Exception {
+        String testEmail = "johndoe@example.com";
+        User user = new User();
+        user.setWorkEmail(testEmail);
+
+        Employee employee = new Employee();
+        employee.setId(1L);
+        employee.setEmail(testEmail);
+
+        Onboarding onboarding = new Onboarding();
+        onboarding.setId(10L);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(testEmail);
+        when(userRepository.findByWorkEmail(testEmail)).thenReturn(Optional.of(user));
+        when(employeeRepository.findByEmail(testEmail)).thenReturn(Optional.of(employee));
+        when(onboardingService.getOrCreateOnboardingForEmployee(any())).thenReturn(onboarding);
+
+        mockMvc.perform(post("/api/v1/onboarding/my/submit")
+                .header("Authorization", "Bearer mock-token"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("UNDER_REVIEW"));
     }
 
     @Test

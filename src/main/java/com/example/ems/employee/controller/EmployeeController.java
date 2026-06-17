@@ -13,7 +13,7 @@ import com.example.ems.employee.service.EmployeeService;
 
 import com.example.ems.leave.service.LeaveService;
 import com.example.ems.security.service.JwtService;
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Employees")
 public class EmployeeController {
-
     @Autowired
     private EmployeeService employeeService;
 

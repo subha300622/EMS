@@ -13,6 +13,7 @@ import com.example.ems.performance.repository.GoalRepository;
 import com.example.ems.performance.service.GoalService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -22,10 +23,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/api/v1/goals")
 @CrossOrigin("*")
+@Tag(name = "Goals")
 public class GoalController {
 
     @Autowired
@@ -119,6 +122,59 @@ public class GoalController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllGoals(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @RequestParam(required = false) Long employeeId) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) return unauthorizedResponse();
+
+        Employee employee = resolveEmployee(currentUser);
+        
+        if (employeeId != null) {
+            if (employee != null && employeeId.equals(employee.getId())) {
+                try {
+                    Map<String, Object> data = goalService.getMyGoals(currentUser.getWorkEmail());
+                    return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", data.get("goals")));
+                } catch (Exception e) {
+                    return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+                }
+            }
+            
+            Employee targetEmployee = employeeRepository.findById(employeeId).orElse(null);
+            boolean isManager = targetEmployee != null && targetEmployee.getManager() != null && employee != null && targetEmployee.getManager().getId().equals(employee.getId());
+            boolean hasGlobalRead = roleService.hasPermission(currentUser.getWorkEmail(), "goal.read");
+            
+            if (!isManager && !hasGlobalRead && !roleService.isSuperAdmin(currentUser.getWorkEmail())) {
+                return forbiddenResponse("goal.read");
+            }
+            
+            try {
+                if (targetEmployee != null) {
+                    return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", goalRepository.findByEmployeeId(employeeId)));
+                } else {
+                    return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", java.util.Collections.emptyList()));
+                }
+            } catch (Exception e) {
+                return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            }
+        }
+
+        boolean hasGlobalRead = roleService.hasPermission(currentUser.getWorkEmail(), "goal.read") || roleService.isSuperAdmin(currentUser.getWorkEmail());
+        if (hasGlobalRead) {
+            return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", goalRepository.findAll()));
+        } else if (employee != null) {
+            List<Goal> teamGoals = goalRepository.findByManagerId(employee.getId());
+            List<Goal> selfGoals = goalRepository.findByEmployeeId(employee.getId());
+            List<Goal> combined = new ArrayList<>();
+            combined.addAll(selfGoals);
+            combined.addAll(teamGoals);
+            return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", combined));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", java.util.Collections.emptyList()));
     }
 
     // 2. Get My Goals

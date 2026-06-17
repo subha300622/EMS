@@ -182,4 +182,31 @@ public class PayrollControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM));
     }
+
+    @Test
+    public void testProcessPayrollSuccess() throws Exception {
+        String token = "Bearer mock-token";
+        String email = "admin@example.com";
+
+        User user = new User();
+        user.setWorkEmail(email);
+
+        Employee emp = new Employee();
+        emp.setId(1L);
+
+        Payroll p = new Payroll(1L, emp, 6, 2026, BigDecimal.valueOf(5000), BigDecimal.ZERO, BigDecimal.ZERO,
+                BigDecimal.valueOf(5000), "PROCESSED", null, null);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
+        when(userRepository.findByWorkEmail(email)).thenReturn(Optional.of(user));
+        when(roleService.hasPermission(email, "payroll.manage")).thenReturn(true);
+        when(payrollService.processPayroll(1L)).thenReturn(p);
+
+        mockMvc.perform(post("/api/v1/payroll-runs/1/process")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("PROCESSED"));
+    }
 }

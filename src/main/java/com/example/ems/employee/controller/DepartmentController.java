@@ -9,7 +9,7 @@ import com.example.ems.employee.dto.DepartmentRequest;
 import com.example.ems.employee.entity.Department;
 import com.example.ems.employee.service.DepartmentService;
 import com.example.ems.security.service.JwtService;
-
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Departments")
 public class DepartmentController {
-
     @Autowired
     private DepartmentService departmentService;
 

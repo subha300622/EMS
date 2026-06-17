@@ -5,6 +5,7 @@ import com.example.ems.auth.entity.Permission;
 import com.example.ems.auth.service.PermissionService;
 import com.example.ems.auth.service.RoleService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Administration")
 public class PermissionController {
 
     @Autowired

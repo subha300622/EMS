@@ -5,16 +5,13 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.onboarding.dto.OnboardingAssetRequest;
-import com.example.ems.onboarding.dto.OnboardingDashboardResponse;
-import com.example.ems.onboarding.dto.OnboardingDocumentResponse;
-import com.example.ems.onboarding.dto.OnboardingRequest;
-import com.example.ems.onboarding.dto.OnboardingResponse;
-import com.example.ems.onboarding.dto.OnboardingTaskResponse;
-import com.example.ems.onboarding.dto.OnboardingTrainingRequest;
+import com.example.ems.onboarding.entity.Onboarding;
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.onboarding.dto.*;
 import com.example.ems.onboarding.service.OnboardingService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,10 +20,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Onboarding")
 public class OnboardingController {
 
     @Autowired
@@ -40,6 +39,9 @@ public class OnboardingController {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private com.example.ems.employee.repository.EmployeeRepository employeeRepository;
 
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -56,6 +58,145 @@ public class OnboardingController {
         return roleService.hasPermission(user.getWorkEmail(), "employee.create")
                 || roleService.hasPermission(user.getWorkEmail(), "employee.update")
                 || roleService.hasPermission(user.getWorkEmail(), "recruitment.manage");
+    }
+
+    private com.example.ems.employee.entity.Employee resolveEmployee(User currentUser) {
+        if (currentUser == null) return null;
+        return employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
+    }
+
+    // ── 0. SELF-SERVICE ONBOARDING ──────────────────────────────────────────
+    @GetMapping("/onboarding/my")
+    public ResponseEntity<?> getMyOnboardingDetails(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+        List<OnboardingTaskResponse> taskResponses = onboardingService.getTasks(onboarding.getId());
+        int totalSteps = taskResponses.size();
+        int completedSteps = (int) taskResponses.stream()
+                .filter(t -> "COMPLETED".equalsIgnoreCase(t.getStatus()))
+                .count();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("employeeId", employee.getEmployeeId());
+        response.put("fullName", employee.getFullName());
+        response.put("department", employee.getDepartment() != null ? employee.getDepartment() : "Engineering");
+        response.put("joiningDate", employee.getJoiningDate() != null ? employee.getJoiningDate().toString() : "2026-06-10");
+        response.put("onboardingStatus", onboarding.getStatus());
+        response.put("completedSteps", completedSteps);
+        response.put("totalSteps", totalSteps);
+
+        return ResponseEntity.ok(ApiResponse.success("My onboarding details retrieved", response));
+    }
+
+    @PutMapping("/onboarding/my")
+    public ResponseEntity<?> updateMyOnboardingProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, Object> body) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+        onboardingService.updateOnboardingProfile(onboarding.getId(), body);
+        return ResponseEntity.ok(ApiResponse.success("Onboarding profile updated successfully"));
+    }
+
+    @PostMapping(value = "/onboarding/my/documents", consumes = "multipart/form-data")
+    public ResponseEntity<?> uploadMyOnboardingDocument(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam("file") MultipartFile file) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error("Document file is empty", "VAL_001"));
+        }
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+        String downloadUrl = "http://localhost:8080/api/documents/download/" + System.currentTimeMillis();
+
+        try {
+            OnboardingDocumentResponse doc = onboardingService.addDocument(
+                    onboarding.getId(), file.getOriginalFilename(), file.getContentType(), downloadUrl);
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Document uploaded successfully", doc));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "VAL_002"));
+        }
+    }
+
+    @GetMapping("/onboarding/my/documents")
+    public ResponseEntity<?> getMyOnboardingDocuments(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+        List<OnboardingDocumentResponse> docs = onboardingService.getDocuments(onboarding.getId());
+        return ResponseEntity.ok(ApiResponse.success("My onboarding documents retrieved", docs));
+    }
+
+    @PostMapping("/onboarding/my/submit")
+    public ResponseEntity<?> submitMyOnboarding(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+        onboardingService.submitOnboarding(onboarding.getId());
+
+        return ResponseEntity.ok(ApiResponse.success("Onboarding submitted successfully", Map.of("status", "UNDER_REVIEW")));
     }
 
     // ── 1. GET DASHBOARD ────────────────────────────────────────────────────

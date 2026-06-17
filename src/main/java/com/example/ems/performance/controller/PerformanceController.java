@@ -19,6 +19,7 @@ import com.example.ems.performance.dto.SelfReviewRequest;
 import com.example.ems.performance.service.PerformanceService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -32,6 +33,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Performance Reviews")
 public class PerformanceController {
 
     @Autowired private PerformanceService performanceService;

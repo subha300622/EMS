@@ -11,6 +11,7 @@ import com.example.ems.payroll.entity.Payroll;
 import com.example.ems.payroll.service.PayrollService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,7 @@ import java.util.LinkedHashMap;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Payroll Runs")
 public class PayrollController {
 
     @Autowired
@@ -221,7 +223,7 @@ public class PayrollController {
     }
 
     // ── 10. PROCESS PAYROLL ──────────────────────────────────────────────────
-    @PutMapping("/payroll-runs/{id}/process")
+    @PostMapping("/payroll-runs/{id}/process")
     public ResponseEntity<?> processPayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {

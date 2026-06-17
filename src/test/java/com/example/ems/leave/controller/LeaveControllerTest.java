@@ -117,4 +117,42 @@ public class LeaveControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Leave history retrieved successfully"));
     }
+
+    @Test
+    public void testDeactivateLeaveTypeSuccess() throws Exception {
+        String token = "Bearer mock-token";
+        String email = "admin@example.com";
+        User user = new User();
+        user.setWorkEmail(email);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
+        when(userRepository.findByWorkEmail(email)).thenReturn(Optional.of(user));
+        when(roleService.hasPermission(email, "leave.manage")).thenReturn(true);
+        when(leaveService.deactivateLeaveType(1L)).thenReturn(new LeaveType());
+
+        mockMvc.perform(patch("/api/v1/leave-types/1/deactivate")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    public void testActivateLeaveTypeSuccess() throws Exception {
+        String token = "Bearer mock-token";
+        String email = "admin@example.com";
+        User user = new User();
+        user.setWorkEmail(email);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
+        when(userRepository.findByWorkEmail(email)).thenReturn(Optional.of(user));
+        when(roleService.hasPermission(email, "leave.manage")).thenReturn(true);
+        when(leaveService.activateLeaveType(1L)).thenReturn(new LeaveType());
+
+        mockMvc.perform(patch("/api/v1/leave-types/1/activate")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
 }

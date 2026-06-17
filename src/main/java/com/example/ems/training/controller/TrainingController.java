@@ -22,6 +22,7 @@ import com.example.ems.training.service.TrainingService;
 import com.example.ems.training.repository.TrainingEnrollmentRepository;
 import com.example.ems.training.entity.TrainingEnrollment;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Training")
 public class TrainingController {
 
     @Autowired private TrainingService trainingService;

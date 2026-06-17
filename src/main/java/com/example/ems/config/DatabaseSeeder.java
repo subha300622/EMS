@@ -18,11 +18,11 @@ import java.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.stereotype.Component;
+// import org.springframework.stereotype.Component;
 
 import java.util.*;
 
-@Component
+// @Component
 public class DatabaseSeeder implements CommandLineRunner {
 
     @Autowired
@@ -38,19 +38,7 @@ public class DatabaseSeeder implements CommandLineRunner {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private com.example.ems.performance.service.MyPerformanceService performanceService;
-
-    @Autowired
-    private com.example.ems.schedule.service.MyScheduleService scheduleService;
-
-    @Autowired
-    private com.example.ems.employee.service.MyEmployeeDirectoryService directoryService;
-
-    @Autowired
     private BCryptPasswordEncoder passwordEncoder;
-
-    @Autowired
-    private com.example.ems.support.service.MySupportService supportService;
 
     @Override
     public void run(String... args) throws Exception {
@@ -111,7 +99,10 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "settings.notifications.update", "settings.appearance.read", "settings.appearance.update", 
                 "settings.language.read", "settings.language.update", "settings.devices.read", 
                 "settings.devices.remove", "settings.data.export", "settings.support.create", 
-                "settings.support.read");
+                "settings.support.read",
+                // Enterprise Module Permissions
+                "audit.read", "audit.export", "settings.manage", "team.read", "asset.manage",
+                "fnf.manage", "payroll-settings.manage", "announcement.manage");
 
         Map<String, Permission> permissionMap = new HashMap<>();
         for (String permName : permissionNames) {
@@ -159,7 +150,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "performance.self.goal.update", "performance.self.assessment.submit", 
                 "performance.self.feedback.read", "performance.self.history.read",
                 "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
-                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read"));
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
+                "audit.read", "audit.export", "settings.manage", "team.read", "asset.manage", "fnf.manage", "payroll-settings.manage", "announcement.manage"));
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(
                 "user.manage",
@@ -170,26 +162,30 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "expense.manage",
                 "goal.create", "goal.read", "goal.update", "goal.delete", "goal.approve", "goal.reject", "goal.analytics.read",
                 "performance.review",
-                "role.manage", "permission.manage"));
+                "role.manage", "permission.manage",
+                "audit.read", "audit.export", "settings.manage", "team.read", "asset.manage", "fnf.manage", "payroll-settings.manage", "announcement.manage"));
 
         rolePermissionsMap.put("HR", Arrays.asList(
                 "employee.create", "employee.read", "employee.update",
                 "attendance.read", "leave.approve", "leave.read",
                 "recruitment.manage", "reports.hr",
-                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read"));
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
+                "team.read", "asset.manage", "fnf.manage", "announcement.manage"));
 
         rolePermissionsMap.put("MANAGER", Arrays.asList(
                 "employee.team.read", "attendance.team.read", "leave.team.approve",
                 "task.assign", "performance.review",
                 "employee.directory.read", "employee.profile.read", "employee.message.create",
                 "employee.contact.read", "employee.team.hierarchy.read",
-                "goal.create", "goal.read", "goal.update", "goal.self.read", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read"));
+                "goal.create", "goal.read", "goal.update", "goal.self.read", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
+                "team.read"));
 
         rolePermissionsMap.put("FINANCE", Arrays.asList(
                 "payroll.read", "payroll.manage", "expense.manage",
                 "salary.manage", "reports.finance",
                 "payslip.read", "employee.payslip.read", "employee.payslip.download",
-                "payslip.self.read", "payslip.self.preview", "payslip.self.download"));
+                "payslip.self.read", "payslip.self.preview", "payslip.self.download",
+                "fnf.manage", "payroll-settings.manage"));
 
         rolePermissionsMap.put("EMPLOYEE", Arrays.asList(
                 "attendance.self.read",
@@ -333,17 +329,5 @@ public class DatabaseSeeder implements CommandLineRunner {
             
             employeeRepository.save(emp);
         }
-
-        // 6. Seed Performance Module Data for employee@company.com
-        performanceService.seedPerformanceData("employee@company.com");
-
-        // 7. Seed Schedule Module Data for employee@company.com
-        scheduleService.seedScheduleData("employee@company.com");
-
-        // 8. Seed Employee Directory Module Data for employee@company.com
-        directoryService.seedDirectoryData("employee@company.com");
-
-        // 9. Seed Support Ticket Module Data for employee@company.com
-        supportService.seedSupportData("employee@company.com");
     }
 }

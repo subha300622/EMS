@@ -33,6 +33,16 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
+        String path = request.getRequestURI();
+        
+        // Exclude auth-related endpoints and Swagger UI resources from rate limiting
+        if (path.contains("/api/v1/auth/") || 
+            path.contains("/swagger-ui") || 
+            path.contains("/v3/api-docs")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         String clientIp = request.getHeader("X-Forwarded-For");
         if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
             clientIp = request.getRemoteAddr();

@@ -12,6 +12,7 @@ import com.example.ems.payroll.entity.Payslip;
 import com.example.ems.payroll.service.PayslipService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Payslips")
 public class PayslipController {
 
     @Autowired

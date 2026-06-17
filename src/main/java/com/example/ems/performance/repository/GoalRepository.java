@@ -20,4 +20,6 @@ public interface GoalRepository extends JpaRepository<Goal, Long> {
     long countByEmployeeIdAndStatus(Long employeeId, String status);
     
     long countByEmployeeId(Long employeeId);
+
+    List<Goal> findByStatus(String status);
 }

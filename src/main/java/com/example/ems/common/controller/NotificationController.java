@@ -8,6 +8,7 @@ import com.example.ems.common.entity.Notification;
 import com.example.ems.common.service.NotificationService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Administration")
 public class NotificationController {
 
     @Autowired
@@ -39,7 +41,7 @@ public class NotificationController {
     }
 
     // ── 1. GET ALL MY NOTIFICATIONS ──────────────────────────────────────────
-    @GetMapping("/notifications")
+    @GetMapping("/notifications/my")
     public ResponseEntity<?> getMyNotifications(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
