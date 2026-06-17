@@ -17,14 +17,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -74,7 +72,7 @@ public class MyPerformanceService {
                 });
 
         // 2. Seed Appraisal Record
-        Appraisal appraisal = appraisalRepository.findByEmployeeEmailAndCycleId(email, cycle.getId())
+        appraisalRepository.findByEmployeeEmailAndCycleId(email, cycle.getId())
                 .orElseGet(() -> {
                     Appraisal a = new Appraisal();
                     a.setEmployee(employee);

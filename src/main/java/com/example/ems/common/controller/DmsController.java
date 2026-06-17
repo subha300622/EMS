@@ -248,19 +248,6 @@ public class DmsController {
         }
     }
 
-    // ── 3. GET MY DOCUMENTS ──────────────────────────────────────────────────
-    @GetMapping("/documents/my")
-    public ResponseEntity<?> getMyDocuments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<DmsDocumentResponse> docs = dmsService.getMyDocuments(currentUser.getWorkEmail());
-        return ResponseEntity.ok(ApiResponse.success("My documents list retrieved successfully", docs));
-    }
-
     // ── 4. APPROVAL / REJECTION ──────────────────────────────────────────────
     @PatchMapping("/documents/{id}/approve")
     public ResponseEntity<?> approveDocument(

@@ -26,7 +26,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -91,5 +91,30 @@ public class LeaveControllerTest {
                 .andExpect(jsonPath("$.message").value("Leave request submitted successfully"))
                 .andExpect(jsonPath("$.data.reason").value("Vacation"))
                 .andExpect(jsonPath("$.data.status").value("PENDING"));
+    }
+
+    @Test
+    public void testGetMyLeavesSuccess() throws Exception {
+        String token = "Bearer mock-token";
+        String email = "john.doe@example.com";
+        
+        User user = new User();
+        user.setWorkEmail(email);
+
+        Employee employee = new Employee();
+        employee.setId(1L);
+        employee.setEmail(email);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
+        when(userRepository.findByWorkEmail(email)).thenReturn(Optional.of(user));
+        when(employeeRepository.findByEmail(email)).thenReturn(Optional.of(employee));
+        when(leaveService.getLeavesByEmployeeId(1L)).thenReturn(java.util.List.of());
+
+        mockMvc.perform(get("/api/v1/leaves/my")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Leave history retrieved successfully"));
     }
 }

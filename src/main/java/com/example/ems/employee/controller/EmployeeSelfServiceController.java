@@ -140,7 +140,8 @@ public class EmployeeSelfServiceController {
 
     // Helper to resolve Employee from User
     private Employee resolveEmployee(User user) {
-        if (user == null) return null;
+        if (user == null)
+            return null;
         return employeeRepository.findByEmail(user.getWorkEmail()).orElse(null);
     }
 
@@ -148,7 +149,7 @@ public class EmployeeSelfServiceController {
     @GetMapping("/employees/me/dashboard")
     public ResponseEntity<?> getDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -157,7 +158,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.dashboard.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.dashboard.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.dashboard.read' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -173,7 +175,8 @@ public class EmployeeSelfServiceController {
             if (stats != null) {
                 attendancePercent = stats.getAttendancePercentage();
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         long leaveBalance = 12;
         try {
@@ -191,9 +194,11 @@ public class EmployeeSelfServiceController {
                 }
                 leaveBalance = sum;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
-        BigDecimal currentCTC = employee.getAnnualSalary() != null ? employee.getAnnualSalary() : BigDecimal.valueOf(1800000);
+        BigDecimal currentCTC = employee.getAnnualSalary() != null ? employee.getAnnualSalary()
+                : BigDecimal.valueOf(1800000);
 
         double performanceRating = 4.5;
         try {
@@ -211,7 +216,8 @@ public class EmployeeSelfServiceController {
                     performanceRating = sum / count;
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         long pendingActions = 3;
         try {
@@ -220,17 +226,22 @@ public class EmployeeSelfServiceController {
                 Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
                 List<OnboardingTaskResponse> tasks = onboardingService.getTasks(onboarding.getId());
                 pendingOnboarding = tasks.stream().filter(t -> !"COMPLETED".equalsIgnoreCase(t.getStatus())).count();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
 
             long pendingLeaves = leaveRepository.findByEmployeeId(employee.getId()).stream()
                     .filter(l -> "PENDING".equalsIgnoreCase(l.getStatus())).count();
 
             long pendingTickets = supportTicketRepository.findByEmployeeId(employee.getEmployeeId()).stream()
-                    .filter(t -> "OPEN".equalsIgnoreCase(t.getStatus()) || "IN_PROGRESS".equalsIgnoreCase(t.getStatus())).count();
+                    .filter(t -> "OPEN".equalsIgnoreCase(t.getStatus())
+                            || "IN_PROGRESS".equalsIgnoreCase(t.getStatus()))
+                    .count();
 
             pendingActions = pendingOnboarding + pendingLeaves + pendingTickets;
-            if (pendingActions == 0) pendingActions = 1; // Always have at least 1 action (default)
-        } catch (Exception ignored) {}
+            if (pendingActions == 0)
+                pendingActions = 1; // Always have at least 1 action (default)
+        } catch (Exception ignored) {
+        }
 
         Map<String, Object> data = new HashMap<>();
         data.put("attendancePercentage", attendancePercent);
@@ -246,7 +257,7 @@ public class EmployeeSelfServiceController {
     @GetMapping("/employees/me/profile")
     public ResponseEntity<?> getMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -255,7 +266,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.read' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -271,7 +283,7 @@ public class EmployeeSelfServiceController {
     public ResponseEntity<?> updateMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> body) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -280,7 +292,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.update")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.update' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.update' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -309,7 +322,7 @@ public class EmployeeSelfServiceController {
     @GetMapping("/employees/me/onboarding")
     public ResponseEntity<?> getMyOnboardingDetails(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -318,7 +331,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.read' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -338,7 +352,8 @@ public class EmployeeSelfServiceController {
         response.put("employeeId", employee.getEmployeeId());
         response.put("fullName", employee.getFullName());
         response.put("department", employee.getDepartment() != null ? employee.getDepartment() : "Engineering");
-        response.put("joiningDate", employee.getJoiningDate() != null ? employee.getJoiningDate().toString() : "2026-06-10");
+        response.put("joiningDate",
+                employee.getJoiningDate() != null ? employee.getJoiningDate().toString() : "2026-06-10");
         response.put("onboardingStatus", onboarding.getStatus());
         response.put("completedSteps", completedSteps);
         response.put("totalSteps", totalSteps);
@@ -350,7 +365,7 @@ public class EmployeeSelfServiceController {
     public ResponseEntity<?> updateMyOnboardingProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> body) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -359,7 +374,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.update")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.update' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.update' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -390,7 +406,7 @@ public class EmployeeSelfServiceController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam("documentType") String documentType,
             @RequestParam("file") MultipartFile file) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -399,7 +415,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.document.upload")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.document.upload' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.document.upload' permission.",
+                            "AUTH_002"));
         }
 
         if (file.isEmpty()) {
@@ -414,7 +431,7 @@ public class EmployeeSelfServiceController {
 
         Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
         String downloadUrl = "http://localhost:8080/api/documents/download/" + System.currentTimeMillis();
-        
+
         try {
             onboardingService.addDocument(
                     onboarding.getId(), documentType, file.getOriginalFilename(), file.getContentType(), downloadUrl);
@@ -424,14 +441,13 @@ public class EmployeeSelfServiceController {
 
         return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                 "message", "Document uploaded successfully",
-                "verificationStatus", "PENDING"
-        ));
+                "verificationStatus", "PENDING"));
     }
 
     @GetMapping("/employees/me/onboarding/documents")
     public ResponseEntity<?> getMyOnboardingDocuments(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -440,7 +456,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.document.read.self")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.document.read.self' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.document.read.self' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -464,7 +481,7 @@ public class EmployeeSelfServiceController {
     @PostMapping("/employees/me/onboarding/submit")
     public ResponseEntity<?> submitMyOnboarding(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -473,7 +490,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "onboarding.self.submit")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.submit' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'onboarding.self.submit' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -487,219 +505,14 @@ public class EmployeeSelfServiceController {
 
         return ResponseEntity.ok(Map.of(
                 "message", "Onboarding submitted successfully",
-                "status", "UNDER_REVIEW"
-        ));
-    }
-
-    // ── 4. ATTENDANCE MANAGEMENT ─────────────────────────────────────────────
-    @GetMapping("/employees/me/attendance")
-    public ResponseEntity<?> getMyAttendanceRecords(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.self.read' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(attendanceService.getAttendanceByEmployeeId(employee.getId()));
-    }
-
-    @PostMapping("/employees/me/attendance/punch-in")
-    public ResponseEntity<?> punchIn(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody(required = false) Map<String, String> body) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.attendance.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.attendance.create' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        String notes = (body != null && body.containsKey("notes")) ? body.get("notes") : "Punch-in from Self-Service";
-        try {
-            Attendance record = attendanceService.checkIn(employee, notes);
-            return ResponseEntity.ok(ApiResponse.success("Punched in successfully", record));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ATT_001"));
-        }
-    }
-
-    @PostMapping("/employees/me/attendance/punch-out")
-    public ResponseEntity<?> punchOut(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody(required = false) Map<String, String> body) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.attendance.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.attendance.create' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        String notes = (body != null && body.containsKey("notes")) ? body.get("notes") : "Punch-out from Self-Service";
-        try {
-            Attendance record = attendanceService.checkOut(employee, notes);
-            return ResponseEntity.ok(ApiResponse.success("Punched out successfully", record));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ATT_002"));
-        }
-    }
-
-    // ── 5. LEAVE MANAGEMENT ──────────────────────────────────────────────────
-    @PostMapping("/employees/me/leaves")
-    public ResponseEntity<?> applyForLeave(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, Object> body) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.leave.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.leave.create' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        // Map request payload fields dynamically to LeaveRequest
-        try {
-            Long leaveTypeId = null;
-            if (body.containsKey("leaveTypeId")) {
-                leaveTypeId = Long.valueOf(body.get("leaveTypeId").toString());
-            } else if (body.containsKey("leaveType")) {
-                String typeName = body.get("leaveType").toString();
-                // Match case-insensitive database LeaveType
-                Optional<LeaveType> typeOpt = leaveTypeRepository.findByName(typeName);
-                if (typeOpt.isEmpty()) {
-                    // fallbacks
-                    List<LeaveType> allTypes = leaveTypeRepository.findAll();
-                    typeOpt = allTypes.stream()
-                            .filter(t -> t.getName().equalsIgnoreCase(typeName) 
-                                    || t.getName().toLowerCase().contains(typeName.toLowerCase()))
-                            .findFirst();
-                }
-                if (typeOpt.isPresent()) {
-                    leaveTypeId = typeOpt.get().getId();
-                } else {
-                    return ResponseEntity.badRequest()
-                            .body(ErrorResponse.error("Leave type not found matching: " + typeName, "LV_001"));
-                }
-            }
-
-            LocalDate fromDate = LocalDate.parse(body.getOrDefault("fromDate", body.get("startDate")).toString());
-            LocalDate toDate = LocalDate.parse(body.getOrDefault("toDate", body.get("endDate")).toString());
-            String reason = body.containsKey("reason") ? body.get("reason").toString() : "Leave request";
-
-            LeaveRequest leaveRequest = new LeaveRequest(leaveTypeId, fromDate, toDate, reason);
-            Leave applied = leaveService.applyLeave(employee, leaveRequest);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Leave request submitted successfully", applied));
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LV_002"));
-        }
-    }
-
-    @GetMapping("/employees/me/leaves")
-    public ResponseEntity<?> getMyLeaveHistory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "leave.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'leave.self.read' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("Leave history retrieved successfully",
-                leaveService.getLeavesByEmployeeId(employee.getId())));
-    }
-
-    @PutMapping("/employees/me/leaves/{id}/cancel")
-    public ResponseEntity<?> cancelLeaveRequest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.leave.cancel")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.leave.cancel' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        try {
-            Leave cancelled = leaveService.cancelLeave(id, employee);
-            return ResponseEntity.ok(ApiResponse.success("Leave request cancelled successfully", cancelled));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LV_003"));
-        }
+                "status", "UNDER_REVIEW"));
     }
 
     // ── 6. PAYSLIPS ──────────────────────────────────────────────────────────
     @GetMapping("/employees/me/payslips")
     public ResponseEntity<?> getMyPayslips(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -739,7 +552,7 @@ public class EmployeeSelfServiceController {
     public ResponseEntity<?> downloadPayslip(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -748,7 +561,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.payslip.download")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.payslip.download' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.payslip.download' permission.",
+                            "AUTH_002"));
         }
 
         Payslip ps = payslipService.getPayslipById(id).orElse(null);
@@ -767,7 +581,8 @@ public class EmployeeSelfServiceController {
         StringBuilder csv = new StringBuilder();
         csv.append("Payslip Number,").append(ps.getPayslipNumber()).append("\n");
         csv.append("Employee Name,").append(ps.getPayroll().getEmployee().getFullName()).append("\n");
-        csv.append("Period,").append(ps.getPayroll().getMonth()).append("/").append(ps.getPayroll().getYear()).append("\n");
+        csv.append("Period,").append(ps.getPayroll().getMonth()).append("/").append(ps.getPayroll().getYear())
+                .append("\n");
         csv.append("Basic Salary,").append(ps.getPayroll().getBasicSalary()).append("\n");
         csv.append("Allowances,").append(ps.getPayroll().getAllowances()).append("\n");
         csv.append("Deductions,").append(ps.getPayroll().getDeductions()).append("\n");
@@ -782,108 +597,11 @@ public class EmployeeSelfServiceController {
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
-    // ── 7. DOCUMENTS MANAGEMENT ──────────────────────────────────────────────
-    @GetMapping("/employees/me/documents")
-    public ResponseEntity<?> getMyDocuments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "document.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'document.self.read' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(employeeDocumentRepository.findByEmployeeId(employee.getId()));
-    }
-
-    @PostMapping(value = "/employees/me/documents", consumes = "multipart/form-data")
-    public ResponseEntity<?> uploadDocument(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam("file") MultipartFile file) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.document.upload")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.document.upload' permission.", "AUTH_002"));
-        }
-
-        if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("File is empty", "VAL_001"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        String downloadUrl = "/api/v1/documents/download/" + System.currentTimeMillis();
-
-        EmployeeDocument doc = new EmployeeDocument();
-        doc.setEmployee(employee);
-        doc.setFileName(file.getOriginalFilename());
-        doc.setFileType(file.getContentType());
-        doc.setFileSize(file.getSize());
-        doc.setDownloadUrl(downloadUrl);
-        doc.setUploadedAt(LocalDateTime.now());
-
-        EmployeeDocument saved = employeeDocumentRepository.save(doc);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Document uploaded successfully", saved));
-    }
-
-    @DeleteMapping("/employees/me/documents/{id}")
-    public ResponseEntity<?> deleteDocument(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.document.delete")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.document.delete' permission.", "AUTH_002"));
-        }
-
-        EmployeeDocument doc = employeeDocumentRepository.findById(id).orElse(null);
-        if (doc == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Document not found", "DOC_001"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null || !doc.getEmployee().getId().equals(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot delete this document.", "AUTH_002"));
-        }
-
-        employeeDocumentRepository.delete(doc);
-        return ResponseEntity.ok(ApiResponse.success("Document deleted successfully"));
-    }
-
     // ── 8. ASSET MANAGEMENT ──────────────────────────────────────────────────
     @GetMapping("/employees/me/assets")
     public ResponseEntity<?> getMyAssets(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -911,7 +629,7 @@ public class EmployeeSelfServiceController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @RequestBody(required = false) Map<String, String> body) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -920,7 +638,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.asset.request")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.asset.request' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.asset.request' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -948,7 +667,7 @@ public class EmployeeSelfServiceController {
         } else {
             asset.setStatus("SERVICE_REQUESTED");
         }
-        
+
         OnboardingAsset saved = onboardingAssetRepository.save(asset);
         return ResponseEntity.ok(ApiResponse.success("Asset request submitted successfully", saved));
     }
@@ -958,7 +677,7 @@ public class EmployeeSelfServiceController {
     public ResponseEntity<?> submitExpense(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, Object> body) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -967,7 +686,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.expense.create")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.expense.create' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.expense.create' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -979,7 +699,8 @@ public class EmployeeSelfServiceController {
         try {
             String title = body.get("title").toString();
             BigDecimal amount = new BigDecimal(body.get("amount").toString());
-            LocalDate expenseDate = LocalDate.parse(body.getOrDefault("expenseDate", LocalDate.now().toString()).toString());
+            LocalDate expenseDate = LocalDate
+                    .parse(body.getOrDefault("expenseDate", LocalDate.now().toString()).toString());
             String description = body.containsKey("description") ? body.get("description").toString() : "";
 
             Long categoryId = null;
@@ -1026,7 +747,7 @@ public class EmployeeSelfServiceController {
     @GetMapping("/employees/me/expenses")
     public ResponseEntity<?> getMyExpenses(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1052,7 +773,7 @@ public class EmployeeSelfServiceController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1061,7 +782,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.expense.update")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.expense.update' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.expense.update' permission.",
+                            "AUTH_002"));
         }
 
         Expense expense = expenseRepository.findById(id).orElse(null);
@@ -1077,14 +799,19 @@ public class EmployeeSelfServiceController {
         }
 
         if (!"PENDING".equalsIgnoreCase(expense.getStatus())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Cannot update expense with status: " + expense.getStatus(), "EXP_003"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Cannot update expense with status: " + expense.getStatus(), "EXP_003"));
         }
 
         try {
-            if (body.containsKey("title")) expense.setTitle(body.get("title").toString());
-            if (body.containsKey("amount")) expense.setAmount(new BigDecimal(body.get("amount").toString()));
-            if (body.containsKey("expenseDate")) expense.setExpenseDate(LocalDate.parse(body.get("expenseDate").toString()));
-            if (body.containsKey("description")) expense.setDescription(body.get("description").toString());
+            if (body.containsKey("title"))
+                expense.setTitle(body.get("title").toString());
+            if (body.containsKey("amount"))
+                expense.setAmount(new BigDecimal(body.get("amount").toString()));
+            if (body.containsKey("expenseDate"))
+                expense.setExpenseDate(LocalDate.parse(body.get("expenseDate").toString()));
+            if (body.containsKey("description"))
+                expense.setDescription(body.get("description").toString());
 
             if (body.containsKey("categoryId")) {
                 Long catId = Long.valueOf(body.get("categoryId").toString());
@@ -1103,7 +830,7 @@ public class EmployeeSelfServiceController {
     @GetMapping("/employees/me/performance")
     public ResponseEntity<?> getMyReviews(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1112,7 +839,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "performance.self.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'performance.self.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'performance.self.read' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -1129,7 +857,7 @@ public class EmployeeSelfServiceController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @RequestBody Map<String, Object> body) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1138,7 +866,9 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.performance.self-review.submit")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.performance.self-review.submit' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error(
+                            "Access Denied: Requires 'employee.performance.self-review.submit' permission.",
+                            "AUTH_002"));
         }
 
         PerformanceReview review = performanceReviewRepository.findById(id).orElse(null);
@@ -1154,10 +884,13 @@ public class EmployeeSelfServiceController {
         }
 
         // Apply self-review comments
-        if (body.containsKey("achievements")) review.setAchievements(body.get("achievements").toString());
-        if (body.containsKey("areasForImprovement")) review.setAreasForImprovement(body.get("areasForImprovement").toString());
-        if (body.containsKey("comments")) review.setComments(body.get("comments").toString());
-        
+        if (body.containsKey("achievements"))
+            review.setAchievements(body.get("achievements").toString());
+        if (body.containsKey("areasForImprovement"))
+            review.setAreasForImprovement(body.get("areasForImprovement").toString());
+        if (body.containsKey("comments"))
+            review.setComments(body.get("comments").toString());
+
         review.setReviewType("SELF");
         review.setStatus("SUBMITTED");
         review.setUpdatedAt(LocalDateTime.now());
@@ -1166,71 +899,11 @@ public class EmployeeSelfServiceController {
         return ResponseEntity.ok(ApiResponse.success("Self-review submitted successfully", saved));
     }
 
-    // ── 11. TRAINING ─────────────────────────────────────────────────────────
-    @GetMapping("/employees/me/trainings")
-    public ResponseEntity<?> getMyTrainings(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.training.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.training.read' permission.", "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(trainingService.getMyEnrollments(currentUser.getWorkEmail()));
-    }
-
-    @PostMapping("/employees/me/trainings/{id}/complete")
-    public ResponseEntity<?> completeTrainingModule(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.training.complete")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.training.complete' permission.", "AUTH_002"));
-        }
-
-        TrainingEnrollment enrollment = trainingEnrollmentRepository.findById(id).orElse(null);
-        if (enrollment == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Training enrollment not found", "TR_001"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null || !enrollment.getEmployee().getId().equals(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You are not enrolled in this training.", "AUTH_002"));
-        }
-
-        // Simulate training completion via assessment submission with 100% score
-        TrainingAssessmentRequest assessment = new TrainingAssessmentRequest();
-        assessment.setScore(100);
-        assessment.setFeedback("Completed via Self-Service");
-        
-        try {
-            Map<String, Object> result = trainingService.submitAssessment(id, assessment);
-            return ResponseEntity.ok(ApiResponse.success("Training module marked as completed", result));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TR_002"));
-        }
-    }
-
     // ── 12. NOTIFICATIONS ────────────────────────────────────────────────────
     @GetMapping("/employees/me/notifications")
     public ResponseEntity<?> getMyNotifications(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1239,7 +912,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.notification.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.notification.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.notification.read' permission.",
+                            "AUTH_002"));
         }
 
         return ResponseEntity.ok(notificationService.getNotificationsForUser(currentUser.getId()));
@@ -1249,7 +923,7 @@ public class EmployeeSelfServiceController {
     public ResponseEntity<?> markNotificationAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1258,7 +932,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.notification.update")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.notification.update' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.notification.update' permission.",
+                            "AUTH_002"));
         }
 
         Notification n = notificationService.getNotificationById(id).orElse(null);
@@ -1285,7 +960,7 @@ public class EmployeeSelfServiceController {
     public ResponseEntity<?> createSupportTicket(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> body) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1294,7 +969,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.support-ticket.create")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.create' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.create' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -1308,7 +984,8 @@ public class EmployeeSelfServiceController {
         String category = body.get("category");
 
         if (title == null || title.isBlank() || description == null || description.isBlank()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Title and description are required", "VAL_001"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Title and description are required", "VAL_001"));
         }
 
         SupportTicket ticket = new SupportTicket();
@@ -1328,7 +1005,7 @@ public class EmployeeSelfServiceController {
     @GetMapping("/employees/me/support-tickets")
     public ResponseEntity<?> getMySupportTickets(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1337,7 +1014,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.support-ticket.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.read' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
@@ -1355,7 +1033,7 @@ public class EmployeeSelfServiceController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @RequestBody Map<String, String> body) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1364,7 +1042,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.support-ticket.update")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.update' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.support-ticket.update' permission.",
+                            "AUTH_002"));
         }
 
         SupportTicket ticket = supportTicketRepository.findById(id).orElse(null);
@@ -1374,7 +1053,9 @@ public class EmployeeSelfServiceController {
         }
 
         Employee employee = resolveEmployee(currentUser);
-        String empId = employee != null ? (employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getEmail()) : "";
+        String empId = employee != null
+                ? (employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getEmail())
+                : "";
         if (employee == null || !ticket.getEmployeeId().equalsIgnoreCase(empId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot modify this ticket.", "AUTH_002"));
@@ -1392,81 +1073,11 @@ public class EmployeeSelfServiceController {
         return ResponseEntity.ok(ApiResponse.success("Support ticket updated successfully", saved));
     }
 
-    // ── 14. GOALS ────────────────────────────────────────────────────────────
-    @GetMapping("/employees/me/goals")
-    public ResponseEntity<?> getMyGoals(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "goal.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'goal.self.read' permission.", "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(performanceGoalRepository.findByEmployeeId(employee.getId()));
-    }
-
-    @PutMapping("/employees/me/goals/{id}")
-    public ResponseEntity<?> updateGoalProgress(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id,
-            @RequestBody Map<String, Object> body) {
-        
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.goal.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.goal.update' permission.", "AUTH_002"));
-        }
-
-        PerformanceGoal goal = performanceGoalRepository.findById(id).orElse(null);
-        if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Goal not found", "GL_001"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null || !goal.getEmployee().getId().equals(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot modify this goal.", "AUTH_002"));
-        }
-
-        if (body.containsKey("progressPercent")) {
-            int progress = Integer.parseInt(body.get("progressPercent").toString());
-            goal.setProgressPercent(progress);
-            if (progress >= 100) {
-                goal.setStatus("ACHIEVED");
-            }
-        }
-        if (body.containsKey("status")) {
-            goal.setStatus(body.get("status").toString().toUpperCase());
-        }
-        goal.setUpdatedAt(LocalDateTime.now());
-
-        PerformanceGoal saved = performanceGoalRepository.save(goal);
-        return ResponseEntity.ok(ApiResponse.success("Goal progress updated successfully", saved));
-    }
-
     // ── 15. SCHEDULE ─────────────────────────────────────────────────────────
     @GetMapping("/employees/me/schedule")
     public ResponseEntity<?> getMyWorkSchedule(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1475,7 +1086,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.schedule.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.schedule.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.schedule.read' permission.",
+                            "AUTH_002"));
         }
 
         Map<String, Object> schedule = new HashMap<>();
@@ -1492,7 +1104,7 @@ public class EmployeeSelfServiceController {
     @GetMapping("/announcements")
     public ResponseEntity<?> getCompanyAnnouncements(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -1501,7 +1113,8 @@ public class EmployeeSelfServiceController {
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.announcement.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.announcement.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.announcement.read' permission.",
+                            "AUTH_002"));
         }
 
         return ResponseEntity.ok(announcementRepository.findByActiveTrueOrderByPublishedDateDesc());

@@ -58,45 +58,6 @@ public class MyPerformanceController {
         return ResponseEntity.ok(ApiResponse.success("Dashboard retrieved", performanceService.getDashboard(user.getWorkEmail())));
     }
 
-    @GetMapping("/goals")
-    public ResponseEntity<ApiResponse<MyGoalListResponse>> getGoals(
-            @RequestHeader("Authorization") String authHeader,
-            @RequestParam(required = false) Long cycleId,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String category,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        User user = resolveUser(authHeader);
-        if (!checkPermission(user, "performance.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.success("Access Denied", null));
-        }
-        Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(ApiResponse.success("Goals retrieved", performanceService.getGoals(user.getWorkEmail(), cycleId, status, category, pageable)));
-    }
-
-    @GetMapping("/goals/{goalId}")
-    public ResponseEntity<ApiResponse<GoalDetailsResponse>> getGoalDetails(
-            @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long goalId) {
-        User user = resolveUser(authHeader);
-        if (!checkPermission(user, "performance.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.success("Access Denied", null));
-        }
-        return ResponseEntity.ok(ApiResponse.success("Goal details retrieved", performanceService.getGoalDetails(user.getWorkEmail(), goalId)));
-    }
-
-    @PatchMapping("/goals/{goalId}/progress")
-    public ResponseEntity<ApiResponse<UpdateGoalProgressResponse>> updateGoalProgress(
-            @RequestHeader("Authorization") String authHeader,
-            @PathVariable Long goalId,
-            @RequestBody UpdateGoalProgressRequest req) {
-        User user = resolveUser(authHeader);
-        if (!checkPermission(user, "performance.self.goal.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.success("Access Denied", null));
-        }
-        return ResponseEntity.ok(ApiResponse.success("Progress updated", performanceService.updateGoalProgress(user.getWorkEmail(), goalId, req)));
-    }
-
     @GetMapping("/reviews")
     public ResponseEntity<ApiResponse<ReviewCyclesResponse>> getReviewCycles(@RequestHeader("Authorization") String authHeader) {
         User user = resolveUser(authHeader);

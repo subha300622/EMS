@@ -1,6 +1,5 @@
 package com.example.ems.schedule.dto;
 
-import java.util.List;
 
 public class MyScheduleDashboardResponse {
 

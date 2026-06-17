@@ -72,7 +72,6 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "system.manage", "role.manage", "permission.manage",
                 // Additional
                 "recruitment.manage", "task.assign", "performance.review", "expense.manage",
-                "profile.read", "profile.update",
                 // Onboarding Self-Service
                 "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
@@ -103,7 +102,16 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.directory.read", "employee.message.create", "employee.contact.read",
                 "employee.team.hierarchy.read", "employee.directory.manage", "employee.report.read",
                 // Support Ticket Permissions
-                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close");
+                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
+                // Goals Module Permissions
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
+                // Settings Module Permissions
+                "settings.self.read", "settings.security.read", "settings.security.update", 
+                "settings.privacy.read", "settings.privacy.update", "settings.notifications.read", 
+                "settings.notifications.update", "settings.appearance.read", "settings.appearance.update", 
+                "settings.language.read", "settings.language.update", "settings.devices.read", 
+                "settings.devices.remove", "settings.data.export", "settings.support.create", 
+                "settings.support.read");
 
         Map<String, Permission> permissionMap = new HashMap<>();
         for (String permName : permissionNames) {
@@ -129,7 +137,6 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
                 "reports.view", "reports.hr", "reports.finance", "reports.manager",
                 "recruitment.manage", "task.assign", "performance.review", "expense.manage",
-                "profile.read", "profile.update",
                 "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
                 "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read", "asset.self.read",
@@ -151,32 +158,42 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.announcement.read",
                 "performance.self.goal.update", "performance.self.assessment.submit", 
                 "performance.self.feedback.read", "performance.self.history.read",
-                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close"));
+                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read"));
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(
                 "user.manage",
                 "user.create", "user.read", "user.update",
                 "employee.create", "employee.read", "employee.update",
-                "attendance.manage", "leave.manage", "reports.view"));
+                "attendance.manage", "leave.manage", "reports.view",
+                "payroll.read", "payroll.manage", "salary.manage", "payslip.read",
+                "expense.manage",
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.approve", "goal.reject", "goal.analytics.read",
+                "performance.review",
+                "role.manage", "permission.manage"));
 
         rolePermissionsMap.put("HR", Arrays.asList(
                 "employee.create", "employee.read", "employee.update",
                 "attendance.read", "leave.approve", "leave.read",
-                "recruitment.manage", "reports.hr"));
+                "recruitment.manage", "reports.hr",
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read"));
 
         rolePermissionsMap.put("MANAGER", Arrays.asList(
                 "employee.team.read", "attendance.team.read", "leave.team.approve",
                 "task.assign", "performance.review",
                 "employee.directory.read", "employee.profile.read", "employee.message.create",
-                "employee.contact.read", "employee.team.hierarchy.read"));
+                "employee.contact.read", "employee.team.hierarchy.read",
+                "goal.create", "goal.read", "goal.update", "goal.self.read", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read"));
 
         rolePermissionsMap.put("FINANCE", Arrays.asList(
                 "payroll.read", "payroll.manage", "expense.manage",
-                "salary.manage", "reports.finance"));
+                "salary.manage", "reports.finance",
+                "payslip.read", "employee.payslip.read", "employee.payslip.download",
+                "payslip.self.read", "payslip.self.preview", "payslip.self.download"));
 
         rolePermissionsMap.put("EMPLOYEE", Arrays.asList(
-                "profile.read", "profile.update", "attendance.self.read",
-                "leave.create", "leave.self.read", "payslip.read", "payslip.self.read",
+                "attendance.self.read",
+                "leave.create", "leave.self.read", "payslip.self.read",
                 "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
                 "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read", "asset.self.read",
@@ -202,12 +219,22 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "schedule.self.notification.read", "schedule.self.timeline.read",
                 "employee.directory.read", "employee.profile.read", "employee.message.create",
                 "employee.contact.read",
-                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close"));
+                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
+                "goal.self.update", "goal.submit"));
+
+        List<String> settingsPerms = Arrays.asList(
+                "settings.self.read", "settings.security.read", "settings.security.update", 
+                "settings.privacy.read", "settings.privacy.update", "settings.notifications.read", 
+                "settings.notifications.update", "settings.appearance.read", "settings.appearance.update", 
+                "settings.language.read", "settings.language.update", "settings.devices.read", 
+                "settings.devices.remove", "settings.data.export", "settings.support.create", 
+                "settings.support.read");
 
         Map<String, Role> roleMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : rolePermissionsMap.entrySet()) {
             String roleName = entry.getKey();
-            List<String> perms = entry.getValue();
+            List<String> perms = new ArrayList<>(entry.getValue());
+            perms.addAll(settingsPerms);
 
             Role role = roleRepository.findByName(roleName)
                     .orElseGet(() -> {

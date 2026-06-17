@@ -472,7 +472,7 @@ public class MyDocumentService {
 
     @Transactional(readOnly = true)
     public MyDocumentDetailsResponse getDocumentDetails(String email, Long documentId) {
-        Employee emp = employeeRepository.findByEmail(email)
+        employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Employee profile not found for email: " + email));
 
         MyEmployeeDocument doc = employeeDocumentRepository.findById(documentId)
@@ -508,7 +508,7 @@ public class MyDocumentService {
 
     @Transactional(readOnly = true)
     public MyDocumentPreviewResponse previewDocument(String email, Long documentId) {
-        Employee emp = employeeRepository.findByEmail(email)
+        employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Employee profile not found for email: " + email));
 
         MyEmployeeDocument doc = employeeDocumentRepository.findById(documentId)
@@ -529,7 +529,7 @@ public class MyDocumentService {
 
     @Transactional(readOnly = true)
     public MyEmployeeDocument downloadDocument(String email, Long documentId) {
-        Employee emp = employeeRepository.findByEmail(email)
+        employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Employee profile not found for email: " + email));
 
         MyEmployeeDocument doc = employeeDocumentRepository.findById(documentId)

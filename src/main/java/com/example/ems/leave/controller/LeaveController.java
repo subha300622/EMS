@@ -86,6 +86,27 @@ public class LeaveController {
         }
     }
 
+    // ── 1b. GET MY LEAVES ─────────────────────────────────────────────────────
+    @GetMapping("/leaves/my")
+    public ResponseEntity<?> getMyLeaves(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Leave history retrieved successfully",
+                leaveService.getLeavesByEmployeeId(employee.getId())));
+    }
+
     // ── 2. GET ALL LEAVES (ADMIN / HR) ────────────────────────────────────────
     @GetMapping("/leaves")
     public ResponseEntity<?> getAllLeaves(
@@ -382,7 +403,7 @@ public class LeaveController {
     }
 
     // ── 16. DEACTIVATE LEAVE TYPE ─────────────────────────────────────────────
-    @PutMapping("/leave-types/{id}/deactivate")
+    @PatchMapping("/leave-types/{id}/deactivate")
     public ResponseEntity<?> deactivateLeaveType(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
@@ -407,7 +428,7 @@ public class LeaveController {
     }
 
     // ── 16b. ACTIVATE LEAVE TYPE ─────────────────────────────────────────────
-    @RequestMapping(value = "/leave-types/{id}/activate", method = {RequestMethod.PATCH, RequestMethod.PUT})
+    @PatchMapping("/leave-types/{id}/activate")
     public ResponseEntity<?> activateLeaveType(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {

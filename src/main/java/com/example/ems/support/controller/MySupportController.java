@@ -5,8 +5,6 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.employee.entity.Employee;
-import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.support.dto.*;
 import com.example.ems.support.service.MySupportService;
@@ -36,9 +34,6 @@ public class MySupportController {
     private UserRepository userRepository;
 
     @Autowired
-    private EmployeeRepository employeeRepository;
-
-    @Autowired
     private JwtService jwtService;
 
     @Autowired
@@ -53,11 +48,6 @@ public class MySupportController {
             }
         }
         return null;
-    }
-
-    private Employee resolveEmployee(User user) {
-        if (user == null) return null;
-        return employeeRepository.findByEmail(user.getWorkEmail()).orElse(null);
     }
 
     private boolean checkPermission(User user, String permission) {

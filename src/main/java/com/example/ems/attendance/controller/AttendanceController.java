@@ -59,7 +59,7 @@ public class AttendanceController {
     }
 
     // ── 1. CHECK-IN ──────────────────────────────────────────────────────────
-    @PostMapping("/attendance/check-in")
+    @PostMapping("/attendance/me/check-in")
     public ResponseEntity<?> checkIn(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "employeeId", required = false) Long employeeId,
@@ -96,7 +96,7 @@ public class AttendanceController {
     }
 
     // ── 2. CHECK-OUT ─────────────────────────────────────────────────────────
-    @PostMapping("/attendance/check-out")
+    @PostMapping("/attendance/me/check-out")
     public ResponseEntity<?> checkOut(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "employeeId", required = false) Long employeeId,
@@ -133,7 +133,7 @@ public class AttendanceController {
 
 
     // ── 4. GET MY ATTENDANCE HISTORY ─────────────────────────────────────────
-    @GetMapping("/attendance/my/history")
+    @GetMapping("/attendance/me")
     public ResponseEntity<?> getMyAttendanceHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 

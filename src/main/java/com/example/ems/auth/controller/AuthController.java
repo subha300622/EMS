@@ -148,10 +148,6 @@ public class AuthController {
                 .map(Permission::getName)
                 .collect(Collectors.toList());
 
-        Long employeeDbId = employeeRepository.findByEmail(user.getWorkEmail())
-                .map(Employee::getId)
-                .orElse(null);
-
         LoginResponse.UserData userData = new LoginResponse.UserData(
                 user.getId(),
                 user.getUserId(),

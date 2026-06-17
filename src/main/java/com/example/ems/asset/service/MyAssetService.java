@@ -427,8 +427,9 @@ public class MyAssetService {
 
     @Transactional(readOnly = true)
     public AssetTimelineResponse getAssetTimeline(Long assetId, Employee employee) {
-        MyAsset asset = assetRepository.findById(assetId)
-                .orElseThrow(() -> new IllegalArgumentException("Asset not found with ID: " + assetId));
+        if (!assetRepository.existsById(assetId)) {
+            throw new IllegalArgumentException("Asset not found with ID: " + assetId);
+        }
 
         List<MyAssetActivity> activities = activityRepository.findByAssetIdOrderByDateDesc(assetId);
         List<AssetTimelineResponse.TimelineEventItem> events = activities.stream()

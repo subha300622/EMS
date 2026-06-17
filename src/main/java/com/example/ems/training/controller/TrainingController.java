@@ -19,6 +19,8 @@ import com.example.ems.training.dto.TrainingEnrollmentResponse;
 import com.example.ems.training.dto.TrainingSessionRequest;
 import com.example.ems.training.dto.TrainingSessionResponse;
 import com.example.ems.training.service.TrainingService;
+import com.example.ems.training.repository.TrainingEnrollmentRepository;
+import com.example.ems.training.entity.TrainingEnrollment;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,7 @@ public class TrainingController {
     @Autowired private EmployeeRepository employeeRepository;
     @Autowired private JwtService jwtService;
     @Autowired private RoleService roleService;
+    @Autowired private TrainingEnrollmentRepository trainingEnrollmentRepository;
 
     // ── Auth helpers ─────────────────────────────────────────────────────────
     private User resolveUser(String authHeader) {
@@ -528,5 +531,47 @@ public class TrainingController {
                 "channel", "EMAIL"
         );
         return ResponseEntity.ok(ApiResponse.success("Training notification dispatched successfully", result));
+    }
+
+    // ── 10. COMPLETE TRAINING (SELF-SERVICE) ─────────────────────────────────
+    @PostMapping("/trainings/{id}/complete")
+    public ResponseEntity<?> completeTrainingModule(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+        
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.training.complete")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.training.complete' permission.", "AUTH_002"));
+        }
+
+        TrainingEnrollment enrollment = trainingEnrollmentRepository.findById(id).orElse(null);
+        if (enrollment == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Training enrollment not found", "TR_001"));
+        }
+
+        Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
+        if (employee == null || !enrollment.getEmployee().getId().equals(employee.getId())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: You are not enrolled in this training.", "AUTH_002"));
+        }
+
+        // Simulate training completion via assessment submission with 100% score
+        TrainingAssessmentRequest assessment = new TrainingAssessmentRequest();
+        assessment.setScore(100);
+        assessment.setFeedback("Completed via Self-Service");
+        
+        try {
+            Map<String, Object> result = trainingService.submitAssessment(id, assessment);
+            return ResponseEntity.ok(ApiResponse.success("Training module marked as completed", result));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TR_002"));
+        }
     }
 }

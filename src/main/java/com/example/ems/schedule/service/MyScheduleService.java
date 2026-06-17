@@ -79,7 +79,7 @@ public class MyScheduleService {
             return templateRepository.save(t);
         });
 
-        MyShiftTemplate night = templateRepository.findById(103L).orElseGet(() -> {
+        templateRepository.findById(103L).orElseGet(() -> {
             MyShiftTemplate t = new MyShiftTemplate(103L, "NIGHT_SHIFT", "22:00", "06:00", 45, "Chennai Office");
             return templateRepository.save(t);
         });

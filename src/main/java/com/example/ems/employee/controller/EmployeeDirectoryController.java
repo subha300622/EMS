@@ -17,7 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/employees")
+@RequestMapping("/api/v1/directory")
 @CrossOrigin("*")
 public class EmployeeDirectoryController {
 

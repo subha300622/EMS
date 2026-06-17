@@ -79,42 +79,6 @@ public class MyPerformanceControllerTest {
     }
 
     @Test
-    void testGetGoals() throws Exception {
-        when(performanceService.getGoals(eq(email), any(), any(), any(), any()))
-                .thenReturn(new MyGoalListResponse(new ArrayList<>(), 0, 0, 0));
-
-        mockMvc.perform(get("/api/v1/my-performance/goals")
-                .header("Authorization", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
-
-    @Test
-    void testGetGoalDetails() throws Exception {
-        when(performanceService.getGoalDetails(email, 1L)).thenReturn(new GoalDetailsResponse());
-
-        mockMvc.perform(get("/api/v1/my-performance/goals/1")
-                .header("Authorization", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
-
-    @Test
-    void testUpdateGoalProgress() throws Exception {
-        UpdateGoalProgressRequest req = new UpdateGoalProgressRequest();
-        req.setProgressPercentage(50.0);
-        when(performanceService.updateGoalProgress(eq(email), eq(1L), any()))
-                .thenReturn(new UpdateGoalProgressResponse("Success", 50.0, "IN_PROGRESS"));
-
-        mockMvc.perform(patch("/api/v1/my-performance/goals/1/progress")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
-
-    @Test
     void testGetReviewCycles() throws Exception {
         when(performanceService.getReviewCycles(email)).thenReturn(new ReviewCyclesResponse());
 

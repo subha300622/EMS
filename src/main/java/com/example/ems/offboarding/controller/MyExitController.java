@@ -2,7 +2,6 @@ package com.example.ems.offboarding.controller;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.offboarding.dto.*;
 import com.example.ems.offboarding.service.MyExitService;
@@ -16,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @RestController

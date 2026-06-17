@@ -69,7 +69,7 @@ public class EmployeeDirectoryControllerTest {
         EmployeeDirectoryDashboardResponse resp = new EmployeeDirectoryDashboardResponse();
         when(directoryService.getDashboard(empEmail)).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees/dashboard")
+        mockMvc.perform(get("/api/v1/directory/dashboard")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -81,7 +81,7 @@ public class EmployeeDirectoryControllerTest {
         MyTeamResponse resp = new MyTeamResponse();
         when(directoryService.getMyTeam(empEmail)).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees/my-team")
+        mockMvc.perform(get("/api/v1/directory/my-team")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -93,7 +93,7 @@ public class EmployeeDirectoryControllerTest {
         EmployeeDirectoryListResponse resp = new EmployeeDirectoryListResponse();
         when(directoryService.getEmployeeList(any(), any(), any(), any(), any(), any(), any())).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees")
+        mockMvc.perform(get("/api/v1/directory")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -105,7 +105,7 @@ public class EmployeeDirectoryControllerTest {
         EmployeeProfileResponse resp = new EmployeeProfileResponse();
         when(directoryService.getEmployeeProfile(eq(101L))).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees/101")
+        mockMvc.perform(get("/api/v1/directory/101")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -117,7 +117,7 @@ public class EmployeeDirectoryControllerTest {
         EmployeeSearchResponse resp = new EmployeeSearchResponse(List.of(), 0);
         when(directoryService.searchEmployees(eq("raj"), any())).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees/search")
+        mockMvc.perform(get("/api/v1/directory/search")
                 .param("keyword", "raj")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
@@ -130,7 +130,7 @@ public class EmployeeDirectoryControllerTest {
         EmployeeSkillsResponse resp = new EmployeeSkillsResponse();
         when(directoryService.getEmployeeSkills(eq(101L))).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees/101/skills")
+        mockMvc.perform(get("/api/v1/directory/101/skills")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -142,7 +142,7 @@ public class EmployeeDirectoryControllerTest {
         EmployeeHierarchyResponse resp = new EmployeeHierarchyResponse();
         when(directoryService.getHierarchy(eq(101L))).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees/101/hierarchy")
+        mockMvc.perform(get("/api/v1/directory/101/hierarchy")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -154,7 +154,7 @@ public class EmployeeDirectoryControllerTest {
         DepartmentListResponse resp = new DepartmentListResponse(List.of());
         when(directoryService.getDepartments()).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees/departments")
+        mockMvc.perform(get("/api/v1/directory/departments")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -167,7 +167,7 @@ public class EmployeeDirectoryControllerTest {
         SendMessageResponse resp = new SendMessageResponse();
         when(directoryService.sendMessage(eq(empEmail), eq(101L), any(SendMessageRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(post("/api/v1/employees/101/messages")
+        mockMvc.perform(post("/api/v1/directory/101/messages")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -181,7 +181,7 @@ public class EmployeeDirectoryControllerTest {
         EmployeeAvailabilityResponse resp = new EmployeeAvailabilityResponse();
         when(directoryService.getAvailability(eq(101L))).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/employees/101/availability")
+        mockMvc.perform(get("/api/v1/directory/101/availability")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));

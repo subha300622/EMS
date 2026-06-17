@@ -17,6 +17,8 @@ import com.example.ems.training.dto.TrainingEnrollmentResponse;
 import com.example.ems.training.dto.TrainingSessionRequest;
 import com.example.ems.training.dto.TrainingSessionResponse;
 import com.example.ems.training.service.TrainingService;
+import com.example.ems.training.repository.TrainingEnrollmentRepository;
+import com.example.ems.training.entity.TrainingEnrollment;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +54,7 @@ public class TrainingControllerTest {
     @Mock private EmployeeRepository employeeRepository;
     @Mock private JwtService jwtService;
     @Mock private RoleService roleService;
+    @Mock private TrainingEnrollmentRepository trainingEnrollmentRepository;
 
     @InjectMocks
     private TrainingController trainingController;
@@ -837,5 +840,34 @@ public class TrainingControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))
                 .andExpect(status().isForbidden());
+    }
+
+    // ── 10. COMPLETE TRAINING (SELF-SERVICE) ─────────────────────────────────
+    @Test
+    public void testCompleteTrainingModuleSuccess() throws Exception {
+        setupEmployee();
+        
+        TrainingEnrollment enrollment = new TrainingEnrollment();
+        enrollment.setId(10L);
+        Employee emp = new Employee();
+        emp.setId(2L);
+        enrollment.setEmployee(emp);
+
+        when(trainingEnrollmentRepository.findById(10L)).thenReturn(Optional.of(enrollment));
+        when(employeeRepository.findByEmail(empEmail)).thenReturn(Optional.of(emp));
+        when(roleService.hasPermission(empEmail, "employee.training.complete")).thenReturn(true);
+
+        Map<String, Object> result = Map.of(
+                "submissionId", 12L,
+                "score", 100,
+                "status", "COMPLETED"
+        );
+        when(trainingService.submitAssessment(eq(10L), any(TrainingAssessmentRequest.class))).thenReturn(result);
+
+        mockMvc.perform(post("/api/v1/trainings/10/complete")
+                .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"));
     }
 }
