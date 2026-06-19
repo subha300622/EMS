@@ -317,50 +317,6 @@ public class MySettingsControllerTest {
     }
 
     @Test
-    public void testExportDataSuccess() throws Exception {
-        setupAuthorized("settings.data.export");
-
-        Map<String, Object> mockResp = Map.of("requestId", "EXP-2026-001", "status", "PROCESSING");
-        when(mySettingsService.exportData(empEmail)).thenReturn(mockResp);
-
-        mockMvc.perform(post("/api/v1/my-settings/data/export")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.requestId").value("EXP-2026-001"));
-    }
-
-    @Test
-    public void testGetExportStatusSuccess() throws Exception {
-        setupAuthorized("settings.data.export");
-
-        Map<String, Object> mockResp = Map.of("requestId", "EXP-2026-001", "status", "COMPLETED", "downloadUrl", "url");
-        when(mySettingsService.getExportStatus(empEmail, "EXP-2026-001")).thenReturn(mockResp);
-
-        mockMvc.perform(get("/api/v1/my-settings/data/export/EXP-2026-001")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.status").value("COMPLETED"));
-    }
-
-    @Test
-    public void testDownloadExportedCsvSuccess() throws Exception {
-        setupAuthorized("settings.data.export");
-
-        byte[] csv = "header,value\n".getBytes();
-        when(mySettingsService.getExportedDataCsv(empEmail, "EXP-2026-001")).thenReturn(csv);
-
-        mockMvc.perform(get("/api/v1/my-settings/data/export/EXP-2026-001/download")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(result -> {
-                    byte[] content = result.getResponse().getContentAsByteArray();
-                    assert content.length > 0;
-                });
-    }
-
-    @Test
     public void testGetFaqsSuccess() throws Exception {
         setupAuthorized("settings.support.read");
 

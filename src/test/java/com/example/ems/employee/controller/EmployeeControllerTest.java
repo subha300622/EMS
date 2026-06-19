@@ -58,7 +58,7 @@ public class EmployeeControllerTest {
 
     @Test
     public void testCreateEmployeeSuccess() throws Exception {
-        String adminEmail = "emssuperadmin@gmail.com";
+        String adminEmail = "super_admin@company.com";
         User adminUser = new User();
         adminUser.setWorkEmail(adminEmail);
 

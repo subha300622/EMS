@@ -124,7 +124,18 @@ public class AuthController {
         }
 
         User user = optUser.get();
-        String roleName = user.getRole() != null ? user.getRole().getName() : user.getRequestedRole();
+
+        // ── Block SUSPENDED / INACTIVE accounts ───────────────────────────────
+        // All registered users are ACTIVE by default. Admin can set SUSPENDED to revoke access.
+        if (user.getStatus() != null && !user.getStatus().equalsIgnoreCase("ACTIVE")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error(
+                            "Your account is " + user.getStatus().toLowerCase() + ". Please contact your administrator.",
+                            "AUTH_018"));
+        }
+
+        // Role name for the token — defaults to EMPLOYEE if not yet upgraded
+        String roleName = user.getRole() != null ? user.getRole().getName() : "EMPLOYEE";
 
         // Create session in Redis first so we can bind sessionId to the access token
         SessionService.SessionMetadata session = sessionService.createSession(
@@ -155,7 +166,7 @@ public class AuthController {
                 user.getWorkEmail(),
                 roleName,
                 permissions,
-                "ACTIVE",
+                user.getStatus(),
                 Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString());
 
         LoginResponse.LoginData loginData = new LoginResponse.LoginData(tokenData, userData);
@@ -318,8 +329,10 @@ public class AuthController {
     @PostMapping("/resend-otp")
     public ResponseEntity<?> resendOtp(
             @RequestBody @Valid ForgotPasswordRequest request) {
-        otpService.resendOtp(request.getEmail());
-        return ResponseEntity.ok(ApiResponse.success("OTP resent successfully"));
+        Map<String, String> result = otpService.resendOtp(request.getEmail());
+        Map<String, Object> data = new HashMap<>();
+        data.put("otp", result.get("otp"));
+        return ResponseEntity.ok(ApiResponse.success("OTP resent successfully", data));
     }
 
     // ── 10. ACTIVE SESSIONS ──────────────────────────────────────────────────

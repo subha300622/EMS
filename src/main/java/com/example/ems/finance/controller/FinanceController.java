@@ -186,4 +186,21 @@ public class FinanceController {
             return ResponseEntity.badRequest().body(ErrorResponse.error("Invalid date parameters. Expected format: YYYY-MM-DD", "FIN_001"));
         }
     }
+
+    // ── 8. GET SALARY DISTRIBUTION ──────────────────────────────────────────
+    @GetMapping("/salary/distribution")
+    public ResponseEntity<?> getSalaryDistribution(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkAccess(user)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Salary distribution retrieved successfully", 
+                financeService.getSalaryDistribution()));
+    }
 }

@@ -20,6 +20,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -56,6 +57,15 @@ public class MySettingsService {
 
     @Autowired
     private MySupportSubCategoryRepository supportSubCategoryRepository;
+
+    @Autowired
+    private UserBackupCodeRepository userBackupCodeRepository;
+
+    @Autowired
+    private com.example.ems.auth.service.OtpService otpService;
+
+    @Autowired
+    private com.example.ems.audit.service.AuditLogService auditLogService;
 
     private static final DateTimeFormatter ISO_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
@@ -403,5 +413,85 @@ public class MySettingsService {
         supportReq.setPreferredContactMethod("EMAIL");
 
         return supportService.createTicket(email, supportReq);
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getBackupCodesInfo(String email) {
+        List<UserBackupCode> codes = userBackupCodeRepository.findByUserEmail(email);
+        Map<String, Object> data = new LinkedHashMap<>();
+        if (codes.isEmpty()) {
+            data.put("remainingCodes", 0);
+            data.put("totalCodes", 0);
+            data.put("lastGeneratedAt", null);
+            data.put("expiresAt", null);
+        } else {
+            long remaining = codes.stream().filter(c -> !c.isUsed()).count();
+            data.put("remainingCodes", remaining);
+            data.put("totalCodes", codes.size());
+            data.put("lastGeneratedAt", codes.get(0).getCreatedAt().format(ISO_FORMATTER));
+            LocalDateTime expires = codes.get(0).getExpiresAt();
+            data.put("expiresAt", expires != null ? expires.format(ISO_FORMATTER) : null);
+        }
+        return data;
+    }
+
+    @Transactional
+    public Map<String, Object> regenerateBackupCodes(String email, RegenerateBackupCodesRequest request, String ipAddress) {
+        User user = userRepository.findByWorkEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("INVALID_PASSWORD");
+        }
+
+        Map<String, Object> otpResult = otpService.verifyOtp(email, request.getOtp());
+        if (!Boolean.TRUE.equals(otpResult.get("verified"))) {
+            throw new IllegalArgumentException("INVALID_OTP");
+        }
+
+        // Invalidate old codes
+        userBackupCodeRepository.deleteByUserEmail(email);
+
+        // Generate 10 new codes
+        List<String> plainCodes = new ArrayList<>();
+        List<UserBackupCode> entities = new ArrayList<>();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiresAt = now.plusDays(90);
+
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        SecureRandom random = new SecureRandom();
+        for (int i = 0; i < 10; i++) {
+            StringBuilder sb = new StringBuilder();
+            for (int j = 0; j < 9; j++) {
+                if (j == 4) {
+                    sb.append("-");
+                } else {
+                    sb.append(chars.charAt(random.nextInt(chars.length())));
+                }
+            }
+            String code = sb.toString();
+            plainCodes.add(code);
+            entities.add(new UserBackupCode(email, passwordEncoder.encode(code), false, now, expiresAt));
+        }
+        userBackupCodeRepository.saveAll(entities);
+
+        // Log audit action
+        auditLogService.logAction(
+                user.getUserId(),
+                email,
+                "BACKUP_CODES_REGENERATED",
+                "USER",
+                user.getId().toString(),
+                ipAddress,
+                "Backup codes regenerated successfully"
+        );
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("generatedAt", now.format(ISO_FORMATTER));
+        data.put("expiresAt", expiresAt.format(ISO_FORMATTER));
+        data.put("remainingCodes", 10);
+        data.put("backupCodes", plainCodes);
+
+        return data;
     }
 }

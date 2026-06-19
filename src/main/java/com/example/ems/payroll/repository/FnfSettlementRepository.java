@@ -9,6 +9,6 @@ import java.util.Optional;
 
 @Repository
 public interface FnfSettlementRepository extends JpaRepository<FnfSettlement, Long> {
-    Optional<FnfSettlement> findByEmployeeId(Long employeeId);
+    List<FnfSettlement> findByEmployeeId(Long employeeId);
     List<FnfSettlement> findByStatus(String status);
 }

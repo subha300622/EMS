@@ -5,16 +5,13 @@ import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.service.ApprovalCenterService;
-import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.leave.service.LeaveService;
 import com.example.ems.offboarding.repository.OffboardingRepository;
 import com.example.ems.onboarding.repository.OnboardingRepository;
 import com.example.ems.onboarding.service.OnboardingService;
 import com.example.ems.performance.repository.PerformanceReviewRepository;
-import com.example.ems.employee.repository.SupportTicketRepository;
 import com.example.ems.security.service.JwtService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -43,9 +40,6 @@ public class DashboardControllerTest {
     private UserRepository userRepository;
 
     @Mock
-    private RoleService roleService;
-
-    @Mock
     private JwtService jwtService;
 
     @Mock
@@ -68,9 +62,6 @@ public class DashboardControllerTest {
 
     @Mock
     private PerformanceReviewRepository performanceReviewRepository;
-
-    @Mock
-    private SupportTicketRepository supportTicketRepository;
 
     @Mock
     private ApprovalCenterService approvalCenterService;

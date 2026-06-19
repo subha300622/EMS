@@ -18,11 +18,11 @@ import java.time.LocalDate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-// import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
-// @Component
+@Component
 public class DatabaseSeeder implements CommandLineRunner {
 
     @Autowired
@@ -39,6 +39,12 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+
+    @Autowired
+    private com.example.ems.support.service.MySupportService mySupportService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.seed.domain:company.com}")
+    private String seedDomain;
 
     @Override
     public void run(String... args) throws Exception {
@@ -155,7 +161,7 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(
                 "user.manage",
-                "user.create", "user.read", "user.update",
+                "user.create", "user.read", "user.update", "user.role.assign",
                 "employee.create", "employee.read", "employee.update",
                 "attendance.manage", "leave.manage", "reports.view",
                 "payroll.read", "payroll.manage", "salary.manage", "payslip.read",
@@ -173,7 +179,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "team.read", "asset.manage", "fnf.manage", "announcement.manage"));
 
         rolePermissionsMap.put("MANAGER", Arrays.asList(
-                "employee.team.read", "attendance.team.read", "leave.team.approve",
+                "employee.read", "employee.team.read", "attendance.read", "attendance.team.read", "leave.team.approve",
                 "task.assign", "performance.review",
                 "employee.directory.read", "employee.profile.read", "employee.message.create",
                 "employee.contact.read", "employee.team.hierarchy.read",
@@ -185,7 +191,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "salary.manage", "reports.finance",
                 "payslip.read", "employee.payslip.read", "employee.payslip.download",
                 "payslip.self.read", "payslip.self.preview", "payslip.self.download",
-                "fnf.manage", "payroll-settings.manage"));
+                "fnf.manage", "payroll-settings.manage", "team.read"));
 
         rolePermissionsMap.put("EMPLOYEE", Arrays.asList(
                 "attendance.self.read",
@@ -254,19 +260,13 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         // 3. Seed Default Users
         for (Role role : roleMap.values()) {
-            String email;
-            String password;
-            String displayName;
+            String roleCleanName = role.getName().toLowerCase();
+            String email = roleCleanName + "@" + seedDomain;
+            String password = roleCleanName + "@" + role.getId();
+            String displayName = role.getName().charAt(0) + role.getName().substring(1).toLowerCase().replace("_", " ");
             
             if ("SUPER_ADMIN".equalsIgnoreCase(role.getName())) {
-                email = "emssuperadmin@gmail.com";
-                password = "Admin@123";
                 displayName = "Super Admin";
-            } else {
-                String roleCleanName = role.getName().toLowerCase();
-                email = roleCleanName + "@company.com";
-                password = roleCleanName + "@" + role.getId();
-                displayName = role.getName().charAt(0) + role.getName().substring(1).toLowerCase().replace("_", " ");
             }
             
             if (userRepository.findByWorkEmail(email).isEmpty()) {
@@ -329,5 +329,13 @@ public class DatabaseSeeder implements CommandLineRunner {
             
             employeeRepository.save(emp);
         }
+
+        // 6. Seed support data (categories, KB articles, sample tickets) for employee
+        String employeeEmail = userRepository.findAll().stream()
+                .filter(u -> u.getRole() != null && "EMPLOYEE".equalsIgnoreCase(u.getRole().getName()))
+                .map(User::getWorkEmail)
+                .findFirst()
+                .orElse("employee@" + seedDomain);
+        mySupportService.seedSupportData(employeeEmail);
     }
 }

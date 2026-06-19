@@ -149,7 +149,8 @@ public class UserController {
     // ── 2. Get All Users ─────────────────────────────────────────────────────
     @GetMapping("/users")
     public ResponseEntity<?> getAllUsers(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "status", required = false) String statusFilter) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -165,15 +166,60 @@ public class UserController {
         List<User> users = userService.getAllUsers();
         List<Map<String, Object>> formattedList = new ArrayList<>();
         for (User u : users) {
+            // Apply optional status filter: /users?status=PENDING or ?status=ACTIVE
+            if (statusFilter != null && !statusFilter.isBlank()
+                    && !statusFilter.equalsIgnoreCase(u.getStatus())) {
+                continue;
+            }
             Map<String, Object> uMap = new LinkedHashMap<>();
+            uMap.put("id", u.getId());
             uMap.put("userId", u.getUserId());
             uMap.put("fullName", u.getFullName());
             uMap.put("email", u.getWorkEmail());
-            uMap.put("role", u.getRole() != null ? u.getRole().getName() : u.getRequestedRole());
+            uMap.put("department", u.getDepartment());
+            uMap.put("role", u.getRole() != null ? u.getRole().getName() : null);
             uMap.put("status", u.getStatus());
             formattedList.add(uMap);
         }
         return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", formattedList));
+    }
+
+    // ── 2b. Get Pending Users (awaiting admin approval) ───────────────────────
+    @GetMapping("/users/pending")
+    public ResponseEntity<?> getPendingUsers(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!hasPermission(currentUser, "user.read")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
+        }
+
+        List<User> pendingUsers = userService.getAllUsers().stream()
+                .filter(u -> "PENDING".equalsIgnoreCase(u.getStatus()))
+                .toList();
+
+        List<Map<String, Object>> formattedList = new ArrayList<>();
+        for (User u : pendingUsers) {
+            Map<String, Object> uMap = new LinkedHashMap<>();
+            uMap.put("id", u.getId());
+            uMap.put("userId", u.getUserId());
+            uMap.put("fullName", u.getFullName());
+            uMap.put("workEmail", u.getWorkEmail());
+            uMap.put("department", u.getDepartment());
+            uMap.put("mobileNumber", u.getMobileNumber());
+            uMap.put("role", null);
+            uMap.put("status", "PENDING");
+            uMap.put("registeredAt", u.getCreatedAt());
+            formattedList.add(uMap);
+        }
+        return ResponseEntity.ok(ApiResponse.success(
+                pendingUsers.size() + " user(s) pending admin approval", formattedList));
     }
 
     // ── 3. Get User By ID ────────────────────────────────────────────────────
@@ -292,7 +338,6 @@ public class UserController {
 
     // ── 7. Update User Status ────────────────────────────────────────────────
     @PutMapping("/users/{userId}/status")
-    @PostMapping("/users/{userId}/status")
     public ResponseEntity<?> updateUserStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String userId,

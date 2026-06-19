@@ -241,7 +241,8 @@ public class RoleController {
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "role.assign")
-                && !roleService.hasPermission(currentUser.getWorkEmail(), "role.manage")) {
+                && !roleService.hasPermission(currentUser.getWorkEmail(), "role.manage")
+                && !roleService.isSuperAdmin(currentUser.getWorkEmail())) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'role.assign' or 'role.manage' permission.", "AUTH_002"));
         }
@@ -252,9 +253,29 @@ public class RoleController {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
             }
-            boolean assigned = roleService.assignRole(userId, request.getRole());
+
+            boolean assigned;
+            String assignedRoleName;
+
+            if (request.getRoleId() != null) {
+                // Assign by numeric role ID (POST body: { "roleId": 3 })
+                assigned = roleService.assignRoleById(userId, request.getRoleId());
+                assignedRoleName = targetUser.getRole() != null ? targetUser.getRole().getName() : request.getRoleId().toString();
+                // Reload to get updated user
+                targetUser = userRepository.findById(userId).orElse(targetUser);
+                assignedRoleName = targetUser.getRole() != null ? targetUser.getRole().getName() : assignedRoleName;
+            } else if (request.getRole() != null && !request.getRole().isBlank()) {
+                // Assign by role name (POST body: { "role": "MANAGER" })
+                assigned = roleService.assignRole(userId, request.getRole());
+                targetUser = userRepository.findById(userId).orElse(targetUser);
+                assignedRoleName = targetUser.getRole() != null ? targetUser.getRole().getName() : request.getRole();
+            } else {
+                return ResponseEntity.badRequest()
+                        .body(ErrorResponse.error("Provide either 'roleId' (numeric) or 'role' (name) in request body.", "ROLE_007"));
+            }
+
             if (assigned) {
-                AssignRoleToUserResponse data = new AssignRoleToUserResponse(targetUser.getUserId(), request.getRole());
+                AssignRoleToUserResponse data = new AssignRoleToUserResponse(targetUser.getUserId(), assignedRoleName);
                 return ResponseEntity.ok(ApiResponse.success("Role assigned successfully to user", data));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)

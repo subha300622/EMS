@@ -25,7 +25,7 @@ public class RegisterRequest {
     @NotBlank(message = "Department is required")
     private String department;
 
-    @NotBlank(message = "Requested role is required")
+    // Optional — Admin assigns the actual role after approval
     private String requestedRole;
 
     // Optional

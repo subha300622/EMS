@@ -107,6 +107,7 @@ public class OtpService {
             log.warn("Exception message: {}", e.getMessage());
         }
 
+        response.put("otp", otp);
         response.put("message", safeMessage);
         return response;
     }

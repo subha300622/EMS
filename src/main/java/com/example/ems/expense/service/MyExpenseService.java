@@ -48,6 +48,9 @@ public class MyExpenseService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired
+    private com.example.ems.auth.repository.UserRepository userRepository;
+
     @EventListener(ContextRefreshedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void seedDatabase() {
@@ -101,12 +104,17 @@ public class MyExpenseService {
             System.out.println("Seeded Expense Policies.");
         }
 
-        // 3. Seed 24 Mock claims for employee@company.com if empty
-        Optional<Employee> mockEmployeeOpt = employeeRepository.findByEmail("employee@company.com");
+        // 3. Seed 24 Mock claims for employee if empty
+        Optional<Employee> mockEmployeeOpt = employeeRepository.findAll().stream()
+                .filter(e -> {
+                    com.example.ems.auth.entity.User u = userRepository.findByWorkEmail(e.getEmail()).orElse(null);
+                    return u != null && u.getRole() != null && "EMPLOYEE".equalsIgnoreCase(u.getRole().getName());
+                })
+                .findFirst();
         if (mockEmployeeOpt.isPresent()) {
             Employee emp = mockEmployeeOpt.get();
             List<Expense> existingExpenses = expenseRepository.findByEmployeeId(emp.getId());
-            if (existingExpenses.isEmpty()) {
+            if (existingExpenses.isEmpty() && expenseRepository.findByExpenseNumber("EXP-2026-0001").isEmpty()) {
                 int expNumCounter = 1;
 
                 // 15 Reimbursed claims (3600.00 each -> total 54000.00, REIMBURSED status, PAID reimbursement)
@@ -237,7 +245,7 @@ public class MyExpenseService {
                 // Seed timeline events
                 timelineEventRepository.save(new MyExpenseTimelineEvent(draftExp, "CREATED", emp.getFullName()));
 
-                System.out.println("Seeded 24 Mock Expense Claims for employee@company.com.");
+                System.out.println("Seeded 24 Mock Expense Claims for " + emp.getEmail() + ".");
             }
         }
     }

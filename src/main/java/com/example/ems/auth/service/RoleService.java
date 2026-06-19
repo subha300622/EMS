@@ -47,6 +47,7 @@ public class RoleService {
 
     /**
      * Checks if a user has a specific permission in the database.
+     * SUPER_ADMIN users (those with system.manage) bypass all permission checks.
      */
     public boolean hasPermission(String email, String permissionName) {
         if (email == null || email.trim().isEmpty() || permissionName == null || permissionName.trim().isEmpty()) {
@@ -56,8 +57,16 @@ public class RoleService {
         if (optUser.isEmpty()) {
             return false;
         }
-        return getEffectivePermissions(optUser.get()).stream()
-                .anyMatch(permission -> permission.getName().equalsIgnoreCase(permissionName));
+        User user = optUser.get();
+        Set<Permission> perms = getEffectivePermissions(user);
+
+        // SUPER_ADMIN bypass: if user has system.manage, allow everything
+        boolean isSuperAdmin = perms.stream().anyMatch(p -> "system.manage".equalsIgnoreCase(p.getName()));
+        if (isSuperAdmin) {
+            return true;
+        }
+
+        return perms.stream().anyMatch(permission -> permission.getName().equalsIgnoreCase(permissionName));
     }
 
     /**
@@ -139,7 +148,37 @@ public class RoleService {
             return false;
         }
         User user = optUser.get();
+
+        // Resolve the role entity by name and assign the FK
+        Optional<Role> optRole = roleRepository.findByName(roleName.trim().toUpperCase().replace(" ", "_"));
+        if (optRole.isEmpty()) {
+            optRole = roleRepository.findByName(roleName.trim());
+        }
+        if (optRole.isEmpty()) {
+            throw new IllegalArgumentException("Role '" + roleName + "' does not exist. Use GET /api/v1/roles to find valid role names.");
+        }
+        user.setRole(optRole.get());
         user.setRequestedRole(roleName);
+        userRepository.save(user);
+        return true;
+    }
+
+    /**
+     * Assigns a role to a user by its numeric Role ID.
+     */
+    public boolean assignRoleById(Long userId, Long roleId) {
+        Optional<User> optUser = userRepository.findById(userId);
+        if (optUser.isEmpty()) {
+            return false;
+        }
+        User user = optUser.get();
+
+        Optional<Role> optRole = roleRepository.findById(roleId);
+        if (optRole.isEmpty()) {
+            throw new IllegalArgumentException("Role with ID '" + roleId + "' does not exist. Use GET /api/v1/roles to find valid role IDs.");
+        }
+        user.setRole(optRole.get());
+        user.setRequestedRole(optRole.get().getName());
         userRepository.save(user);
         return true;
     }

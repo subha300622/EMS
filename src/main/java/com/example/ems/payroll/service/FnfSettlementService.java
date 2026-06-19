@@ -42,7 +42,8 @@ public class FnfSettlementService {
     }
 
     public Optional<FnfSettlement> getSettlementByEmployeeId(Long employeeId) {
-        return fnfSettlementRepository.findByEmployeeId(employeeId);
+        List<FnfSettlement> list = fnfSettlementRepository.findByEmployeeId(employeeId);
+        return list.isEmpty() ? Optional.empty() : Optional.of(list.get(0));
     }
 
     @Transactional

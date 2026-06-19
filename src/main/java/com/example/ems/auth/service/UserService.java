@@ -64,36 +64,10 @@ public class UserService {
             return "Employee ID is already in use";
         }
 
-        Optional<Role> optRole = Optional.empty();
-        String workEmail = request.getWorkEmail();
-        if (workEmail != null && workEmail.endsWith("@company.com")) {
-            String prefix = workEmail.substring(0, workEmail.indexOf("@")).trim().toUpperCase().replace(" ", "_");
-            if (prefix.equals("SUPERADMIN")) {
-                prefix = "SUPER_ADMIN";
-            }
-            optRole = roleRepository.findByName(prefix);
-        }
-
-        if (optRole.isEmpty()) {
-            String reqRole = request.getRequestedRole();
-            if (reqRole == null || reqRole.trim().isEmpty()) {
-                return "Requested role is required";
-            }
-
-            String normalizedRole = reqRole.trim().toUpperCase().replace(" ", "_");
-            if (normalizedRole.equals("SUPERADMIN")) {
-                normalizedRole = "SUPER_ADMIN";
-            }
-
-            optRole = roleRepository.findByName(normalizedRole);
-            if (optRole.isEmpty()) {
-                optRole = roleRepository.findByName(reqRole);
-            }
-        }
-
-        if (optRole.isEmpty()) {
-            return "Role does not exist in the system. Registration aborted.";
-        }
+        // ── Auto-assign the EMPLOYEE role so users can login immediately ────────
+        // Admin can upgrade to HR / MANAGER / FINANCE / ADMIN anytime via assign-role.
+        Role employeeRole = roleRepository.findByName("EMPLOYEE")
+                .orElse(null); // safe — seeder always creates EMPLOYEE role on startup
 
         User user = new User();
         user.setFullName(request.getFullName());
@@ -101,10 +75,10 @@ public class UserService {
         user.setMobileNumber(request.getMobileNumber());
         user.setEmployeeId(request.getEmployeeId());
         user.setDepartment(request.getDepartment());
-        user.setRequestedRole(request.getRequestedRole());
-        user.setRole(optRole.get());
         user.setLocation(request.getLocation());
-        // BCrypt hash the password before storing
+        user.setStatus("ACTIVE");          // ← Can login immediately
+        user.setRole(employeeRole);        // ← Default EMPLOYEE role
+        user.setRequestedRole(employeeRole != null ? "EMPLOYEE" : null);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
 
         userRepository.save(user);
@@ -113,6 +87,7 @@ public class UserService {
         user.setUserId(userId);
         userRepository.save(user);
 
+        // Create Employee profile record
         Employee emp = employeeRepository.findByEmail(user.getWorkEmail())
                 .orElseGet(Employee::new);
         emp.setFullName(user.getFullName());
@@ -124,16 +99,16 @@ public class UserService {
         if (emp.getAddress() == null) emp.setAddress("123 Corporate Way");
         if (emp.getEmergencyContact() == null) emp.setEmergencyContact("9876543210");
         if (emp.getDepartment() == null) emp.setDepartment(user.getDepartment() != null && !user.getDepartment().isBlank() ? user.getDepartment() : "Engineering");
-        if (emp.getDesignation() == null) emp.setDesignation(user.getRole() != null ? user.getRole().getName() : "Software Engineer");
-        if (emp.getAnnualSalary() == null) emp.setAnnualSalary(BigDecimal.valueOf(85000));
-        if (emp.getJoiningDate() == null) emp.setJoiningDate(LocalDate.of(2026, 6, 10));
+        if (emp.getDesignation() == null) emp.setDesignation("Employee");
+        if (emp.getAnnualSalary() == null) emp.setAnnualSalary(BigDecimal.valueOf(0));
+        if (emp.getJoiningDate() == null) emp.setJoiningDate(LocalDate.now());
         if (emp.getLocation() == null) emp.setLocation(user.getLocation() != null && !user.getLocation().isBlank() ? user.getLocation() : "Headquarters");
         if (emp.getEmploymentType() == null) emp.setEmploymentType("FULL_TIME");
         if (emp.getStatus() == null || emp.getStatus().isBlank()) emp.setStatus("ACTIVE");
         employeeRepository.save(emp);
 
-        log.info("New user registered: {} ({}) and employee profile created", user.getWorkEmail(), userId);
-        return "Registration Successful! Your User ID: " + userId + " | Role ID: " + user.getRole().getId();
+        log.info("New user registered with EMPLOYEE role: {} ({})", user.getWorkEmail(), userId);
+        return "Registration Successful! Your User ID: " + userId + " | Role: EMPLOYEE (admin can upgrade your role)";
     }
 
     public java.util.List<User> getAllUsers() {

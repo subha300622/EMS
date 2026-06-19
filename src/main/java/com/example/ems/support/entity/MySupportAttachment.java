@@ -19,6 +19,11 @@ public class MySupportAttachment {
 
     private LocalDateTime uploadedAt = LocalDateTime.now();
 
+    /** Raw file bytes stored in DB so we can serve them on download. */
+    @Lob
+    @Column(name = "file_content")
+    private byte[] fileContent;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ticket_id")
     private MySupportTicket ticket;
@@ -47,6 +52,9 @@ public class MySupportAttachment {
 
     public LocalDateTime getUploadedAt() { return uploadedAt; }
     public void setUploadedAt(LocalDateTime uploadedAt) { this.uploadedAt = uploadedAt; }
+
+    public byte[] getFileContent() { return fileContent; }
+    public void setFileContent(byte[] fileContent) { this.fileContent = fileContent; }
 
     public MySupportTicket getTicket() { return ticket; }
     public void setTicket(MySupportTicket ticket) { this.ticket = ticket; }

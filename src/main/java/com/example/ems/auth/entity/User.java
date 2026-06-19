@@ -48,9 +48,13 @@ public class User {
     private String password;
 
     @PrePersist
-    public void prePersist() {
+    @PreUpdate
+    public void prePersistOrUpdate() {
         if (this.createdAt == null) {
             this.createdAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+        }
+        if (this.workEmail != null) {
+            this.workEmail = this.workEmail.trim().toLowerCase();
         }
     }
 
@@ -108,7 +112,7 @@ public class User {
     }
 
     public void setWorkEmail(String workEmail) {
-        this.workEmail = workEmail;
+        this.workEmail = workEmail != null ? workEmail.trim().toLowerCase() : null;
     }
 
     public String getMobileNumber() {

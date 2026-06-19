@@ -59,8 +59,10 @@ public class MyEmployeeDirectoryService {
 
     @Transactional
     public void seedDirectoryData(String email) {
+        String domain = email != null && email.contains("@") ? email.substring(email.indexOf("@") + 1) : "local";
+
         // Find or create Frontend Team manager: Rajan Kumar
-        Employee manager = employeeRepository.findByEmail("manager@company.com").orElse(null);
+        Employee manager = employeeRepository.findByEmail("manager@" + domain).orElse(null);
         if (manager != null) {
             manager.setFullName("Rajan Kumar");
             manager.setDesignation("Frontend Manager");
@@ -110,28 +112,28 @@ public class MyEmployeeDirectoryService {
         }
 
         // Teammate 2: Sneha Rao
-        Employee sneha = seedEmployee("sneha@company.com", "Sneha Rao", "Frontend Developer", "Engineering", team, manager, "REMOTE", "ACTIVE", "AVAILABLE", "WORKING");
+        Employee sneha = seedEmployee("sneha@" + domain, "Sneha Rao", "Frontend Developer", "Engineering", team, manager, "REMOTE", "ACTIVE", "AVAILABLE", "WORKING");
         if (sneha != null && skillRepository.findByEmployee(sneha).isEmpty()) {
             skillRepository.save(new MyEmployeeSkill(null, sneha, "React", "INTERMEDIATE", 2));
             skillRepository.save(new MyEmployeeSkill(null, sneha, "GraphQL", "BEGINNER", 1));
         }
 
         // Teammate 3
-        Employee peer3 = seedEmployee("peer3@company.com", "Amit Patel", "Frontend Intern", "Engineering", team, manager, "OFFICE", "ACTIVE", "BUSY", "WORKING");
+        Employee peer3 = seedEmployee("peer3@" + domain, "Amit Patel", "Frontend Intern", "Engineering", team, manager, "OFFICE", "ACTIVE", "BUSY", "WORKING");
         if (peer3 != null && skillRepository.findByEmployee(peer3).isEmpty()) {
             skillRepository.save(new MyEmployeeSkill(null, peer3, "React", "BEGINNER", 1));
             skillRepository.save(new MyEmployeeSkill(null, peer3, "TypeScript", "INTERMEDIATE", 1));
         }
 
         // Teammate 4
-        Employee peer4 = seedEmployee("peer4@company.com", "Neha Sharma", "UI/UX Designer", "Engineering", team, manager, "HYBRID", "ACTIVE", "OFFLINE", "WORKING");
+        Employee peer4 = seedEmployee("peer4@" + domain, "Neha Sharma", "UI/UX Designer", "Engineering", team, manager, "HYBRID", "ACTIVE", "OFFLINE", "WORKING");
         if (peer4 != null && skillRepository.findByEmployee(peer4).isEmpty()) {
             skillRepository.save(new MyEmployeeSkill(null, peer4, "Figma", "ADVANCED", 3));
             skillRepository.save(new MyEmployeeSkill(null, peer4, "React", "BEGINNER", 1));
         }
 
         // Other departments
-        Employee hrUser = employeeRepository.findByEmail("hr@company.com").orElse(null);
+        Employee hrUser = employeeRepository.findByEmail("hr@" + domain).orElse(null);
         if (hrUser != null) {
             hrUser.setFullName("Emma Watson");
             hrUser.setDesignation("HR Specialist");
@@ -141,7 +143,7 @@ public class MyEmployeeDirectoryService {
             employeeRepository.save(hrUser);
         }
 
-        Employee financeUser = employeeRepository.findByEmail("finance@company.com").orElse(null);
+        Employee financeUser = employeeRepository.findByEmail("finance@" + domain).orElse(null);
         if (financeUser != null) {
             financeUser.setFullName("John Smith");
             financeUser.setDesignation("Finance Lead");

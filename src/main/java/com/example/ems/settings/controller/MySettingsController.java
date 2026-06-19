@@ -7,6 +7,7 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.settings.dto.ChangePasswordRequest;
+import com.example.ems.settings.dto.RegenerateBackupCodesRequest;
 import com.example.ems.settings.dto.SupportTicketRequest;
 import com.example.ems.settings.service.MySettingsService;
 import com.example.ems.support.dto.CreateTicketResponse;
@@ -16,7 +17,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -358,62 +358,7 @@ public class MySettingsController {
         }
     }
 
-    // 17. Request Data Export
-    @PostMapping("/data/export")
-    public ResponseEntity<?> exportData(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
 
-        try {
-            Map<String, Object> response = mySettingsService.exportData(currentUser.getWorkEmail());
-            return ResponseEntity.ok(ApiResponse.success("Data export request initiated successfully", response));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "SET_500"));
-        }
-    }
-
-    // 18. Get Export Status
-    @GetMapping("/data/export/{requestId}")
-    public ResponseEntity<?> getExportStatus(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("requestId") String requestId) {
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
-
-        try {
-            Map<String, Object> response = mySettingsService.getExportStatus(currentUser.getWorkEmail(), requestId);
-            return ResponseEntity.ok(ApiResponse.success("Export status retrieved successfully", response));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "SET_500"));
-        }
-    }
-
-    // 19. Download Exported CSV
-    @GetMapping("/data/export/{requestId}/download")
-    public ResponseEntity<?> downloadExportedCsv(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("requestId") String requestId) {
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
-
-        try {
-            byte[] csvBytes = mySettingsService.getExportedDataCsv(currentUser.getWorkEmail(), requestId);
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType("text/csv"));
-            headers.setContentDispositionFormData("attachment", "personal-data-" + requestId + ".csv");
-            headers.setContentLength(csvBytes.length);
-            return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "SET_500"));
-        }
-    }
 
     // 20. GET FAQs
     @GetMapping("/faqs")
@@ -450,6 +395,57 @@ public class MySettingsController {
                     .body(ApiResponse.success("Support ticket created successfully", data));
         } catch (Exception e) {
             return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "SET_500"));
+        }
+    }
+
+    // 22. Get Backup Codes Info
+    @GetMapping("/security/2fa/backup-codes")
+    public ResponseEntity<?> getBackupCodesInfo(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.security.read")) return forbiddenResponse("settings.security.read");
+
+        try {
+            Map<String, Object> response = mySettingsService.getBackupCodesInfo(currentUser.getWorkEmail());
+            return ResponseEntity.ok(ApiResponse.success("Backup codes info retrieved successfully", response));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "SET_500"));
+        }
+    }
+
+    // 23. Regenerate Backup Codes
+    @PostMapping("/security/2fa/backup-codes/regenerate")
+    public ResponseEntity<?> regenerateBackupCodes(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @Valid @RequestBody RegenerateBackupCodesRequest request,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.security.update")) return forbiddenResponse("settings.security.update");
+
+        try {
+            String ipAddress = httpRequest.getHeader("X-Forwarded-For");
+            if (ipAddress == null || ipAddress.isEmpty() || "unknown".equalsIgnoreCase(ipAddress)) {
+                ipAddress = httpRequest.getRemoteAddr();
+            }
+            Map<String, Object> response = mySettingsService.regenerateBackupCodes(currentUser.getWorkEmail(), request, ipAddress);
+            return ResponseEntity.ok(ApiResponse.success("Backup codes regenerated successfully", response));
+        } catch (IllegalArgumentException e) {
+            String msg = e.getMessage();
+            if ("INVALID_PASSWORD".equals(msg)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ErrorResponse.error("Current password is incorrect", "INVALID_PASSWORD"));
+            } else if ("INVALID_OTP".equals(msg)) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ErrorResponse.error("Invalid verification code", "INVALID_OTP"));
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error(msg, "SET_500"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }

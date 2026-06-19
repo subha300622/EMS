@@ -4,6 +4,8 @@ import com.example.ems.expense.entity.Expense;
 import com.example.ems.expense.repository.ExpenseRepository;
 import com.example.ems.payroll.entity.Payroll;
 import com.example.ems.payroll.repository.PayrollRepository;
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.employee.repository.EmployeeRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ public class FinanceService {
     @Autowired
     private PayrollRepository payrollRepository;
 
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
     // ── 1. DASHBOARD DATA ──────────────────────────────────────────────────
     public Map<String, Object> getDashboardData() {
         List<Expense> expenses = expenseRepository.findAll();
@@ -40,12 +45,13 @@ public class FinanceService {
                 .map(Payroll::getNetPay)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        List<String> pendingExpenseStatuses = Arrays.asList("PENDING", "SUBMITTED", "PENDING_MANAGER_APPROVAL", "PENDING_FINANCE_APPROVAL");
         long pendingExpensesCount = expenses.stream()
-                .filter(e -> "PENDING".equalsIgnoreCase(e.getStatus()))
+                .filter(e -> pendingExpenseStatuses.contains(e.getStatus().toUpperCase()))
                 .count();
 
         BigDecimal pendingExpensesAmount = expenses.stream()
-                .filter(e -> "PENDING".equalsIgnoreCase(e.getStatus()))
+                .filter(e -> pendingExpenseStatuses.contains(e.getStatus().toUpperCase()))
                 .map(Expense::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -208,6 +214,9 @@ public class FinanceService {
         BigDecimal totalDeductions = payrolls.stream().map(Payroll::getDeductions).reduce(BigDecimal.ZERO,
                 BigDecimal::add);
         BigDecimal totalNetPay = payrolls.stream().map(Payroll::getNetPay).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal totalHra = payrolls.stream()
+                .map(p -> p.getHra() != null ? p.getHra() : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         long employeeCount = payrolls.stream()
                 .map(p -> p.getEmployee().getId())
@@ -217,6 +226,7 @@ public class FinanceService {
         Map<String, Object> summary = new LinkedHashMap<>();
         summary.put("totalBasicSalary", totalBasic);
         summary.put("totalAllowances", totalAllowances);
+        summary.put("totalHra", totalHra);
         summary.put("totalDeductions", totalDeductions);
         summary.put("totalNetPay", totalNetPay);
         summary.put("employeeCount", employeeCount);
@@ -229,7 +239,8 @@ public class FinanceService {
         List<Map<String, Object>> pending = new ArrayList<>();
 
         // Pending Expenses
-        List<Expense> expenses = expenseRepository.findByStatus("PENDING");
+        List<String> pendingExpenseStatuses = Arrays.asList("PENDING", "SUBMITTED", "PENDING_MANAGER_APPROVAL", "PENDING_FINANCE_APPROVAL");
+        List<Expense> expenses = expenseRepository.findByStatusIn(pendingExpenseStatuses);
         for (Expense e : expenses) {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", "EXP-" + e.getId());
@@ -341,5 +352,38 @@ public class FinanceService {
         report.put("details", details);
 
         return report;
+    }
+
+    // ── 8. SALARY DISTRIBUTION ──────────────────────────────────────────────
+    public Map<String, Long> getSalaryDistribution() {
+        List<Employee> employees = employeeRepository.findAll().stream()
+                .filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus()) && e.getAnnualSalary() != null)
+                .toList();
+
+        long range1 = 0; // < 30k
+        long range2 = 0; // 30k - 50k
+        long range3 = 0; // 50k - 80k
+        long range4 = 0; // 80k+
+
+        for (Employee emp : employees) {
+            BigDecimal monthly = emp.getAnnualSalary().divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
+            double val = monthly.doubleValue();
+            if (val < 30000) {
+                range1++;
+            } else if (val >= 30000 && val < 50000) {
+                range2++;
+            } else if (val >= 50000 && val < 80000) {
+                range3++;
+            } else {
+                range4++;
+            }
+        }
+
+        Map<String, Long> dist = new LinkedHashMap<>();
+        dist.put("<30k", range1);
+        dist.put("30k-50k", range2);
+        dist.put("50k-80k", range3);
+        dist.put("80k+", range4);
+        return dist;
     }
 }

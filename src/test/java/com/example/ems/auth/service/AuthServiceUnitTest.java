@@ -74,19 +74,18 @@ public class AuthServiceUnitTest {
     }
 
     @Test
-    public void testRegisterDynamicRoleFromEmailPrefix() {
+    public void testRegisterDefaultRoleEmployee() {
         String testEmail = "finance@company.com";
         RegisterRequest req = new RegisterRequest();
         req.setFullName("Test User");
         req.setWorkEmail(testEmail);
         req.setPassword("password123");
         req.setConfirmPassword("password123");
-        req.setRequestedRole("EMPLOYEE"); // Requested role is EMPLOYEE, but email prefix is finance
+        req.setRequestedRole("EMPLOYEE");
 
         when(userRepository.existsByWorkEmail(testEmail)).thenReturn(false);
         when(passwordEncoder.encode(any())).thenReturn("hashed_password");
         
-        // Mock save returning user to get ID (usually JPA generates it, we mock setting it on user object)
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
             u.setId(10L);
@@ -95,14 +94,14 @@ public class AuthServiceUnitTest {
 
         String result = userService.register(req);
         assertTrue(result.contains("Registration Successful!"));
-        assertTrue(result.contains("Role ID: 5"));
+        assertTrue(result.contains("Role: EMPLOYEE"));
     }
 
     @Test
-    public void testRegisterFallbackToRequestedRole() {
+    public void testRegisterDefaultRoleEmployeeEvenWithRequestedRoleHR() {
         RegisterRequest req = new RegisterRequest();
         req.setFullName("Test User");
-        req.setWorkEmail("john.doe@company.com"); // Email prefix does not match any role
+        req.setWorkEmail("john.doe@company.com");
         req.setPassword("password123");
         req.setConfirmPassword("password123");
         req.setRequestedRole("HR");
@@ -117,7 +116,7 @@ public class AuthServiceUnitTest {
 
         String result = userService.register(req);
         assertTrue(result.contains("Registration Successful!"));
-        assertTrue(result.contains("Role ID: 3"));
+        assertTrue(result.contains("Role: EMPLOYEE"));
     }
 
     @Test

@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.HashMap;
 
 @Service
@@ -18,6 +17,12 @@ public class SystemSettingService {
 
     @Autowired
     private SystemSettingRepository systemSettingRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${resend.from-email:EMS System <noreply@company.com>}")
+    private String fromEmailProperty;
+
+    @org.springframework.beans.factory.annotation.Value("${app.email.sender-address:noreply@company.com}")
+    private String defaultSenderAddress;
 
     @PostConstruct
     public void initDefaultSettings() {
@@ -30,7 +35,15 @@ public class SystemSettingService {
         defaults.put("security.session_timeout", new String[]{"3600", "security"});
         defaults.put("email.smtp_host", new String[]{"smtp.resend.com", "email"});
         defaults.put("email.smtp_port", new String[]{"587", "email"});
-        defaults.put("email.sender_address", new String[]{"onboarding@resend.dev", "email"});
+        String senderEmail = defaultSenderAddress;
+        if (fromEmailProperty != null) {
+            if (fromEmailProperty.contains("<") && fromEmailProperty.contains(">")) {
+                senderEmail = fromEmailProperty.substring(fromEmailProperty.indexOf("<") + 1, fromEmailProperty.indexOf(">")).trim();
+            } else {
+                senderEmail = fromEmailProperty.trim();
+            }
+        }
+        defaults.put("email.sender_address", new String[]{senderEmail, "email"});
         defaults.put("integrations.slack_webhook", new String[]{"https://hooks.slack.com/services/...", "integrations"});
         defaults.put("integrations.jira_base_url", new String[]{"https://jira.enterprise.com", "integrations"});
         defaults.put("password-policy.min_length", new String[]{"8", "password-policy"});

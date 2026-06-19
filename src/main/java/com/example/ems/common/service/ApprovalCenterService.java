@@ -19,11 +19,18 @@ import com.example.ems.performance.entity.Goal;
 import com.example.ems.performance.repository.GoalRepository;
 import com.example.ems.performance.service.GoalService;
 import com.example.ems.performance.dto.GoalDecisionRequest;
+import com.example.ems.expense.entity.Expense;
+import com.example.ems.expense.entity.MyExpenseApprovalStep;
+import com.example.ems.expense.entity.MyExpenseTimelineEvent;
+import com.example.ems.expense.repository.ExpenseRepository;
+import com.example.ems.expense.repository.MyExpenseApprovalStepRepository;
+import com.example.ems.expense.repository.MyExpenseTimelineEventRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +70,15 @@ public class ApprovalCenterService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private ExpenseRepository expenseRepository;
+
+    @Autowired
+    private MyExpenseApprovalStepRepository approvalStepRepository;
+
+    @Autowired
+    private MyExpenseTimelineEventRepository timelineEventRepository;
 
     public List<ApprovalItemDto> getPendingApprovals() {
         List<ApprovalItemDto> items = new ArrayList<>();
@@ -149,6 +165,42 @@ public class ApprovalCenterService {
             case "SALARY_REVISION":
                 appraisalService.approveIncrement(id, approverEmail);
                 break;
+            case "EXP":
+                Expense expense = expenseRepository.findById(id)
+                        .orElseThrow(() -> new IllegalArgumentException("Expense not found with ID: " + id));
+                List<MyExpenseApprovalStep> steps = approvalStepRepository.findByExpenseIdOrderByLevelAsc(id);
+                String approverName = approver != null ? approver.getFullName() : "Finance Approver";
+                MyExpenseApprovalStep pendingStep = steps.stream()
+                        .filter(s -> "PENDING".equalsIgnoreCase(s.getStatus()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (pendingStep != null) {
+                    pendingStep.setStatus("APPROVED");
+                    pendingStep.setActionDate(LocalDateTime.now());
+                    pendingStep.setComments("Approved via unified approval center.");
+                    approvalStepRepository.save(pendingStep);
+
+                    if ("MANAGER".equalsIgnoreCase(pendingStep.getApproverRole())) {
+                        boolean hasFinance = steps.stream().anyMatch(s -> "FINANCE".equalsIgnoreCase(s.getApproverRole()));
+                        if (!hasFinance) {
+                            MyExpenseApprovalStep financeStep = new MyExpenseApprovalStep(expense, 2, "FINANCE", "APPROVED", LocalDateTime.now(), "Approved by Finance directly.");
+                            approvalStepRepository.save(financeStep);
+                        }
+                    }
+                } else {
+                    MyExpenseApprovalStep managerStep = new MyExpenseApprovalStep(expense, 1, "MANAGER", "APPROVED", LocalDateTime.now(), "Approved directly.");
+                    MyExpenseApprovalStep financeStep = new MyExpenseApprovalStep(expense, 2, "FINANCE", "APPROVED", LocalDateTime.now(), "Approved directly.");
+                    approvalStepRepository.save(managerStep);
+                    approvalStepRepository.save(financeStep);
+                }
+
+                expense.setStatus("REIMBURSED");
+                expense.setReimbursementStatus("PAID");
+                expenseRepository.save(expense);
+
+                timelineEventRepository.save(new MyExpenseTimelineEvent(expense, "FINANCE_APPROVED", approverName));
+                break;
             default:
                 throw new IllegalArgumentException("Unknown approval item type: " + type);
         }
@@ -185,6 +237,31 @@ public class ApprovalCenterService {
                 break;
             case "SALARY_REVISION":
                 appraisalService.rejectIncrement(id, approverEmail);
+                break;
+            case "EXP":
+                Expense expReject = expenseRepository.findById(id)
+                        .orElseThrow(() -> new IllegalArgumentException("Expense not found with ID: " + id));
+                List<MyExpenseApprovalStep> rejectSteps = approvalStepRepository.findByExpenseIdOrderByLevelAsc(id);
+                String rejectApproverName = approver != null ? approver.getFullName() : "Finance Approver";
+                MyExpenseApprovalStep rejectPendingStep = rejectSteps.stream()
+                        .filter(s -> "PENDING".equalsIgnoreCase(s.getStatus()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (rejectPendingStep != null) {
+                    rejectPendingStep.setStatus("REJECTED");
+                    rejectPendingStep.setActionDate(LocalDateTime.now());
+                    rejectPendingStep.setComments("Rejected via unified approval center.");
+                    approvalStepRepository.save(rejectPendingStep);
+                } else {
+                    MyExpenseApprovalStep managerStep = new MyExpenseApprovalStep(expReject, 1, "MANAGER", "REJECTED", LocalDateTime.now(), "Rejected directly.");
+                    approvalStepRepository.save(managerStep);
+                }
+
+                expReject.setStatus("REJECTED");
+                expenseRepository.save(expReject);
+
+                timelineEventRepository.save(new MyExpenseTimelineEvent(expReject, "REJECTED", rejectApproverName));
                 break;
             default:
                 throw new IllegalArgumentException("Unknown approval item type: " + type);

@@ -7,7 +7,6 @@ import com.example.ems.security.service.JwtService;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.employee.repository.SupportTicketRepository;
-import com.example.ems.employee.repository.AnnouncementRepository;
 import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.leave.service.LeaveService;
 import com.example.ems.leave.repository.LeaveRepository;
@@ -51,9 +50,6 @@ public class EmployeeSelfServiceController {
 
     @Autowired
     private SupportTicketRepository supportTicketRepository;
-
-    @Autowired
-    private AnnouncementRepository announcementRepository;
 
     @Autowired
     private AttendanceService attendanceService;

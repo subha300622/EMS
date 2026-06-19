@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/finance/onboarding")
 @CrossOrigin("*")
 @Tag(name = "Finance")
 public class FinanceOnboardingController {

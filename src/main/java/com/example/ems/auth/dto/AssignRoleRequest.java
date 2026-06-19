@@ -4,6 +4,7 @@ public class AssignRoleRequest {
 
     private String role;
     private String roleName;
+    private Long roleId;
 
     public String getRole() {
         return roleName != null ? roleName : role;
@@ -19,5 +20,13 @@ public class AssignRoleRequest {
 
     public void setRoleName(String roleName) {
         this.roleName = roleName;
+    }
+
+    public Long getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(Long roleId) {
+        this.roleId = roleId;
     }
 }

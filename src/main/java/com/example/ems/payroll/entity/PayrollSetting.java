@@ -10,10 +10,10 @@ public class PayrollSetting {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String settingKey;
 
-    @Column(nullable = false)
+    @Column
     private String settingValue;
 
     private String description;

@@ -72,6 +72,14 @@ public class Employee {
 
     private LocalDateTime lastActiveAt = LocalDateTime.now();
 
+    @PrePersist
+    @PreUpdate
+    public void prePersistOrUpdate() {
+        if (this.email != null) {
+            this.email = this.email.trim().toLowerCase();
+        }
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -79,7 +87,7 @@ public class Employee {
     public void setFullName(String fullName) { this.fullName = fullName; }
 
     public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setEmail(String email) { this.email = email != null ? email.trim().toLowerCase() : null; }
 
     public String getEmployeeId() { return employeeId; }
     public void setEmployeeId(String employeeId) { this.employeeId = employeeId; }

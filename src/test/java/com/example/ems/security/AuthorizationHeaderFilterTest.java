@@ -27,6 +27,9 @@ public class AuthorizationHeaderFilterTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private com.example.ems.auth.repository.UserRepository userRepository;
+
     @InjectMocks
     private AuthorizationHeaderFilter authorizationHeaderFilter;
 
@@ -61,7 +64,14 @@ public class AuthorizationHeaderFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = mock(MockFilterChain.class);
 
-        when(jwtService.generateAccessToken("EMP005", "emssuperadmin@gmail.com", "SUPER_ADMIN"))
+        com.example.ems.auth.entity.User superAdmin = new com.example.ems.auth.entity.User();
+        com.example.ems.auth.entity.Role role = new com.example.ems.auth.entity.Role();
+        role.setName("SUPER_ADMIN");
+        superAdmin.setRole(role);
+        superAdmin.setWorkEmail("super_admin@company.com");
+        when(userRepository.findAll()).thenReturn(List.of(superAdmin));
+
+        when(jwtService.generateAccessToken("EMP005", "super_admin@company.com", "SUPER_ADMIN"))
                 .thenReturn("mock-super-admin-token");
 
         authorizationHeaderFilter.doFilter(request, response, filterChain);

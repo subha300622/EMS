@@ -22,6 +22,9 @@ public class AuthorizationHeaderFilter extends OncePerRequestFilter {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private com.example.ems.auth.repository.UserRepository userRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -43,7 +46,12 @@ public class AuthorizationHeaderFilter extends OncePerRequestFilter {
             cleanAuthHeader = cleanHeader(authHeader);
         } else {
             // Auto-inject a valid Super Admin token for local testing convenience if no token is provided
-            String devToken = jwtService.generateAccessToken("EMP005", "emssuperadmin@gmail.com", "SUPER_ADMIN");
+            String superAdminEmail = userRepository.findAll().stream()
+                    .filter(u -> u.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(u.getRole().getName()))
+                    .map(com.example.ems.auth.entity.User::getWorkEmail)
+                    .findFirst()
+                    .orElse("super_admin@localhost");
+            String devToken = jwtService.generateAccessToken("EMP005", superAdminEmail, "SUPER_ADMIN");
             cleanAuthHeader = "Bearer " + devToken;
         }
 

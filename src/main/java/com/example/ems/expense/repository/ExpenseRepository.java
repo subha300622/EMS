@@ -13,7 +13,10 @@ import java.util.List;
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
     List<Expense> findByStatus(String status);
+    List<Expense> findByStatusIn(List<String> statuses);
     List<Expense> findByEmployeeId(Long employeeId);
+
+    java.util.Optional<Expense> findByExpenseNumber(String expenseNumber);
 
     @Query("SELECT e FROM Expense e WHERE e.employee.id = :employeeId " +
            "AND (:status IS NULL OR e.status = :status) " +

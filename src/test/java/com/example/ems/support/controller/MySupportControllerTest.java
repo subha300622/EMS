@@ -70,7 +70,7 @@ public class MySupportControllerTest {
         SupportDashboardResponse resp = new SupportDashboardResponse();
         when(supportService.getDashboard(empEmail)).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/support/dashboard")
+        mockMvc.perform(get("/api/v1/my-support/dashboard")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -89,7 +89,7 @@ public class MySupportControllerTest {
         CreateTicketResponse resp = new CreateTicketResponse(1L, "SUP-2026-0001", "OPEN", "HIGH", "2026-06-16T12:00:00Z", "2026-06-16T14:00:00Z", "2026-06-17T20:00:00Z", "Created");
         when(supportService.createTicket(eq(empEmail), any(CreateTicketRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(post("/api/v1/support/tickets")
+        mockMvc.perform(post("/api/v1/my-support/tickets")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
                 .header("Authorization", "Bearer " + token))
@@ -104,7 +104,7 @@ public class MySupportControllerTest {
         MyTicketsResponse resp = new MyTicketsResponse(List.of(), new MyTicketsResponse.PaginationDto());
         when(supportService.getMyTickets(eq(empEmail), any(), any(), any(), any(), any())).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/support/tickets")
+        mockMvc.perform(get("/api/v1/my-support/tickets")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -118,7 +118,7 @@ public class MySupportControllerTest {
         resp.setTicketNumber("SUP-2026-0001");
         when(supportService.getTicketDetails(empEmail, 1L)).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/support/tickets/1")
+        mockMvc.perform(get("/api/v1/my-support/tickets/1")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -134,7 +134,7 @@ public class MySupportControllerTest {
         AddCommentResponse resp = new AddCommentResponse(10L, empEmail, "2026-06-16T12:30:00Z", "Comment added");
         when(supportService.addComment(eq(empEmail), eq(1L), any(AddCommentRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(post("/api/v1/support/tickets/1/comments")
+        mockMvc.perform(post("/api/v1/my-support/tickets/1/comments")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
                 .header("Authorization", "Bearer " + token))
@@ -152,7 +152,7 @@ public class MySupportControllerTest {
         EscalateTicketResponse resp = new EscalateTicketResponse(1L, "SUP-2026-0001", "HIGH", "CRITICAL", "2026-06-16T12:45:00Z", "Escalated");
         when(supportService.escalateTicket(eq(empEmail), eq(1L), any(EscalateTicketRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(patch("/api/v1/support/tickets/1/escalate")
+        mockMvc.perform(patch("/api/v1/my-support/tickets/1/escalate")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
                 .header("Authorization", "Bearer " + token))
@@ -171,7 +171,7 @@ public class MySupportControllerTest {
         CloseTicketResponse resp = new CloseTicketResponse(1L, "SUP-2026-0001", "CLOSED", "2026-06-16T13:00:00Z", 5, "Super service", "Closed");
         when(supportService.closeTicket(eq(empEmail), eq(1L), any(CloseTicketRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(patch("/api/v1/support/tickets/1/close")
+        mockMvc.perform(patch("/api/v1/my-support/tickets/1/close")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request))
                 .header("Authorization", "Bearer " + token))
@@ -185,7 +185,7 @@ public class MySupportControllerTest {
         setupMockPermissions(true);
         when(supportService.getCategories()).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/support/categories")
+        mockMvc.perform(get("/api/v1/my-support/categories")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -199,7 +199,7 @@ public class MySupportControllerTest {
         AttachmentUploadResponse resp = new AttachmentUploadResponse("FILE-101", "test.txt", "text/plain", 8L, "2026-06-16T12:00:00Z");
         when(supportService.uploadAttachment(any())).thenReturn(resp);
 
-        mockMvc.perform(multipart("/api/v1/support/attachments")
+        mockMvc.perform(multipart("/api/v1/my-support/attachments")
                 .file(file)
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
@@ -213,7 +213,7 @@ public class MySupportControllerTest {
         TicketTimelineResponse resp = new TicketTimelineResponse(1L, "SUP-2026-0001", List.of());
         when(supportService.getTicketTimeline(empEmail, 1L)).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/support/tickets/1/timeline")
+        mockMvc.perform(get("/api/v1/my-support/tickets/1/timeline")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -225,7 +225,7 @@ public class MySupportControllerTest {
         FAQSearchResponse resp = new FAQSearchResponse(List.of());
         when(supportService.searchFAQ("VPN")).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/support/knowledge-base")
+        mockMvc.perform(get("/api/v1/my-support/knowledge-base")
                 .param("keyword", "VPN")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())

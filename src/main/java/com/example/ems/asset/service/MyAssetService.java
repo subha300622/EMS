@@ -51,6 +51,9 @@ public class MyAssetService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired
+    private com.example.ems.auth.repository.UserRepository userRepository;
+
     @EventListener(ContextRefreshedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void seedDatabase() {
@@ -72,12 +75,17 @@ public class MyAssetService {
             System.out.println("Seeded Asset Policies.");
         }
 
-        // 3. Seed Mock Active Assets for employee@company.com if empty
-        Optional<Employee> mockEmployeeOpt = employeeRepository.findByEmail("employee@company.com");
+        // 3. Seed Mock Active Assets for employee if empty
+        Optional<Employee> mockEmployeeOpt = employeeRepository.findAll().stream()
+                .filter(e -> {
+                    com.example.ems.auth.entity.User u = userRepository.findByWorkEmail(e.getEmail()).orElse(null);
+                    return u != null && u.getRole() != null && "EMPLOYEE".equalsIgnoreCase(u.getRole().getName());
+                })
+                .findFirst();
         if (mockEmployeeOpt.isPresent()) {
             Employee emp = mockEmployeeOpt.get();
             List<MyAsset> existingAssets = assetRepository.findByAssignedToId(emp.getId());
-            if (existingAssets.isEmpty()) {
+            if (existingAssets.isEmpty() && assetRepository.findByAssetCode("SN-DL2024-421").isEmpty()) {
                 // Dell XPS 15
                 MyAsset asset1 = new MyAsset();
                 asset1.setAssetCode("SN-DL2024-421");
@@ -153,7 +161,7 @@ public class MyAssetService {
                 act3.setDate(LocalDateTime.now().minusMonths(3));
                 activityRepository.save(act3);
 
-                System.out.println("Seeded Mock Active Assets for employee@company.com.");
+                System.out.println("Seeded Mock Active Assets for " + emp.getEmail() + ".");
             }
         }
     }

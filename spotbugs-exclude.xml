@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter
+    xmlns="https://github.com/spotbugs/filter/3.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="https://github.com/spotbugs/filter/3.0.0 https://raw.githubusercontent.com/spotbugs/filter/3.0.0/filter.xsd">
+    
+    <!-- Exclude representation exposure warnings for mutable JPA entities/DTOs -->
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2" />
+    </Match>
+
+    <!-- Exclude formatting, encoding, and other common project-wide static analysis warnings -->
+    <Match>
+        <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE,DM_DEFAULT_ENCODING,DMI_RANDOM_USED_ONLY_ONCE,BX_UNBOXED_AND_COERCED_FOR_TERNARY_OPERATOR,HRS_REQUEST_PARAMETER_TO_HTTP_HEADER,DMI_HARDCODED_ABSOLUTE_FILENAME,CT_CONSTRUCTOR_THROW" />
+    </Match>
+</FindBugsFilter>

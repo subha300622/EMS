@@ -4,7 +4,6 @@ import com.example.ems.appraisal.repository.IncrementRepository;
 import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.service.ApprovalCenterService;
@@ -18,7 +17,6 @@ import com.example.ems.onboarding.repository.OnboardingRepository;
 import com.example.ems.onboarding.service.OnboardingService;
 import com.example.ems.performance.repository.PerformanceReviewRepository;
 import com.example.ems.performance.entity.PerformanceReview;
-import com.example.ems.employee.repository.SupportTicketRepository;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -43,9 +41,6 @@ public class DashboardController {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleService roleService;
-
-    @Autowired
     private JwtService jwtService;
 
     @Autowired
@@ -68,9 +63,6 @@ public class DashboardController {
 
     @Autowired
     private PerformanceReviewRepository performanceReviewRepository;
-
-    @Autowired
-    private SupportTicketRepository supportTicketRepository;
 
     @Autowired
     private ApprovalCenterService approvalCenterService;
