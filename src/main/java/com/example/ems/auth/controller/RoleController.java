@@ -12,6 +12,7 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,7 @@ public class RoleController {
     private JwtService jwtService;
 
     // ── Create Role ──────────────────────────────────────────────────────────
+    @Operation(summary = "Create Role", description = "Creates a new system security role for RBAC authorization.")
     @PostMapping("/roles")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> createRole(
@@ -70,6 +72,7 @@ public class RoleController {
     }
 
     // ── Get Roles ────────────────────────────────────────────────────────────
+    @Operation(summary = "Get All Roles", description = "Retrieves all configured system roles along with metadata.")
     @GetMapping("/roles")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getRoles(
@@ -101,6 +104,7 @@ public class RoleController {
     }
 
     // ── Update Role ──────────────────────────────────────────────────────────
+    @Operation(summary = "Update Role", description = "Fully updates the name and description of an existing system role.")
     @PutMapping("/roles/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> updateRole(
@@ -136,6 +140,7 @@ public class RoleController {
     }
 
     // ── Patch Role ────────────────────────────────────────────────────────────
+    @Operation(summary = "Patch Role Details", description = "Partially updates attributes (such as name or description) of a system role.")
     @PatchMapping("/roles/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> patchRole(
@@ -177,6 +182,7 @@ public class RoleController {
     }
 
     // ── Get Role Users ────────────────────────────────────────────────────────
+    @Operation(summary = "Get Role Users", description = "Retrieves all users assigned to the specified security role.")
     @GetMapping("/roles/{id}/users")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getRoleUsers(
@@ -209,6 +215,7 @@ public class RoleController {
     }
 
     // ── Delete Role ──────────────────────────────────────────────────────────
+    @Operation(summary = "Delete Role", description = "Deletes a security role from the system.")
     @DeleteMapping("/roles/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> deleteRole(
@@ -240,6 +247,7 @@ public class RoleController {
 
 
     // ── Assign Permissions to Role ───────────────────────────────────────────
+    @Operation(summary = "Assign Permissions to Role", description = "Maps multiple system catalog permissions to a specific role.")
     @PostMapping("/roles/{id}/permissions")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> assignPermissions(
@@ -289,6 +297,7 @@ public class RoleController {
     }
 
     // ── Get Role By ID ───────────────────────────────────────────────────────
+    @Operation(summary = "Get Role Details", description = "Retrieves the description, metadata, and permissions mapped to a specific role.")
     @GetMapping("/roles/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getRoleById(
@@ -322,6 +331,7 @@ public class RoleController {
     }
 
     // ── Get Permissions for Role ─────────────────────────────────────────────
+    @Operation(summary = "Get Role Permissions", description = "Retrieves all permissions currently mapped to the specified role.")
     @GetMapping("/roles/{id}/permissions")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getRolePermissions(
@@ -355,6 +365,7 @@ public class RoleController {
     }
 
     // ── Revoke Permission from Role ──────────────────────────────────────────
+    @Operation(summary = "Revoke Permission from Role", description = "Removes a specific access permission mapping from a security role.")
     @DeleteMapping("/roles/{id}/permissions/{permissionId}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> revokePermission(
