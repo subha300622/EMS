@@ -18,6 +18,7 @@ import com.example.ems.employee.service.DepartmentService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,7 @@ public class DepartmentController {
     }
 
     // ── 1. GET ALL DEPARTMENTS ───────────────────────────────────────────────
+    @Operation(summary = "Get All Departments", description = "Retrieves a list of all company departments.")
     @GetMapping("/departments")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Department>>> getAllDepartments(
@@ -73,6 +75,7 @@ public class DepartmentController {
     }
 
     // ── 2. GET DEPARTMENT BY ID ──────────────────────────────────────────────
+    @Operation(summary = "Get Department by ID", description = "Retrieves the details of a specific department by its unique ID.")
     @GetMapping("/departments/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDepartmentById(
@@ -93,6 +96,7 @@ public class DepartmentController {
     }
 
     // ── 3. CREATE DEPARTMENT (ADMIN / HR) ────────────────────────────────────
+    @Operation(summary = "Create Department", description = "Creates a new department record with allocated budget and cost center parameters.")
     @PostMapping("/departments")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createDepartment(
@@ -121,6 +125,7 @@ public class DepartmentController {
     }
 
     // ── 4. UPDATE DEPARTMENT (ADMIN / HR) ────────────────────────────────────
+    @Operation(summary = "Update Department", description = "Updates configuration fields for an existing department.")
     @PutMapping("/departments/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateDepartment(
@@ -149,6 +154,7 @@ public class DepartmentController {
     }
 
     // ── 5. DELETE DEPARTMENT (ADMIN) ─────────────────────────────────────────
+    @Operation(summary = "Delete Department", description = "Deletes a department from the system.")
     @DeleteMapping("/departments/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteDepartment(
@@ -175,6 +181,7 @@ public class DepartmentController {
     }
 
     // ── 6. GET DEPARTMENTS DROPDOWN ──────────────────────────────────────────
+    @Operation(summary = "Get Departments Dropdown", description = "Retrieves a lightweight list of departments (ID and name) for UI dropdown selections.")
     @GetMapping("/departments/dropdown")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDepartmentsDropdown(
@@ -199,6 +206,7 @@ public class DepartmentController {
     }
 
     // ── 7. GET DEPARTMENTS HIERARCHY ─────────────────────────────────────────
+    @Operation(summary = "Get Department Hierarchy", description = "Retrieves the organizational reporting structure of company departments.")
     @GetMapping("/departments/hierarchy")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getHierarchy(
@@ -215,6 +223,7 @@ public class DepartmentController {
     }
 
     // ── 8. GET DEPARTMENTS DASHBOARD ─────────────────────────────────────────
+    @Operation(summary = "Get Department Dashboard", description = "Retrieves a department dashboard summary with headcounts and budget statistics.")
     @GetMapping("/departments/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboard(
@@ -231,6 +240,7 @@ public class DepartmentController {
     }
 
     // ── 9. GET DEPARTMENT EMPLOYEES (PAGINATED & FILTERED) ───────────────────
+    @Operation(summary = "Get Department Employees", description = "Retrieves a paginated list of employees belonging to the specified department.")
     @GetMapping("/departments/{id}/employees")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getEmployeesByDepartment(
@@ -279,6 +289,7 @@ public class DepartmentController {
     }
 
     // ── 10. GET DEPARTMENT MANAGER ───────────────────────────────────────────
+    @Operation(summary = "Get Department Manager", description = "Retrieves the profile details of the manager heading the specified department.")
     @GetMapping("/departments/{id}/manager")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getManager(
@@ -304,6 +315,7 @@ public class DepartmentController {
     }
 
     // ── 11. PUT DEPARTMENT MANAGER ───────────────────────────────────────────
+    @Operation(summary = "Assign Department Manager", description = "Assigns an employee as the manager of the specified department.")
     @PutMapping("/departments/{id}/manager")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateManager(
@@ -327,6 +339,7 @@ public class DepartmentController {
     }
 
     // ── 12. POST TRANSFERS ───────────────────────────────────────────────────
+    @Operation(summary = "Transfer Employee Department", description = "Records and executes an employee transfer between departments with an effective date.")
     @PostMapping("/departments/transfers")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> transferEmployee(
@@ -355,6 +368,7 @@ public class DepartmentController {
     }
 
     // ── 13. GET TRANSFERS ────────────────────────────────────────────────────
+    @Operation(summary = "Get All Department Transfers", description = "Retrieves a history log of all employee department transfers.")
     @GetMapping("/departments/transfers")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<DepartmentTransfer>>> getAllTransfers(
@@ -371,6 +385,7 @@ public class DepartmentController {
     }
 
     // ── 14. GET ANALYTICS: EMPLOYEE DISTRIBUTION ────────────────────────────
+    @Operation(summary = "Get Employee Distribution Analytics", description = "Retrieves employee count distribution across departments for analytical charts.")
     @GetMapping("/departments/analytics/employee-distribution")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEmployeeDistribution(
@@ -387,6 +402,7 @@ public class DepartmentController {
     }
 
     // ── 15. GET ANALYTICS: BUDGET DISTRIBUTION ──────────────────────────────
+    @Operation(summary = "Get Budget Distribution Analytics", description = "Retrieves total budget allocation statistics mapped across departments.")
     @GetMapping("/departments/analytics/budget-distribution")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getBudgetDistribution(
@@ -403,6 +419,7 @@ public class DepartmentController {
     }
 
     // ── 16. GET ANALYTICS: GROWTH ────────────────────────────────────────────
+    @Operation(summary = "Get Department Growth Analytics", description = "Retrieves growth metrics and recruitment trends by department.")
     @GetMapping("/departments/analytics/growth")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getGrowth(
@@ -419,6 +436,7 @@ public class DepartmentController {
     }
 
     // ── 17. GET ANALYTICS: HEADCOUNT TREND ───────────────────────────────────
+    @Operation(summary = "Get Headcount Trend Analytics", description = "Retrieves headcount trend timelines filtered by departments.")
     @GetMapping("/departments/analytics/headcount-trend")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getHeadcountTrend(
@@ -435,6 +453,7 @@ public class DepartmentController {
     }
 
     // ── 18. GET/PUT COST-CENTER ──────────────────────────────────────────────
+    @Operation(summary = "Get Department Cost Center", description = "Retrieves cost center details mapped to the specified department.")
     @GetMapping("/departments/{id}/cost-center")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCostCenter(
@@ -456,6 +475,7 @@ public class DepartmentController {
         }
     }
 
+    @Operation(summary = "Update Department Cost Center", description = "Updates the cost center identifier for a specific department.")
     @PutMapping("/departments/{id}/cost-center")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateCostCenter(
@@ -480,6 +500,7 @@ public class DepartmentController {
     }
 
     // ── 19. GET/PUT BUDGET ───────────────────────────────────────────────────
+    @Operation(summary = "Get Department Budget", description = "Retrieves allocated and utilized budget amounts for a department.")
     @GetMapping("/departments/{id}/budget")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getBudget(
@@ -501,6 +522,7 @@ public class DepartmentController {
         }
     }
 
+    @Operation(summary = "Update Department Budget", description = "Updates the allocated and utilized budget fields for a department.")
     @PutMapping("/departments/{id}/budget")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateBudget(
@@ -526,6 +548,7 @@ public class DepartmentController {
     }
 
     // ── 20. GET REPORTS: HEADCOUNT ───────────────────────────────────────────
+    @Operation(summary = "Get Headcount Report", description = "Generates a headcount distribution summary report across departments.")
     @GetMapping("/departments/reports/headcount")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getHeadcountReport(
@@ -542,6 +565,7 @@ public class DepartmentController {
     }
 
     // ── 21. GET REPORTS: BUDGET-UTILIZATION ─────────────────────────────────
+    @Operation(summary = "Get Budget Utilization Report", description = "Generates a department budget utilization report showing allocated vs spent funds.")
     @GetMapping("/departments/reports/budget-utilization")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getBudgetUtilizationReport(
@@ -558,6 +582,7 @@ public class DepartmentController {
     }
 
     // ── 22. GET REPORTS: EMPLOYEE-ALLOCATION ────────────────────────────────
+    @Operation(summary = "Get Employee Allocation Report", description = "Generates an employee placement and allocation report by department.")
     @GetMapping("/departments/reports/employee-allocation")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getEmployeeAllocationReport(
@@ -574,6 +599,7 @@ public class DepartmentController {
     }
 
     // ── 23. GET REPORTS: PERFORMANCE-SUMMARY ────────────────────────────────
+    @Operation(summary = "Get Department Performance Report", description = "Generates a consolidated performance appraisal summary report grouped by department.")
     @GetMapping("/departments/reports/performance-summary")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPerformanceSummaryReport(
