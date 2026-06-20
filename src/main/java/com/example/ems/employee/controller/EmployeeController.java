@@ -16,6 +16,7 @@ import com.example.ems.employee.service.EmployeeService;
 import com.example.ems.leave.service.LeaveService;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,7 @@ public class EmployeeController {
     @Autowired
     private com.example.ems.payroll.service.PayrollService payrollService;
 
+    @Operation(summary = "Create Employee Record", description = "Creates a new employee profile in the system with contact details, department, role, and salary parameters.")
     @PostMapping("/employees")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createEmployee(
@@ -74,6 +76,7 @@ public class EmployeeController {
         }
     }
 
+    @Operation(summary = "Get All Employees", description = "Retrieves a list of all employees registered in the system.")
     @GetMapping("/employees")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Employee>>> getAllEmployees(
@@ -93,6 +96,7 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success("Employees list retrieved successfully", employeeService.getAllEmployees()));
     }
 
+    @Operation(summary = "Get Employee by ID", description = "Retrieves details of a specific employee profile by ID.")
     @GetMapping("/employees/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getEmployeeById(
@@ -116,6 +120,7 @@ public class EmployeeController {
                         .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002")));
     }
 
+    @Operation(summary = "Update Employee", description = "Updates attributes of an existing employee profile.")
     @PutMapping("/employees/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ErrorResponse> updateEmployee(
@@ -144,6 +149,7 @@ public class EmployeeController {
         }
     }
 
+    @Operation(summary = "Delete Employee", description = "Removes an employee record from the database.")
     @DeleteMapping("/employees/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteEmployee(
@@ -170,6 +176,7 @@ public class EmployeeController {
         }
     }
 
+    @Operation(summary = "Get Employees by Department", description = "Retrieves all employees assigned to the specified department code.")
     @GetMapping("/employees/department/{departmentId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getEmployeesByDepartment(
@@ -191,6 +198,7 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success("Employees for department retrieved successfully", list));
     }
 
+    @Operation(summary = "Get Employees by Manager", description = "Retrieves all direct reports under the specified manager's employee ID.")
     @GetMapping("/employees/manager/{managerId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getEmployeesByManager(
@@ -214,6 +222,7 @@ public class EmployeeController {
 
 
     // ── 10. Get Salary Details ───────────────────────────────────────────────
+    @Operation(summary = "Get Employee Salary Details", description = "Retrieves the salary details, including base and annual compensation, for the specified employee.")
     @GetMapping("/employees/{id}/salary")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getEmployeeSalary(
@@ -253,6 +262,7 @@ public class EmployeeController {
     }
 
     // ── 11. Get Attendance Summary ───────────────────────────────────────────
+    @Operation(summary = "Get Employee Attendance Summary", description = "Retrieves a breakdown of present, absent, late, and half-day records for the employee.")
     @GetMapping("/employees/{id}/attendance-summary")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getEmployeeAttendanceSummary(
@@ -296,6 +306,7 @@ public class EmployeeController {
     }
 
     // ── 12. Get Leave Summary ────────────────────────────────────────────────
+    @Operation(summary = "Get Employee Leave Summary", description = "Retrieves current leave balances and allowance for the employee.")
     @GetMapping("/employees/{id}/leave-summary")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getEmployeeLeaveSummary(
@@ -330,6 +341,7 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success("Leave summary retrieved successfully", summary));
     }
 
+    @Operation(summary = "Update Employee Status", description = "Changes status indicators (such as ACTIVE, SUSPENDED, TERMINATED) on an employee profile.")
     @PatchMapping("/employees/{id}/status")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ErrorResponse> updateEmployeeStatus(
@@ -359,6 +371,7 @@ public class EmployeeController {
     }
 
 
+    @Operation(summary = "Get Employee Payroll History", description = "Retrieves past salary payslips and processed payroll distributions for the employee.")
     @GetMapping("/employees/{id}/payroll")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Payroll>>> getEmployeePayroll(
