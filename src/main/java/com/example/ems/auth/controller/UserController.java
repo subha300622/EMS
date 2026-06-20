@@ -15,6 +15,7 @@ import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -121,6 +122,7 @@ public class UserController {
     }
 
     // ── 1. Create User ───────────────────────────────────────────────────────
+    @Operation(summary = "Create User", description = "Creates a new user account with specified employee details, roles, and status.")
     @PostMapping("/users")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> createUser(
@@ -148,6 +150,7 @@ public class UserController {
     }
 
     // ── 2. Get All Users ─────────────────────────────────────────────────────
+    @Operation(summary = "Get All Users", description = "Retrieves a list of all user accounts, with optional status filtering (e.g., ACTIVE, PENDING).")
     @GetMapping("/users")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAllUsers(
@@ -187,6 +190,7 @@ public class UserController {
     }
 
     // ── 2b. Get Pending Users (awaiting admin approval) ───────────────────────
+    @Operation(summary = "Get Pending Users", description = "Retrieves a list of user registration requests that are pending admin approval.")
     @GetMapping("/users/pending")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getPendingUsers(
@@ -226,6 +230,7 @@ public class UserController {
     }
 
     // ── 3. Get User By ID ────────────────────────────────────────────────────
+    @Operation(summary = "Get User by ID", description = "Retrieves detailed information of a specific user account using their unique user ID.")
     @GetMapping("/users/{userId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getUserById(
@@ -250,6 +255,7 @@ public class UserController {
     }
 
     // ── 4. Update User ───────────────────────────────────────────────────────
+    @Operation(summary = "Update User Details", description = "Updates profile fields such as name, contact number, department, and location for a specific user.")
     @PutMapping("/users/{userId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ErrorResponse> updateUser(
@@ -279,6 +285,7 @@ public class UserController {
     }
 
     // ── 5. Delete User ───────────────────────────────────────────────────────
+    @Operation(summary = "Delete User", description = "Permanently deletes a user account from the system.")
     @DeleteMapping("/users/{userId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteUser(
@@ -309,6 +316,7 @@ public class UserController {
     }
 
     // ── 6. Update User Role ──────────────────────────────────────────────────
+    @Operation(summary = "Update User Role", description = "Assigns a specific system security role to a user account.")
     @PutMapping("/users/{userId}/role")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateUserRole(
@@ -344,6 +352,7 @@ public class UserController {
     }
 
     // ── 7. Update User Status ────────────────────────────────────────────────
+    @Operation(summary = "Update User Status", description = "Changes the account status of a user (e.g., activating or deactivating the account).")
     @PutMapping("/users/{userId}/status")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateUserStatus(
@@ -375,6 +384,7 @@ public class UserController {
     }
 
     // ── 7b. Delete User Role ─────────────────────────────────────────────────
+    @Operation(summary = "Remove User Role", description = "Clears and removes any assigned security role from the user's account.")
     @DeleteMapping("/users/{userId}/role")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteUserRole(
@@ -405,6 +415,7 @@ public class UserController {
     }
 
     // ── 7c. Get User Roles ───────────────────────────────────────────────────
+    @Operation(summary = "Get User Roles", description = "Retrieves the security roles and associated access permissions mapped to a user account.")
     @GetMapping("/users/{userId}/roles")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getUserRoles(
@@ -452,6 +463,7 @@ public class UserController {
     }
 
     // ── 8. Search Users ──────────────────────────────────────────────────────
+    @Operation(summary = "Search Users", description = "Searches for user accounts matching a query string in fields like name, email, and department.")
     @GetMapping("/users/search")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> searchUsers(
@@ -485,6 +497,7 @@ public class UserController {
 
 
     // ── 11. Reset Password (Admin) ───────────────────────────────────────────
+    @Operation(summary = "Reset Password (Admin)", description = "Admin-initiated password reset that updates the target user's password without verification checks.")
     @PutMapping("/users/{userId}/password/reset")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> resetPassword(
@@ -518,6 +531,7 @@ public class UserController {
     }
 
     // ── 12. Export Users ─────────────────────────────────────────────────────
+    @Operation(summary = "Export Users to CSV", description = "Generates and downloads a CSV report of all registered user accounts with their metadata.")
     @GetMapping("/users/export")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<byte[]> exportUsers(
