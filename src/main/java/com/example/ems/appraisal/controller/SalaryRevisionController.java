@@ -30,7 +30,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Payroll Management")
+@Tag(name = "Salary Management")
 public class SalaryRevisionController {
 
     @Autowired

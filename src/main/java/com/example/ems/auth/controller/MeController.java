@@ -22,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/me")
 @CrossOrigin("*")
-@Tag(name = "My Profile")
+@Tag(name = "Employee Self Service")
 public class MeController {
 
     @Autowired

@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Organization Management")
+@Tag(name = "Department Management")
 public class DepartmentController {
 
     @Autowired

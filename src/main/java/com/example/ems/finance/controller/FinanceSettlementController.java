@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/finance/settlements")
 @CrossOrigin("*")
-@Tag(name = "Finance Settlement Management")
+@Tag(name = "Settlement Management")
 public class FinanceSettlementController {
 
     @Autowired

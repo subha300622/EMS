@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Organization Management")
+@Tag(name = "Organization Directory")
 public class OrgChartController {
 
     @Autowired

@@ -22,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/finance/asset-cost-report")
 @CrossOrigin("*")
-@Tag(name = "Finance Asset Cost Report Management")
+@Tag(name = "Reports & Analytics")
 public class FinanceAssetCostReportController {
 
     @Autowired

@@ -25,7 +25,7 @@ import java.util.HashMap;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Onboarding")
+@Tag(name = "Onboarding Management")
 public class OnboardingController {
 
     @Autowired

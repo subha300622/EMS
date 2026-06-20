@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Notifications")
+@Tag(name = "Notification Management")
 public class NotificationController {
 
     @Autowired

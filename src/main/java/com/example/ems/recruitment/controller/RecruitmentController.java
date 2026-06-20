@@ -40,7 +40,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Recruitment")
+@Tag(name = "Recruitment Management")
 public class RecruitmentController {
 
     @Autowired

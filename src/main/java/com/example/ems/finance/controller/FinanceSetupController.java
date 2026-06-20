@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.Operation;
 @RestController
 @RequestMapping("/api/v1/finance/setup")
 @CrossOrigin("*")
-@Tag(name = "Finance Management")
+@Tag(name = "Finance Setup")
 public class FinanceSetupController {
 
     @Autowired

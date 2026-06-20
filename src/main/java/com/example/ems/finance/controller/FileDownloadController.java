@@ -1,5 +1,6 @@
 package com.example.ems.finance.controller;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.example.ems.finance.service.FinanceAssetCostReportService;
 import com.example.ems.finance.service.FinanceSettlementService;
 import com.example.ems.employee.entity.Employee;
@@ -18,6 +19,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/files")
 @CrossOrigin("*")
+@Tag(name = "Document Management")
 public class FileDownloadController {
 
     @Autowired

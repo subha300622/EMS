@@ -29,7 +29,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/my-assets")
 @CrossOrigin("*")
-@Tag(name = "My Assets")
+@Tag(name = "Employee Self Service")
 public class MyAssetController {
 
     @Autowired

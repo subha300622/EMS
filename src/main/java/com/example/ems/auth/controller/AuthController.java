@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1/auth")
 @CrossOrigin("*")
-@Tag(name = "Authentication")
+@Tag(name = "Authentication & Security")
 public class AuthController {
 
     @Autowired

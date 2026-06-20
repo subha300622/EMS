@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "User & RBAC")
+@Tag(name = "Role Management")
 public class RoleController {
     @Autowired
     private RoleService roleService;

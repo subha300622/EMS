@@ -29,7 +29,7 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "User & RBAC")
+@Tag(name = "User Management")
 public class UserController {
 
     @Autowired

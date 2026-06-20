@@ -19,7 +19,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "User & RBAC")
+@Tag(name = "Permission Management")
 public class PermissionController {
 
     @Autowired

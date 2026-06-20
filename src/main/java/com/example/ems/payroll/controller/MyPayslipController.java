@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/my-payslips")
 @CrossOrigin("*")
-@Tag(name = "My Payroll")
+@Tag(name = "Employee Self Service")
 public class MyPayslipController {
 
     @Autowired

@@ -25,7 +25,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/v1/finance")
 @CrossOrigin("*")
-@Tag(name = "Finance Management")
+@Tag(name = "Finance Setup")
 public class FinanceController {
 
     @Autowired

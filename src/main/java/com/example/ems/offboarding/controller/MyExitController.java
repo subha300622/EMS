@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 @RestController
 @RequestMapping("/api/v1/my-exit")
 @CrossOrigin("*")
-@Tag(name = "My Exit")
+@Tag(name = "Employee Self Service")
 public class MyExitController {
 
     @Autowired

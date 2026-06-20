@@ -29,7 +29,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/v1/team")
 @CrossOrigin("*")
-@Tag(name = "Organization Management")
+@Tag(name = "Organization Directory")
 public class TeamManagementController {
 
     @Autowired

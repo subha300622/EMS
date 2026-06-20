@@ -28,7 +28,7 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/v1/goals")
 @CrossOrigin("*")
-@Tag(name = "Performance Management")
+@Tag(name = "Goal Management")
 public class GoalController {
 
     @Autowired

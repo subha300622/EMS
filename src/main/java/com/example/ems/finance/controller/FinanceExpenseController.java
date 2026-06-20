@@ -27,7 +27,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/finance/expenses")
 @CrossOrigin("*")
-@Tag(name = "Finance Expense Management")
+@Tag(name = "Expense Management")
 public class FinanceExpenseController {
 
     @Autowired

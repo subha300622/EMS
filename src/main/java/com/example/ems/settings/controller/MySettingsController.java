@@ -29,7 +29,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/my-settings")
 @CrossOrigin("*")
-@Tag(name = "My Settings")
+@Tag(name = "Employee Self Service")
 public class MySettingsController {
 
     @Autowired

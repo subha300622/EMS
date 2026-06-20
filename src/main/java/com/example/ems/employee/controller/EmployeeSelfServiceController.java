@@ -36,6 +36,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Employee Self Service")
 public class EmployeeSelfServiceController {
 
     @Autowired
@@ -91,7 +92,6 @@ public class EmployeeSelfServiceController {
     }
 
     // ── 1. EMPLOYEE DASHBOARD ───────────────────────────────────────────────
-    @Tag(name = "My Profile")
     @GetMapping("/employees/me/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<Map<String, Object>> getDashboard(
@@ -201,15 +201,12 @@ public class EmployeeSelfServiceController {
     }
 
     // ── 2. EMPLOYEE PROFILE ──────────────────────────────────────────────────
-    @Tag(name = "My Profile")
     @GetMapping("/employees/me/profile")
     public ResponseEntity<Void> getMyProfile() {
         return ResponseEntity.status(HttpStatus.PERMANENT_REDIRECT)
                 .location(java.net.URI.create("/api/v1/me"))
                 .build();
     }
-
-    @Tag(name = "My Profile")
     @PutMapping("/employees/me/profile")
     public ResponseEntity<Void> updateMyProfile() {
         return ResponseEntity.status(HttpStatus.PERMANENT_REDIRECT)
@@ -224,7 +221,6 @@ public class EmployeeSelfServiceController {
     // Redundant with MyPayslipController
 
     // ── 8. ASSET MANAGEMENT ──────────────────────────────────────────────────
-    @Tag(name = "My Assets")
     @GetMapping("/employees/me/assets")
         @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<List<OnboardingAsset>> getMyAssets(
@@ -251,8 +247,6 @@ public class EmployeeSelfServiceController {
         List<OnboardingAsset> list = onboardingAssetRepository.findByOnboardingId(onboarding.getId());
         return ResponseEntity.ok(list);
     }
-
-    @Tag(name = "My Assets")
     @PostMapping("/employees/me/assets/{id}/request")
         @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> requestAssetService(
@@ -306,7 +300,6 @@ public class EmployeeSelfServiceController {
     // Redundant with MyExpenseController
 
     // ── 10. PERFORMANCE REVIEW ───────────────────────────────────────────────
-    @Tag(name = "My Performance")
     @GetMapping("/employees/me/performance")
         @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<List<PerformanceReview>> getMyReviews(
@@ -332,8 +325,6 @@ public class EmployeeSelfServiceController {
 
         return ResponseEntity.ok(performanceReviewRepository.findByEmployeeId(employee.getId()));
     }
-
-    @Tag(name = "My Performance")
     @PostMapping("/employees/me/performance/{id}/self-review")
         @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> submitSelfReview(
@@ -389,7 +380,6 @@ public class EmployeeSelfServiceController {
     // Redundant with MySupportController
 
     // ── 15. SCHEDULE ─────────────────────────────────────────────────────────
-    @Tag(name = "My Schedule")
     @GetMapping("/employees/me/schedule")
         @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<Map<String, Object>> getMyWorkSchedule(

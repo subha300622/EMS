@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @RestController
 @RequestMapping("/api/v1/announcements")
 @CrossOrigin("*")
-@Tag(name = "System Administration")
+@Tag(name = "Notification Management")
 public class AnnouncementController {
 
     @Autowired

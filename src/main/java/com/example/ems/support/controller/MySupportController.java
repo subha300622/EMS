@@ -28,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/my-support")
 @CrossOrigin("*")
+@Tag(name = "Employee Self Service")
 public class MySupportController {
 
     @Autowired
@@ -82,8 +83,6 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     // TAG: My Support - Tickets
     // ═══════════════════════════════════════════════════════════════════════════
-
-    @Tag(name = "My Support")
     @Operation(summary = "Get My Support Dashboard")
     @GetMapping("/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -99,8 +98,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Create Support Ticket")
     @PostMapping("/tickets")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -118,8 +115,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Get My Tickets (paginated/filtered by status, priority, categoryId, search)")
     @GetMapping("/tickets")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -142,8 +137,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Get Ticket Details")
     @GetMapping("/tickets/{ticketId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -160,8 +153,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Update Ticket (subject, description, priority) — only OPEN tickets")
     @PutMapping("/tickets/{ticketId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -179,8 +170,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Close Ticket (with optional rating + feedback)")
     @PatchMapping("/tickets/{ticketId}/close")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -198,8 +187,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Reopen a CLOSED ticket")
     @PatchMapping("/tickets/{ticketId}/reopen")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -216,8 +203,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Escalate Ticket to CRITICAL priority")
     @PatchMapping("/tickets/{ticketId}/escalate")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -235,8 +220,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Delete an OPEN ticket")
     @DeleteMapping("/tickets/{ticketId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -253,8 +236,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Get Ticket Activity Timeline")
     @GetMapping("/tickets/{ticketId}/timeline")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -271,8 +252,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Submit satisfaction feedback for a RESOLVED or CLOSED ticket")
     @PostMapping("/tickets/{ticketId}/feedback")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -294,8 +273,6 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     // TAG: My Support - Comments
     // ═══════════════════════════════════════════════════════════════════════════
-
-    @Tag(name = "My Support")
     @Operation(summary = "Get All Comments on a Ticket")
     @GetMapping("/tickets/{ticketId}/comments")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -312,8 +289,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Add a Comment to a Ticket")
     @PostMapping("/tickets/{ticketId}/comments")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -335,8 +310,6 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     // TAG: My Support - Attachments
     // ═══════════════════════════════════════════════════════════════════════════
-
-    @Tag(name = "My Support")
     @Operation(summary = "Upload an Attachment (returns fileId to attach to ticket/comment)")
     @PostMapping(value = "/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -353,8 +326,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Download an Attachment by fileId")
     @GetMapping("/attachments/{attachmentId}/download")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -380,8 +351,6 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     // TAG: My Support - Knowledge Base
     // ═══════════════════════════════════════════════════════════════════════════
-
-    @Tag(name = "My Support")
     @Operation(summary = "Get Support Categories (with subcategories)")
     @GetMapping("/categories")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -397,8 +366,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Search Knowledge Base (legacy — use /knowledge-base/articles instead)")
     @GetMapping("/knowledge-base")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -415,8 +382,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "List Knowledge Base Articles (optional ?category= filter)")
     @GetMapping("/knowledge-base/articles")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -433,8 +398,6 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
-
-    @Tag(name = "My Support")
     @Operation(summary = "Get Knowledge Base Article by ID (increments view count)")
     @GetMapping("/knowledge-base/articles/{articleId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -455,8 +418,6 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     // TAG: My Support - Analytics
     // ═══════════════════════════════════════════════════════════════════════════
-
-    @Tag(name = "My Support")
     @Operation(summary = "Export My Tickets as CSV")
     @GetMapping("/tickets/export")
     @SuppressWarnings({"unchecked", "rawtypes"})

@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/v1/payroll-settings")
 @CrossOrigin("*")
-@Tag(name = "Payroll Management")
+@Tag(name = "Finance Setup")
 public class PayrollSettingsController {
 
     @Autowired

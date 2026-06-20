@@ -24,7 +24,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/finance/onboarding")
 @CrossOrigin("*")
-@Tag(name = "Employee Finance Onboarding")
+@Tag(name = "Finance Onboarding")
 public class EmployeeFinanceOnboardingController {
 
     @Autowired

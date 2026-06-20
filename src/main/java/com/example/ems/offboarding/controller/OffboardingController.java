@@ -30,7 +30,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Offboarding")
+@Tag(name = "Offboarding Management")
 public class OffboardingController {
 
     @Autowired

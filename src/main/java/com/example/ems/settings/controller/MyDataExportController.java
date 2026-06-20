@@ -46,6 +46,7 @@ import java.util.zip.ZipOutputStream;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
+@Tag(name = "Employee Self Service")
 public class MyDataExportController {
 
     @Autowired
@@ -144,7 +145,6 @@ public class MyDataExportController {
     }
 
     // ── 1. EXPORT PAYSLIPS (ZIP) ─────────────────────────────────────────────
-    @Tag(name = "My Payroll")
     @GetMapping("/my-payslips/export")
     public ResponseEntity<?> exportPayslips(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -191,7 +191,6 @@ public class MyDataExportController {
     }
 
     // ── 2. EXPORT ATTENDANCE (CSV) ───────────────────────────────────────────
-    @Tag(name = "My Attendance")
     @GetMapping("/my-attendance/export")
     public ResponseEntity<?> exportAttendance(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -229,7 +228,6 @@ public class MyDataExportController {
     }
 
     // ── 3. EXPORT LEAVES (CSV) ───────────────────────────────────────────────
-    @Tag(name = "My Leave")
     @GetMapping("/my-leaves/export")
     public ResponseEntity<?> exportLeaves(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -269,7 +267,6 @@ public class MyDataExportController {
     }
 
     // ── 4. EXPORT EXPENSES (CSV) ──────────────────────────────────────────────
-    @Tag(name = "My Expenses")
     @GetMapping("/my-expenses/export")
     public ResponseEntity<?> exportExpenses(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -310,7 +307,6 @@ public class MyDataExportController {
     }
 
     // ── 5. EXPORT PERFORMANCE (PDF) ──────────────────────────────────────────
-    @Tag(name = "My Performance")
     @GetMapping("/my-performance/export")
     public ResponseEntity<?> exportPerformance(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -369,7 +365,6 @@ public class MyDataExportController {
     }
 
     // ── 6. EXPORT DOCUMENTS (ZIP) ────────────────────────────────────────────
-    @Tag(name = "My Documents")
     @GetMapping("/my-documents/export")
     public ResponseEntity<?> exportDocuments(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -416,7 +411,6 @@ public class MyDataExportController {
     }
 
     // ── 7. EXPORT TRAININGS (PDF) ────────────────────────────────────────────
-    @Tag(name = "My Profile")
     @GetMapping("/my-trainings/export")
     public ResponseEntity<?> exportTrainings(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -468,7 +462,6 @@ public class MyDataExportController {
     }
 
     // ── 8. REQUEST SETTINGS DATA EXPORT ──────────────────────────────────────
-    @Tag(name = "My Settings")
     @PostMapping("/my-settings/data/export")
     public ResponseEntity<?> exportData(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -486,7 +479,6 @@ public class MyDataExportController {
     }
 
     // ── 9. GET SETTINGS EXPORT STATUS ────────────────────────────────────────
-    @Tag(name = "My Settings")
     @GetMapping("/my-settings/data/export/{requestId}")
     public ResponseEntity<?> getExportStatus(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -505,7 +497,6 @@ public class MyDataExportController {
     }
 
     // ── 10. DOWNLOAD SETTINGS EXPORTED DATA (CSV) ────────────────────────────
-    @Tag(name = "My Settings")
     @GetMapping("/my-settings/data/export/{requestId}/download")
     public ResponseEntity<?> downloadExportedCsv(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,

@@ -23,7 +23,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/v1/my-documents")
 @CrossOrigin("*")
-@Tag(name = "My Documents")
+@Tag(name = "Employee Self Service")
 public class MyDocumentController {
 
     @Autowired

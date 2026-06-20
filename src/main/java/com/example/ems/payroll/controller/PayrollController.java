@@ -26,7 +26,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Payroll Management")
+@Tag(name = "Payroll Processing")
 public class PayrollController {
 
     @Autowired

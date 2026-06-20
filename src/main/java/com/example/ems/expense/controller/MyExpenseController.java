@@ -32,7 +32,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/my-expenses")
 @CrossOrigin("*")
-@Tag(name = "My Expenses")
+@Tag(name = "Employee Self Service")
 public class MyExpenseController {
 
     @Autowired

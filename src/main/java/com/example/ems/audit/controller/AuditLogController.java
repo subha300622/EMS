@@ -22,7 +22,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/audit-logs")
 @CrossOrigin("*")
-@Tag(name = "Audit Logs")
+@Tag(name = "Audit & Compliance")
 public class AuditLogController {
 
     @Autowired
