@@ -9,6 +9,7 @@ import com.example.ems.finance.dto.*;
 import com.example.ems.finance.service.FinanceAssetCostReportService;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -70,6 +71,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 1. GET DASHBOARD ──────────────────────────────────────────────────────
+    @Operation(summary = "Get Asset Cost Dashboard Summary", description = "Retrieves high-level summary statistics of total asset purchasing costs, depreciation values, and maintenance costs.")
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -82,6 +84,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 2. GET BREAKDOWN (PAGINATED) ──────────────────────────────────────────
+    @Operation(summary = "Get Asset Cost Breakdown", description = "Retrieves a paginated breakdown of purchase costs and counts across different asset categories.")
     @GetMapping
     public ResponseEntity<?> getBreakdown(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -97,6 +100,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 3. GET CATEGORY DETAILS ───────────────────────────────────────────────
+    @Operation(summary = "Get Asset Category Cost Details", description = "Retrieves cost details and purchase metrics for a specific asset category.")
     @GetMapping("/categories/{categoryId}")
     public ResponseEntity<?> getCategoryDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -115,6 +119,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 4. GET CATEGORY ASSETS ────────────────────────────────────────────────
+    @Operation(summary = "Get Assets in Category", description = "Retrieves a detailed listing of individual asset costs and conditions within the specified category.")
     @GetMapping("/categories/{categoryId}/assets")
     public ResponseEntity<?> getCategoryAssets(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -133,6 +138,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 5. GET ASSET FINANCIAL DETAILS ────────────────────────────────────────
+    @Operation(summary = "Get Asset Financial Details", description = "Retrieves purchase cost, book value, maintenance fees, and depreciation status for a specific asset.")
     @GetMapping("/assets/{assetId}")
     public ResponseEntity<?> getAssetFinancialDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -151,6 +157,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 6. GET DEPRECIATION REPORT ────────────────────────────────────────────
+    @Operation(summary = "Get Asset Depreciation Report", description = "Retrieves monthly/yearly depreciation schedules and book value projections for all company assets.")
     @GetMapping("/depreciation")
     public ResponseEntity<?> getDepreciationReport(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -163,6 +170,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 7. GET MAINTENANCE COST REPORT ────────────────────────────────────────
+    @Operation(summary = "Get Asset Maintenance Cost Report", description = "Retrieves cumulative maintenance and repair cost statistics across all asset profiles.")
     @GetMapping("/maintenance-cost")
     public ResponseEntity<?> getMaintenanceCostReport(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -175,6 +183,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 8. GET REPLACEMENT DUE ASSETS ────────────────────────────────────────
+    @Operation(summary = "Get Assets Due for Replacement", description = "Retrieves a listing of assets that have exceeded their useful life cycle and are due for replacement.")
     @GetMapping("/replacement-due")
     public ResponseEntity<?> getReplacementDueAssets(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -187,6 +196,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 9. EXPORT PDF ─────────────────────────────────────────────────────────
+    @Operation(summary = "Export Asset Cost Report to PDF", description = "Generates and retrieves download metadata for the PDF asset cost report.")
     @GetMapping("/export/pdf")
     public ResponseEntity<?> exportPdf(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -199,6 +209,7 @@ public class FinanceAssetCostReportController {
     }
 
     // ── 10. EXPORT CSV ────────────────────────────────────────────────────────
+    @Operation(summary = "Export Asset Cost Report to CSV", description = "Generates and retrieves download metadata for the CSV asset cost spreadsheet report.")
     @GetMapping("/export/csv")
     public ResponseEntity<?> exportCsv(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
