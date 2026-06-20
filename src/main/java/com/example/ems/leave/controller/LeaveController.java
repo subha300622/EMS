@@ -119,6 +119,7 @@ public class LeaveController {
     }
 
     // ── 2. GET ALL LEAVES (ADMIN / HR) ────────────────────────────────────────
+    @Operation(summary = "Get All Leaves", description = "Admin/HR API to retrieve all leave request applications.")
     @GetMapping("/leaves")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Leave>>> getAllLeaves(
@@ -144,6 +145,7 @@ public class LeaveController {
     }
 
     // ── 3. GET LEAVE BY ID ────────────────────────────────────────────────────
+    @Operation(summary = "Get Leave Request by ID", description = "Retrieves details of a specific leave application by its ID.")
     @GetMapping("/leaves/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getLeaveById(
@@ -180,6 +182,7 @@ public class LeaveController {
 
 
     // ── 8. GET PENDING LEAVES (MANAGERS / ADMIN / HR) ──────────────────────────
+    @Operation(summary = "Get Pending Leaves", description = "Retrieves all leave applications currently awaiting approval decisions.")
     @GetMapping("/leaves/pending")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Leave>>> getPendingLeaves(
@@ -207,6 +210,7 @@ public class LeaveController {
     }
 
     // ── 9. GET STATS (ADMIN / HR) ─────────────────────────────────────────────
+    @Operation(summary = "Get Leave Statistics", description = "Retrieves statistics on leave applications and balances.")
     @GetMapping("/leaves/stats")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getLeaveStats(
@@ -229,6 +233,7 @@ public class LeaveController {
     }
 
     // ── 10. APPROVE LEAVE ─────────────────────────────────────────────────────
+    @Operation(summary = "Approve Leave Request", description = "Approves a pending leave application.")
     @PatchMapping("/leaves/{id}/approve")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approveLeave(
@@ -265,6 +270,7 @@ public class LeaveController {
     }
 
     // ── 11. REJECT LEAVE ─────────────────────────────────────────────────────
+    @Operation(summary = "Reject Leave Request", description = "Rejects a pending leave application with feedback options.")
     @PatchMapping("/leaves/{id}/reject")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> rejectLeave(
@@ -301,6 +307,7 @@ public class LeaveController {
     }
 
     // ── 12. CANCEL LEAVE ─────────────────────────────────────────────────────
+    @Operation(summary = "Cancel Leave Request", description = "Cancels a submitted leave application.")
     @PutMapping("/leaves/cancel")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> cancelLeave(
@@ -328,6 +335,7 @@ public class LeaveController {
     }
 
     // ── 12b. DELETE LEAVE ─────────────────────────────────────────────────────
+    @Operation(summary = "Delete Leave Entry", description = "Deletes a leave application entry from records.")
     @DeleteMapping("/leaves")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteLeave(
@@ -355,6 +363,7 @@ public class LeaveController {
     }
 
     // ── 13. CREATE LEAVE TYPE ─────────────────────────────────────────────────
+    @Operation(summary = "Create Leave Type", description = "Creates a new category class for leave allocation, like Paid Leave or Sick Leave.")
     @PostMapping("/leave-types")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createLeaveType(
@@ -382,6 +391,7 @@ public class LeaveController {
     }
 
     // ── 14. GET ALL LEAVE TYPES ───────────────────────────────────────────────
+    @Operation(summary = "Get All Leave Types", description = "Retrieves a listing of all active and inactive leave type classifications.")
     @GetMapping("/leave-types")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<LeaveType>>> getLeaveTypes(
@@ -398,6 +408,7 @@ public class LeaveController {
     }
 
     // ── 15. UPDATE LEAVE TYPE ────────────────────────────────────────────────
+    @Operation(summary = "Update Leave Type", description = "Updates configurations on an existing leave type.")
     @PutMapping("/leave-types/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateLeaveType(
@@ -425,6 +436,7 @@ public class LeaveController {
     }
 
     // ── 16. DEACTIVATE LEAVE TYPE ─────────────────────────────────────────────
+    @Operation(summary = "Deactivate Leave Type", description = "Deactivates a leave type classification, disabling new applications.")
     @PatchMapping("/leave-types/{id}/deactivate")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deactivateLeaveType(
@@ -451,6 +463,7 @@ public class LeaveController {
     }
 
     // ── 16b. ACTIVATE LEAVE TYPE ─────────────────────────────────────────────
+    @Operation(summary = "Activate Leave Type", description = "Activates a previously deactivated leave type classification.")
     @PatchMapping("/leave-types/{id}/activate")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> activateLeaveType(
@@ -477,6 +490,7 @@ public class LeaveController {
     }
 
     // ── 17. GET LEAVE TYPE BY ID ──────────────────────────────────────────────
+    @Operation(summary = "Get Leave Type Details", description = "Retrieves details of a specific leave type by ID.")
     @GetMapping("/leave-types/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getLeaveTypeById(
@@ -499,6 +513,7 @@ public class LeaveController {
     }
 
     // ── 18. DELETE LEAVE TYPE ──────────────────────────────────────────────────
+    @Operation(summary = "Delete Leave Type", description = "Removes a leave type classification from the system configuration.")
     @DeleteMapping("/leave-types/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteLeaveType(
@@ -529,6 +544,7 @@ public class LeaveController {
     }
 
     // ── 19. GET LEAVE CALENDAR ───────────────────────────────────────────────
+    @Operation(summary = "Get Leave Calendar", description = "Retrieves a calendar timeline of active leaves.")
     @GetMapping("/leave-calendar")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Leave>>> getLeaveCalendar(
@@ -546,6 +562,7 @@ public class LeaveController {
     }
 
     // ── 20. GET LEAVES PAYROLL IMPACT ─────────────────────────────────────────
+    @Operation(summary = "Get Leaves Payroll Impact", description = "Retrieves unpaid leave details for payroll deductions.")
     @GetMapping("/leaves/payroll-impact")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getLeavesPayrollImpact(
