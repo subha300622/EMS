@@ -11,6 +11,7 @@ import com.example.ems.expense.service.ExpenseCategoryService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -48,6 +49,7 @@ public class ExpenseCategoryController {
         return null;
     }
 
+    @Operation(summary = "Create Expense Category", description = "Creates a new category category (e.g., Travel, Meals) with monthly or yearly budget limits.")
     @PostMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createCategory(
@@ -74,6 +76,7 @@ public class ExpenseCategoryController {
         }
     }
 
+    @Operation(summary = "Get All Expense Categories", description = "Retrieves a list of all configured expense categories in the system.")
     @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAllCategories(
@@ -89,6 +92,7 @@ public class ExpenseCategoryController {
         return ResponseEntity.ok(ApiResponse.success("Expense categories retrieved successfully", list));
     }
 
+    @Operation(summary = "Get Expense Category by ID", description = "Retrieves details of a specific expense category by ID.")
     @GetMapping("/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getCategoryById(
@@ -107,6 +111,7 @@ public class ExpenseCategoryController {
                         .body(ErrorResponse.error("Expense category not found with ID: " + id, "EXP_002")));
     }
 
+    @Operation(summary = "Update Expense Category", description = "Updates configurations and budget limits on an existing expense category.")
     @PutMapping("/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateCategory(
@@ -133,6 +138,7 @@ public class ExpenseCategoryController {
         }
     }
 
+    @Operation(summary = "Delete Expense Category", description = "Deletes an expense category configuration from the system.")
     @DeleteMapping("/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteCategory(
