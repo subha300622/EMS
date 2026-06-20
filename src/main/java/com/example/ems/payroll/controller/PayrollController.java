@@ -14,6 +14,7 @@ import com.example.ems.payroll.service.PayrollService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -53,6 +54,7 @@ public class PayrollController {
     }
 
     // ── 1. GENERATE PAYROLL (FINANCE / ADMIN) ────────────────────────────────
+    @Operation(summary = "Generate Payroll Runs", description = "Triggers the generation of payroll records for all active employees for the specified month and year.")
     @PostMapping("/payroll-runs")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> generatePayroll(
@@ -77,6 +79,7 @@ public class PayrollController {
     }
 
     // ── 4. GET ALL PAYROLL RECORDS (HR / FINANCE / ADMIN) ────────────────────
+    @Operation(summary = "Get All Payroll Records", description = "Retrieves a listing of all payroll records in the system.")
     @GetMapping("/payroll-runs")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Payroll>>> getAllPayroll(
@@ -100,6 +103,7 @@ public class PayrollController {
     }
 
     // ── 5. GET PAYROLL BY ID (HR / FINANCE / ADMIN) ──────────────────────────
+    @Operation(summary = "Get Payroll Record by ID", description = "Retrieves detailed fields of a specific payroll record by its ID.")
     @GetMapping("/payroll-runs/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getPayrollById(
@@ -127,6 +131,7 @@ public class PayrollController {
     }
 
     // ── 6. GET PAYROLL BY EMPLOYEE ID (HR / FINANCE / ADMIN) ──────────────────
+    @Operation(summary = "Get Employee Payroll Records", description = "Retrieves all historical payroll records matching the specified employee ID.")
     @GetMapping("/payroll-runs/employee/{employeeId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Payroll>>> getPayrollByEmployee(
@@ -151,6 +156,7 @@ public class PayrollController {
     }
 
     // ── 7. UPDATE PAYROLL (FINANCE / ADMIN) ──────────────────────────────────
+    @Operation(summary = "Update Payroll Record", description = "Updates specific salary, allowance, or deduction values on a payroll record.")
     @PutMapping("/payroll-runs/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updatePayroll(
@@ -178,6 +184,7 @@ public class PayrollController {
     }
 
     // ── 8. REVIEW PAYROLL ────────────────────────────────────────────────────
+    @Operation(summary = "Review Payroll Record", description = "Changes the status of a specific payroll record to REVIEWED.")
     @PutMapping("/payroll-runs/{id}/review")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> reviewPayroll(
@@ -204,6 +211,7 @@ public class PayrollController {
     }
 
     // ── 9. APPROVE PAYROLL ───────────────────────────────────────────────────
+    @Operation(summary = "Approve Payroll Record", description = "Approves a specific payroll record, moving its status to APPROVED.")
     @PatchMapping("/payroll-runs/{id}/approve")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approvePayroll(
@@ -230,6 +238,7 @@ public class PayrollController {
     }
 
     // ── 10. PROCESS PAYROLL ──────────────────────────────────────────────────
+    @Operation(summary = "Process Payroll Record", description = "Executes payment processing for a specific payroll record, moving its status to PROCESSED.")
     @PostMapping("/payroll-runs/{id}/process")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> processPayroll(
@@ -258,6 +267,7 @@ public class PayrollController {
     // ── NEW STRUCTURED PAYROLL ENDPOINTS ──────────────────────────────────────
 
     // 1. Dashboard
+    @Operation(summary = "Get Payroll Dashboard", description = "Retrieves payroll dashboard analytics including cost trends and disbursement status summaries.")
     @GetMapping("/payroll/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPayrollDashboard(
@@ -272,6 +282,7 @@ public class PayrollController {
     }
 
     // 2. Salary Structure setup
+    @Operation(summary = "Save Salary Structure", description = "Saves or updates the structured salary mapping configuration for an employee.")
     @PostMapping("/payroll/salary-structures")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> saveSalaryStructure(
@@ -292,6 +303,7 @@ public class PayrollController {
     }
 
     // 5. Process Payroll
+    @Operation(summary = "Execute Payroll Run", description = "Processes the monthly payroll run calculations for a specific department.")
     @PostMapping("/payroll/process")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> processPayrollRun(
@@ -311,6 +323,7 @@ public class PayrollController {
     }
 
     // 6. Payroll Calculation
+    @Operation(summary = "Get Payroll Calculation Preview", description = "Generates a calculation preview showing breakdowns of basic salary, allowance, taxes, and deductions.")
     @GetMapping("/payroll/{employeeId}/calculation")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCalculationPreview(
@@ -326,6 +339,7 @@ public class PayrollController {
     }
 
     // 7. Payroll Approval
+    @Operation(summary = "Approve Payroll Run Status", description = "Approves the generated payroll run status for disbursements.")
     @PostMapping("/payroll/{id}/approve")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approvePayrollRun(
@@ -346,6 +360,7 @@ public class PayrollController {
 
 
     // 9. Salary Disbursement
+    @Operation(summary = "Disburse Salary Payments", description = "Executes the disbursement workflow to pay employees for a processed payroll run.")
     @PostMapping("/payroll/disburse")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> disburseSalary(
@@ -366,6 +381,7 @@ public class PayrollController {
     }
 
     // 10. Payroll History
+    @Operation(summary = "Get Monthly Payroll History", description = "Retrieves historical logs of monthly payroll distributions.")
     @GetMapping("/payroll/history")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPayrollHistory(
@@ -381,6 +397,7 @@ public class PayrollController {
 
 
     // 12. Tax Configuration
+    @Operation(summary = "Get Tax Settings Configuration", description = "Retrieves the current system configuration tax slabs and settings.")
     @GetMapping("/payroll/taxes")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getTaxConfiguration(
@@ -394,6 +411,7 @@ public class PayrollController {
                 payrollService.getTaxSettings()));
     }
 
+    @Operation(summary = "Update Tax Settings Configuration", description = "Updates the active tax configuration parameters in the system settings.")
     @PutMapping("/payroll/taxes")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> updateTaxConfiguration(
@@ -409,6 +427,7 @@ public class PayrollController {
     }
 
     // 13. Payroll Analytics
+    @Operation(summary = "Get Payroll Cost Trends", description = "Retrieves analytical cost timelines showing company-wide salary expenses over time.")
     @GetMapping("/payroll/analytics/cost-trend")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCostTrend(
@@ -422,6 +441,7 @@ public class PayrollController {
                 payrollService.getCostTrend()));
     }
 
+    @Operation(summary = "Get Department Payroll Costs", description = "Retrieves compiled payroll expenses categorized by department classifications.")
     @GetMapping("/payroll/analytics/department-cost")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDepartmentCost(
@@ -436,6 +456,7 @@ public class PayrollController {
     }
 
     // 14. Payroll Reports
+    @Operation(summary = "Get Monthly Payroll Report", description = "Generates a monthly payroll report showing all employee payslips details.")
     @GetMapping("/payroll/reports/monthly")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMonthlyPayrollReport(
@@ -448,6 +469,7 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.success("Monthly report retrieved", payrollService.getMonthlyReport()));
     }
 
+    @Operation(summary = "Get Salary Register Report", description = "Retrieves the structured salary register mapping basic pay, deductions, and gross totals.")
     @GetMapping("/payroll/reports/salary-register")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSalaryRegister(
@@ -460,6 +482,7 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.success("Salary register retrieved", payrollService.getSalaryRegister()));
     }
 
+    @Operation(summary = "Get Tax Deductions Report", description = "Retrieves tax deduction reports calculated and withheld during payroll runs.")
     @GetMapping("/payroll/reports/tax")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTaxReport(
@@ -472,6 +495,7 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.success("Tax report retrieved", payrollService.getTaxReport()));
     }
 
+    @Operation(summary = "Get Disbursement Report", description = "Retrieves disbursement report logging bank transfers and payment release actions.")
     @GetMapping("/payroll/reports/disbursement")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDisbursementReport(
@@ -484,6 +508,7 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.success("Disbursement report retrieved", payrollService.getDisbursementReport()));
     }
 
+    @Operation(summary = "Delete Payroll Record", description = "Deletes a specific payroll record from the database.")
     @DeleteMapping("/payroll-runs/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deletePayroll(
@@ -510,6 +535,7 @@ public class PayrollController {
         }
     }
 
+    @Operation(summary = "Get Payroll Statistics", description = "Retrieves quick metrics and statistics regarding processed payroll runs.")
     @GetMapping("/payroll-runs/stats")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPayrollStats(
@@ -522,12 +548,14 @@ public class PayrollController {
         return ResponseEntity.ok(ApiResponse.success("Payroll stats retrieved", payrollService.getPayrollStats()));
     }
 
+    @Operation(summary = "Get Payroll Reports Summary", description = "Retrieves payroll statistics summary reports.")
     @GetMapping("/payroll-runs/reports")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPayrollReports(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
         return getPayrollStats(authHeader);
     }
 
+    @Operation(summary = "Export Payroll to CSV", description = "Generates and downloads a CSV spreadsheet listing payroll records.")
     @GetMapping("/payroll-runs/export")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<byte[]> exportPayroll(
