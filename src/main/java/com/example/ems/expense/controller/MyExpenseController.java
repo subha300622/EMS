@@ -13,6 +13,7 @@ import com.example.ems.expense.repository.ExpenseRepository;
 import com.example.ems.expense.repository.MyExpenseReceiptRepository;
 import com.example.ems.expense.service.MyExpenseService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,6 +122,7 @@ public class MyExpenseController {
 
 
     // 2. Get My Expense List
+    @Operation(summary = "Get My Expenses", description = "Retrieves a paginated list of expense claims for the logged-in employee, with optional filters for status, category, and date range.")
     @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMyExpenses(
@@ -165,6 +167,7 @@ public class MyExpenseController {
     }
 
     // 3. Create Expense Claim
+    @Operation(summary = "Create Expense Claim", description = "Submits a new expense reimbursement claim.")
     @PostMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createExpense(
@@ -191,6 +194,7 @@ public class MyExpenseController {
     }
 
     // 4. Get Expense Details
+    @Operation(summary = "Get Expense Details", description = "Retrieves details of a specific expense claim by ID.")
     @GetMapping("/{expenseId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getExpenseDetails(
@@ -228,6 +232,7 @@ public class MyExpenseController {
     }
 
     // 5. Update Expense Claim
+    @Operation(summary = "Update Expense Claim", description = "Updates the details of a pending expense claim.")
     @PutMapping("/{expenseId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateExpense(
@@ -266,6 +271,7 @@ public class MyExpenseController {
     }
 
     // 6. Withdraw Expense Claim
+    @Operation(summary = "Withdraw Expense Claim", description = "Withdraws a submitted expense claim from approval workflow.")
     @PatchMapping("/{expenseId}/withdraw")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> withdrawExpense(
@@ -304,6 +310,7 @@ public class MyExpenseController {
     }
 
     // 7. Upload Expense Receipt
+    @Operation(summary = "Upload Receipt", description = "Uploads a receipt document for expense verification.")
     @PostMapping(value = "/receipts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> uploadReceipt(
@@ -331,6 +338,7 @@ public class MyExpenseController {
     }
 
     // 8. Download Receipt
+    @Operation(summary = "Download Receipt", description = "Downloads the file data of an uploaded expense receipt.")
     @GetMapping("/receipts/{receiptId}/download")
     public ResponseEntity<?> downloadReceipt(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -371,6 +379,7 @@ public class MyExpenseController {
     }
 
     // 9. Get Expense Timeline
+    @Operation(summary = "Get Expense Timeline", description = "Retrieves the timeline/audit log of events for a specific expense claim.")
     @GetMapping("/{expenseId}/timeline")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getExpenseTimeline(
@@ -408,6 +417,7 @@ public class MyExpenseController {
     }
 
     // 10. Get Expense Categories
+    @Operation(summary = "Get Expense Categories", description = "Retrieves all active expense categories.")
     @GetMapping("/categories")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getCategories(
@@ -421,6 +431,7 @@ public class MyExpenseController {
     }
 
     // 11. Get Expense Policy
+    @Operation(summary = "Get Expense Policies", description = "Retrieves active company expense policies.")
     @GetMapping("/policies")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getPolicies(

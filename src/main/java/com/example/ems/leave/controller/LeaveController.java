@@ -16,6 +16,7 @@ import com.example.ems.leave.entity.LeaveType;
 import com.example.ems.leave.service.LeaveService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,7 @@ public class LeaveController {
     }
 
     // ── 1. APPLY LEAVE ────────────────────────────────────────────────────────
+    @Operation(summary = "Apply for Leave", description = "Submits a new leave request with date range, leave type, and reason.")
     @PostMapping("/leaves")
     @Tag(name = "Employee Self Service - Leave")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -93,6 +95,7 @@ public class LeaveController {
     }
 
     // ── 1b. GET MY LEAVES ─────────────────────────────────────────────────────
+    @Operation(summary = "Get My Leave History", description = "Retrieves the logged-in employee's complete leave application history and statuses.")
     @GetMapping("/leaves/my")
     @Tag(name = "Employee Self Service - Leave")
     @SuppressWarnings({"unchecked", "rawtypes"})

@@ -28,7 +28,7 @@ import com.example.ems.performance.repository.GoalRepository;
 import com.example.ems.performance.repository.PerformanceReviewRepository;
 import com.example.ems.training.entity.TrainingEnrollment;
 import com.example.ems.training.repository.TrainingEnrollmentRepository;
-
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -145,6 +145,7 @@ public class MyDataExportController {
     }
 
     // ── 1. EXPORT PAYSLIPS (ZIP) ─────────────────────────────────────────────
+    @Operation(summary = "Export Payslips", description = "Exports all available employee payslips packaged into a ZIP archive.")
     @GetMapping("/my-payslips/export")
     public ResponseEntity<?> exportPayslips(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -191,6 +192,7 @@ public class MyDataExportController {
     }
 
     // ── 2. EXPORT ATTENDANCE (CSV) ───────────────────────────────────────────
+    @Operation(summary = "Export Attendance History", description = "Exports the logged-in employee's complete attendance logs in CSV format.")
     @GetMapping("/my-attendance/export")
     public ResponseEntity<?> exportAttendance(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -228,6 +230,7 @@ public class MyDataExportController {
     }
 
     // ── 3. EXPORT LEAVES (CSV) ───────────────────────────────────────────────
+    @Operation(summary = "Export Leave History", description = "Exports the logged-in employee's complete leave history in CSV format.")
     @GetMapping("/my-leaves/export")
     public ResponseEntity<?> exportLeaves(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -267,6 +270,7 @@ public class MyDataExportController {
     }
 
     // ── 4. EXPORT EXPENSES (CSV) ──────────────────────────────────────────────
+    @Operation(summary = "Export Expense Claims", description = "Exports the logged-in employee's complete expense reimbursement records in CSV format.")
     @GetMapping("/my-expenses/export")
     public ResponseEntity<?> exportExpenses(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -307,6 +311,7 @@ public class MyDataExportController {
     }
 
     // ── 5. EXPORT PERFORMANCE (PDF) ──────────────────────────────────────────
+    @Operation(summary = "Export Performance Summary", description = "Generates and downloads a PDF document summarizing the employee's goals and performance reviews.")
     @GetMapping("/my-performance/export")
     public ResponseEntity<?> exportPerformance(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -365,6 +370,7 @@ public class MyDataExportController {
     }
 
     // ── 6. EXPORT DOCUMENTS (ZIP) ────────────────────────────────────────────
+    @Operation(summary = "Export Personal Documents", description = "Exports all uploaded employee documents packaged into a ZIP archive.")
     @GetMapping("/my-documents/export")
     public ResponseEntity<?> exportDocuments(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -411,6 +417,7 @@ public class MyDataExportController {
     }
 
     // ── 7. EXPORT TRAININGS (PDF) ────────────────────────────────────────────
+    @Operation(summary = "Export Training History", description = "Generates and downloads a PDF document summarizing the employee's training course enrollment history.")
     @GetMapping("/my-trainings/export")
     public ResponseEntity<?> exportTrainings(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -462,6 +469,7 @@ public class MyDataExportController {
     }
 
     // ── 8. REQUEST SETTINGS DATA EXPORT ──────────────────────────────────────
+    @Operation(summary = "Initiate Settings Data Export", description = "Triggers a background process to export the employee's personal settings, MFA, and profile preferences.")
     @PostMapping("/my-settings/data/export")
     public ResponseEntity<?> exportData(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
@@ -479,6 +487,7 @@ public class MyDataExportController {
     }
 
     // ── 9. GET SETTINGS EXPORT STATUS ────────────────────────────────────────
+    @Operation(summary = "Get Settings Export Status", description = "Checks completion status of a personal settings data export request.")
     @GetMapping("/my-settings/data/export/{requestId}")
     public ResponseEntity<?> getExportStatus(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -497,6 +506,7 @@ public class MyDataExportController {
     }
 
     // ── 10. DOWNLOAD SETTINGS EXPORTED DATA (CSV) ────────────────────────────
+    @Operation(summary = "Download Exported Settings Data", description = "Downloads the compiled personal settings data file in CSV format.")
     @GetMapping("/my-settings/data/export/{requestId}/download")
     public ResponseEntity<?> downloadExportedCsv(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,

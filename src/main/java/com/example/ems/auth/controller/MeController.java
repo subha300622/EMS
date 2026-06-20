@@ -15,6 +15,7 @@ import com.example.ems.asset.repository.MyAssetRepository;
 import com.example.ems.performance.repository.PerformanceReviewRepository;
 import com.example.ems.support.repository.MySupportTicketRepository;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -57,6 +58,7 @@ public class MeController {
     @Autowired
     private MySupportTicketRepository supportTicketRepository;
 
+    @Operation(summary = "Get My Profile", description = "Retrieves the detailed employee profile of the currently authenticated user.")
     @GetMapping("/profile")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMyProfile(
@@ -81,6 +83,7 @@ public class MeController {
         return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", employee));
     }
 
+    @Operation(summary = "Update My Profile", description = "Updates editable contact details such as phone, address, emergency contact, and profile image in the employee's profile.")
     @PutMapping("/profile")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -123,6 +126,7 @@ public class MeController {
         return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", saved));
     }
 
+    @Operation(summary = "Get My Dashboard Stats", description = "Retrieves active counts of pending leaves, pending expenses, assigned assets, pending reviews, and open tickets.")
     @GetMapping("/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<MyDashboardResponse>> getMyDashboard(

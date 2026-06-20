@@ -7,6 +7,7 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.schedule.dto.*;
 import com.example.ems.schedule.service.MyScheduleService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -53,6 +54,7 @@ public class MyScheduleController {
 
 
 
+    @Operation(summary = "Get Work Calendar", description = "Retrieves work calendar entries, shifts, and holiday events for a specified date range.")
     @GetMapping("/calendar")
     public ResponseEntity<ApiResponse<MyCalendarResponse>> getCalendar(
             @RequestHeader("Authorization") String authHeader,
@@ -67,6 +69,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Calendar retrieved", scheduleService.getCalendar(user.getWorkEmail(), view, startDate, endDate, eventType)));
     }
 
+    @Operation(summary = "Get Today's Schedule", description = "Retrieves work hours, shift details, and events scheduled for today.")
     @GetMapping("/today")
     public ResponseEntity<ApiResponse<TodayScheduleResponse>> getTodaySchedule(@RequestHeader("Authorization") String authHeader) {
         User user = resolveUser(authHeader);
@@ -76,6 +79,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Today's schedule retrieved", scheduleService.getTodaySchedule(user.getWorkEmail())));
     }
 
+    @Operation(summary = "Get Upcoming Schedule", description = "Retrieves shifts and schedule events for the next specified number of days.")
     @GetMapping("/upcoming")
     public ResponseEntity<ApiResponse<UpcomingScheduleResponse>> getUpcomingSchedule(
             @RequestHeader("Authorization") String authHeader,
@@ -88,6 +92,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Upcoming schedule retrieved", scheduleService.getUpcomingSchedule(user.getWorkEmail(), days, eventType)));
     }
 
+    @Operation(summary = "Get My Shift History", description = "Retrieves the history of assigned shifts, working hours, and shift statuses.")
     @GetMapping("/shifts")
     public ResponseEntity<ApiResponse<ShiftHistoryResponse>> getShifts(
             @RequestHeader("Authorization") String authHeader,
@@ -100,6 +105,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Shifts retrieved", scheduleService.getMyShiftHistory(user.getWorkEmail(), month, status)));
     }
 
+    @Operation(summary = "Create Shift Change Request", description = "Submits a request to change or swap an assigned work shift.")
     @PostMapping("/change-requests")
     public ResponseEntity<ApiResponse<ChangeRequestResponse>> createChangeRequest(
             @RequestHeader("Authorization") String authHeader,
@@ -111,6 +117,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Change request submitted", scheduleService.createChangeRequest(user.getWorkEmail(), req)));
     }
 
+    @Operation(summary = "Get Shift Change Requests", description = "Retrieves status history of submitted shift change requests.")
     @GetMapping("/change-requests")
     public ResponseEntity<ApiResponse<ChangeRequestListResponse>> getChangeRequests(
             @RequestHeader("Authorization") String authHeader,
@@ -125,6 +132,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Change requests retrieved", scheduleService.getChangeRequests(user.getWorkEmail(), status, pageable)));
     }
 
+    @Operation(summary = "Update Availability Preferences", description = "Updates general weekly availability preferences and preferred working hours.")
     @PutMapping("/availability")
     public ResponseEntity<ApiResponse<AvailabilityResponse>> updateAvailability(
             @RequestHeader("Authorization") String authHeader,
@@ -136,6 +144,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Availability updated", scheduleService.updateAvailability(user.getWorkEmail(), req)));
     }
 
+    @Operation(summary = "Get Shift Timeline", description = "Retrieves the timeline/audit trail of shift assignments, swaps, and changes.")
     @GetMapping("/timeline")
     public ResponseEntity<ApiResponse<ScheduleTimelineResponse>> getTimeline(@RequestHeader("Authorization") String authHeader) {
         User user = resolveUser(authHeader);
@@ -145,6 +154,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Timeline retrieved", scheduleService.getTimeline(user.getWorkEmail())));
     }
 
+    @Operation(summary = "Get Schedule Notifications", description = "Retrieves schedule-related system alerts, shift changes, and updates.")
     @GetMapping("/notifications")
     public ResponseEntity<ApiResponse<ScheduleNotificationsResponse>> getNotifications(@RequestHeader("Authorization") String authHeader) {
         User user = resolveUser(authHeader);
@@ -154,6 +164,7 @@ public class MyScheduleController {
         return ResponseEntity.ok(ApiResponse.success("Notifications retrieved", scheduleService.getNotifications(user.getWorkEmail())));
     }
 
+    @Operation(summary = "Get Schedule Policies", description = "Retrieves company policies regarding work shifts, timing, and attendance regulations.")
     @GetMapping("/policies")
     public ResponseEntity<ApiResponse<SchedulePoliciesResponse>> getPolicies(@RequestHeader("Authorization") String authHeader) {
         User user = resolveUser(authHeader);

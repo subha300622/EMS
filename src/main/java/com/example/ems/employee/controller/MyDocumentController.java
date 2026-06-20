@@ -9,6 +9,7 @@ import com.example.ems.employee.dto.*;
 import com.example.ems.employee.entity.MyEmployeeDocument;
 import com.example.ems.employee.service.MyDocumentService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -70,6 +71,7 @@ public class MyDocumentController {
 
 
     // 2. Get Document Categories
+    @Operation(summary = "Get Document Categories", description = "Retrieves categories and document compliance statuses for the logged-in employee.")
     @GetMapping("/categories")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getCategories(
@@ -92,6 +94,7 @@ public class MyDocumentController {
     }
 
     // 3. Get Documents by Category
+    @Operation(summary = "Get Documents by Category", description = "Retrieves employee documents belonging to a specific category.")
     @GetMapping("/categories/{categoryId}/documents")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDocumentsByCategory(
@@ -115,6 +118,7 @@ public class MyDocumentController {
     }
 
     // 4. Upload Document
+    @Operation(summary = "Upload Document", description = "Uploads a new document under a specified category and document type.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> uploadDocument(
@@ -149,6 +153,7 @@ public class MyDocumentController {
     }
 
     // 5. Replace Existing Document
+    @Operation(summary = "Replace Document Version", description = "Uploads a new version of an existing document to replace the previous one.")
     @PutMapping(value = "/{documentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> replaceDocument(
@@ -176,6 +181,7 @@ public class MyDocumentController {
     }
 
     // 6. Get Document Details
+    @Operation(summary = "Get Document Details", description = "Retrieves structural metadata and verification history of a specific document.")
     @GetMapping("/{documentId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDocumentDetails(
@@ -199,6 +205,7 @@ public class MyDocumentController {
     }
 
     // 7. Preview/View Document
+    @Operation(summary = "Preview Document", description = "Generates a temporary read-only preview URL for viewing the document.")
     @GetMapping("/{documentId}/preview")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> previewDocument(
@@ -222,6 +229,7 @@ public class MyDocumentController {
     }
 
     // 8. Download Document
+    @Operation(summary = "Download Document File", description = "Downloads the raw file data of a specific document.")
     @GetMapping("/{documentId}/download")
     public ResponseEntity<?> downloadDocument(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -248,6 +256,7 @@ public class MyDocumentController {
     }
 
     // 9. Get Expiry Notifications
+    @Operation(summary = "Get Document Expiry Alerts", description = "Retrieves active warnings for documents that are expiring soon.")
     @GetMapping("/notifications")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getExpiryNotifications(
@@ -270,6 +279,7 @@ public class MyDocumentController {
     }
 
     // 10. Get Document Activity History
+    @Operation(summary = "Get Document Audit History", description = "Retrieves an audit log of upload, update, and verification activities on the employee's documents.")
     @GetMapping("/history")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDocumentHistory(
@@ -294,6 +304,7 @@ public class MyDocumentController {
     }
 
     // 11. Get Allowed Document Types
+    @Operation(summary = "Get Allowed Document Types", description = "Retrieves a catalog of allowed document codes and their criteria.")
     @GetMapping("/document-types")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAllowedDocumentTypes(

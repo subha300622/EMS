@@ -12,6 +12,7 @@ import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,6 +100,7 @@ public class MyAssetController {
 
 
     // 2. Get My Assigned Assets
+    @Operation(summary = "Get My Assigned Assets", description = "Retrieves a paginated list of all assets currently assigned to the logged-in employee.")
     @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAssignedAssets(
@@ -144,6 +146,7 @@ public class MyAssetController {
     }
 
     // 3. Get Asset Details
+    @Operation(summary = "Get Asset Details", description = "Retrieves the details of a specific assigned asset by its ID.")
     @GetMapping("/{assetId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAssetDetails(
@@ -181,6 +184,7 @@ public class MyAssetController {
     }
 
     // 4. Submit Asset Request
+    @Operation(summary = "Submit Asset Request", description = "Submits a request for a new asset (e.g. laptop, mobile device).")
     @PostMapping("/requests")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> requestAsset(
@@ -207,6 +211,7 @@ public class MyAssetController {
     }
 
     // 5. Get Asset Requests
+    @Operation(summary = "Get Asset Requests", description = "Retrieves a list of all asset requests submitted by the logged-in employee.")
     @GetMapping("/requests")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAssetRequests(
@@ -227,6 +232,7 @@ public class MyAssetController {
     }
 
     // 6. Report Issue on Asset
+    @Operation(summary = "Report Asset Issue", description = "Reports a hardware or software issue with an assigned asset and creates a support ticket.")
     @PostMapping("/{assetId}/issues")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> reportIssue(
@@ -265,6 +271,7 @@ public class MyAssetController {
     }
 
     // 7. Get Asset Issues
+    @Operation(summary = "Get Asset Issues", description = "Retrieves a list of all reported issues and ticket statuses for the employee's assets.")
     @GetMapping("/issues")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAssetIssues(
@@ -285,6 +292,7 @@ public class MyAssetController {
     }
 
     // 8. Submit Asset Return Request
+    @Operation(summary = "Submit Asset Return Request", description = "Initiates a return request for a company asset with details on condition and reason.")
     @PostMapping("/{assetId}/return-request")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> submitReturnRequest(
@@ -323,6 +331,7 @@ public class MyAssetController {
     }
 
     // 9. Get Asset Timeline
+    @Operation(summary = "Get Asset Timeline", description = "Retrieves the lifecycle timeline of an asset, including assignment, checkouts, and returns.")
     @GetMapping("/{assetId}/timeline")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAssetTimeline(
@@ -360,6 +369,7 @@ public class MyAssetController {
     }
 
     // 10. Get Allowed Category Configurations
+    @Operation(summary = "Get Asset Categories", description = "Retrieves configurations for allowed asset categories.")
     @GetMapping("/categories")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getCategories(
@@ -373,6 +383,7 @@ public class MyAssetController {
     }
 
     // 11. Get Policy Acknowledgement Details
+    @Operation(summary = "Get Asset Policies", description = "Retrieves policies and policy acknowledgement details for assets.")
     @GetMapping("/policies")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getPolicies(

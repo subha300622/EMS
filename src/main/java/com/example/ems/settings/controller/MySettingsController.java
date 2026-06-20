@@ -11,7 +11,7 @@ import com.example.ems.settings.dto.RegenerateBackupCodesRequest;
 import com.example.ems.settings.dto.SupportTicketRequest;
 import com.example.ems.settings.service.MySettingsService;
 import com.example.ems.support.dto.CreateTicketResponse;
-
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -74,6 +74,7 @@ public class MySettingsController {
     }
 
     // 1. Settings Dashboard
+    @Operation(summary = "Get Settings Dashboard", description = "Retrieves an overview of user preferences, security posture, and active MFA status.")
     @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDashboard(
@@ -92,6 +93,7 @@ public class MySettingsController {
     }
 
     // 2. Get Security Settings
+    @Operation(summary = "Get Security Settings", description = "Retrieves details of active security policies, login history, and MFA parameters.")
     @GetMapping("/security")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getSecuritySettings(
@@ -110,6 +112,7 @@ public class MySettingsController {
     }
 
     // 3. Change Password
+    @Operation(summary = "Change Password", description = "Updates the user account password after validating the old password.")
     @PostMapping("/security/change-password")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> changePassword(
@@ -131,6 +134,7 @@ public class MySettingsController {
     }
 
     // 4. Enable MFA
+    @Operation(summary = "Enable/Disable MFA", description = "Toggles Multi-Factor Authentication (MFA) status for the employee account.")
     @PutMapping("/security/mfa")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> enableMfa(
@@ -152,6 +156,7 @@ public class MySettingsController {
     }
 
     // 5. Get Privacy Settings
+    @Operation(summary = "Get Privacy Settings", description = "Retrieves the employee's directory visibility and communication privacy preferences.")
     @GetMapping("/privacy")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getPrivacySettings(
@@ -170,6 +175,7 @@ public class MySettingsController {
     }
 
     // 6. Update Privacy Settings
+    @Operation(summary = "Update Privacy Settings", description = "Updates directory visibility and personal details sharing preferences.")
     @PutMapping("/privacy")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updatePrivacySettings(
@@ -189,6 +195,7 @@ public class MySettingsController {
     }
 
     // 7. Get Notification Preferences
+    @Operation(summary = "Get Notification Preferences", description = "Retrieves configured notification preferences across email, SMS, and push notification channels.")
     @GetMapping("/notifications")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getNotificationPreferences(
@@ -207,6 +214,7 @@ public class MySettingsController {
     }
 
     // 8. Update Notification Preferences for category
+    @Operation(summary = "Update Notification Category Preference", description = "Updates delivery preferences (email/push/SMS) for a specific notification category.")
     @PutMapping("/notifications/{category}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateNotificationCategory(
@@ -227,6 +235,7 @@ public class MySettingsController {
     }
 
     // 9. Get Notification Timing
+    @Operation(summary = "Get Notification Timing Preferences", description = "Retrieves preferred quiet hours and batching settings for alerts.")
     @GetMapping("/notifications/timing")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getNotificationTiming(
@@ -245,6 +254,7 @@ public class MySettingsController {
     }
 
     // 10. Update Notification Timing
+    @Operation(summary = "Update Notification Timing Preferences", description = "Updates quiet hours and alert batching intervals.")
     @PutMapping("/notifications/timing")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateNotificationTiming(
@@ -264,6 +274,7 @@ public class MySettingsController {
     }
 
     // 11. Get Appearance
+    @Operation(summary = "Get Appearance Settings", description = "Retrieves display theme, language, and styling preferences.")
     @GetMapping("/appearance")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAppearance(
@@ -282,6 +293,7 @@ public class MySettingsController {
     }
 
     // 12. Update Appearance
+    @Operation(summary = "Update Appearance Settings", description = "Updates display theme (light/dark) and visual dashboard choices.")
     @PutMapping("/appearance")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateAppearance(
@@ -301,6 +313,7 @@ public class MySettingsController {
     }
 
     // 13. Get Language & Region
+    @Operation(summary = "Get Language and Region Settings", description = "Retrieves current locale, language, and timezone settings.")
     @GetMapping("/language-region")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getLanguageRegion(
@@ -319,6 +332,7 @@ public class MySettingsController {
     }
 
     // 14. Update Language & Region
+    @Operation(summary = "Update Language and Region Settings", description = "Updates locale, preferred display language, and timezone.")
     @PutMapping("/language-region")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateLanguageRegion(
@@ -338,6 +352,7 @@ public class MySettingsController {
     }
 
     // 15. Get Connected Devices
+    @Operation(summary = "Get Connected Devices", description = "Retrieves active sessions, logins, and connected devices for security audit.")
     @GetMapping("/devices")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDevices(
@@ -356,6 +371,7 @@ public class MySettingsController {
     }
 
     // 16. Remove Connected Device
+    @Operation(summary = "Remove Connected Device", description = "Revokes authentication token and logs out the selected session/device.")
     @DeleteMapping("/devices/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> removeDevice(
@@ -377,6 +393,7 @@ public class MySettingsController {
 
 
     // 20. GET FAQs
+    @Operation(summary = "Get FAQs", description = "Retrieves list of frequently asked questions and troubleshooting guides.")
     @GetMapping("/faqs")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getFaqs(
@@ -395,6 +412,7 @@ public class MySettingsController {
     }
 
     // 21. Create Support Request
+    @Operation(summary = "Create Support Request", description = "Creates a helpdesk support ticket linked to user settings and preferences.")
     @PostMapping("/support-tickets")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createSupportRequest(
@@ -418,6 +436,7 @@ public class MySettingsController {
     }
 
     // 22. Get Backup Codes Info
+    @Operation(summary = "Get Backup Codes Info", description = "Retrieves availability and count of remaining backup codes for 2FA recovery.")
     @GetMapping("/security/2fa/backup-codes")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getBackupCodesInfo(
@@ -436,6 +455,7 @@ public class MySettingsController {
     }
 
     // 23. Regenerate Backup Codes
+    @Operation(summary = "Regenerate Backup Codes", description = "Generates a fresh set of backup/recovery codes for multi-factor authentication (MFA).")
     @PostMapping("/security/2fa/backup-codes/regenerate")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> regenerateBackupCodes(

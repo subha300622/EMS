@@ -9,6 +9,7 @@ import com.example.ems.payroll.dto.*;
 import com.example.ems.payroll.service.MyPayslipService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,6 +69,7 @@ public class MyPayslipController {
 
 
     // 2. Get My Payslips History
+    @Operation(summary = "Get Payslip History", description = "Retrieves a paginated list of payslips for the logged-in employee, with optional filters for financial year, month, and status.")
     @GetMapping("/history")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getHistory(
@@ -98,6 +100,7 @@ public class MyPayslipController {
     }
 
     // 3. Get Specific Payslip Details
+    @Operation(summary = "Get Payslip Details", description = "Retrieves details of a specific payslip by ID.")
     @GetMapping("/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDetails(
@@ -121,6 +124,7 @@ public class MyPayslipController {
     }
 
     // 4. Preview Specific Payslip
+    @Operation(summary = "Preview Payslip", description = "Generates details needed to render a preview of a specific payslip.")
     @GetMapping("/{id}/preview")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> preview(
@@ -144,6 +148,7 @@ public class MyPayslipController {
     }
 
     // 5. Download Specific Payslip PDF
+    @Operation(summary = "Download Payslip PDF", description = "Downloads a specific payslip as a PDF document.")
     @GetMapping("/{id}/download")
     public ResponseEntity<?> download(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -170,6 +175,7 @@ public class MyPayslipController {
     }
 
     // 6. Get Annual Salary Statement
+    @Operation(summary = "Get Annual Salary Statement", description = "Retrieves the annual salary statement summary.")
     @GetMapping("/annual-statement")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAnnual(
@@ -195,6 +201,7 @@ public class MyPayslipController {
     }
 
     // 7. Download Annual Salary Statement PDF
+    @Operation(summary = "Download Annual Statement PDF", description = "Downloads the annual salary statement as a PDF document.")
     @GetMapping("/annual-statement/download")
     public ResponseEntity<?> downloadAnnual(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -221,6 +228,7 @@ public class MyPayslipController {
     }
 
     // 8. Get Salary Revision History
+    @Operation(summary = "Get Salary Revisions", description = "Retrieves revision history of the employee's salary and compensations.")
     @GetMapping("/salary-revisions")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getSalaryRevisions(
@@ -243,6 +251,7 @@ public class MyPayslipController {
     }
 
     // 9. Get Tax Summary
+    @Operation(summary = "Get Tax Summary", description = "Retrieves a summary of the employee's taxes and deductions.")
     @GetMapping("/tax-summary")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTax(
@@ -265,6 +274,7 @@ public class MyPayslipController {
     }
 
     // 10. Email Specific Payslip
+    @Operation(summary = "Email Payslip", description = "Emails a specific payslip PDF to the specified email address.")
     @PostMapping("/{id}/email")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> email(
@@ -291,6 +301,7 @@ public class MyPayslipController {
     }
 
     // 11. Get Payroll Timeline
+    @Operation(summary = "Get Payroll Timeline", description = "Retrieves the timeline of payroll releases and updates for the employee.")
     @GetMapping("/timeline")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTimeline(

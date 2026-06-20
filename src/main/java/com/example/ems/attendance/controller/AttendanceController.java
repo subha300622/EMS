@@ -17,6 +17,7 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,7 @@ public class AttendanceController {
     }
 
     // ── 1. CHECK-IN ──────────────────────────────────────────────────────────
+    @Operation(summary = "Check In", description = "Records the daily check-in/punch-in time and optional notes for the employee.")
     @PostMapping("/attendance/me/check-in")
     @Tag(name = "Employee Self Service - Attendance")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -103,6 +105,7 @@ public class AttendanceController {
     }
 
     // ── 2. CHECK-OUT ─────────────────────────────────────────────────────────
+    @Operation(summary = "Check Out", description = "Records the daily check-out/punch-out time and optional notes for the employee.")
     @PostMapping("/attendance/me/check-out")
     @Tag(name = "Employee Self Service - Attendance")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -142,6 +145,7 @@ public class AttendanceController {
 
 
     // ── 4. GET MY ATTENDANCE HISTORY ─────────────────────────────────────────
+    @Operation(summary = "Get My Attendance History", description = "Retrieves the logged-in employee's complete attendance logs.")
     @GetMapping("/attendance/me")
     @Tag(name = "Employee Self Service - Attendance")
     @SuppressWarnings({"unchecked", "rawtypes"})

@@ -6,6 +6,7 @@ import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.offboarding.dto.*;
 import com.example.ems.offboarding.service.MyExitService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,7 @@ public class MyExitController {
 
 
     // 2. Submit Resignation Request
+    @Operation(summary = "Submit Resignation", description = "Submits a formal resignation request starting the employee offboarding process.")
     @PostMapping("/resignation")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<SubmitResignationResponse> submitResignation(
@@ -68,6 +70,7 @@ public class MyExitController {
     }
 
     // 3. Get Exit Checklist
+    @Operation(summary = "Get Exit Checklist", description = "Retrieves the clearance checklist tasks assigned to the employee for offboarding.")
     @GetMapping("/checklist")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ExitChecklistResponse> getChecklist(
@@ -88,6 +91,7 @@ public class MyExitController {
     }
 
     // 4. Upload Exit Documents
+    @Operation(summary = "Upload Exit Document", description = "Uploads required offboarding documents such as signed agreements or letters.")
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<UploadDocumentResponse> uploadDocument(
@@ -113,6 +117,7 @@ public class MyExitController {
     }
 
     // 5. Get Uploaded Exit Documents
+    @Operation(summary = "Get Exit Documents", description = "Retrieves list and status of uploaded exit/offboarding documents.")
     @GetMapping("/documents")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<UploadedDocumentsResponse> getDocuments(
@@ -133,6 +138,7 @@ public class MyExitController {
     }
 
     // 6. Confirm Asset Return
+    @Operation(summary = "Confirm Asset Return", description = "Acknowledges/confirms physical return of a company asset by the employee.")
     @PostMapping("/assets/{assetId}/return")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<AssetReturnConfirmResponse> confirmAssetReturn(
@@ -155,6 +161,7 @@ public class MyExitController {
     }
 
     // 7. Get Assigned Assets
+    @Operation(summary = "Get Offboarding Assets", description = "Retrieves the list of company assets assigned to the employee that must be cleared.")
     @GetMapping("/assets")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<AssignedAssetsResponse> getAssets(
@@ -175,6 +182,7 @@ public class MyExitController {
     }
 
     // 8. Schedule Exit Interview
+    @Operation(summary = "Schedule Exit Interview", description = "Schedules a convenient time for the exit interview with HR.")
     @PostMapping("/interview")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ExitInterviewScheduleResponse> scheduleInterview(
@@ -196,6 +204,7 @@ public class MyExitController {
     }
 
     // 9. Sign NDA / Exit Agreement
+    @Operation(summary = "Sign Exit Agreement", description = "Digitally signs exit agreements or NDAs required during offboarding.")
     @PostMapping("/agreements/sign")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<SignAgreementResponse> signAgreement(
@@ -217,6 +226,7 @@ public class MyExitController {
     }
 
     // 10. Get F&F Settlement Details
+    @Operation(summary = "Get Full & Final Settlement Details", description = "Retrieves full and final (F&F) settlement statements, dues, and status.")
     @GetMapping("/settlement")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<SettlementDetailsResponse> getSettlement(
@@ -237,6 +247,7 @@ public class MyExitController {
     }
 
     // 11. Get Exit Timeline
+    @Operation(summary = "Get Exit Timeline", description = "Retrieves timeline of steps, milestones, and updates in the employee exit process.")
     @GetMapping("/timeline")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ExitTimelineResponse> getTimeline(
@@ -257,6 +268,7 @@ public class MyExitController {
     }
 
     // 12. Download Experience Letter
+    @Operation(summary = "Download Experience Letter", description = "Downloads the generated experience/relieving letter in PDF format once offboarding is complete.")
     @GetMapping(value = "/experience-letter", produces = MediaType.APPLICATION_PDF_VALUE)
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<Object> downloadExperienceLetter(
@@ -283,6 +295,7 @@ public class MyExitController {
     }
 
     // 13. Cancel Exit Request
+    @Operation(summary = "Cancel Exit Request", description = "Cancels a submitted resignation request, if allowed within the notice period window.")
     @PutMapping("/resignation/cancel")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<CancelExitResponse> cancelExit(
