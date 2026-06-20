@@ -13,6 +13,7 @@ import com.example.ems.security.service.JwtService;
 
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -63,6 +64,7 @@ public class FinanceController {
     }
 
     // ── 1. GET DASHBOARD ──────────────────────────────────────────────────────
+    @Operation(summary = "Get Finance Dashboard Stats", description = "Retrieves high-level overview metrics of company expenses, payroll, and settlements for the finance dashboard.")
     @GetMapping("/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboard(
@@ -81,6 +83,7 @@ public class FinanceController {
     }
 
     // ── 2. GET MONTHLY ANALYTICS ──────────────────────────────────────────────
+    @Operation(summary = "Get Monthly Finance Analytics", description = "Retrieves historical monthly breakdowns of payroll vs general operational expenses.")
     @GetMapping("/analytics/monthly")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMonthlyAnalytics(
@@ -99,6 +102,7 @@ public class FinanceController {
     }
 
     // ── 3. GET RECENT TRANSACTIONS ────────────────────────────────────────────
+    @Operation(summary = "Get Recent Transactions", description = "Retrieves a listing of recent transaction entries including salary disbursement and approved claim audits.")
     @GetMapping("/transactions/recent")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRecentTransactions(
@@ -117,6 +121,7 @@ public class FinanceController {
     }
 
     // ── 4. GET EXPENSES BY CATEGORY ───────────────────────────────────────────
+    @Operation(summary = "Get Expenses by Category", description = "Retrieves a breakdown listing of company operational expenses grouped by expense categories.")
     @GetMapping("/expenses/categories")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getExpensesByCategory(
@@ -135,6 +140,7 @@ public class FinanceController {
     }
 
     // ── 5. GET SALARY SUMMARY ─────────────────────────────────────────────────
+    @Operation(summary = "Get Salary Expenses Summary", description = "Retrieves summary metrics of total basic pay, deductions, and net salary payout budgets.")
     @GetMapping("/salary/summary")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getSalarySummary(
@@ -153,6 +159,7 @@ public class FinanceController {
     }
 
     // ── 6. GET PENDING PAYMENTS ───────────────────────────────────────────────
+    @Operation(summary = "Get Pending Due Payments", description = "Retrieves a list of pending pay cycles, pending expense claims, and unpaid settlement fees.")
     @GetMapping("/payments/pending")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPendingPayments(
@@ -171,6 +178,7 @@ public class FinanceController {
     }
 
     // ── 7. GET CUSTOM REPORT ──────────────────────────────────────────────────
+    @Operation(summary = "Generate Custom Finance Report", description = "Generates a custom report of company transactions over a specified date range and type.")
     @GetMapping("/report")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getCustomReport(
@@ -199,6 +207,7 @@ public class FinanceController {
     }
 
     // ── 8. GET SALARY DISTRIBUTION ──────────────────────────────────────────
+    @Operation(summary = "Get Salary Distribution Analytics", description = "Retrieves a distribution categorization listing of employees grouped by salary bracket bands.")
     @GetMapping("/salary/distribution")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Long>>> getSalaryDistribution(
