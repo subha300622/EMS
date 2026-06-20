@@ -14,6 +14,7 @@ import com.example.ems.payroll.repository.TaxSlabRepository;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,7 @@ public class PayrollSettingsController {
     }
 
     // --- PARAMETERS ---
+    @Operation(summary = "Get Payroll Settings Parameters", description = "Retrieves general system configuration parameters for payroll processing (e.g., pay cycle start day, tax calculation enabled).")
     @GetMapping("/parameters")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getParameters(
@@ -84,6 +86,7 @@ public class PayrollSettingsController {
         return ResponseEntity.ok(ApiResponse.success("Payroll parameters retrieved", payrollSettingRepository.findAll()));
     }
 
+    @Operation(summary = "Save Payroll Settings Parameter", description = "Creates or updates a general system configuration parameter for payroll processing.")
     @PostMapping("/parameters")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -113,6 +116,7 @@ public class PayrollSettingsController {
     }
 
     // --- COMPONENTS ---
+    @Operation(summary = "Get Salary Components", description = "Retrieves all configured salary earnings and deductions components (e.g., Basic Salary, HRA, Provident Fund).")
     @GetMapping("/components")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getComponents(
@@ -131,6 +135,7 @@ public class PayrollSettingsController {
         return ResponseEntity.ok(ApiResponse.success("Salary components retrieved", salaryComponentRepository.findAll()));
     }
 
+    @Operation(summary = "Create Salary Component", description = "Creates a new salary component structure for basic calculations.")
     @PostMapping("/components")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -152,6 +157,7 @@ public class PayrollSettingsController {
                 .body(ApiResponse.success("Salary component created", salaryComponentRepository.save(component)));
     }
 
+    @Operation(summary = "Update Salary Component", description = "Updates configurations on an existing salary component entry.")
     @PutMapping("/components/{id}")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -185,6 +191,7 @@ public class PayrollSettingsController {
         return ResponseEntity.ok(ApiResponse.success("Salary component updated", salaryComponentRepository.save(component)));
     }
 
+    @Operation(summary = "Delete Salary Component", description = "Removes a salary component entry from the system setup.")
     @DeleteMapping("/components/{id}")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -212,6 +219,7 @@ public class PayrollSettingsController {
     }
 
     // --- TAX SLABS ---
+    @Operation(summary = "Get Tax Slabs", description = "Retrieves all configured income tax slabs under active tax regimes.")
     @GetMapping("/tax-slabs")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTaxSlabs(
@@ -230,6 +238,7 @@ public class PayrollSettingsController {
         return ResponseEntity.ok(ApiResponse.success("Tax slabs retrieved", taxSlabRepository.findAll()));
     }
 
+    @Operation(summary = "Create Tax Slab", description = "Creates a new income tax slab specifying regime, income boundaries, and rate percentage.")
     @PostMapping("/tax-slabs")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -251,6 +260,7 @@ public class PayrollSettingsController {
                 .body(ApiResponse.success("Tax slab created", taxSlabRepository.save(slab)));
     }
 
+    @Operation(summary = "Update Tax Slab", description = "Updates an existing income tax slab configuration.")
     @PutMapping("/tax-slabs/{id}")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -283,6 +293,7 @@ public class PayrollSettingsController {
         return ResponseEntity.ok(ApiResponse.success("Tax slab updated", taxSlabRepository.save(slab)));
     }
 
+    @Operation(summary = "Delete Tax Slab", description = "Deletes an income tax slab entry from configuration.")
     @DeleteMapping("/tax-slabs/{id}")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
