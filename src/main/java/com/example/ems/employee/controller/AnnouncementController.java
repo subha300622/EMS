@@ -11,6 +11,7 @@ import com.example.ems.employee.repository.AnnouncementRepository;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +38,7 @@ public class AnnouncementController {
     @Autowired
     private JwtService jwtService;
 
+    @Operation(summary = "Get All Announcements", description = "Retrieves active or all announcements depending on the caller's role (Employee vs Admin).")
     @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Announcement>>> getAnnouncements(
@@ -64,6 +66,7 @@ public class AnnouncementController {
         }
     }
 
+    @Operation(summary = "Get Announcement by ID", description = "Retrieves details of a specific announcement by ID.")
     @GetMapping("/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAnnouncementById(
@@ -92,6 +95,7 @@ public class AnnouncementController {
         return ResponseEntity.ok(ApiResponse.success("Announcement details retrieved successfully", announcement));
     }
 
+    @Operation(summary = "Create Announcement", description = "Publishes a new company-wide announcement.")
     @PostMapping
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -115,6 +119,7 @@ public class AnnouncementController {
                 .body(ApiResponse.success("Announcement created successfully", saved));
     }
 
+    @Operation(summary = "Update Announcement", description = "Updates the title, content, or active status of an existing announcement.")
     @PutMapping("/{id}")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -148,6 +153,7 @@ public class AnnouncementController {
                 ApiResponse.success("Announcement updated successfully", announcementRepository.save(announcement)));
     }
 
+    @Operation(summary = "Delete Announcement", description = "Removes an announcement from the system.")
     @DeleteMapping("/{id}")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
