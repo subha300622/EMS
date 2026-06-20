@@ -8,6 +8,7 @@ import com.example.ems.auth.service.PermissionService;
 import com.example.ems.auth.service.RoleService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ public class PermissionController {
     @Autowired
     private RoleService roleService;
 
+    @Operation(summary = "Create Permission", description = "Creates a new granular security access permission in the system catalog.")
     @PostMapping("/permissions")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<Permission> createPermission(
@@ -47,6 +49,7 @@ public class PermissionController {
         }
     }
 
+    @Operation(summary = "Get All Permissions", description = "Retrieves a list of all defined security permissions in the system catalog.")
     @GetMapping("/permissions")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<List<Permission>> getPermissions(
@@ -60,6 +63,7 @@ public class PermissionController {
         return ResponseEntity.ok(permissionService.getAllPermissions());
     }
 
+    @Operation(summary = "Get Permission Details", description = "Retrieves the detail information of a specific security permission by ID.")
     @GetMapping("/permissions/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<Map<String, Object>> getPermissionById(
@@ -77,6 +81,7 @@ public class PermissionController {
                         .body(Map.of("error", "Permission not found with ID: " + id)));
     }
 
+    @Operation(summary = "Update Permission", description = "Updates the name and description of an existing security permission.")
     @PutMapping("/permissions/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<Map<String, Object>> updatePermission(
@@ -99,6 +104,7 @@ public class PermissionController {
         }
     }
 
+    @Operation(summary = "Delete Permission", description = "Deletes a security permission from the system catalog.")
     @DeleteMapping("/permissions/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<Map<String, Object>> deletePermission(
