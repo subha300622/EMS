@@ -14,6 +14,7 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -40,6 +41,7 @@ public class OrgChartController {
     @Autowired
     private JwtService jwtService;
 
+    @Operation(summary = "Get Organization Chart", description = "Generates the complete hierarchal structure of the organization starting from the top-most managers.")
     @GetMapping("/organization-chart")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getOrganizationChart(
@@ -68,6 +70,7 @@ public class OrgChartController {
         return ResponseEntity.ok(ApiResponse.success("Organization chart retrieved successfully", orgChart));
     }
 
+    @Operation(summary = "Get Organization Chart for Employee", description = "Generates the hierarchal structure of direct and indirect reports starting from the specified employee.")
     @GetMapping("/organization-chart/{employeeId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getOrganizationChartForEmployee(
@@ -97,6 +100,7 @@ public class OrgChartController {
         return ResponseEntity.ok(ApiResponse.success("Organization chart for employee retrieved successfully", chart));
     }
 
+    @Operation(summary = "Get Reporting Chain", description = "Retrieves the upward manager reporting chain hierarchy for the specified employee.")
     @GetMapping("/employees/{id}/reporting-chain")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getReportingChain(
