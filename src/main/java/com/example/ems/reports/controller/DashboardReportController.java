@@ -158,13 +158,12 @@ public class DashboardReportController {
 
     // ── 3. EXPORT ATTENDANCE REPORT ───────────────────────────────────────────
     @GetMapping("/reports/attendance")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ResponseEntity> exportAttendanceReport(
+    public ResponseEntity<?> exportAttendanceReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -173,7 +172,7 @@ public class DashboardReportController {
                 && !roleService.hasRole(currentUser, "SUPER_ADMIN")
                 && !roleService.hasRole(currentUser, "ADMIN")
                 && !roleService.hasRole(currentUser, "HR")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires reports privileges.", "AUTH_002"));
         }
 
@@ -194,13 +193,12 @@ public class DashboardReportController {
 
     // ── 4. EXPORT LEAVES REPORT ───────────────────────────────────────────────
     @GetMapping("/reports/leaves")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ResponseEntity> exportLeavesReport(
+    public ResponseEntity<?> exportLeavesReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -209,7 +207,7 @@ public class DashboardReportController {
                 && !roleService.hasRole(currentUser, "SUPER_ADMIN")
                 && !roleService.hasRole(currentUser, "ADMIN")
                 && !roleService.hasRole(currentUser, "HR")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires reports privileges.", "AUTH_002"));
         }
 
@@ -232,13 +230,12 @@ public class DashboardReportController {
 
     // ── 5. EXPORT EMPLOYEES REPORT ────────────────────────────────────────────
     @GetMapping("/reports/employees")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ResponseEntity> exportEmployeesReport(
+    public ResponseEntity<?> exportEmployeesReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -247,7 +244,7 @@ public class DashboardReportController {
                 && !roleService.hasRole(currentUser, "SUPER_ADMIN")
                 && !roleService.hasRole(currentUser, "ADMIN")
                 && !roleService.hasRole(currentUser, "HR")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires reports privileges.", "AUTH_002"));
         }
 
@@ -271,13 +268,12 @@ public class DashboardReportController {
 
     // ── 6. EXPORT PAYROLL REPORT ──────────────────────────────────────────────
     @GetMapping("/reports/payroll")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ResponseEntity> exportPayrollReport(
+    public ResponseEntity<?> exportPayrollReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -286,7 +282,7 @@ public class DashboardReportController {
                 && !roleService.hasRole(currentUser, "SUPER_ADMIN")
                 && !roleService.hasRole(currentUser, "ADMIN")
                 && !roleService.hasRole(currentUser, "FINANCE")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires payroll reports privileges.", "AUTH_002"));
         }
 
@@ -309,8 +305,7 @@ public class DashboardReportController {
         return createCsvResponse(csv.toString(), "payroll_report.csv");
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity createCsvResponse(String content, String fileName) {
+    private ResponseEntity<byte[]> createCsvResponse(String content, String fileName) {
         byte[] data = content.getBytes();
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
         headers.setContentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM);

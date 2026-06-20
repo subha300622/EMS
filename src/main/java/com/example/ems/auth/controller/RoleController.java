@@ -238,68 +238,6 @@ public class RoleController {
         }
     }
 
-    // ── Assign Role ──────────────────────────────────────────────────────────
-    @PostMapping("/users/{id}/assign-role")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> assignRole(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("id") Long userId,
-            @RequestBody @Valid AssignRoleRequest request) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "role.assign")
-                && !roleService.hasPermission(currentUser.getWorkEmail(), "role.manage")
-                && !roleService.isSuperAdmin(currentUser.getWorkEmail())) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'role.assign' or 'role.manage' permission.",
-                            "AUTH_002"));
-        }
-
-        try {
-            User targetUser = userRepository.findById(userId).orElse(null);
-            if (targetUser == null) {
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
-            }
-
-            boolean assigned;
-            String assignedRoleName;
-
-            if (request.getRoleId() != null) {
-                // Assign by numeric role ID (POST body: { "roleId": 3 })
-                assigned = roleService.assignRoleById(userId, request.getRoleId());
-                assignedRoleName = targetUser.getRole() != null ? targetUser.getRole().getName()
-                        : request.getRoleId().toString();
-                // Reload to get updated user
-                targetUser = userRepository.findById(userId).orElse(targetUser);
-                assignedRoleName = targetUser.getRole() != null ? targetUser.getRole().getName() : assignedRoleName;
-            } else if (request.getRole() != null && !request.getRole().isBlank()) {
-                // Assign by role name (POST body: { "role": "MANAGER" })
-                assigned = roleService.assignRole(userId, request.getRole());
-                targetUser = userRepository.findById(userId).orElse(targetUser);
-                assignedRoleName = targetUser.getRole() != null ? targetUser.getRole().getName() : request.getRole();
-            } else {
-                return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("Provide either 'roleId' (numeric) or 'role' (name) in request body.",
-                                "ROLE_007"));
-            }
-
-            if (assigned) {
-                AssignRoleToUserResponse data = new AssignRoleToUserResponse(targetUser.getUserId(), assignedRoleName);
-                return ResponseEntity.ok(ApiResponse.success("Role assigned successfully to user", data));
-            } else {
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
-            }
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ROLE_004"));
-        }
-    }
 
     // ── Assign Permissions to Role ───────────────────────────────────────────
     @PostMapping("/roles/{id}/permissions")

@@ -1,6 +1,6 @@
 package com.example.ems.attendance.controller;
 import java.util.Map;
-import java.util.LinkedHashMap;
+
 import com.example.ems.attendance.dto.AttendanceStatsResponse;
 
 import com.example.ems.attendance.dto.AttendanceRequest;
@@ -64,7 +64,6 @@ public class AttendanceController {
     }
 
     // ── 1. CHECK-IN ──────────────────────────────────────────────────────────
-    @Tag(name = "My Attendance")
     @PostMapping("/attendance/me/check-in")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> checkIn(
@@ -103,7 +102,6 @@ public class AttendanceController {
     }
 
     // ── 2. CHECK-OUT ─────────────────────────────────────────────────────────
-    @Tag(name = "My Attendance")
     @PostMapping("/attendance/me/check-out")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> checkOut(
@@ -142,7 +140,6 @@ public class AttendanceController {
 
 
     // ── 4. GET MY ATTENDANCE HISTORY ─────────────────────────────────────────
-    @Tag(name = "My Attendance")
     @GetMapping("/attendance/me")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Attendance>>> getMyAttendanceHistory(

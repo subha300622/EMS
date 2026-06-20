@@ -203,70 +203,18 @@ public class EmployeeSelfServiceController {
     // ── 2. EMPLOYEE PROFILE ──────────────────────────────────────────────────
     @Tag(name = "My Profile")
     @GetMapping("/employees/me/profile")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<Employee> getMyProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.read' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(employee);
+    public ResponseEntity<Void> getMyProfile() {
+        return ResponseEntity.status(HttpStatus.PERMANENT_REDIRECT)
+                .location(java.net.URI.create("/api/v1/me"))
+                .build();
     }
 
     @Tag(name = "My Profile")
     @PutMapping("/employees/me/profile")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateMyProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> body){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.update")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.update' permission.",
-                            "AUTH_002"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        if (body.containsKey("phoneNumber")) {
-            employee.setPhone(body.get("phoneNumber"));
-        } else if (body.containsKey("phone")) {
-            employee.setPhone(body.get("phone"));
-        }
-        if (body.containsKey("address")) {
-            employee.setAddress(body.get("address"));
-        }
-        if (body.containsKey("emergencyContact")) {
-            employee.setEmergencyContact(body.get("emergencyContact"));
-        }
-
-        Employee saved = employeeRepository.save(employee);
-        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", saved));
+    public ResponseEntity<Void> updateMyProfile() {
+        return ResponseEntity.status(HttpStatus.PERMANENT_REDIRECT)
+                .location(java.net.URI.create("/api/v1/me"))
+                .build();
     }
 
     // ── 3. MY ONBOARDING ─────────────────────────────────────────────────────

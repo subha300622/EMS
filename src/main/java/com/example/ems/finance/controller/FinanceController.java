@@ -10,6 +10,8 @@ import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.finance.service.FinanceService;
 import com.example.ems.security.service.JwtService;
 
+
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -213,4 +215,5 @@ public class FinanceController {
         return ResponseEntity.ok(ApiResponse.success("Salary distribution retrieved successfully", 
                 financeService.getSalaryDistribution()));
     }
+
 }

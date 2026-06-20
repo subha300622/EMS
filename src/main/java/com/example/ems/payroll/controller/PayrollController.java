@@ -21,9 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Map;
-import java.util.LinkedHashMap;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -346,28 +344,6 @@ public class PayrollController {
         }
     }
 
-    // 8. Generate Payslip PDF/JSON
-    @GetMapping("/payroll/{employeeId}/payslip")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<Object> getPayslip(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId,
-            @RequestHeader(value = "Accept", required = false) String acceptHeader) {
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (acceptHeader != null && acceptHeader.contains("application/pdf")) {
-            byte[] mockPdf = "%PDF-1.4 simulated pdf payslip content".getBytes();
-            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
-            headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
-            headers.setContentDispositionFormData("attachment", "payslip_" + employeeId + ".pdf");
-            return new ResponseEntity<>(mockPdf, headers, HttpStatus.OK);
-        }
-        return ResponseEntity.ok(ApiResponse.success("Payslip data retrieved successfully",
-                payrollService.calculatePreview(employeeId)));
-    }
 
     // 9. Salary Disbursement
     @PostMapping("/payroll/disburse")
@@ -403,20 +379,6 @@ public class PayrollController {
                 payrollService.getMonthlyReport()));
     }
 
-    // 11. Employee Payroll History
-    @GetMapping("/payroll/employees/{id}/history")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<Payroll>>> getEmployeeHistory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        return ResponseEntity.ok(ApiResponse.success("Employee payroll history retrieved successfully",
-                payrollService.getPayrollByEmployeeId(id)));
-    }
 
     // 12. Tax Configuration
     @GetMapping("/payroll/taxes")

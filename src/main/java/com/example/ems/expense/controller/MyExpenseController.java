@@ -108,14 +108,12 @@ public class MyExpenseController {
                 || roleService.isSuperAdmin(currentUser.getWorkEmail());
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity unauthorizedResponse() {
+    private ResponseEntity<ErrorResponse> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity forbiddenResponse(String permission) {
+    private ResponseEntity<ErrorResponse> forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
@@ -351,8 +349,7 @@ public class MyExpenseController {
 
     // 8. Download Receipt
     @GetMapping("/receipts/{receiptId}/download")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<byte[]> downloadReceipt(
+    public ResponseEntity<?> downloadReceipt(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("receiptId") Long receiptId){
 
@@ -362,18 +359,18 @@ public class MyExpenseController {
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<MyExpenseReceipt> receiptOpt = receiptRepository.findById(receiptId);
         if (receiptOpt.isEmpty()) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Receipt not found with ID: " + receiptId, "EXP_404"));
         }
 
         if (!isReceiptOwnerOrAdmin(currentUser, employee, receiptOpt.get())) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not own this receipt.", "EXP_403"));
         }
 
@@ -383,9 +380,9 @@ public class MyExpenseController {
             headers.setContentType(MediaType.parseMediaType(doc.getFileType()));
             headers.setContentDispositionFormData("attachment", doc.getFileName());
             headers.setContentLength(doc.getFileData().length);
-            return (ResponseEntity) new ResponseEntity<>(doc.getFileData(), headers, HttpStatus.OK);
+            return new ResponseEntity<>(doc.getFileData(), headers, HttpStatus.OK);
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
         }
     }

@@ -55,14 +55,12 @@ public class MyPayslipController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity unauthorizedResponse() {
+    private ResponseEntity<ErrorResponse> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity forbiddenResponse(String permission) {
+    private ResponseEntity<ErrorResponse> forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
@@ -167,8 +165,7 @@ public class MyPayslipController {
 
     // 5. Download Specific Payslip PDF
     @GetMapping("/{id}/download")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<byte[]> download(
+    public ResponseEntity<?> download(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("id") Long payslipId){
         User currentUser = resolveUser(authHeader);
@@ -185,9 +182,9 @@ public class MyPayslipController {
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", "payslip-" + payslipId + ".pdf");
             headers.setContentLength(pdfBytes.length);
-            return (ResponseEntity) new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
@@ -219,8 +216,7 @@ public class MyPayslipController {
 
     // 7. Download Annual Salary Statement PDF
     @GetMapping("/annual-statement/download")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<byte[]> downloadAnnual(
+    public ResponseEntity<?> downloadAnnual(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String financialYear){
         User currentUser = resolveUser(authHeader);
@@ -237,9 +233,9 @@ public class MyPayslipController {
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", "annual-statement.pdf");
             headers.setContentLength(pdfBytes.length);
-            return (ResponseEntity) new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }

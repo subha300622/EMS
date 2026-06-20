@@ -29,4 +29,26 @@ public interface MyAssetRepository extends JpaRepository<MyAsset, Long> {
     List<MyAsset> findByAssignedToIdAndStatus(Long employeeId, String status);
 
     java.util.Optional<MyAsset> findByAssetCode(String assetCode);
+
+    @Query("SELECT a FROM MyAsset a WHERE " +
+           "(:status IS NULL OR " +
+           "  (:status = 'AVAILABLE' AND a.status IN ('UNASSIGNED', 'RETURNED', 'AVAILABLE')) OR " +
+           "  (:status <> 'AVAILABLE' AND a.status = :status)" +
+           ") AND " +
+           "(:category IS NULL OR a.category = :category) AND " +
+           "(:department IS NULL OR (a.assignedTo IS NOT NULL AND a.assignedTo.department = :department)) AND " +
+           "(:search IS NULL OR " +
+           "  LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "  LOWER(a.assetName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "  LOWER(a.brand) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "  LOWER(a.model) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "  LOWER(a.serialNumber) LIKE LOWER(CONCAT('%', :search, '%'))" +
+           ")")
+    Page<MyAsset> findFiltered(
+        @Param("status") String status,
+        @Param("category") String category,
+        @Param("department") String department,
+        @Param("search") String search,
+        Pageable pageable
+    );
 }

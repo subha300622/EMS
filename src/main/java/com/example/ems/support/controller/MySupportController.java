@@ -70,13 +70,11 @@ public class MySupportController {
         return false;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity unauthorizedResponse() {
+    private ResponseEntity<?> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity forbiddenResponse(String permission) {
+    private ResponseEntity<?> forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
@@ -360,7 +358,7 @@ public class MySupportController {
     @Operation(summary = "Download an Attachment by fileId")
     @GetMapping("/attachments/{attachmentId}/download")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<Object> downloadAttachment(
+    public ResponseEntity<?> downloadAttachment(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("attachmentId") String attachmentId){
         User currentUser = resolveUser(authHeader);
@@ -462,7 +460,7 @@ public class MySupportController {
     @Operation(summary = "Export My Tickets as CSV")
     @GetMapping("/tickets/export")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<Object> exportTickets(
+    public ResponseEntity<?> exportTickets(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();

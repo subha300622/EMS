@@ -25,8 +25,9 @@ public class Expense {
     @Column(name = "expense_date", nullable = false)
     private LocalDate expenseDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status; // PENDING, APPROVED, REJECTED
+    private ExpenseStatus status;
 
     private String description;
 
@@ -50,7 +51,7 @@ public class Expense {
     @Column(name = "attachment_url")
     private String attachmentUrl;
 
-    @Column(name = "attachment_data")
+    @Column(name = "attachment_data", columnDefinition = "BYTEA")
     private byte[] attachmentData;
 
     @Column(name = "created_at", nullable = false)
@@ -90,7 +91,7 @@ public class Expense {
         this.title = title;
         this.amount = amount;
         this.expenseDate = expenseDate;
-        this.status = status;
+        this.status = status != null ? ExpenseStatus.valueOf(status.toUpperCase()) : null;
         this.description = description;
         this.rejectionReason = rejectionReason;
         this.category = category;
@@ -136,10 +137,18 @@ public class Expense {
     }
 
     public String getStatus() {
-        return status;
+        return status != null ? status.name() : null;
     }
 
     public void setStatus(String status) {
+        this.status = status != null ? ExpenseStatus.valueOf(status.toUpperCase()) : null;
+    }
+
+    public ExpenseStatus getExpenseStatus() {
+        return status;
+    }
+
+    public void setExpenseStatus(ExpenseStatus status) {
         this.status = status;
     }
 
@@ -287,11 +296,57 @@ public class Expense {
         this.approvalFlow = approvalFlow;
     }
 
+    private String businessPurpose;
+    private String approvalRemarks;
+    private String sendBackReason;
+    private String paymentMode;
+    private String transactionReference;
+
     public List<MyExpenseTimelineEvent> getTimelineEvents() {
         return timelineEvents;
     }
 
     public void setTimelineEvents(List<MyExpenseTimelineEvent> timelineEvents) {
         this.timelineEvents = timelineEvents;
+    }
+
+    public String getBusinessPurpose() {
+        return businessPurpose;
+    }
+
+    public void setBusinessPurpose(String businessPurpose) {
+        this.businessPurpose = businessPurpose;
+    }
+
+    public String getApprovalRemarks() {
+        return approvalRemarks;
+    }
+
+    public void setApprovalRemarks(String approvalRemarks) {
+        this.approvalRemarks = approvalRemarks;
+    }
+
+    public String getSendBackReason() {
+        return sendBackReason;
+    }
+
+    public void setSendBackReason(String sendBackReason) {
+        this.sendBackReason = sendBackReason;
+    }
+
+    public String getPaymentMode() {
+        return paymentMode;
+    }
+
+    public void setPaymentMode(String paymentMode) {
+        this.paymentMode = paymentMode;
+    }
+
+    public String getTransactionReference() {
+        return transactionReference;
+    }
+
+    public void setTransactionReference(String transactionReference) {
+        this.transactionReference = transactionReference;
     }
 }

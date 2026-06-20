@@ -36,6 +36,12 @@ public class AssetDto {
     @Schema(example = "1")
     private Long assignedToEmployeeId;
 
+    @Schema(example = "TechCorp India Pvt Ltd")
+    private String vendor;
+
+    @Schema(example = "18.00")
+    private BigDecimal depreciationPercentage;
+
     public AssetDto() {}
 
     public String getAssetCode() { return assetCode; }
@@ -82,4 +88,10 @@ public class AssetDto {
 
     public Long getAssignedToEmployeeId() { return assignedToEmployeeId; }
     public void setAssignedToEmployeeId(Long assignedToEmployeeId) { this.assignedToEmployeeId = assignedToEmployeeId; }
+
+    public String getVendor() { return vendor; }
+    public void setVendor(String vendor) { this.vendor = vendor; }
+
+    public BigDecimal getDepreciationPercentage() { return depreciationPercentage; }
+    public void setDepreciationPercentage(BigDecimal depreciationPercentage) { this.depreciationPercentage = depreciationPercentage; }
 }

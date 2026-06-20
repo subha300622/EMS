@@ -37,6 +37,9 @@ public class MyAssetService {
     private MyAssetRepository assetRepository;
 
     @Autowired
+    private MyAssetMaintenanceRepository maintenanceRepository;
+
+    @Autowired
     private MyAssetRequestRepository requestRepository;
 
     @Autowired
@@ -62,6 +65,8 @@ public class MyAssetService {
             categoryRepository.save(new MyAssetCategory("LAPTOP", "Laptop", 1, true));
             categoryRepository.save(new MyAssetCategory("MOBILE", "Mobile Device", 1, true));
             categoryRepository.save(new MyAssetCategory("MONITOR", "Display Monitor", 2, true));
+            categoryRepository.save(new MyAssetCategory("ACCESSORIES", "Accessories", 5, true));
+            categoryRepository.save(new MyAssetCategory("SERVERS", "Servers", 5, true));
             System.out.println("Seeded Asset Categories.");
         }
 
@@ -105,6 +110,7 @@ public class MyAssetService {
                 asset1.setWarrantyStatus("ACTIVE");
                 asset1.setWarrantyExpiryDate(LocalDate.now().plusYears(2));
                 asset1.setStatus("ASSIGNED");
+                asset1.setDepreciationPercentage(BigDecimal.valueOf(15.00));
                 assetRepository.save(asset1);
 
                 MyAssetActivity act1 = new MyAssetActivity(asset1, "ASSIGNED", "IT Admin", "Initial asset assignment during onboarding.");
@@ -130,6 +136,7 @@ public class MyAssetService {
                 asset2.setWarrantyStatus("ACTIVE");
                 asset2.setWarrantyExpiryDate(LocalDate.now().plusMonths(6));
                 asset2.setStatus("ASSIGNED");
+                asset2.setDepreciationPercentage(BigDecimal.valueOf(20.00));
                 assetRepository.save(asset2);
 
                 MyAssetActivity act2 = new MyAssetActivity(asset2, "ASSIGNED", "IT Admin", "Initial asset assignment during onboarding.");
@@ -155,13 +162,141 @@ public class MyAssetService {
                 asset3.setWarrantyStatus("ACTIVE");
                 asset3.setWarrantyExpiryDate(LocalDate.now().plusYears(1));
                 asset3.setStatus("ASSIGNED");
+                asset3.setDepreciationPercentage(BigDecimal.valueOf(10.00));
                 assetRepository.save(asset3);
 
                 MyAssetActivity act3 = new MyAssetActivity(asset3, "ASSIGNED", "IT Admin", "Initial asset assignment during remote setup.");
                 act3.setDate(LocalDateTime.now().minusMonths(3));
                 activityRepository.save(act3);
 
-                System.out.println("Seeded Mock Active Assets for " + emp.getEmail() + ".");
+                // Dell Latitude 5400 (Replacement Due Laptop)
+                MyAsset asset4 = new MyAsset();
+                asset4.setAssetCode("AST-1001");
+                asset4.setAssetName("Dell Latitude 5400");
+                asset4.setCategory("LAPTOP");
+                asset4.setBrand("Dell");
+                asset4.setModel("Latitude 5400");
+                asset4.setSerialNumber("CN-DL5400-LAT");
+                asset4.setPurchaseDate(LocalDate.now().minusYears(6));
+                asset4.setPurchasePrice(BigDecimal.valueOf(80000.00));
+                asset4.setCurrentValue(BigDecimal.valueOf(10000.00));
+                asset4.setAssignedTo(emp);
+                asset4.setAssignedDate(LocalDate.now().minusYears(6));
+                asset4.setAssignedBy("IT Admin");
+                asset4.setLocation("Headquarters");
+                asset4.setCondition("GOOD");
+                asset4.setWarrantyStatus("EXPIRED");
+                asset4.setWarrantyExpiryDate(LocalDate.now().minusYears(3));
+                asset4.setStatus("ASSIGNED");
+                asset4.setDepreciationPercentage(BigDecimal.valueOf(15.00));
+                assetRepository.save(asset4);
+
+                MyAssetActivity act4 = new MyAssetActivity(asset4, "ASSIGNED", "IT Admin", "Assigned older laptop.");
+                act4.setDate(LocalDateTime.now().minusYears(6));
+                activityRepository.save(act4);
+
+                // Logitech MX Master 3S
+                MyAsset asset5 = new MyAsset();
+                asset5.setAssetCode("AST-1002");
+                asset5.setAssetName("Logitech MX Master 3S");
+                asset5.setCategory("ACCESSORIES");
+                asset5.setBrand("Logitech");
+                asset5.setModel("MX Master 3S");
+                asset5.setSerialNumber("LOGI-MX3S-991");
+                asset5.setPurchaseDate(LocalDate.now().minusYears(2));
+                asset5.setPurchasePrice(BigDecimal.valueOf(15000.00));
+                asset5.setCurrentValue(BigDecimal.valueOf(12000.00));
+                asset5.setAssignedTo(emp);
+                asset5.setAssignedDate(LocalDate.now().minusYears(2));
+                asset5.setAssignedBy("IT Admin");
+                asset5.setLocation("Headquarters");
+                asset5.setCondition("GOOD");
+                asset5.setWarrantyStatus("ACTIVE");
+                asset5.setWarrantyExpiryDate(LocalDate.now().plusYears(1));
+                asset5.setStatus("ASSIGNED");
+                asset5.setDepreciationPercentage(BigDecimal.valueOf(10.00));
+                assetRepository.save(asset5);
+
+                MyAssetActivity act5 = new MyAssetActivity(asset5, "ASSIGNED", "IT Admin", "Assigned accessory.");
+                act5.setDate(LocalDateTime.now().minusYears(2));
+                activityRepository.save(act5);
+
+                // Jabra Evolve2 65
+                MyAsset asset6 = new MyAsset();
+                asset6.setAssetCode("AST-1003");
+                asset6.setAssetName("Jabra Evolve2 65");
+                asset6.setCategory("ACCESSORIES");
+                asset6.setBrand("Jabra");
+                asset6.setModel("Evolve2 65");
+                asset6.setSerialNumber("JABRA-EVO65-882");
+                asset6.setPurchaseDate(LocalDate.now().minusYears(1));
+                asset6.setPurchasePrice(BigDecimal.valueOf(22000.00));
+                asset6.setCurrentValue(BigDecimal.valueOf(18000.00));
+                asset6.setAssignedTo(emp);
+                asset6.setAssignedDate(LocalDate.now().minusYears(1));
+                asset6.setAssignedBy("IT Admin");
+                asset6.setLocation("Remote");
+                asset6.setCondition("GOOD");
+                asset6.setWarrantyStatus("ACTIVE");
+                asset6.setWarrantyExpiryDate(LocalDate.now().plusYears(2));
+                asset6.setStatus("ASSIGNED");
+                asset6.setDepreciationPercentage(BigDecimal.valueOf(10.00));
+                assetRepository.save(asset6);
+
+                MyAssetActivity act6 = new MyAssetActivity(asset6, "ASSIGNED", "IT Admin", "Assigned headset.");
+                act6.setDate(LocalDateTime.now().minusYears(1));
+                activityRepository.save(act6);
+
+                // Server PowerEdge R740
+                MyAsset asset7 = new MyAsset();
+                asset7.setAssetCode("AST-1004");
+                asset7.setAssetName("PowerEdge R740");
+                asset7.setCategory("SERVERS");
+                asset7.setBrand("Dell");
+                asset7.setModel("PowerEdge R740");
+                asset7.setSerialNumber("CN-SRV-R740");
+                asset7.setPurchaseDate(LocalDate.now().minusYears(3));
+                asset7.setPurchasePrice(BigDecimal.valueOf(500000.00));
+                asset7.setCurrentValue(BigDecimal.valueOf(350000.00));
+                asset7.setAssignedTo(emp);
+                asset7.setAssignedDate(LocalDate.now().minusYears(3));
+                asset7.setAssignedBy("IT Admin");
+                asset7.setLocation("Data Center");
+                asset7.setCondition("EXCELLENT");
+                asset7.setWarrantyStatus("ACTIVE");
+                asset7.setWarrantyExpiryDate(LocalDate.now().plusYears(2));
+                asset7.setStatus("ASSIGNED");
+                asset7.setDepreciationPercentage(BigDecimal.valueOf(15.00));
+                assetRepository.save(asset7);
+
+                MyAssetActivity act7 = new MyAssetActivity(asset7, "ASSIGNED", "IT Admin", "Assigned server.");
+                act7.setDate(LocalDateTime.now().minusYears(3));
+                activityRepository.save(act7);
+
+                // Seed Maintenances
+                MyAssetMaintenance maint1 = new MyAssetMaintenance(asset1, "Screen replacement", "Dell Service Center", BigDecimal.valueOf(5000));
+                maint1.setActualCost(BigDecimal.valueOf(5000));
+                maint1.setStatus("COMPLETED");
+                maint1.setCompletedDate(LocalDate.now().minusMonths(2));
+                maintenanceRepository.save(maint1);
+
+                MyAssetMaintenance maint2 = new MyAssetMaintenance(asset4, "Battery replacement", "Dell Service Center", BigDecimal.valueOf(8000));
+                maint2.setActualCost(BigDecimal.valueOf(8000));
+                maint2.setStatus("COMPLETED");
+                maint2.setCompletedDate(LocalDate.now().minusMonths(4));
+                maintenanceRepository.save(maint2);
+
+                MyAssetMaintenance maint3 = new MyAssetMaintenance(asset7, "RAM Upgrade", "Enterprise IT Solutions", BigDecimal.valueOf(35000));
+                maint3.setActualCost(BigDecimal.valueOf(35000));
+                maint3.setStatus("COMPLETED");
+                maint3.setCompletedDate(LocalDate.now().minusMonths(1));
+                maintenanceRepository.save(maint3);
+
+                MyAssetMaintenance maint4 = new MyAssetMaintenance(asset2, "Battery health check", "Apple Service", BigDecimal.valueOf(4000));
+                maint4.setStatus("UNDER_MAINTENANCE");
+                maintenanceRepository.save(maint4);
+
+                System.out.println("Seeded Rich Mock Active Assets and Maintenances for " + emp.getEmail() + ".");
             }
         }
     }

@@ -63,14 +63,12 @@ public class MySettingsController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity unauthorizedResponse() {
+    private ResponseEntity<?> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity forbiddenResponse(String permission) {
+    private ResponseEntity<?> forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }

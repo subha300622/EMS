@@ -59,6 +59,13 @@ public class MyAsset {
 
     private LocalDate warrantyExpiryDate;
 
+    private String vendor;
+
+    private BigDecimal depreciationPercentage;
+
+    @Column(precision = 12, scale = 2)
+    private BigDecimal assetRecoveryAmount = BigDecimal.ZERO;
+
     @Column(nullable = false)
     private String status = "ASSIGNED"; // ASSIGNED, RETURN_REQUESTED, RETURNED
 
@@ -228,5 +235,29 @@ public class MyAsset {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getVendor() {
+        return vendor;
+    }
+
+    public void setVendor(String vendor) {
+        this.vendor = vendor;
+    }
+
+    public BigDecimal getDepreciationPercentage() {
+        return depreciationPercentage;
+    }
+
+    public void setDepreciationPercentage(BigDecimal depreciationPercentage) {
+        this.depreciationPercentage = depreciationPercentage;
+    }
+
+    public BigDecimal getAssetRecoveryAmount() {
+        return assetRecoveryAmount != null ? assetRecoveryAmount : BigDecimal.ZERO;
+    }
+
+    public void setAssetRecoveryAmount(BigDecimal assetRecoveryAmount) {
+        this.assetRecoveryAmount = assetRecoveryAmount;
     }
 }

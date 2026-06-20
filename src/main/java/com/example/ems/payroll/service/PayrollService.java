@@ -8,8 +8,6 @@ import com.example.ems.payroll.entity.Payroll;
 import com.example.ems.payroll.entity.SalaryStructure;
 import com.example.ems.payroll.repository.PayrollRepository;
 import com.example.ems.payroll.repository.SalaryStructureRepository;
-import com.example.ems.attendance.repository.AttendanceRepository;
-import com.example.ems.leave.repository.LeaveRepository;
 import com.example.ems.employee.repository.DepartmentRepository;
 import com.example.ems.employee.entity.Department;
 
@@ -38,11 +36,7 @@ public class PayrollService {
     @Autowired
     private SalaryStructureRepository salaryStructureRepository;
 
-    @Autowired
-    private AttendanceRepository attendanceRepository;
 
-    @Autowired
-    private LeaveRepository leaveRepository;
 
     @Autowired
     private DepartmentRepository departmentRepository;

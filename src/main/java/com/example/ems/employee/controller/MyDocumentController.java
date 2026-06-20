@@ -57,14 +57,12 @@ public class MyDocumentController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity unauthorizedResponse() {
+    private ResponseEntity<ErrorResponse> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity forbiddenResponse(String permission) {
+    private ResponseEntity<ErrorResponse> forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
@@ -245,8 +243,7 @@ public class MyDocumentController {
 
     // 8. Download Document
     @GetMapping("/{documentId}/download")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<byte[]> downloadDocument(
+    public ResponseEntity<?> downloadDocument(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("documentId") Long documentId){
         User currentUser = resolveUser(authHeader);
@@ -263,9 +260,9 @@ public class MyDocumentController {
             headers.setContentType(MediaType.parseMediaType(doc.getFileType()));
             headers.setContentDispositionFormData("attachment", doc.getFileName());
             headers.setContentLength(doc.getFileData().length);
-            return (ResponseEntity) new ResponseEntity<>(doc.getFileData(), headers, HttpStatus.OK);
+            return new ResponseEntity<>(doc.getFileData(), headers, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
         }
     }

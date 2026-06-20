@@ -30,11 +30,26 @@ public class FnfSettlement {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal netAmount = BigDecimal.ZERO;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status = "PENDING"; // PENDING, APPROVED, PROCESSED
+    private FnfSettlementStatus status = FnfSettlementStatus.PENDING;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    @Column(columnDefinition = "TEXT")
+    private String workflowRemarks;
+
+    private String approvedBy;
+    private LocalDateTime approvedDate;
+
+    private String processedBy;
+    private LocalDateTime processedDate;
+
+    @Enumerated(EnumType.STRING)
+    private PaymentMode paymentMode;
+
+    private String paymentReference;
 
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
@@ -62,11 +77,32 @@ public class FnfSettlement {
     public BigDecimal getNetAmount() { return netAmount; }
     public void setNetAmount(BigDecimal netAmount) { this.netAmount = netAmount; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public FnfSettlementStatus getStatus() { return status; }
+    public void setStatus(FnfSettlementStatus status) { this.status = status; }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }
+
+    public String getWorkflowRemarks() { return workflowRemarks; }
+    public void setWorkflowRemarks(String workflowRemarks) { this.workflowRemarks = workflowRemarks; }
+
+    public String getApprovedBy() { return approvedBy; }
+    public void setApprovedBy(String approvedBy) { this.approvedBy = approvedBy; }
+
+    public LocalDateTime getApprovedDate() { return approvedDate; }
+    public void setApprovedDate(LocalDateTime approvedDate) { this.approvedDate = approvedDate; }
+
+    public String getProcessedBy() { return processedBy; }
+    public void setProcessedBy(String processedBy) { this.processedBy = processedBy; }
+
+    public LocalDateTime getProcessedDate() { return processedDate; }
+    public void setProcessedDate(LocalDateTime processedDate) { this.processedDate = processedDate; }
+
+    public PaymentMode getPaymentMode() { return paymentMode; }
+    public void setPaymentMode(PaymentMode paymentMode) { this.paymentMode = paymentMode; }
+
+    public String getPaymentReference() { return paymentReference; }
+    public void setPaymentReference(String paymentReference) { this.paymentReference = paymentReference; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

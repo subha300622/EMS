@@ -22,6 +22,7 @@ import java.math.BigDecimal;
 import java.util.*;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -139,21 +140,6 @@ public class PayrollManagementTest {
     }
 
     @Test
-    public void testGetPayslip() throws Exception {
-        when(payrollService.calculatePreview(101L)).thenReturn(Map.of("grossSalary", 80000));
-
-        mockMvc.perform(get("/api/v1/payroll/101/payslip")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-
-        mockMvc.perform(get("/api/v1/payroll/101/payslip")
-                        .header("Authorization", AUTH_HEADER)
-                        .header("Accept", "application/pdf"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
     public void testDisburseSalary() throws Exception {
         when(payrollService.disbursePayment(15L)).thenReturn(Map.of("payrollRunId", 15, "status", "PAID"));
 
@@ -176,21 +162,9 @@ public class PayrollManagementTest {
     }
 
     @Test
-    public void testGetEmployeeHistory() throws Exception {
-        Payroll p = new Payroll();
-        p.setId(1L);
-        when(payrollService.getPayrollByEmployeeId(101L)).thenReturn(List.of(p));
-
-        mockMvc.perform(get("/api/v1/payroll/employees/101/history")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
-
-    @Test
     public void testTaxConfiguration() throws Exception {
         when(payrollService.getTaxSettings()).thenReturn(Map.of("pfRate", 12.0));
-        when(payrollService.updateTaxSettings(any(Map.class))).thenReturn(Map.of("pfRate", 15.0));
+        when(payrollService.updateTaxSettings(anyMap())).thenReturn(Map.of("pfRate", 15.0));
 
         mockMvc.perform(get("/api/v1/payroll/taxes")
                         .header("Authorization", AUTH_HEADER))

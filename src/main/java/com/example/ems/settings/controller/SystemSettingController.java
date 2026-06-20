@@ -89,12 +89,12 @@ public class SystemSettingController {
 
     // --- Sub-modules: Company ---
     @GetMapping("/company")
-    public ResponseEntity<List<SystemSetting>> getCompanySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> getCompanySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "company");
     }
 
     @PutMapping("/company")
-    public ResponseEntity<Map<String, SystemSetting>> updateCompanySettings(
+    public ResponseEntity<?> updateCompanySettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "company");
@@ -102,12 +102,12 @@ public class SystemSettingController {
 
     // --- Sub-modules: Security ---
     @GetMapping("/security")
-    public ResponseEntity<List<SystemSetting>> getSecuritySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> getSecuritySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "security");
     }
 
     @PutMapping("/security")
-    public ResponseEntity<Map<String, SystemSetting>> updateSecuritySettings(
+    public ResponseEntity<?> updateSecuritySettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "security");
@@ -115,12 +115,12 @@ public class SystemSettingController {
 
     // --- Sub-modules: Email ---
     @GetMapping("/email")
-    public ResponseEntity<List<SystemSetting>> getEmailSettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> getEmailSettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "email");
     }
 
     @PutMapping("/email")
-    public ResponseEntity<Map<String, SystemSetting>> updateEmailSettings(
+    public ResponseEntity<?> updateEmailSettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "email");
@@ -128,12 +128,12 @@ public class SystemSettingController {
 
     // --- Sub-modules: Integrations ---
     @GetMapping("/integrations")
-    public ResponseEntity<List<SystemSetting>> getIntegrationsSettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> getIntegrationsSettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "integrations");
     }
 
     @PutMapping("/integrations")
-    public ResponseEntity<Map<String, SystemSetting>> updateIntegrationsSettings(
+    public ResponseEntity<?> updateIntegrationsSettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "integrations");
@@ -141,20 +141,19 @@ public class SystemSettingController {
 
     // --- Sub-modules: Password Policy ---
     @GetMapping("/password-policy")
-    public ResponseEntity<List<SystemSetting>> getPasswordPolicySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> getPasswordPolicySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "password-policy");
     }
 
     @PutMapping("/password-policy")
-    public ResponseEntity<Map<String, SystemSetting>> updatePasswordPolicySettings(
+    public ResponseEntity<?> updatePasswordPolicySettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "password-policy");
     }
 
     // --- Helper Methods ---
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity getSettingsByCategory(String authHeader, String category) {
+    private ResponseEntity<?> getSettingsByCategory(String authHeader, String category) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
@@ -166,8 +165,7 @@ public class SystemSettingController {
         return ResponseEntity.ok(ApiResponse.success(category + " settings retrieved successfully", settings));
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private ResponseEntity updateSettingsByCategory(String authHeader, Map<String, String> settingsMap, String category) {
+    private ResponseEntity<?> updateSettingsByCategory(String authHeader, Map<String, String> settingsMap, String category) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));

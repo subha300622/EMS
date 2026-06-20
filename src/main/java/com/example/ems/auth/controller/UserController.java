@@ -483,58 +483,6 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success("Search results retrieved successfully", formattedList));
     }
 
-    // ── 9. Get Profile ───────────────────────────────────────────────────────
-    @Tag(name = "My Profile")
-    @GetMapping("/users/profile")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("userId", currentUser.getUserId());
-        data.put("fullName", currentUser.getFullName());
-        data.put("workEmail", currentUser.getWorkEmail());
-        data.put("mobileNumber", currentUser.getMobileNumber());
-        data.put("department", currentUser.getDepartment());
-        data.put("location", currentUser.getLocation());
-        data.put("role", currentUser.getRole() != null ? currentUser.getRole().getName() : currentUser.getRequestedRole());
-        data.put("status", currentUser.getStatus());
-
-        return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", data));
-    }
-
-    // ── 10. Update Profile ───────────────────────────────────────────────────
-    @Tag(name = "My Profile")
-    @PutMapping("/users/profile")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid ProfileUpdateRequest request){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        try {
-            User updated = userService.updateUserProfile(currentUser.getId(), request);
-            Map<String, Object> responseData = new LinkedHashMap<>();
-            responseData.put("userId", updated.getUserId());
-            responseData.put("fullName", updated.getFullName());
-            responseData.put("mobileNumber", updated.getMobileNumber());
-            responseData.put("location", updated.getLocation());
-            return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", responseData));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_003"));
-        }
-    }
 
     // ── 11. Reset Password (Admin) ───────────────────────────────────────────
     @PutMapping("/users/{userId}/password/reset")

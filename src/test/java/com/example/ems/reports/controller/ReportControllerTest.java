@@ -164,7 +164,8 @@ public class ReportControllerTest {
                 .andExpect(jsonPath("$.data.exportId").exists())
                 .andReturn().getResponse().getContentAsString();
 
-        Map<String, Object> data = (Map<String, Object>) new ObjectMapper().readValue(response, Map.class).get("data");
+        Map<String, Object> responseMap = new ObjectMapper().readValue(response, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+        Map<String, Object> data = new ObjectMapper().convertValue(responseMap.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
         String exportId = (String) data.get("exportId");
 
         mockMvc.perform(get("/api/v1/reports/export/" + exportId)
@@ -190,7 +191,8 @@ public class ReportControllerTest {
                 .andExpect(jsonPath("$.data.id").exists())
                 .andReturn().getResponse().getContentAsString();
 
-        Map<String, Object> data = (Map<String, Object>) new ObjectMapper().readValue(res, Map.class).get("data");
+        Map<String, Object> responseMap = new ObjectMapper().readValue(res, new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+        Map<String, Object> data = new ObjectMapper().convertValue(responseMap.get("data"), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
         Number id = (Number) data.get("id");
         Long scheduleId = id.longValue();
 

@@ -92,7 +92,6 @@ public class LeaveController {
     }
 
     // ── 1b. GET MY LEAVES ─────────────────────────────────────────────────────
-    @Tag(name = "My Leave")
     @GetMapping("/leaves/my")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Leave>>> getMyLeaves(
