@@ -63,17 +63,7 @@ public class MyScheduleControllerTest {
         when(roleService.hasPermission(eq(empEmail), any(String.class))).thenReturn(allowed);
     }
 
-    @Test
-    public void testGetDashboard() throws Exception {
-        setupMockPermissions(true);
-        MyScheduleDashboardResponse resp = new MyScheduleDashboardResponse();
-        when(scheduleService.getDashboard(empEmail)).thenReturn(resp);
 
-        mockMvc.perform(get("/api/v1/my-schedule/dashboard")
-                .header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
 
     @Test
     public void testGetCalendar() throws Exception {

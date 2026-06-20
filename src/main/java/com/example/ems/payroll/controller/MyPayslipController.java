@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/my-payslips")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Payroll")
 public class MyPayslipController {
 
     @Autowired
@@ -65,27 +65,7 @@ public class MyPayslipController {
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
 
-    // 1. Get My Payslips Dashboard
-    @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
-        }
-        if (!checkPermission(currentUser, "payslip.self.read")) {
-            return (ResponseEntity) forbiddenResponse("payslip.self.read");
-        }
 
-        try {
-            MyPayslipDashboardResponse response = myPayslipService.getPayslipDashboard(currentUser.getWorkEmail());
-            return ResponseEntity.ok(ApiResponse.success("Dashboard retrieved successfully", response));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "PR_001"));
-        }
-    }
 
     // 2. Get My Payslips History
     @GetMapping("/history")

@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 @RestController
 @RequestMapping("/api/v1/my-exit")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Exit Management")
 public class MyExitController {
 
     @Autowired
@@ -44,25 +44,7 @@ public class MyExitController {
         return null;
     }
 
-    // 1. Get My Exit Dashboard
-    @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<MyExitDashboardResponse> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
 
-        try {
-            MyExitDashboardResponse response = myExitService.getMyExitDashboard(currentUser.getWorkEmail());
-            return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "OFB_002"));
-        }
-    }
 
     // 2. Submit Resignation Request
     @PostMapping("/resignation")

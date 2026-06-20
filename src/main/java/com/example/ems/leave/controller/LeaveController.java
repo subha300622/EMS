@@ -65,6 +65,7 @@ public class LeaveController {
 
     // ── 1. APPLY LEAVE ────────────────────────────────────────────────────────
     @PostMapping("/leaves")
+    @Tag(name = "Employee Self Service - Leave")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> applyLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -93,6 +94,7 @@ public class LeaveController {
 
     // ── 1b. GET MY LEAVES ─────────────────────────────────────────────────────
     @GetMapping("/leaves/my")
+    @Tag(name = "Employee Self Service - Leave")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Leave>>> getMyLeaves(
             @RequestHeader(value = "Authorization", required = false) String authHeader){

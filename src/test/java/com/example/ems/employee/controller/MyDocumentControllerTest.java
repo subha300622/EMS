@@ -72,24 +72,7 @@ public class MyDocumentControllerTest {
         when(roleService.hasPermission(EMAIL, permission)).thenReturn(allowed);
     }
 
-    @Test
-    public void testGetDashboardSuccess() throws Exception {
-        mockPermission("document.self.read", true);
 
-        MyDocumentsDashboardResponse.EmployeeInfo emp = new MyDocumentsDashboardResponse.EmployeeInfo(1L, "EMP001", "John Doe");
-        MyDocumentsDashboardResponse.SummaryInfo summary = new MyDocumentsDashboardResponse.SummaryInfo(21, 18, 2, 1, 86);
-        MyDocumentsDashboardResponse.AlertInfo alert = new MyDocumentsDashboardResponse.AlertInfo("PENDING_UPLOAD", "2 documents pending upload", 2);
-        MyDocumentsDashboardResponse resp = new MyDocumentsDashboardResponse(emp, summary, List.of(alert));
-
-        when(documentService.getDocumentDashboard(EMAIL)).thenReturn(resp);
-
-        mockMvc.perform(get("/api/v1/my-documents/dashboard")
-                .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.employee.name").value("John Doe"))
-                .andExpect(jsonPath("$.data.summary.completionPercentage").value(86));
-    }
 
     @Test
     public void testGetCategoriesSuccess() throws Exception {

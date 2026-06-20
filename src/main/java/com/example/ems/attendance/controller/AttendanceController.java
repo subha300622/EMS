@@ -65,6 +65,7 @@ public class AttendanceController {
 
     // ── 1. CHECK-IN ──────────────────────────────────────────────────────────
     @PostMapping("/attendance/me/check-in")
+    @Tag(name = "Employee Self Service - Attendance")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> checkIn(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -103,6 +104,7 @@ public class AttendanceController {
 
     // ── 2. CHECK-OUT ─────────────────────────────────────────────────────────
     @PostMapping("/attendance/me/check-out")
+    @Tag(name = "Employee Self Service - Attendance")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> checkOut(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -141,6 +143,7 @@ public class AttendanceController {
 
     // ── 4. GET MY ATTENDANCE HISTORY ─────────────────────────────────────────
     @GetMapping("/attendance/me")
+    @Tag(name = "Employee Self Service - Attendance")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Attendance>>> getMyAttendanceHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader){

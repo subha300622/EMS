@@ -64,22 +64,7 @@ public class MyExitControllerTest {
         when(userRepository.findByWorkEmail(empEmail)).thenReturn(Optional.of(empUser));
     }
 
-    @Test
-    public void testGetDashboardSuccess() throws Exception {
-        MyExitDashboardResponse.EmployeeInfo emp = new MyExitDashboardResponse.EmployeeInfo(101L, "EMP001", "John Doe", "Engineering", "Software Engineer");
-        MyExitDashboardResponse.ExitRequestInfo req = new MyExitDashboardResponse.ExitRequestInfo(501L, "IN_PROGRESS", LocalDate.of(2026, 4, 1), LocalDate.of(2026, 4, 10), 4L, "IT_CLEARANCE");
-        MyExitDashboardResponse.ProgressInfo prog = new MyExitDashboardResponse.ProgressInfo(2, 10, 20);
-        MyExitDashboardResponse resp = new MyExitDashboardResponse(emp, req, prog);
 
-        when(myExitService.getMyExitDashboard(empEmail)).thenReturn(resp);
-
-        mockMvc.perform(get("/api/v1/my-exit/dashboard")
-                .header("Authorization", "Bearer " + mockToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.employee.employeeCode").value("EMP001"))
-                .andExpect(jsonPath("$.exitRequest.id").value(501L))
-                .andExpect(jsonPath("$.progress.completionPercentage").value(20));
-    }
 
     @Test
     public void testSubmitResignationSuccess() throws Exception {

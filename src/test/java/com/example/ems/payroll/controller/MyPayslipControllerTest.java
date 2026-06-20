@@ -72,36 +72,7 @@ public class MyPayslipControllerTest {
         when(roleService.hasPermission(EMAIL, permission)).thenReturn(allowed);
     }
 
-    @Test
-    public void testGetDashboardSuccess() throws Exception {
-        mockPermission("payslip.self.read", true);
 
-        MyPayslipDashboardResponse.EmployeeInfo emp = new MyPayslipDashboardResponse.EmployeeInfo(
-                1L, "EMP001", "John Doe", "Engineer", "Engineering"
-        );
-        MyPayslipDashboardResponse.CTCInfo ctc = new MyPayslipDashboardResponse.CTCInfo(
-                BigDecimal.valueOf(1200000), "INR", "INR 1200000"
-        );
-        MyPayslipDashboardResponse.SalaryOverviewInfo overview = new MyPayslipDashboardResponse.SalaryOverviewInfo(
-                ctc, LocalDate.now()
-        );
-        MyPayslipDashboardResponse.LatestPayrollInfo latest = new MyPayslipDashboardResponse.LatestPayrollInfo(
-                "June 2026", BigDecimal.valueOf(100000), BigDecimal.valueOf(10000), BigDecimal.valueOf(90000),
-                LocalDate.now(), "PAID"
-        );
-        MyPayslipDashboardResponse.StatisticsInfo stats = new MyPayslipDashboardResponse.StatisticsInfo(
-                12, "FY 2025-26"
-        );
-
-        MyPayslipDashboardResponse resp = new MyPayslipDashboardResponse(emp, overview, latest, stats);
-        when(myPayslipService.getPayslipDashboard(EMAIL)).thenReturn(resp);
-
-        mockMvc.perform(get("/api/v1/my-payslips/dashboard")
-                .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.employee.name").value("John Doe"));
-    }
 
     @Test
     public void testGetHistorySuccess() throws Exception {

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/my-performance")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Performance")
 public class MyPerformanceController {
 
     @Autowired
@@ -49,14 +49,7 @@ public class MyPerformanceController {
                roleService.hasPermission(user.getWorkEmail(), "employee.performance.read");
     }
 
-    @GetMapping("/dashboard")
-    public ResponseEntity<ApiResponse<MyPerformanceDashboardResponse>> getDashboard(@RequestHeader("Authorization") String authHeader) {
-        User user = resolveUser(authHeader);
-        if (!checkPermission(user, "performance.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.success("Access Denied", null));
-        }
-        return ResponseEntity.ok(ApiResponse.success("Dashboard retrieved", performanceService.getDashboard(user.getWorkEmail())));
-    }
+
 
     @GetMapping("/reviews")
     public ResponseEntity<ApiResponse<ReviewCyclesResponse>> getReviewCycles(@RequestHeader("Authorization") String authHeader) {

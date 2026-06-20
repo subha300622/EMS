@@ -67,16 +67,7 @@ public class MyPerformanceControllerTest {
         when(roleService.hasPermission(eq(email), anyString())).thenReturn(true);
     }
 
-    @Test
-    void testGetDashboard() throws Exception {
-        when(performanceService.getDashboard(email)).thenReturn(new MyPerformanceDashboardResponse());
 
-        mockMvc.perform(get("/api/v1/my-performance/dashboard")
-                .header("Authorization", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("Dashboard retrieved"));
-    }
 
     @Test
     void testGetReviewCycles() throws Exception {

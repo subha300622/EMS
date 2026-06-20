@@ -23,7 +23,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/v1/my-documents")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Documents")
 public class MyDocumentController {
 
     @Autowired
@@ -67,27 +67,7 @@ public class MyDocumentController {
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
 
-    // 1. Get My Documents Dashboard
-    @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
-        }
-        if (!checkPermission(currentUser, "document.self.read")) {
-            return (ResponseEntity) forbiddenResponse("document.self.read");
-        }
 
-        try {
-            MyDocumentsDashboardResponse response = documentService.getDocumentDashboard(currentUser.getWorkEmail());
-            return ResponseEntity.ok(ApiResponse.success("Dashboard retrieved successfully", response));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
-        }
-    }
 
     // 2. Get Document Categories
     @GetMapping("/categories")

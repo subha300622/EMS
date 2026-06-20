@@ -94,23 +94,7 @@ public class MyAssetControllerTest {
         when(roleService.hasPermission(EMAIL, permission)).thenReturn(allowed);
     }
 
-    @Test
-    public void testGetDashboardSuccess() throws Exception {
-        mockPermission("asset.self.read", true);
 
-        MyAssetsDashboardResponse.EmployeeInfo empInfo = new MyAssetsDashboardResponse.EmployeeInfo(1L, "EMP001", "John Doe", "Engineering");
-        MyAssetsDashboardResponse.SummaryInfo summary = new MyAssetsDashboardResponse.SummaryInfo(3, 3, BigDecimal.valueOf(235000), "INR", 0, 0);
-        MyAssetsDashboardResponse response = new MyAssetsDashboardResponse(empInfo, summary, LocalDateTime.now());
-
-        when(assetService.getDashboard(any())).thenReturn(response);
-
-        mockMvc.perform(get("/api/v1/my-assets/dashboard")
-                .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.employee.name").value("John Doe"))
-                .andExpect(jsonPath("$.data.summary.totalAssetValue").value(235000));
-    }
 
     @Test
     public void testGetAssignedAssetsSuccess() throws Exception {

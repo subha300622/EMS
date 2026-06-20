@@ -28,7 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RestController
 @RequestMapping("/api/v1/my-support")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Support")
 public class MySupportController {
 
     @Autowired

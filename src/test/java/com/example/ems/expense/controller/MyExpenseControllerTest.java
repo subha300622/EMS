@@ -95,23 +95,7 @@ public class MyExpenseControllerTest {
         when(roleService.hasPermission(EMAIL, permission)).thenReturn(allowed);
     }
 
-    @Test
-    public void testGetDashboardSuccess() throws Exception {
-        mockPermission("expense.self.read", true);
 
-        MyExpenseDashboardResponse.EmployeeInfo emp = new MyExpenseDashboardResponse.EmployeeInfo(1L, "EMP001", "John Doe", "Engineering");
-        MyExpenseDashboardResponse.SummaryInfo summary = new MyExpenseDashboardResponse.SummaryInfo(24, 3, 18, 2, 15, BigDecimal.valueOf(85600), BigDecimal.valueOf(12400), BigDecimal.valueOf(64200), BigDecimal.valueOf(54000), "INR");
-        MyExpenseDashboardResponse response = new MyExpenseDashboardResponse(emp, summary, "FY-2025-26", LocalDateTime.now());
-
-        when(expenseService.getDashboard(any())).thenReturn(response);
-
-        mockMvc.perform(get("/api/v1/my-expenses/dashboard")
-                .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.employee.fullName").value("John Doe"))
-                .andExpect(jsonPath("$.data.summary.totalClaims").value(24));
-    }
 
     @Test
     public void testGetMyExpensesSuccess() throws Exception {

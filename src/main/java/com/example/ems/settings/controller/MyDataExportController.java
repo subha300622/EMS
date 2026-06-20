@@ -46,7 +46,7 @@ import java.util.zip.ZipOutputStream;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Settings")
 public class MyDataExportController {
 
     @Autowired

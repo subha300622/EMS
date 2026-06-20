@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/my-schedule")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Schedule")
 public class MyScheduleController {
 
     @Autowired
@@ -51,14 +51,7 @@ public class MyScheduleController {
                roleService.hasPermission(user.getWorkEmail(), "employee.schedule.read");
     }
 
-    @GetMapping("/dashboard")
-    public ResponseEntity<ApiResponse<MyScheduleDashboardResponse>> getDashboard(@RequestHeader("Authorization") String authHeader) {
-        User user = resolveUser(authHeader);
-        if (!checkPermission(user, "schedule.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.success("Access Denied", null));
-        }
-        return ResponseEntity.ok(ApiResponse.success("Dashboard retrieved", scheduleService.getDashboard(user.getWorkEmail())));
-    }
+
 
     @GetMapping("/calendar")
     public ResponseEntity<ApiResponse<MyCalendarResponse>> getCalendar(

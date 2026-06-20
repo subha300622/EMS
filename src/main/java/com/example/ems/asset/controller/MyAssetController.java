@@ -29,7 +29,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/my-assets")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Assets")
 public class MyAssetController {
 
     @Autowired
@@ -96,24 +96,7 @@ public class MyAssetController {
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
 
-    // 1. Get My Assets Dashboard
-    @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.read")) return (ResponseEntity) forbiddenResponse("asset.self.read");
 
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
-        }
-
-        MyAssetsDashboardResponse response = assetService.getDashboard(employee);
-        return ResponseEntity.ok(ApiResponse.success("Dashboard statistics retrieved successfully", response));
-    }
 
     // 2. Get My Assigned Assets
     @GetMapping

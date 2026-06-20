@@ -8,7 +8,12 @@ import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
-
+import com.example.ems.auth.dto.MyDashboardResponse;
+import com.example.ems.leave.repository.LeaveRepository;
+import com.example.ems.expense.repository.ExpenseRepository;
+import com.example.ems.asset.repository.MyAssetRepository;
+import com.example.ems.performance.repository.PerformanceReviewRepository;
+import com.example.ems.support.repository.MySupportTicketRepository;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +27,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/me")
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service")
+@Tag(name = "Employee Self Service - Profile")
 public class MeController {
 
     @Autowired
@@ -37,7 +42,22 @@ public class MeController {
     @Autowired
     private JwtService jwtService;
 
-    @GetMapping
+    @Autowired
+    private LeaveRepository leaveRepository;
+
+    @Autowired
+    private ExpenseRepository expenseRepository;
+
+    @Autowired
+    private MyAssetRepository assetRepository;
+
+    @Autowired
+    private PerformanceReviewRepository reviewRepository;
+
+    @Autowired
+    private MySupportTicketRepository supportTicketRepository;
+
+    @GetMapping("/profile")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -61,7 +81,7 @@ public class MeController {
         return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", employee));
     }
 
-    @PutMapping
+    @PutMapping("/profile")
     @Transactional
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateMyProfile(
@@ -101,6 +121,58 @@ public class MeController {
 
         Employee saved = employeeRepository.save(employee);
         return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", saved));
+    }
+
+    @GetMapping("/dashboard")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<MyDashboardResponse>> getMyDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.dashboard.read")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.dashboard.read' permission.", "AUTH_002"));
+        }
+
+        Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
+        if (employee == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        long pendingLeavesCount = leaveRepository.findByEmployeeIdAndStatus(employee.getId(), "PENDING").size();
+
+        long pendingExpensesCount = expenseRepository.findByEmployeeId(employee.getId()).stream()
+                .filter(e -> {
+                    String status = e.getStatus();
+                    return "PENDING".equals(status) || "SUBMITTED".equals(status)
+                            || "PENDING_MANAGER_APPROVAL".equals(status) || "PENDING_FINANCE_APPROVAL".equals(status);
+                })
+                .count();
+
+        long assignedAssetsCount = assetRepository.findByAssignedToId(employee.getId()).size();
+
+        long pendingReviewsCount = reviewRepository.findByEmployeeId(employee.getId()).stream()
+                .filter(r -> !"FINALIZED".equalsIgnoreCase(r.getStatus()))
+                .count();
+
+        long openTicketsCount = supportTicketRepository.findByEmployeeEmail(employee.getEmail()).stream()
+                .filter(t -> "OPEN".equalsIgnoreCase(t.getStatus()) || "IN_PROGRESS".equalsIgnoreCase(t.getStatus()))
+                .count();
+
+        MyDashboardResponse dashboardResponse = new MyDashboardResponse(
+                pendingLeavesCount,
+                pendingExpensesCount,
+                assignedAssetsCount,
+                pendingReviewsCount,
+                openTicketsCount
+        );
+
+        return ResponseEntity.ok(ApiResponse.success("Dashboard statistics retrieved successfully", dashboardResponse));
     }
 
     private User resolveUser(String authHeader) {

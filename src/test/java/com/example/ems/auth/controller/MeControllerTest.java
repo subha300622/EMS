@@ -6,6 +6,11 @@ import com.example.ems.auth.service.RoleService;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
+import com.example.ems.leave.repository.LeaveRepository;
+import com.example.ems.expense.repository.ExpenseRepository;
+import com.example.ems.asset.repository.MyAssetRepository;
+import com.example.ems.performance.repository.PerformanceReviewRepository;
+import com.example.ems.support.repository.MySupportTicketRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +48,21 @@ public class MeControllerTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private LeaveRepository leaveRepository;
+
+    @Mock
+    private ExpenseRepository expenseRepository;
+
+    @Mock
+    private MyAssetRepository assetRepository;
+
+    @Mock
+    private PerformanceReviewRepository reviewRepository;
+
+    @Mock
+    private MySupportTicketRepository supportTicketRepository;
+
     @InjectMocks
     private MeController meController;
 
@@ -75,7 +95,7 @@ public class MeControllerTest {
         employee.setFullName("Me Employee");
         when(employeeRepository.findByEmail(EMAIL)).thenReturn(Optional.of(employee));
 
-        mockMvc.perform(get("/api/v1/me")
+        mockMvc.perform(get("/api/v1/me/profile")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -91,11 +111,36 @@ public class MeControllerTest {
         when(employeeRepository.findByEmail(EMAIL)).thenReturn(Optional.of(employee));
         when(employeeRepository.save(any(Employee.class))).thenReturn(employee);
 
-        mockMvc.perform(put("/api/v1/me")
+        mockMvc.perform(put("/api/v1/me/profile")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(Map.of("phone", "9876543210"))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    public void testGetMyDashboardSuccess() throws Exception {
+        mockPermission("employee.dashboard.read", true);
+        Employee employee = new Employee();
+        employee.setId(10L);
+        employee.setEmail(EMAIL);
+        when(employeeRepository.findByEmail(EMAIL)).thenReturn(Optional.of(employee));
+
+        when(leaveRepository.findByEmployeeIdAndStatus(10L, "PENDING")).thenReturn(java.util.Collections.emptyList());
+        when(expenseRepository.findByEmployeeId(10L)).thenReturn(java.util.Collections.emptyList());
+        when(assetRepository.findByAssignedToId(10L)).thenReturn(java.util.Collections.emptyList());
+        when(reviewRepository.findByEmployeeId(10L)).thenReturn(java.util.Collections.emptyList());
+        when(supportTicketRepository.findByEmployeeEmail(EMAIL)).thenReturn(java.util.Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/me/dashboard")
+                .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.pendingLeaves").value(0))
+                .andExpect(jsonPath("$.data.pendingExpenses").value(0))
+                .andExpect(jsonPath("$.data.assignedAssets").value(0))
+                .andExpect(jsonPath("$.data.pendingReviews").value(0))
+                .andExpect(jsonPath("$.data.openTickets").value(0));
     }
 }
