@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -7,19 +8,26 @@ import jakarta.validation.constraints.NotNull;
 public class ManagerReviewRequest {
 
     @NotNull(message = "Employee ID is required")
+    @Schema(example = "1")
     private Long employeeId;
 
     @NotNull(message = "Reviewer (manager) employee ID is required")
+    @Schema(example = "1")
     private Long reviewerId;
 
+    @Schema(example = "1")
     private Long cycleId;
 
+    @Schema(example = "string")
     private String achievements;
 
+    @Schema(example = "string")
     private String areasForImprovement;
 
+    @Schema(example = "Excellent progress")
     private String comments;
 
+    @Schema(example = "1")
     private Integer rating; // 1-5
 
     public Long getEmployeeId() { return employeeId; }

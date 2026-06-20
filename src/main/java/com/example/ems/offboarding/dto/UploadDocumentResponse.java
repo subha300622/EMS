@@ -1,14 +1,21 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
 public class UploadDocumentResponse {
 
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "string")
     private String documentName;
+    @Schema(example = "string")
     private String documentType;
+    @Schema(example = "string")
     private String uploadedBy;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime uploadedAt;
+    @Schema(example = "ACTIVE")
     private String status;
 
     public UploadDocumentResponse() {}

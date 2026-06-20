@@ -1,20 +1,33 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class AssetRequestResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "string")
     private String requestNumber;
+    @Schema(example = "string")
     private String assetCategory;
+    @Schema(example = "string")
     private String requestedModel;
+    @Schema(example = "Personal business")
     private String businessReason;
+    @Schema(example = "string")
     private String priority;
+    @Schema(example = "2026-06-19")
     private LocalDate requiredByDate;
+    @Schema(example = "Excellent progress")
     private String managerComments;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime requestedAt;
+    @Schema(example = "2026-06-19")
     private LocalDate expectedApprovalDate;
+    @Schema(example = "string")
     private String currentApprover;
 
     public AssetRequestResponse() {}

@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,10 +23,15 @@ public class MyDocumentNotificationsResponse {
     }
 
     public static class NotificationItem {
+        @Schema(example = "1")
         private Long documentId;
+        @Schema(example = "string")
         private String documentName;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "1")
         private int daysRemaining;
+        @Schema(example = "2026-06-19")
         private LocalDate expiryDate;
 
         public NotificationItem() {}

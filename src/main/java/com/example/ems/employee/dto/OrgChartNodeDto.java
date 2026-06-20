@@ -1,15 +1,23 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrgChartNodeDto {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "string")
     private String employeeId;
+    @Schema(example = "John Doe")
     private String fullName;
+    @Schema(example = "Software Engineer")
     private String designation;
+    @Schema(example = "john.doe@example.com")
     private String email;
+    @Schema(example = "string")
     private String profileImage;
+    @Schema(example = "Engineering")
     private String department;
     private List<OrgChartNodeDto> children = new ArrayList<>();
 

@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -42,8 +43,11 @@ public class MyDocumentsDashboardResponse {
     }
 
     public static class EmployeeInfo {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "string")
         private String name;
 
         public EmployeeInfo() {}
@@ -63,10 +67,15 @@ public class MyDocumentsDashboardResponse {
     }
 
     public static class SummaryInfo {
+        @Schema(example = "1")
         private int totalDocuments;
+        @Schema(example = "1")
         private int uploadedDocuments;
+        @Schema(example = "1")
         private int pendingDocuments;
+        @Schema(example = "1")
         private int expiringSoonDocuments;
+        @Schema(example = "1")
         private int completionPercentage;
 
         public SummaryInfo() {}
@@ -92,11 +101,17 @@ public class MyDocumentsDashboardResponse {
     }
 
     public static class AlertInfo {
+        @Schema(example = "string")
         private String type;
+        @Schema(example = "string")
         private String message;
+        @Schema(example = "1")
         private Integer count;
+        @Schema(example = "1")
         private Long documentId;
+        @Schema(example = "2026-06-19")
         private LocalDate expiryDate;
+        @Schema(example = "string")
         private String severity;
 
         public AlertInfo() {}

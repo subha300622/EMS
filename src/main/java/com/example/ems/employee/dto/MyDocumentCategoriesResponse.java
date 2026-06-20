@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -21,11 +22,17 @@ public class MyDocumentCategoriesResponse {
     }
 
     public static class CategoryItem {
+        @Schema(example = "1")
         private Long categoryId;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "string")
         private String icon;
+        @Schema(example = "1")
         private int uploaded;
+        @Schema(example = "1")
         private int total;
+        @Schema(example = "1")
         private int completionPercentage;
 
         public CategoryItem() {}

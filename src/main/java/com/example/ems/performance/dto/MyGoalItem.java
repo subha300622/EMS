@@ -1,13 +1,22 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class MyGoalItem {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "EMP101")
     private String goalCode;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "string")
     private String category;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String priority;
+    @Schema(example = "100.00")
     private Double progressPercentage;
+    @Schema(example = "string")
     private String dueDate;
 
     // Getters and Setters

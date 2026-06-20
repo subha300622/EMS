@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/my-payslips")
 @CrossOrigin("*")
-@Tag(name = "My Payslips")
+@Tag(name = "My Payroll")
 public class MyPayslipController {
 
     @Autowired
@@ -55,53 +55,57 @@ public class MyPayslipController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    private ResponseEntity<?> unauthorizedResponse() {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private ResponseEntity<?> forbiddenResponse(String permission) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
 
     // 1. Get My Payslips Dashboard
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.read")) {
-            return forbiddenResponse("payslip.self.read");
+            return (ResponseEntity) forbiddenResponse("payslip.self.read");
         }
 
         try {
             MyPayslipDashboardResponse response = myPayslipService.getPayslipDashboard(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Dashboard retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 2. Get My Payslips History
     @GetMapping("/history")
-    public ResponseEntity<?> getHistory(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getHistory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String financialYear,
             @RequestParam(required = false) String month,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "id,desc") String sort) {
+            @RequestParam(defaultValue = "id,desc") String sort){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.read")) {
-            return forbiddenResponse("payslip.self.read");
+            return (ResponseEntity) forbiddenResponse("payslip.self.read");
         }
 
         try {
@@ -110,60 +114,63 @@ public class MyPayslipController {
             );
             return ResponseEntity.ok(ApiResponse.success("Payslip history retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 3. Get Specific Payslip Details
     @GetMapping("/{id}")
-    public ResponseEntity<?> getDetails(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("id") Long payslipId) {
+            @PathVariable("id") Long payslipId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.read")) {
-            return forbiddenResponse("payslip.self.read");
+            return (ResponseEntity) forbiddenResponse("payslip.self.read");
         }
 
         try {
             MyPayslipDetailsResponse response = myPayslipService.getPayslipDetails(currentUser.getWorkEmail(), payslipId);
             return ResponseEntity.ok(ApiResponse.success("Payslip details retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 4. Preview Specific Payslip
     @GetMapping("/{id}/preview")
-    public ResponseEntity<?> preview(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> preview(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("id") Long payslipId) {
+            @PathVariable("id") Long payslipId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.preview")) {
-            return forbiddenResponse("payslip.self.preview");
+            return (ResponseEntity) forbiddenResponse("payslip.self.preview");
         }
 
         try {
             MyPayslipPreviewResponse response = myPayslipService.previewPayslip(currentUser.getWorkEmail(), payslipId);
             return ResponseEntity.ok(ApiResponse.success("Payslip preview generated successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 5. Download Specific Payslip PDF
     @GetMapping("/{id}/download")
-    public ResponseEntity<?> download(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> download(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("id") Long payslipId) {
+            @PathVariable("id") Long payslipId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return unauthorizedResponse();
@@ -178,24 +185,25 @@ public class MyPayslipController {
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", "payslip-" + payslipId + ".pdf");
             headers.setContentLength(pdfBytes.length);
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 6. Get Annual Salary Statement
     @GetMapping("/annual-statement")
-    public ResponseEntity<?> getAnnual(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAnnual(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestParam(required = false) String financialYear) {
+            @RequestParam(required = false) String financialYear){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.read")) {
-            return forbiddenResponse("payslip.self.read");
+            return (ResponseEntity) forbiddenResponse("payslip.self.read");
         }
 
         try {
@@ -204,16 +212,17 @@ public class MyPayslipController {
             );
             return ResponseEntity.ok(ApiResponse.success("Annual salary statement retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 7. Download Annual Salary Statement PDF
     @GetMapping("/annual-statement/download")
-    public ResponseEntity<?> downloadAnnual(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> downloadAnnual(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestParam(required = false) String financialYear) {
+            @RequestParam(required = false) String financialYear){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return unauthorizedResponse();
@@ -228,67 +237,70 @@ public class MyPayslipController {
             headers.setContentType(MediaType.APPLICATION_PDF);
             headers.setContentDispositionFormData("attachment", "annual-statement.pdf");
             headers.setContentLength(pdfBytes.length);
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 8. Get Salary Revision History
     @GetMapping("/salary-revisions")
-    public ResponseEntity<?> getSalaryRevisions(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getSalaryRevisions(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.read")) {
-            return forbiddenResponse("payslip.self.read");
+            return (ResponseEntity) forbiddenResponse("payslip.self.read");
         }
 
         try {
             MySalaryRevisionsResponse response = myPayslipService.getSalaryRevisionHistory(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Salary revision history retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 9. Get Tax Summary
     @GetMapping("/tax-summary")
-    public ResponseEntity<?> getTax(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getTax(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.read")) {
-            return forbiddenResponse("payslip.self.read");
+            return (ResponseEntity) forbiddenResponse("payslip.self.read");
         }
 
         try {
             TaxSummaryResponse response = myPayslipService.getTaxSummary(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Tax summary retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }
 
     // 10. Email Specific Payslip
     @PostMapping("/{id}/email")
-    public ResponseEntity<?> email(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> email(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("id") Long payslipId,
-            @Valid @RequestBody EmailPayslipRequest request) {
+            @Valid @RequestBody EmailPayslipRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.export")) {
-            return forbiddenResponse("payslip.self.export");
+            return (ResponseEntity) forbiddenResponse("payslip.self.export");
         }
 
         try {
@@ -297,28 +309,29 @@ public class MyPayslipController {
             );
             return ResponseEntity.ok(ApiResponse.success("Payslip sent via email successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "PR_002"));
         }
     }
 
     // 11. Get Payroll Timeline
     @GetMapping("/timeline")
-    public ResponseEntity<?> getTimeline(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getTimeline(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return (ResponseEntity) unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "payslip.self.read")) {
-            return forbiddenResponse("payslip.self.read");
+            return (ResponseEntity) forbiddenResponse("payslip.self.read");
         }
 
         try {
             PayrollTimelineResponse response = myPayslipService.getPayrollTimeline(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Payroll timeline retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "PR_001"));
         }
     }

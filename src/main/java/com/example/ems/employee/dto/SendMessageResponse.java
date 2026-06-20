@@ -1,9 +1,14 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class SendMessageResponse {
+    @Schema(example = "1")
     private Long messageId;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String sentAt;
+    @Schema(example = "string")
     private String message;
 
     public SendMessageResponse() {}

@@ -1,4 +1,5 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -15,11 +16,17 @@ public class FAQSearchResponse {
     public void setArticles(List<FAQArticleDto> articles) { this.articles = articles; }
 
     public static class FAQArticleDto {
+        @Schema(example = "1")
         private Long articleId;
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "string")
         private String content;
+        @Schema(example = "string")
         private String category;
+        @Schema(example = "1")
         private int views;
+        @Schema(example = "100.00")
         private double helpfulnessScore; // e.g. 92.0
 
         public FAQArticleDto() {}

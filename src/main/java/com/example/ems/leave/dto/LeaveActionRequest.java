@@ -1,10 +1,12 @@
 package com.example.ems.leave.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotNull;
 
 public class LeaveActionRequest {
 
     @NotNull(message = "Leave ID is required")
+    @Schema(example = "1")
     private Long leaveId;
 
     public LeaveActionRequest() {}

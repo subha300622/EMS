@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 
@@ -26,10 +27,15 @@ public class MyExitDashboardResponse {
     public void setProgress(ProgressInfo progress) { this.progress = progress; }
 
     public static class EmployeeInfo {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "Engineering")
         private String department;
+        @Schema(example = "Software Engineer")
         private String designation;
 
         public EmployeeInfo() {}
@@ -59,11 +65,17 @@ public class MyExitDashboardResponse {
     }
 
     public static class ExitRequestInfo {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "2026-06-19")
         private LocalDate resignationDate;
+        @Schema(example = "2026-06-19")
         private LocalDate lastWorkingDay;
+        @Schema(example = "1")
         private Long daysRemaining;
+        @Schema(example = "string")
         private String currentStage;
 
         public ExitRequestInfo() {}
@@ -97,8 +109,11 @@ public class MyExitDashboardResponse {
     }
 
     public static class ProgressInfo {
+        @Schema(example = "1")
         private int completedTasks;
+        @Schema(example = "1")
         private int totalTasks;
+        @Schema(example = "1")
         private int completionPercentage;
 
         public ProgressInfo() {}

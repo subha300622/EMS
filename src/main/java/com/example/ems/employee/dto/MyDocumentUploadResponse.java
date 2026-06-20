@@ -1,15 +1,23 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
 public class MyDocumentUploadResponse {
 
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "string")
     private String fileName;
+    @Schema(example = "string")
     private String documentType;
+    @Schema(example = "1")
     private int version;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "ACTIVE")
     private String verificationStatus;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime uploadedAt;
 
     public MyDocumentUploadResponse() {}

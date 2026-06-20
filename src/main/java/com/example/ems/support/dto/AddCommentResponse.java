@@ -1,9 +1,14 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class AddCommentResponse {
+    @Schema(example = "Excellent progress")
     private Long commentId;
+    @Schema(example = "string")
     private String createdBy;
+    @Schema(example = "string")
     private String createdAt;
+    @Schema(example = "string")
     private String message;
 
     public AddCommentResponse() {}

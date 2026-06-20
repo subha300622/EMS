@@ -1,4 +1,7 @@
 package com.example.ems.reports.controller;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.attendance.repository.AttendanceRepository;
@@ -28,7 +31,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/v1/reports")
 @CrossOrigin("*")
-@Tag(name = "Reports")
+@Tag(name = "Reports & Analytics")
 public class DashboardReportController {
 
     @Autowired
@@ -77,12 +80,13 @@ public class DashboardReportController {
 
     // ── 1. GET ADMIN DASHBOARD ────────────────────────────────────────────────
     @GetMapping("/dashboard/admin")
-    public ResponseEntity<?> getAdminDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAdminDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -91,7 +95,7 @@ public class DashboardReportController {
                 || roleService.hasRoleOrGreater(currentUser, "HR");
 
         if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires admin/HR dashboard privileges.", "AUTH_002"));
         }
 
@@ -111,18 +115,19 @@ public class DashboardReportController {
 
     // ── 2. GET MANAGER DASHBOARD ──────────────────────────────────────────────
     @GetMapping("/dashboard/manager")
-    public ResponseEntity<?> getManagerDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getManagerDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Employee manager = resolveEmployee(currentUser);
         if (manager == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for current user", "EMP_002"));
         }
 
@@ -153,12 +158,13 @@ public class DashboardReportController {
 
     // ── 3. EXPORT ATTENDANCE REPORT ───────────────────────────────────────────
     @GetMapping("/reports/attendance")
-    public ResponseEntity<?> exportAttendanceReport(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ResponseEntity> exportAttendanceReport(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -167,7 +173,7 @@ public class DashboardReportController {
                 && !roleService.hasRole(currentUser, "SUPER_ADMIN")
                 && !roleService.hasRole(currentUser, "ADMIN")
                 && !roleService.hasRole(currentUser, "HR")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires reports privileges.", "AUTH_002"));
         }
 
@@ -188,12 +194,13 @@ public class DashboardReportController {
 
     // ── 4. EXPORT LEAVES REPORT ───────────────────────────────────────────────
     @GetMapping("/reports/leaves")
-    public ResponseEntity<?> exportLeavesReport(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ResponseEntity> exportLeavesReport(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -202,7 +209,7 @@ public class DashboardReportController {
                 && !roleService.hasRole(currentUser, "SUPER_ADMIN")
                 && !roleService.hasRole(currentUser, "ADMIN")
                 && !roleService.hasRole(currentUser, "HR")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires reports privileges.", "AUTH_002"));
         }
 
@@ -225,12 +232,13 @@ public class DashboardReportController {
 
     // ── 5. EXPORT EMPLOYEES REPORT ────────────────────────────────────────────
     @GetMapping("/reports/employees")
-    public ResponseEntity<?> exportEmployeesReport(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ResponseEntity> exportEmployeesReport(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -239,7 +247,7 @@ public class DashboardReportController {
                 && !roleService.hasRole(currentUser, "SUPER_ADMIN")
                 && !roleService.hasRole(currentUser, "ADMIN")
                 && !roleService.hasRole(currentUser, "HR")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires reports privileges.", "AUTH_002"));
         }
 
@@ -263,12 +271,13 @@ public class DashboardReportController {
 
     // ── 6. EXPORT PAYROLL REPORT ──────────────────────────────────────────────
     @GetMapping("/reports/payroll")
-    public ResponseEntity<?> exportPayrollReport(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ResponseEntity> exportPayrollReport(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -277,7 +286,7 @@ public class DashboardReportController {
                 && !roleService.hasRole(currentUser, "SUPER_ADMIN")
                 && !roleService.hasRole(currentUser, "ADMIN")
                 && !roleService.hasRole(currentUser, "FINANCE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires payroll reports privileges.", "AUTH_002"));
         }
 
@@ -300,7 +309,8 @@ public class DashboardReportController {
         return createCsvResponse(csv.toString(), "payroll_report.csv");
     }
 
-    private ResponseEntity<?> createCsvResponse(String content, String fileName) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity createCsvResponse(String content, String fileName) {
         byte[] data = content.getBytes();
         org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
         headers.setContentType(org.springframework.http.MediaType.APPLICATION_OCTET_STREAM);

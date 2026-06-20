@@ -1,4 +1,5 @@
 package com.example.ems.leave.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -8,14 +9,18 @@ import java.time.LocalDate;
 public class LeaveRequest {
 
     @NotNull(message = "Leave type ID is required")
+    @Schema(example = "1")
     private Long leaveTypeId;
 
     @NotNull(message = "Start date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
 
     @NotNull(message = "End date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate endDate;
 
+    @Schema(example = "Personal business")
     private String reason;
 
     public LeaveRequest() {}

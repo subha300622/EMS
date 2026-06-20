@@ -1,4 +1,5 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.common.entity.DmsDocumentSignature;
 
@@ -6,15 +7,25 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class DmsSignatureResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "Project Deliverables")
     private String documentTitle;
+    @Schema(example = "1")
     private Long requestedFromEmployeeId;
+    @Schema(example = "string")
     private String requestedFromEmployeeName;
+    @Schema(example = "john.doe@example.com")
     private String requestedByEmail;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime signedAt;
+    @Schema(example = "2026-06-19")
     private LocalDate signatureDate;
+    @Schema(example = "Excellent progress")
     private String comments;
 
     public DmsSignatureResponse() {}

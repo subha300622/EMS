@@ -56,13 +56,14 @@ public class AuditLogController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllLogs(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAllLogs(@RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(currentUser, "audit.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'audit.read' permission.", "AUTH_002"));
         }
         List<AuditLog> logs = auditLogService.getAllLogs();
@@ -70,18 +71,19 @@ public class AuditLogController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getLogById(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getLogById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(currentUser, "audit.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'audit.read' permission.", "AUTH_002"));
         }
-        return auditLogService.getLogById(id)
+        return (ResponseEntity) auditLogService.getLogById(id)
                 .<ResponseEntity<?>>map(
                         log -> ResponseEntity.ok(ApiResponse.success("Audit log details retrieved successfully", log)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -89,13 +91,14 @@ public class AuditLogController {
     }
 
     @GetMapping("/export")
-    public ResponseEntity<?> exportLogs(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportLogs(@RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(currentUser, "audit.export")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'audit.export' permission.", "AUTH_002"));
         }
         byte[] data = auditLogService.exportLogsToCsv();
@@ -103,19 +106,20 @@ public class AuditLogController {
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDispositionFormData("attachment", "audit_logs.csv");
         headers.setContentLength(data.length);
-        return new ResponseEntity<>(data, headers, HttpStatus.OK);
+        return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
     @GetMapping("/user/{userId}")
-    public ResponseEntity<?> getLogsByUser(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getLogsByUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String userId) {
+            @PathVariable String userId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(currentUser, "audit.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'audit.read' permission.", "AUTH_002"));
         }
         List<AuditLog> logs = auditLogService.getLogsByUser(userId);
@@ -123,16 +127,17 @@ public class AuditLogController {
     }
 
     @GetMapping("/entity/{entityType}/{entityId}")
-    public ResponseEntity<?> getLogsByEntity(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<Object> getLogsByEntity(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String entityType,
-            @PathVariable String entityId) {
+            @PathVariable String entityId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(currentUser, "audit.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'audit.read' permission.", "AUTH_002"));
         }
         List<AuditLog> logs = auditLogService.getLogsByEntity(entityType, entityId);

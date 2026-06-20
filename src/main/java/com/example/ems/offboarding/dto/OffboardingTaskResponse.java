@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.offboarding.entity.OffboardingTask;
 
@@ -6,11 +7,17 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class OffboardingTaskResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19")
     private LocalDate dueDate;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime completedAt;
 
     public OffboardingTaskResponse() {}

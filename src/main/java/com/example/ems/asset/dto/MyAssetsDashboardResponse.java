@@ -1,4 +1,5 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -7,6 +8,7 @@ public class MyAssetsDashboardResponse {
 
     private EmployeeInfo employee;
     private SummaryInfo summary;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime lastUpdatedAt;
 
     public MyAssetsDashboardResponse() {}
@@ -42,9 +44,13 @@ public class MyAssetsDashboardResponse {
     }
 
     public static class EmployeeInfo {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "Engineering")
         private String department;
 
         public EmployeeInfo() {}
@@ -90,11 +96,17 @@ public class MyAssetsDashboardResponse {
     }
 
     public static class SummaryInfo {
+        @Schema(example = "1")
         private int assignedAssets;
+        @Schema(example = "1")
         private int activeAssets;
+        @Schema(example = "100.00")
         private BigDecimal totalAssetValue;
+        @Schema(example = "string")
         private String currency;
+        @Schema(example = "1")
         private int upcomingReturns;
+        @Schema(example = "1")
         private int openIssueTickets;
 
         public SummaryInfo() {}

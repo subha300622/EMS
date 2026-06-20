@@ -1,4 +1,5 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
@@ -6,10 +7,15 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class RoleResponse {
 
+    @Schema(example = "Software Engineer")
     private Long roleId;
+    @Schema(example = "string")
     private String name;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "1")
     private Integer permissionsCount;
+    @Schema(example = "string")
     private String createdAt;
     private List<PermissionResponse> permissions;
 

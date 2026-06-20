@@ -30,7 +30,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Appraisals")
+@Tag(name = "Performance Management")
 public class AppraisalController {
 
     @Autowired
@@ -82,14 +82,15 @@ public class AppraisalController {
 
     // ── 1. DASHBOARD ─────────────────────────────────────────────────────────
     @GetMapping("/appraisals/dashboard")
-    public ResponseEntity<?> getDashboard(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isFinanceOrManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager/Finance permissions.", "AUTH_002"));
 
         AppraisalDashboardResponse stats = appraisalService.getDashboardStats();
@@ -98,32 +99,34 @@ public class AppraisalController {
 
     // ── 2. APPRAISALS ────────────────────────────────────────────────────────
     @PostMapping("/appraisals")
-    public ResponseEntity<?> createAppraisal(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> createAppraisal(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody AppraisalRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         try {
             AppraisalResponse response = appraisalService.createAppraisal(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Appraisal record created successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
         }
     }
 
     @GetMapping("/appraisals")
-    public ResponseEntity<?> getAppraisals(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> getAppraisals(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<AppraisalResponse> list;
@@ -138,23 +141,24 @@ public class AppraisalController {
     }
 
     @GetMapping("/appraisals/{id}")
-    public ResponseEntity<?> getAppraisalById(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> getAppraisalById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<AppraisalResponse> appraisal = appraisalService.getAppraisalById(id);
         if (appraisal.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Appraisal not found with ID: " + id, "APP_002"));
 
         AppraisalResponse app = appraisal.get();
         if (!isFinanceOrManager(currentUser) && (currentUser.getEmployeeId() == null
                 || !currentUser.getEmployeeId().equals(String.valueOf(app.getEmployeeId())))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view other employees' appraisals.",
                             "AUTH_002"));
         }
@@ -163,69 +167,72 @@ public class AppraisalController {
     }
 
     @PutMapping("/appraisals/{id}")
-    public ResponseEntity<?> updateAppraisal(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> updateAppraisal(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody AppraisalRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         try {
             Optional<AppraisalResponse> response = appraisalService.updateAppraisal(id, request);
             if (response.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("Appraisal not found with ID: " + id, "APP_002"));
             }
             return ResponseEntity.ok(ApiResponse.success("Appraisal updated successfully", response.get()));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
         }
     }
 
     @DeleteMapping("/appraisals/{id}")
-    public ResponseEntity<?> deleteAppraisal(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> deleteAppraisal(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         boolean deleted = appraisalService.deleteAppraisal(id);
         if (!deleted) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Appraisal not found with ID: " + id, "APP_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Appraisal record deleted successfully"));
     }
 
     @PostMapping("/appraisals/{id}/self-review")
-    public ResponseEntity<?> submitSelfReview(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> submitSelfReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody AppraisalSelfReviewRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<AppraisalResponse> appOpt = appraisalService.getAppraisalById(id);
         if (appOpt.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Appraisal not found with ID: " + id, "APP_002"));
 
         AppraisalResponse app = appOpt.get();
         if (!isManager(currentUser) && (currentUser.getEmployeeId() == null
                 || !currentUser.getEmployeeId().equals(String.valueOf(app.getEmployeeId())))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error(
                             "Access Denied: You cannot submit self-review for another employee's appraisal.",
                             "AUTH_002"));
@@ -236,54 +243,57 @@ public class AppraisalController {
     }
 
     @PostMapping("/appraisals/{id}/manager-review")
-    public ResponseEntity<?> submitManagerReview(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> submitManagerReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody AppraisalManagerReviewRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Optional<AppraisalResponse> updated = appraisalService.submitManagerReview(id, request,
                 currentUser.getWorkEmail());
         if (updated.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Appraisal not found with ID: " + id, "APP_002"));
 
         return ResponseEntity.ok(ApiResponse.success("Manager review submitted successfully", updated.get()));
     }
 
     @PostMapping("/appraisals/{id}/finalize")
-    public ResponseEntity<?> finalizeAppraisal(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> finalizeAppraisal(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody AppraisalFinalizeRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Optional<AppraisalResponse> updated = appraisalService.finalizeAppraisal(id, request);
         if (updated.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Appraisal not found with ID: " + id, "APP_002"));
 
         return ResponseEntity.ok(ApiResponse.success("Appraisal finalized successfully", updated.get()));
     }
 
     @GetMapping("/appraisal-cycles")
-    public ResponseEntity<?> getAppraisalCycles(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> getAppraisalCycles(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<AppraisalCycleResponse> list = appraisalService.getAppraisalCycles();
@@ -291,11 +301,12 @@ public class AppraisalController {
     }
 
     @GetMapping("/increment-policies")
-    public ResponseEntity<?> getIncrementPolicies(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> getIncrementPolicies(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<IncrementPolicyResponse> list = appraisalService.getIncrementPolicies();
@@ -304,15 +315,16 @@ public class AppraisalController {
 
     // ── 4. REPORTS ───────────────────────────────────────────────────────────
     @GetMapping("/appraisals/reports/{reportType}")
-    public ResponseEntity<?> getAppraisalsReport(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> getAppraisalsReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String reportType) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isFinanceOrManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager/Finance permissions.", "AUTH_002"));
 
         Map<String, Object> data = appraisalService.getAppraisalsReport(reportType);
@@ -320,15 +332,16 @@ public class AppraisalController {
     }
 
     @GetMapping("/increments/reports/{reportType}")
-    public ResponseEntity<?> getIncrementsReport(
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> getIncrementsReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String reportType) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isFinanceOrManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager/Finance permissions.", "AUTH_002"));
 
         Map<String, Object> data = appraisalService.getIncrementsReport(reportType);

@@ -1,4 +1,7 @@
 package com.example.ems.employee.controller;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -33,7 +36,6 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "My Profile")
 public class EmployeeSelfServiceController {
 
     @Autowired
@@ -89,25 +91,27 @@ public class EmployeeSelfServiceController {
     }
 
     // ── 1. EMPLOYEE DASHBOARD ───────────────────────────────────────────────
+    @Tag(name = "My Profile")
     @GetMapping("/employees/me/dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<Map<String, Object>> getDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.dashboard.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.dashboard.read' permission.",
                             "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
@@ -197,51 +201,55 @@ public class EmployeeSelfServiceController {
     }
 
     // ── 2. EMPLOYEE PROFILE ──────────────────────────────────────────────────
+    @Tag(name = "My Profile")
     @GetMapping("/employees/me/profile")
-    public ResponseEntity<?> getMyProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<Employee> getMyProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.read' permission.",
                             "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
         return ResponseEntity.ok(employee);
     }
 
+    @Tag(name = "My Profile")
     @PutMapping("/employees/me/profile")
-    public ResponseEntity<?> updateMyProfile(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.update' permission.",
                             "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
@@ -268,25 +276,26 @@ public class EmployeeSelfServiceController {
     // Redundant with MyPayslipController
 
     // ── 8. ASSET MANAGEMENT ──────────────────────────────────────────────────
-    @GetMapping("/employees/me/assets")
     @Tag(name = "My Assets")
-    public ResponseEntity<?> getMyAssets(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @GetMapping("/employees/me/assets")
+        @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<List<OnboardingAsset>> getMyAssets(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.self.read' permission.", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
@@ -295,40 +304,41 @@ public class EmployeeSelfServiceController {
         return ResponseEntity.ok(list);
     }
 
-    @PostMapping("/employees/me/assets/{id}/request")
     @Tag(name = "My Assets")
-    public ResponseEntity<?> requestAssetService(
+    @PostMapping("/employees/me/assets/{id}/request")
+        @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> requestAssetService(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body) {
+            @RequestBody(required = false) Map<String, String> body){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.asset.request")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.asset.request' permission.",
                             "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
         OnboardingAsset asset = onboardingAssetRepository.findById(id).orElse(null);
         if (asset == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Asset not found", "AST_001"));
         }
 
         Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
         if (!asset.getOnboarding().getId().equals(onboarding.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: This asset is not assigned to you.", "AUTH_002"));
         }
 
@@ -348,47 +358,49 @@ public class EmployeeSelfServiceController {
     // Redundant with MyExpenseController
 
     // ── 10. PERFORMANCE REVIEW ───────────────────────────────────────────────
-    @GetMapping("/employees/me/performance")
     @Tag(name = "My Performance")
-    public ResponseEntity<?> getMyReviews(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @GetMapping("/employees/me/performance")
+        @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<List<PerformanceReview>> getMyReviews(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "performance.self.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'performance.self.read' permission.",
                             "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
         return ResponseEntity.ok(performanceReviewRepository.findByEmployeeId(employee.getId()));
     }
 
-    @PostMapping("/employees/me/performance/{id}/self-review")
     @Tag(name = "My Performance")
-    public ResponseEntity<?> submitSelfReview(
+    @PostMapping("/employees/me/performance/{id}/self-review")
+        @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> submitSelfReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody Map<String, Object> body){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.performance.self-review.submit")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error(
                             "Access Denied: Requires 'employee.performance.self-review.submit' permission.",
                             "AUTH_002"));
@@ -396,13 +408,13 @@ public class EmployeeSelfServiceController {
 
         PerformanceReview review = performanceReviewRepository.findById(id).orElse(null);
         if (review == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Performance review not found", "PR_001"));
         }
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null || !review.getEmployee().getId().equals(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot modify this performance review.", "AUTH_002"));
         }
 
@@ -429,19 +441,20 @@ public class EmployeeSelfServiceController {
     // Redundant with MySupportController
 
     // ── 15. SCHEDULE ─────────────────────────────────────────────────────────
-    @GetMapping("/employees/me/schedule")
     @Tag(name = "My Schedule")
-    public ResponseEntity<?> getMyWorkSchedule(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @GetMapping("/employees/me/schedule")
+        @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<Map<String, Object>> getMyWorkSchedule(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.schedule.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.schedule.read' permission.",
                             "AUTH_002"));
         }

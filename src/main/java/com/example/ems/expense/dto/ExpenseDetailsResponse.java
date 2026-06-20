@@ -1,4 +1,5 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -6,14 +7,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class ExpenseDetailsResponse {
+    @Schema(example = "1")
     private Long expenseId;
+    @Schema(example = "string")
     private String expenseNumber;
     private EmployeeInfo employee;
+    @Schema(example = "string")
     private String category;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "2026-06-19")
     private LocalDate expenseDate;
+    @Schema(example = "5000.00")
     private BigDecimal amount;
+    @Schema(example = "string")
     private String currency;
     private List<ReceiptInfo> receipts;
     private List<ApprovalStepInfo> approvalFlow;
@@ -73,7 +82,9 @@ public class ExpenseDetailsResponse {
     public void setPayment(PaymentInfo payment) { this.payment = payment; }
 
     public static class EmployeeInfo {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "string")
         private String name;
 
         public EmployeeInfo() {}
@@ -91,8 +102,11 @@ public class ExpenseDetailsResponse {
     }
 
     public static class ReceiptInfo {
+        @Schema(example = "1")
         private Long receiptId;
+        @Schema(example = "string")
         private String fileName;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime uploadedAt;
 
         public ReceiptInfo() {}
@@ -114,10 +128,15 @@ public class ExpenseDetailsResponse {
     }
 
     public static class ApprovalStepInfo {
+        @Schema(example = "1")
         private int level;
+        @Schema(example = "Software Engineer")
         private String approverRole;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime actionDate;
+        @Schema(example = "Excellent progress")
         private String comments;
 
         public ApprovalStepInfo() {}
@@ -147,7 +166,9 @@ public class ExpenseDetailsResponse {
     }
 
     public static class PaymentInfo {
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String expectedPaymentMonth;
 
         public PaymentInfo() {}

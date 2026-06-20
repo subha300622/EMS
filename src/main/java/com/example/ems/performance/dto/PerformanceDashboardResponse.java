@@ -1,30 +1,49 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class PerformanceDashboardResponse {
     // Cycles
+    @Schema(example = "1")
     private long totalCycles;
+    @Schema(example = "1")
     private long totalActiveCycles;
+    @Schema(example = "1")
     private long totalClosedCycles;
 
     // Goals
+    @Schema(example = "1")
     private long totalGoals;
+    @Schema(example = "1")
     private long achievedGoals;
+    @Schema(example = "75")
     private long inProgressGoals;
+    @Schema(example = "1")
     private long missedGoals;
+    @Schema(example = "100.00")
     private double goalCompletionRate;
+    @Schema(example = "100.00")
     private double averageGoalProgress;
 
     // Reviews
+    @Schema(example = "1")
     private long totalReviews;
+    @Schema(example = "1")
     private long selfReviews;
+    @Schema(example = "1")
     private long managerReviews;
+    @Schema(example = "1")
     private long pendingReviews;
+    @Schema(example = "1")
     private long finalizedReviews;
+    @Schema(example = "100.00")
     private double averageRating;
 
     // PIPs
+    @Schema(example = "1")
     private long totalPips;
+    @Schema(example = "1")
     private long activePips;
+    @Schema(example = "1")
     private long completedPips;
 
     public long getTotalActiveCycles() { return totalActiveCycles; }

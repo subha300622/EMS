@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -20,12 +21,19 @@ public class EmployeeDirectoryListResponse {
     public void setPagination(PaginationDto pagination) { this.pagination = pagination; }
 
     public static class EmployeeListItemDto {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "John Doe")
         private String fullName;
+        @Schema(example = "Software Engineer")
         private String designation;
+        @Schema(example = "Engineering")
         private String department;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String workMode;
+        @Schema(example = "string")
         private String profileImage;
         private List<String> skills;
 
@@ -68,10 +76,15 @@ public class EmployeeDirectoryListResponse {
     }
 
     public static class PaginationDto {
+        @Schema(example = "0")
         private int page;
+        @Schema(example = "10")
         private int size;
+        @Schema(example = "1")
         private long totalElements;
+        @Schema(example = "0")
         private int totalPages;
+        @Schema(example = "true")
         private boolean hasNext;
 
         public PaginationDto() {}

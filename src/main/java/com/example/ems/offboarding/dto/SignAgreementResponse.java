@@ -1,12 +1,17 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
 public class SignAgreementResponse {
 
+    @Schema(example = "1")
     private Long agreementId;
+    @Schema(example = "string")
     private String agreementType;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime signedAt;
+    @Schema(example = "ACTIVE")
     private String status;
 
     public SignAgreementResponse() {}

@@ -1,4 +1,5 @@
 package com.example.ems.training.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,19 +9,26 @@ import java.time.LocalDate;
 public class TrainingSessionRequest {
 
     @NotNull(message = "Course ID is required")
+    @Schema(example = "1")
     private Long courseId;
 
     @NotBlank(message = "Trainer name is required")
+    @Schema(example = "string")
     private String trainerName;
 
     @NotNull(message = "Schedule date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate scheduleDate;
 
+    @Schema(example = "string")
     private String startTime;
+    @Schema(example = "string")
     private String endTime;
+    @Schema(example = "Bangalore")
     private String location;
 
     @Positive(message = "Capacity must be positive")
+    @Schema(example = "1")
     private Integer capacity;
 
     public Long getCourseId() { return courseId; }

@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -13,13 +14,21 @@ public class ShiftHistoryResponse {
     }
 
     public static class ShiftItem {
+        @Schema(example = "1")
         private Long shiftId;
+        @Schema(example = "string")
         private String shiftName;
+        @Schema(example = "string")
         private String date;
+        @Schema(example = "string")
         private String startTime;
+        @Schema(example = "string")
         private String endTime;
+        @Schema(example = "1")
         private Integer durationHours;
+        @Schema(example = "Bangalore")
         private String location;
+        @Schema(example = "ACTIVE")
         private String status;
 
         // Getters and Setters

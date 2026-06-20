@@ -1,4 +1,5 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -7,8 +8,10 @@ import jakarta.validation.constraints.NotBlank;
 public class PermissionRequest {
 
     @NotBlank(message = "Permission name is required")
+    @Schema(example = "string")
     private String name;
 
+    @Schema(example = "Detailed description of the item")
     private String description;
 
     public String getName() {

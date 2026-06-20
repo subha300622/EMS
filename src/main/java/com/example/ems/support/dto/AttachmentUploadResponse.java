@@ -1,10 +1,16 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class AttachmentUploadResponse {
+    @Schema(example = "string")
     private String fileId;
+    @Schema(example = "string")
     private String fileName;
+    @Schema(example = "string")
     private String fileType;
+    @Schema(example = "10")
     private Long fileSize;
+    @Schema(example = "string")
     private String uploadedAt;
 
     public AttachmentUploadResponse() {}

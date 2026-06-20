@@ -1,4 +1,5 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,29 +9,38 @@ import java.time.LocalDate;
 public class DmsDocumentRequest {
 
     @NotBlank(message = "Document title is required")
+    @Schema(example = "Project Deliverables")
     private String title;
 
+    @Schema(example = "Detailed description of the item")
     private String description;
 
     @NotBlank(message = "Category is required")
+    @Schema(example = "string")
     private String category; // VISA, CONTRACT, IDENTIFICATION, POLICY
 
+    @Schema(example = "2026-06-19")
     private LocalDate expiryDate;
 
     @NotNull(message = "Owner employee ID is required")
+    @Schema(example = "1")
     private Long employeeId;
 
     @NotBlank(message = "File name is required")
+    @Schema(example = "string")
     private String fileName;
 
     @NotBlank(message = "File type is required")
+    @Schema(example = "string")
     private String fileType;
 
     @NotNull(message = "File size is required")
     @Positive(message = "File size must be positive")
+    @Schema(example = "10")
     private Long fileSize;
 
     @NotBlank(message = "Download URL is required")
+    @Schema(example = "string")
     private String downloadUrl;
 
     public DmsDocumentRequest() {}

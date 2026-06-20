@@ -1,4 +1,5 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.math.BigDecimal;
@@ -6,11 +7,17 @@ import java.math.BigDecimal;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SalaryRevisionApplyResponse {
 
+    @Schema(example = "string")
     private String revisionId;
+    @Schema(example = "string")
     private String employeeId;
+    @Schema(example = "120000.00")
     private BigDecimal previousSalary;
+    @Schema(example = "120000.00")
     private BigDecimal newSalary;
+    @Schema(example = "string")
     private String appliedAt;
+    @Schema(example = "ACTIVE")
     private String status;
 
     public SalaryRevisionApplyResponse() {}

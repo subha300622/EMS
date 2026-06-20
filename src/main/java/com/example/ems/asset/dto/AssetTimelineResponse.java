@@ -1,4 +1,5 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -21,9 +22,13 @@ public class AssetTimelineResponse {
     }
 
     public static class TimelineEventItem {
+        @Schema(example = "string")
         private String event;
+        @Schema(example = "string")
         private String performedBy;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime date;
+        @Schema(example = "string")
         private String remarks;
 
         public TimelineEventItem() {}

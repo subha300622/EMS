@@ -1,10 +1,14 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class SupportCategoryResponse {
+    @Schema(example = "1")
     private Long categoryId;
+    @Schema(example = "string")
     private String name;
+    @Schema(example = "string")
     private String icon;
     private List<SubCategoryDto> subCategories;
 
@@ -30,7 +34,9 @@ public class SupportCategoryResponse {
     public void setSubCategories(List<SubCategoryDto> subCategories) { this.subCategories = subCategories; }
 
     public static class SubCategoryDto {
+        @Schema(example = "1")
         private Long subCategoryId;
+        @Schema(example = "string")
         private String name;
 
         public SubCategoryDto() {}

@@ -1,4 +1,5 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
@@ -8,14 +9,17 @@ public class PayrollUpdateRequest {
 
     @NotNull(message = "Basic salary is required")
     @DecimalMin(value = "0.0", message = "Basic salary cannot be negative")
+    @Schema(example = "120000.00")
     private BigDecimal basicSalary;
 
     @NotNull(message = "Allowances is required")
     @DecimalMin(value = "0.0", message = "Allowances cannot be negative")
+    @Schema(example = "100.00")
     private BigDecimal allowances;
 
     @NotNull(message = "Deductions is required")
     @DecimalMin(value = "0.0", message = "Deductions cannot be negative")
+    @Schema(example = "5000.00")
     private BigDecimal deductions;
 
     public PayrollUpdateRequest() {}

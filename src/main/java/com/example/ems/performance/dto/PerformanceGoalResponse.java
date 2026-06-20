@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.performance.entity.PerformanceGoal;
 
@@ -6,17 +7,29 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class PerformanceGoalResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "1")
     private Long cycleId;
+    @Schema(example = "string")
     private String cycleName;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "75")
     private int progressPercent;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19")
     private LocalDate dueDate;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public PerformanceGoalResponse() {}

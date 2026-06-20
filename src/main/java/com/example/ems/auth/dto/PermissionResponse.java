@@ -1,9 +1,13 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class PermissionResponse {
 
+    @Schema(example = "1")
     private Long permissionId;
+    @Schema(example = "string")
     private String name;
+    @Schema(example = "Detailed description of the item")
     private String description;
 
     public PermissionResponse() {}

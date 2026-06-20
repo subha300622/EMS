@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -6,10 +7,15 @@ public class FeedbackListResponse {
     private List<FeedbackItem> feedback;
 
     public static class FeedbackItem {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "Excellent progress")
         private String feedbackType;
+        @Schema(example = "1")
         private Integer rating;
+        @Schema(example = "Excellent progress")
         private String comments;
+        @Schema(example = "string")
         private String receivedDate;
 
         // Getters and Setters

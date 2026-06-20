@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -7,8 +8,11 @@ public class AvailabilityRequest {
     private List<AvailabilitySlot> availability;
 
     public static class AvailabilitySlot {
+        @Schema(example = "string")
         private String dayOfWeek;
+        @Schema(example = "string")
         private String availableFrom;
+        @Schema(example = "string")
         private String availableTo;
 
         // Getters and Setters

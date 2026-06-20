@@ -1,14 +1,22 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class TicketDetailsResponse {
+    @Schema(example = "1")
     private Long ticketId;
+    @Schema(example = "string")
     private String ticketNumber;
+    @Schema(example = "Request for Leave")
     private String subject;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "string")
     private String category;
+    @Schema(example = "string")
     private String priority;
+    @Schema(example = "ACTIVE")
     private String status;
     private CreatedByDto createdBy;
     private AssignedToDto assignedTo;
@@ -65,7 +73,9 @@ public class TicketDetailsResponse {
     public void setSla(SlaDetailDto sla) { this.sla = sla; }
 
     public static class CreatedByDto {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "string")
         private String name;
 
         public CreatedByDto() {}
@@ -83,7 +93,9 @@ public class TicketDetailsResponse {
     }
 
     public static class AssignedToDto {
+        @Schema(example = "string")
         private String team;
+        @Schema(example = "string")
         private String agent;
 
         public AssignedToDto() {}
@@ -101,7 +113,9 @@ public class TicketDetailsResponse {
     }
 
     public static class AttachmentDto {
+        @Schema(example = "string")
         private String fileId;
+        @Schema(example = "string")
         private String fileName;
 
         public AttachmentDto() {}
@@ -119,8 +133,11 @@ public class TicketDetailsResponse {
     }
 
     public static class SlaDetailDto {
+        @Schema(example = "string")
         private String responseDueAt;
+        @Schema(example = "string")
         private String resolutionDueAt;
+        @Schema(example = "ACTIVE")
         private String status; // WITHIN_SLA, BREACHED
 
         public SlaDetailDto() {}

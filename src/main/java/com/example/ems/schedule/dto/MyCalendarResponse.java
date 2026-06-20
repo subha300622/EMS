@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.util.List;
@@ -15,14 +16,23 @@ public class MyCalendarResponse {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class CalendarEvent {
+        @Schema(example = "1")
         private Long eventId;
+        @Schema(example = "string")
         private String eventType; // MEETING, SHIFT, LEAVE, HOLIDAY
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "string")
         private String startDateTime;
+        @Schema(example = "string")
         private String endDateTime;
+        @Schema(example = "string")
         private String startDate;
+        @Schema(example = "string")
         private String endDate;
+        @Schema(example = "Bangalore")
         private String location;
+        @Schema(example = "ACTIVE")
         private String status;
 
         // Getters and Setters

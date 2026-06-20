@@ -1,18 +1,32 @@
 package com.example.ems.recruitment.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class RecruitmentDashboardResponse {
+    @Schema(example = "1")
     private long totalJobs;
+    @Schema(example = "1")
     private long activeJobs;
+    @Schema(example = "1")
     private long closedJobs;
+    @Schema(example = "1")
     private long draftJobs;
+    @Schema(example = "1")
     private long totalCandidates;
+    @Schema(example = "1")
     private long candidatesApplied;
+    @Schema(example = "1")
     private long candidatesScreening;
+    @Schema(example = "1")
     private long candidatesInterviewing;
+    @Schema(example = "1")
     private long candidatesOffered;
+    @Schema(example = "1")
     private long candidatesHired;
+    @Schema(example = "1")
     private long candidatesRejected;
+    @Schema(example = "1")
     private long scheduledInterviewsCount;
+    @Schema(example = "100.00")
     private double conversionRate; // hired / total candidates
 
     public long getTotalJobs() { return totalJobs; }

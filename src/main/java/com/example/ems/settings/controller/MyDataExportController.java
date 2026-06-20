@@ -1,4 +1,6 @@
 package com.example.ems.settings.controller;
+import java.util.List;
+import java.util.Map;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -44,7 +46,6 @@ import java.util.zip.ZipOutputStream;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "My Data Export")
 public class MyDataExportController {
 
     @Autowired
@@ -111,12 +112,14 @@ public class MyDataExportController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    private ResponseEntity<?> unauthorizedResponse() {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private ResponseEntity<?> forbiddenResponse(String permission) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
@@ -143,16 +146,18 @@ public class MyDataExportController {
     }
 
     // ── 1. EXPORT PAYSLIPS (ZIP) ─────────────────────────────────────────────
+    @Tag(name = "My Payroll")
     @GetMapping("/my-payslips/export")
-    public ResponseEntity<?> exportPayslips(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportPayslips(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
         if (!checkPermission(currentUser, "payslip.self.download")) return forbiddenResponse("payslip.self.download");
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -181,23 +186,25 @@ public class MyDataExportController {
             headers.setContentDispositionFormData("attachment", "payslips-export.zip");
             headers.setContentLength(zipBytes.length);
 
-            return new ResponseEntity<>(zipBytes, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(zipBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to generate payslips ZIP: " + e.getMessage(), "EXP_500"));
         }
     }
 
     // ── 2. EXPORT ATTENDANCE (CSV) ───────────────────────────────────────────
+    @Tag(name = "My Attendance")
     @GetMapping("/my-attendance/export")
-    public ResponseEntity<?> exportAttendance(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportAttendance(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -218,23 +225,25 @@ public class MyDataExportController {
             headers.setContentDispositionFormData("attachment", "attendance-export.csv");
             headers.setContentLength(data.length);
 
-            return new ResponseEntity<>(data, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to export attendance CSV: " + e.getMessage(), "EXP_500"));
         }
     }
 
     // ── 3. EXPORT LEAVES (CSV) ───────────────────────────────────────────────
+    @Tag(name = "My Leave")
     @GetMapping("/my-leaves/export")
-    public ResponseEntity<?> exportLeaves(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportLeaves(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -257,24 +266,26 @@ public class MyDataExportController {
             headers.setContentDispositionFormData("attachment", "leaves-export.csv");
             headers.setContentLength(data.length);
 
-            return new ResponseEntity<>(data, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to export leaves CSV: " + e.getMessage(), "EXP_500"));
         }
     }
 
     // ── 4. EXPORT EXPENSES (CSV) ──────────────────────────────────────────────
+    @Tag(name = "My Expenses")
     @GetMapping("/my-expenses/export")
-    public ResponseEntity<?> exportExpenses(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportExpenses(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
         if (!checkPermission(currentUser, "expense.self.read")) return forbiddenResponse("expense.self.read");
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -297,24 +308,26 @@ public class MyDataExportController {
             headers.setContentDispositionFormData("attachment", "expenses-export.csv");
             headers.setContentLength(data.length);
 
-            return new ResponseEntity<>(data, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to export expenses CSV: " + e.getMessage(), "EXP_500"));
         }
     }
 
     // ── 5. EXPORT PERFORMANCE (PDF) ──────────────────────────────────────────
+    @Tag(name = "My Performance")
     @GetMapping("/my-performance/export")
-    public ResponseEntity<?> exportPerformance(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportPerformance(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
         if (!checkPermission(currentUser, "performance.self.read")) return forbiddenResponse("performance.self.read");
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -355,24 +368,26 @@ public class MyDataExportController {
             headers.setContentDispositionFormData("attachment", "performance-export.pdf");
             headers.setContentLength(pdfBytes.length);
 
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to generate performance PDF: " + e.getMessage(), "EXP_500"));
         }
     }
 
     // ── 6. EXPORT DOCUMENTS (ZIP) ────────────────────────────────────────────
+    @Tag(name = "My Documents")
     @GetMapping("/my-documents/export")
-    public ResponseEntity<?> exportDocuments(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportDocuments(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
         if (!checkPermission(currentUser, "document.self.download")) return forbiddenResponse("document.self.download");
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -401,23 +416,25 @@ public class MyDataExportController {
             headers.setContentDispositionFormData("attachment", "documents-export.zip");
             headers.setContentLength(zipBytes.length);
 
-            return new ResponseEntity<>(zipBytes, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(zipBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to package documents ZIP: " + e.getMessage(), "EXP_500"));
         }
     }
 
     // ── 7. EXPORT TRAININGS (PDF) ────────────────────────────────────────────
+    @Tag(name = "My Profile")
     @GetMapping("/my-trainings/export")
-    public ResponseEntity<?> exportTrainings(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportTrainings(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee profile not found", "EMP_002"));
         }
 
         try {
@@ -452,53 +469,59 @@ public class MyDataExportController {
             headers.setContentDispositionFormData("attachment", "trainings-export.pdf");
             headers.setContentLength(pdfBytes.length);
 
-            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to generate trainings PDF: " + e.getMessage(), "EXP_500"));
         }
     }
 
     // ── 8. REQUEST SETTINGS DATA EXPORT ──────────────────────────────────────
+    @Tag(name = "My Settings")
     @PostMapping("/my-settings/data/export")
-    public ResponseEntity<?> exportData(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> exportData(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.data.export")) return (ResponseEntity) forbiddenResponse("settings.data.export");
 
         try {
             Map<String, Object> response = mySettingsService.exportData(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Data export request initiated successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // ── 9. GET SETTINGS EXPORT STATUS ────────────────────────────────────────
+    @Tag(name = "My Settings")
     @GetMapping("/my-settings/data/export/{requestId}")
-    public ResponseEntity<?> getExportStatus(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getExportStatus(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("requestId") String requestId) {
+            @PathVariable("requestId") String requestId){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.data.export")) return (ResponseEntity) forbiddenResponse("settings.data.export");
 
         try {
             Map<String, Object> response = mySettingsService.getExportStatus(currentUser.getWorkEmail(), requestId);
             return ResponseEntity.ok(ApiResponse.success("Export status retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // ── 10. DOWNLOAD SETTINGS EXPORTED DATA (CSV) ────────────────────────────
+    @Tag(name = "My Settings")
     @GetMapping("/my-settings/data/export/{requestId}/download")
-    public ResponseEntity<?> downloadExportedCsv(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> downloadExportedCsv(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("requestId") String requestId) {
+            @PathVariable("requestId") String requestId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
         if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
@@ -509,9 +532,9 @@ public class MyDataExportController {
             headers.setContentType(MediaType.parseMediaType("text/csv"));
             headers.setContentDispositionFormData("attachment", "personal-data-" + requestId + ".csv");
             headers.setContentLength(csvBytes.length);
-            return new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(csvBytes, headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }

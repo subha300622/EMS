@@ -1,13 +1,19 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
 public class MyDocumentReplaceResponse {
 
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "1")
     private int previousVersion;
+    @Schema(example = "1")
     private int newVersion;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public MyDocumentReplaceResponse() {}

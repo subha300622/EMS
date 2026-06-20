@@ -1,9 +1,14 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class EmployeeAvailabilityResponse {
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String availability;
+    @Schema(example = "ACTIVE")
     private String currentStatus;
+    @Schema(example = "string")
     private String lastActiveAt;
 
     public EmployeeAvailabilityResponse() {}

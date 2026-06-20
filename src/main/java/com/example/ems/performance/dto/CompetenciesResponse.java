@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -6,11 +7,17 @@ public class CompetenciesResponse {
     private List<CompetencyItem> competencies;
 
     public static class CompetencyItem {
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "string")
         private String type;
+        @Schema(example = "1")
         private Integer expectedLevel;
+        @Schema(example = "1")
         private Integer currentLevel;
+        @Schema(example = "1")
         private Integer gap;
+        @Schema(example = "string")
         private String improvementPlan;
 
         // Getters and Setters

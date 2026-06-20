@@ -1,4 +1,5 @@
 package com.example.ems.recruitment.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -8,11 +9,13 @@ import jakarta.validation.constraints.NotNull;
 public class InterviewFeedbackRequest {
 
     @NotBlank(message = "Feedback text is required")
+    @Schema(example = "Excellent progress")
     private String feedback;
 
     @NotNull(message = "Rating is required")
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating must be at most 5")
+    @Schema(example = "1")
     private Integer rating;
 
     public String getFeedback() { return feedback; }

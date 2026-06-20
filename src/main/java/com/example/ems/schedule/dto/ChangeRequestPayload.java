@@ -1,11 +1,17 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class ChangeRequestPayload {
 
+    @Schema(example = "1")
     private Long currentShiftId;
+    @Schema(example = "1")
     private Long requestedShiftId;
+    @Schema(example = "string")
     private String requestedDate; // "2026-06-20"
+    @Schema(example = "string")
     private String requestType; // "SHIFT_CHANGE"
+    @Schema(example = "Personal business")
     private String reason;
 
     // Getters and Setters

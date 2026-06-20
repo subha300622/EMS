@@ -1,4 +1,5 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,9 +22,13 @@ public class ExpenseCategoriesResponse {
     }
 
     public static class CategoryItem {
+        @Schema(example = "EMP101")
         private String code;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "100.00")
         private BigDecimal maxLimit;
+        @Schema(example = "true")
         private boolean requiresReceipt;
 
         public CategoryItem() {}

@@ -1,4 +1,5 @@
 package com.example.ems.training.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.training.entity.TrainingEnrollment;
 
@@ -6,18 +7,31 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class TrainingEnrollmentResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "john.doe@example.com")
     private String employeeEmail;
+    @Schema(example = "1")
     private Long sessionId;
+    @Schema(example = "Project Deliverables")
     private String courseTitle;
+    @Schema(example = "string")
     private String trainerName;
+    @Schema(example = "2026-06-19")
     private LocalDate scheduleDate;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime enrollmentDate;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "75")
     private Integer progressPercent;
+    @Schema(example = "string")
     private String grade;
+    @Schema(example = "string")
     private String certificateNumber;
 
     public TrainingEnrollmentResponse() {}

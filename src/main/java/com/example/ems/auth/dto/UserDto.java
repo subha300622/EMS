@@ -1,9 +1,14 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class UserDto {
+    @Schema(example = "string")
     private String id;
+    @Schema(example = "string")
     private String name;
+    @Schema(example = "john.doe@example.com")
     private String email;
+    @Schema(example = "Software Engineer")
     private String role;
 
     public UserDto() {}

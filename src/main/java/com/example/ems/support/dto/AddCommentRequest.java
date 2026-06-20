@@ -1,8 +1,10 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class AddCommentRequest {
+    @Schema(example = "Excellent progress")
     private String commentText;
     private List<String> attachments; // list of fileIds
 

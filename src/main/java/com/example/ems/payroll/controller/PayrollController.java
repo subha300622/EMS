@@ -7,7 +7,9 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.payroll.dto.PayrollGenerateRequest;
 import com.example.ems.payroll.dto.PayrollUpdateRequest;
+import com.example.ems.payroll.dto.SalaryStructureRequest;
 import com.example.ems.payroll.entity.Payroll;
+import com.example.ems.payroll.entity.SalaryStructure;
 import com.example.ems.payroll.service.PayrollService;
 import com.example.ems.security.service.JwtService;
 
@@ -26,7 +28,7 @@ import java.util.LinkedHashMap;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Payroll Runs")
+@Tag(name = "Payroll Management")
 public class PayrollController {
 
     @Autowired
@@ -54,41 +56,43 @@ public class PayrollController {
 
     // ── 1. GENERATE PAYROLL (FINANCE / ADMIN) ────────────────────────────────
     @PostMapping("/payroll-runs")
-    public ResponseEntity<?> generatePayroll(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> generatePayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid PayrollGenerateRequest request) {
+            @RequestBody @Valid PayrollGenerateRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
         }
 
         List<Payroll> generated = payrollService.generatePayroll(request.getMonth(), request.getYear());
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Payroll generated successfully. Records created: " + generated.size(),
                         generated));
     }
 
     // ── 4. GET ALL PAYROLL RECORDS (HR / FINANCE / ADMIN) ────────────────────
     @GetMapping("/payroll-runs")
-    public ResponseEntity<?> getAllPayroll(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Payroll>>> getAllPayroll(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
                             "AUTH_002"));
         }
@@ -99,24 +103,25 @@ public class PayrollController {
 
     // ── 5. GET PAYROLL BY ID (HR / FINANCE / ADMIN) ──────────────────────────
     @GetMapping("/payroll-runs/{id}")
-    public ResponseEntity<?> getPayrollById(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getPayrollById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
                             "AUTH_002"));
         }
 
-        return payrollService.getPayrollById(id)
+        return (ResponseEntity) payrollService.getPayrollById(id)
                 .<ResponseEntity<?>>map(
                         p -> ResponseEntity.ok(ApiResponse.success("Payroll record retrieved successfully", p)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -125,19 +130,20 @@ public class PayrollController {
 
     // ── 6. GET PAYROLL BY EMPLOYEE ID (HR / FINANCE / ADMIN) ──────────────────
     @GetMapping("/payroll-runs/employee/{employeeId}")
-    public ResponseEntity<?> getPayrollByEmployee(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Payroll>>> getPayrollByEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId) {
+            @PathVariable Long employeeId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
                             "AUTH_002"));
         }
@@ -148,19 +154,20 @@ public class PayrollController {
 
     // ── 7. UPDATE PAYROLL (FINANCE / ADMIN) ──────────────────────────────────
     @PutMapping("/payroll-runs/{id}")
-    public ResponseEntity<?> updatePayroll(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updatePayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody @Valid PayrollUpdateRequest request) {
+            @RequestBody @Valid PayrollUpdateRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
         }
 
@@ -168,24 +175,25 @@ public class PayrollController {
             Payroll updated = payrollService.updatePayroll(id, request);
             return ResponseEntity.ok(ApiResponse.success("Payroll record updated successfully", updated));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_002"));
         }
     }
 
     // ── 8. REVIEW PAYROLL ────────────────────────────────────────────────────
     @PutMapping("/payroll-runs/{id}/review")
-    public ResponseEntity<?> reviewPayroll(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> reviewPayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
         }
 
@@ -193,24 +201,25 @@ public class PayrollController {
             Payroll updated = payrollService.reviewPayroll(id);
             return ResponseEntity.ok(ApiResponse.success("Payroll status updated to REVIEWED", updated));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_003"));
         }
     }
 
     // ── 9. APPROVE PAYROLL ───────────────────────────────────────────────────
     @PatchMapping("/payroll-runs/{id}/approve")
-    public ResponseEntity<?> approvePayroll(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> approvePayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
         }
 
@@ -218,24 +227,25 @@ public class PayrollController {
             Payroll updated = payrollService.approvePayroll(id);
             return ResponseEntity.ok(ApiResponse.success("Payroll status updated to APPROVED", updated));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_004"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_004"));
         }
     }
 
     // ── 10. PROCESS PAYROLL ──────────────────────────────────────────────────
     @PostMapping("/payroll-runs/{id}/process")
-    public ResponseEntity<?> processPayroll(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> processPayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
         }
 
@@ -243,105 +253,289 @@ public class PayrollController {
             Payroll updated = payrollService.processPayroll(id);
             return ResponseEntity.ok(ApiResponse.success("Payroll status updated to PROCESSED", updated));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_005"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_005"));
         }
     }
 
-    // ── 10b. BATCH PROCESS PAYROLL ───────────────────────────────────────────
-    @PostMapping("/payroll-runs/process")
-    public ResponseEntity<?> processPayrollBatch(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody List<Long> ids) {
+    // ── NEW STRUCTURED PAYROLL ENDPOINTS ──────────────────────────────────────
 
+    // 1. Dashboard
+    @GetMapping("/payroll/dashboard")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPayrollDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
-        }
-
-        List<Payroll> processed = new ArrayList<>();
-        List<String> errors = new ArrayList<>();
-        for (Long id : ids) {
-            try {
-                processed.add(payrollService.processPayroll(id));
-            } catch (Exception e) {
-                errors.add("ID " + id + ": " + e.getMessage());
-            }
-        }
-
-        Map<String, Object> result = new LinkedHashMap<>();
-        result.put("processedCount", processed.size());
-        result.put("processedRecords", processed);
-        result.put("errors", errors);
-
-        return ResponseEntity.ok(ApiResponse.success("Batch payroll processing completed", result));
+        return ResponseEntity.ok(ApiResponse.success("Payroll dashboard retrieved successfully",
+                payrollService.getPayrollDashboard()));
     }
 
-    // ── 11. PAY PAYROLL ──────────────────────────────────────────────────────
-    @PatchMapping("/payroll-runs/{id}/payment")
-    public ResponseEntity<?> payPayroll(
+    // 2. Salary Structure setup
+    @PostMapping("/payroll/salary-structures")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> saveSalaryStructure(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody SalaryStructureRequest request) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        try {
+            SalaryStructure ss = payrollService.saveSalaryStructure(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Salary structure saved successfully", ss));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_007"));
+        }
+    }
+
+    // 5. Process Payroll
+    @PostMapping("/payroll/process")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> processPayrollRun(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, Object> requestBody) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        String month = (String) requestBody.get("month");
+        Number deptId = (Number) requestBody.get("departmentId");
+        Long departmentId = deptId != null ? deptId.longValue() : null;
+
+        Map<String, Object> result = payrollService.processPayrollRun(month, departmentId);
+        return ResponseEntity.ok(ApiResponse.success("Payroll processed successfully", result));
+    }
+
+    // 6. Payroll Calculation
+    @GetMapping("/payroll/{employeeId}/calculation")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCalculationPreview(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long employeeId) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Payroll calculation preview generated",
+                payrollService.calculatePreview(employeeId)));
+    }
+
+    // 7. Payroll Approval
+    @PostMapping("/payroll/{id}/approve")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> approvePayrollRun(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
-
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
-        }
-
         try {
-            Payroll updated = payrollService.payPayroll(id);
-            return ResponseEntity.ok(ApiResponse.success("Payroll status updated to PAID", updated));
+            Payroll p = payrollService.approvePayroll(id);
+            return ResponseEntity.ok(ApiResponse.success("Payroll run approved successfully", p));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_006"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_004"));
         }
     }
 
-    // ── 12. GET STATS (HR / FINANCE / ADMIN) ─────────────────────────────────
-    @GetMapping("/payroll-runs/stats")
-    public ResponseEntity<?> getPayrollStats(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
+    // 8. Generate Payslip PDF/JSON
+    @GetMapping("/payroll/{employeeId}/payslip")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<Object> getPayslip(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long employeeId,
+            @RequestHeader(value = "Accept", required = false) String acceptHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
-                && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
-                            "AUTH_002"));
+        if (acceptHeader != null && acceptHeader.contains("application/pdf")) {
+            byte[] mockPdf = "%PDF-1.4 simulated pdf payslip content".getBytes();
+            org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+            headers.setContentType(org.springframework.http.MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "payslip_" + employeeId + ".pdf");
+            return new ResponseEntity<>(mockPdf, headers, HttpStatus.OK);
         }
+        return ResponseEntity.ok(ApiResponse.success("Payslip data retrieved successfully",
+                payrollService.calculatePreview(employeeId)));
+    }
 
-        return ResponseEntity.ok(ApiResponse.success("Payroll statistics retrieved successfully",
-                payrollService.getPayrollStats()));
+    // 9. Salary Disbursement
+    @PostMapping("/payroll/disburse")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> disburseSalary(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, Long> requestBody) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        Long payrollRunId = requestBody.get("payrollRunId");
+        try {
+            Map<String, Object> result = payrollService.disbursePayment(payrollRunId);
+            return ResponseEntity.ok(ApiResponse.success("Salary disbursement completed", result));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PR_006"));
+        }
+    }
+
+    // 10. Payroll History
+    @GetMapping("/payroll/history")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPayrollHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Payroll history retrieved successfully",
+                payrollService.getMonthlyReport()));
+    }
+
+    // 11. Employee Payroll History
+    @GetMapping("/payroll/employees/{id}/history")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Payroll>>> getEmployeeHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Employee payroll history retrieved successfully",
+                payrollService.getPayrollByEmployeeId(id)));
+    }
+
+    // 12. Tax Configuration
+    @GetMapping("/payroll/taxes")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTaxConfiguration(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Tax configuration retrieved successfully",
+                payrollService.getTaxSettings()));
+    }
+
+    @PutMapping("/payroll/taxes")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateTaxConfiguration(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody Map<String, Object> requestBody) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Tax configuration updated successfully",
+                payrollService.updateTaxSettings(requestBody)));
+    }
+
+    // 13. Payroll Analytics
+    @GetMapping("/payroll/analytics/cost-trend")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCostTrend(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Cost trend retrieved successfully",
+                payrollService.getCostTrend()));
+    }
+
+    @GetMapping("/payroll/analytics/department-cost")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getDepartmentCost(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Department payroll costs retrieved successfully",
+                payrollService.getDepartmentCost()));
+    }
+
+    // 14. Payroll Reports
+    @GetMapping("/payroll/reports/monthly")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMonthlyPayrollReport(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Monthly report retrieved", payrollService.getMonthlyReport()));
+    }
+
+    @GetMapping("/payroll/reports/salary-register")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getSalaryRegister(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Salary register retrieved", payrollService.getSalaryRegister()));
+    }
+
+    @GetMapping("/payroll/reports/tax")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getTaxReport(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Tax report retrieved", payrollService.getTaxReport()));
+    }
+
+    @GetMapping("/payroll/reports/disbursement")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getDisbursementReport(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Disbursement report retrieved", payrollService.getDisbursementReport()));
     }
 
     @DeleteMapping("/payroll-runs/{id}")
-    public ResponseEntity<?> deletePayroll(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deletePayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
         }
 
@@ -349,30 +543,43 @@ public class PayrollController {
         if (deleted) {
             return ResponseEntity.ok(ApiResponse.success("Payroll record deleted successfully"));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Payroll record not found with ID: " + id, "PR_001"));
         }
     }
 
-    @GetMapping("/payroll-runs/reports")
-    public ResponseEntity<?> getPayrollReports(
+    @GetMapping("/payroll-runs/stats")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPayrollStats(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Payroll stats retrieved", payrollService.getPayrollStats()));
+    }
+
+    @GetMapping("/payroll-runs/reports")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getPayrollReports(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         return getPayrollStats(authHeader);
     }
 
     @GetMapping("/payroll-runs/export")
-    public ResponseEntity<?> exportPayroll(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportPayroll(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.",
                             "AUTH_002"));
         }
@@ -399,6 +606,6 @@ public class PayrollController {
         headers.setContentDispositionFormData("attachment", "payroll_export.csv");
         headers.setContentLength(data.length);
 
-        return new ResponseEntity<>(data, headers, HttpStatus.OK);
+        return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 }

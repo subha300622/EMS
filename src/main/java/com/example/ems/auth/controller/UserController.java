@@ -29,7 +29,7 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Administration")
+@Tag(name = "User & RBAC")
 public class UserController {
 
     @Autowired
@@ -122,44 +122,46 @@ public class UserController {
 
     // ── 1. Create User ───────────────────────────────────────────────────────
     @PostMapping("/users")
-    public ResponseEntity<?> createUser(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid UserCreateRequest request) {
+            @RequestBody @Valid UserCreateRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.create' or 'user.manage' permission.", "AUTH_002"));
         }
 
         try {
             User created = userService.createUser(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("User created successfully", formatCreatedUser(created)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_001"));
         }
     }
 
     // ── 2. Get All Users ─────────────────────────────────────────────────────
     @GetMapping("/users")
-    public ResponseEntity<?> getAllUsers(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAllUsers(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(value = "status", required = false) String statusFilter) {
+            @RequestParam(value = "status", required = false) String statusFilter){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
         }
 
@@ -186,17 +188,18 @@ public class UserController {
 
     // ── 2b. Get Pending Users (awaiting admin approval) ───────────────────────
     @GetMapping("/users/pending")
-    public ResponseEntity<?> getPendingUsers(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getPendingUsers(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
         }
 
@@ -224,22 +227,23 @@ public class UserController {
 
     // ── 3. Get User By ID ────────────────────────────────────────────────────
     @GetMapping("/users/{userId}")
-    public ResponseEntity<?> getUserById(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getUserById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String userId) {
+            @PathVariable String userId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
         }
 
-        return userService.getUserByUserId(userId)
+        return (ResponseEntity) userService.getUserByUserId(userId)
                 .<ResponseEntity<?>>map(user -> ResponseEntity.ok(ApiResponse.success("User details retrieved successfully", formatUserDetail(user))))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002")));
@@ -247,46 +251,48 @@ public class UserController {
 
     // ── 4. Update User ───────────────────────────────────────────────────────
     @PutMapping("/users/{userId}")
-    public ResponseEntity<?> updateUser(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ErrorResponse> updateUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String userId,
-            @RequestBody @Valid UserUpdateRequest request) {
+            @RequestBody @Valid UserUpdateRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.update' or 'user.manage' permission.", "AUTH_002"));
         }
 
         try {
-            return userService.updateUserByUserId(userId, request)
+            return (ResponseEntity) userService.updateUserByUserId(userId, request)
                     .<ResponseEntity<?>>map(user -> ResponseEntity.ok(ApiResponse.success("User updated successfully", formatUserUpdateDetail(user))))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002")));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_003"));
         }
     }
 
     // ── 5. Delete User ───────────────────────────────────────────────────────
     @DeleteMapping("/users/{userId}")
-    public ResponseEntity<?> deleteUser(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String userId) {
+            @PathVariable String userId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.delete")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.delete' or 'user.manage' permission.", "AUTH_002"));
         }
 
@@ -297,26 +303,27 @@ public class UserController {
             responseData.put("deleted", true);
             return ResponseEntity.ok(ApiResponse.success("User deleted successfully", responseData));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
         }
     }
 
     // ── 6. Update User Role ──────────────────────────────────────────────────
     @PutMapping("/users/{userId}/role")
-    public ResponseEntity<?> updateUserRole(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateUserRole(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String userId,
-            @RequestBody @Valid AssignRoleRequest request) {
+            @RequestBody @Valid AssignRoleRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.role.assign")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.role.assign' or 'user.manage' permission.", "AUTH_002"));
         }
 
@@ -328,29 +335,30 @@ public class UserController {
                 responseData.put("role", request.getRole());
                 return ResponseEntity.ok(ApiResponse.success("User role updated successfully", responseData));
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
             }
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_004"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_004"));
         }
     }
 
     // ── 7. Update User Status ────────────────────────────────────────────────
     @PutMapping("/users/{userId}/status")
-    public ResponseEntity<?> updateUserStatus(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateUserStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String userId,
-            @RequestBody @Valid UpdateStatusRequest request) {
+            @RequestBody @Valid UpdateStatusRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.update' or 'user.manage' permission.", "AUTH_002"));
         }
 
@@ -361,25 +369,26 @@ public class UserController {
             responseData.put("status", request.getStatus());
             return ResponseEntity.ok(ApiResponse.success("User status updated successfully", responseData));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
         }
     }
 
     // ── 7b. Delete User Role ─────────────────────────────────────────────────
     @DeleteMapping("/users/{userId}/role")
-    public ResponseEntity<?> deleteUserRole(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteUserRole(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String userId) {
+            @PathVariable String userId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.role.assign")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.role.assign' or 'user.manage' permission.", "AUTH_002"));
         }
 
@@ -390,31 +399,32 @@ public class UserController {
             responseData.put("role", null);
             return ResponseEntity.ok(ApiResponse.success("User role removed successfully", responseData));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
         }
     }
 
     // ── 7c. Get User Roles ───────────────────────────────────────────────────
     @GetMapping("/users/{userId}/roles")
-    public ResponseEntity<?> getUserRoles(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getUserRoles(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String userId) {
+            @PathVariable String userId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
         }
 
         java.util.Optional<User> targetUser = userService.getUserByUserId(userId);
         if (targetUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
         }
 
@@ -443,18 +453,19 @@ public class UserController {
 
     // ── 8. Search Users ──────────────────────────────────────────────────────
     @GetMapping("/users/search")
-    public ResponseEntity<?> searchUsers(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> searchUsers(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(value = "query", required = false) String query) {
+            @RequestParam(value = "query", required = false) String query){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
         }
 
@@ -473,13 +484,15 @@ public class UserController {
     }
 
     // ── 9. Get Profile ───────────────────────────────────────────────────────
+    @Tag(name = "My Profile")
     @GetMapping("/users/profile")
-    public ResponseEntity<?> getProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -497,14 +510,16 @@ public class UserController {
     }
 
     // ── 10. Update Profile ───────────────────────────────────────────────────
+    @Tag(name = "My Profile")
     @PutMapping("/users/profile")
-    public ResponseEntity<?> updateProfile(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid ProfileUpdateRequest request) {
+            @RequestBody @Valid ProfileUpdateRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -517,30 +532,31 @@ public class UserController {
             responseData.put("location", updated.getLocation());
             return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", responseData));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_003"));
         }
     }
 
     // ── 11. Reset Password (Admin) ───────────────────────────────────────────
     @PutMapping("/users/{userId}/password/reset")
-    public ResponseEntity<?> resetPassword(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> resetPassword(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String userId,
-            @RequestBody @Valid AdminResetPasswordRequest request) {
+            @RequestBody @Valid AdminResetPasswordRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.password.reset")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.password.reset' or 'user.manage' permission.", "AUTH_002"));
         }
 
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Passwords do not match", "AUTH_005"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Passwords do not match", "AUTH_005"));
         }
 
         try {
@@ -549,23 +565,24 @@ public class UserController {
             responseData.put("userId", userId);
             return ResponseEntity.ok(ApiResponse.success("Password reset successfully", responseData));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "USR_002"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "USR_002"));
         }
     }
 
     // ── 12. Export Users ─────────────────────────────────────────────────────
     @GetMapping("/users/export")
-    public ResponseEntity<?> exportUsers(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportUsers(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!hasPermission(currentUser, "user.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
         }
 
@@ -586,6 +603,6 @@ public class UserController {
         headers.setContentDispositionFormData("attachment", "users.csv");
         headers.setContentLength(data.length);
 
-        return new ResponseEntity<>(data, headers, HttpStatus.OK);
+        return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 }

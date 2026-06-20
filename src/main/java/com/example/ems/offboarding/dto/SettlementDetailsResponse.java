@@ -1,17 +1,26 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class SettlementDetailsResponse {
 
+    @Schema(example = "120000.00")
     private BigDecimal salary;
+    @Schema(example = "5000.00")
     private BigDecimal gratuity;
+    @Schema(example = "100.00")
     private BigDecimal leaveEncashment;
+    @Schema(example = "100.00")
     private BigDecimal reimbursements;
+    @Schema(example = "5000.00")
     private BigDecimal deductions;
+    @Schema(example = "5000.00")
     private BigDecimal netPayableAmount;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19")
     private LocalDate expectedSettlementDate;
 
     public SettlementDetailsResponse() {}

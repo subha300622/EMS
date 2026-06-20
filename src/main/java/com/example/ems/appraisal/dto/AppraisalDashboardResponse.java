@@ -1,16 +1,27 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class AppraisalDashboardResponse {
+    @Schema(example = "1")
     private long totalAppraisals;
+    @Schema(example = "1")
     private long pendingSelfReviews;
+    @Schema(example = "1")
     private long pendingManagerReviews;
+    @Schema(example = "1")
     private long finalizedAppraisals;
+    @Schema(example = "100.00")
     private double averageRating;
 
+    @Schema(example = "1")
     private long totalIncrements;
+    @Schema(example = "1")
     private long pendingIncrements;
+    @Schema(example = "1")
     private long approvedIncrements;
+    @Schema(example = "1")
     private long appliedIncrements;
+    @Schema(example = "100.00")
     private double averageIncrementPercentage;
 
     public long getTotalAppraisals() { return totalAppraisals; }

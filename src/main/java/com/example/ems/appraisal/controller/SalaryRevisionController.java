@@ -30,7 +30,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Salary Revisions")
+@Tag(name = "Payroll Management")
 public class SalaryRevisionController {
 
     @Autowired
@@ -275,56 +275,58 @@ public class SalaryRevisionController {
 
     // ── 1. CREATE INCREMENT REQUEST ──────────────────────────────────────────
     @PostMapping("/salary-revisions")
-    public ResponseEntity<?> createIncrement(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody NewIncrementRequest request) {
+            @Valid @RequestBody NewIncrementRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermHROrManager(currentUser, "salary.revision.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
         }
 
         if (request.getEmployeeId() == null || request.getEmployeeId().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee ID is required", "VAL_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee ID is required", "VAL_001"));
         }
         if (request.getIncrementPercentage() == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Increment percentage is required", "VAL_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Increment percentage is required", "VAL_001"));
         }
         if (request.getIncrementPercentage().compareTo(java.math.BigDecimal.ZERO) <= 0) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Increment percentage must be positive", "VAL_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Increment percentage must be positive", "VAL_001"));
         }
         if (request.getEffectiveDate() == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Effective date is required", "VAL_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Effective date is required", "VAL_001"));
         }
 
         try {
             com.example.ems.appraisal.entity.Increment created = appraisalService.createIncrement(request);
             SalaryRevisionDetailedResponse data = mapToDetailedResponse(created);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Salary increment request created successfully", data));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_001"));
         }
     }
 
     // ── 2. GET ALL SALARY REVISIONS ──────────────────────────────────────────
     @GetMapping("/salary-revisions")
-    public ResponseEntity<?> getSalaryRevisions(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getSalaryRevisions(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String status) {
+            @RequestParam(required = false) String status){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPerm(currentUser, "salary.revision.read", true)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager/Finance privileges.", "AUTH_002"));
         }
 
@@ -353,12 +355,13 @@ public class SalaryRevisionController {
 
     // ── 3. GET SALARY REVISION DETAILS ───────────────────────────────────────
     @GetMapping("/salary-revisions/{id}")
-    public ResponseEntity<?> getSalaryRevisionDetails(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<SalaryRevisionDetailedResponse>> getSalaryRevisionDetails(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("id") String revisionId) {
+            @PathVariable("id") String revisionId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -366,12 +369,12 @@ public class SalaryRevisionController {
         try {
             idVal = parseRevisionId(revisionId);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
         }
 
         Optional<com.example.ems.appraisal.entity.Increment> inc = appraisalService.getIncrementEntityById(idVal);
         if (inc.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Increment request not found with ID: " + revisionId, "INC_002"));
         }
 
@@ -381,7 +384,7 @@ public class SalaryRevisionController {
                 && currentUser.getEmployeeId().equals(response.getEmployee().getEmployeeId());
         
         if (!isSelf && !checkPerm(currentUser, "salary.revision.read", true)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view other employees' revisions.", "AUTH_002"));
         }
 
@@ -390,17 +393,18 @@ public class SalaryRevisionController {
 
     // ── 4. UPDATE INCREMENT REQUEST ──────────────────────────────────────────
     @PutMapping("/salary-revisions/{id}")
-    public ResponseEntity<?> updateIncrement(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<SalaryRevisionUpdateResponse>> updateIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("id") String revisionId,
-            @Valid @RequestBody NewIncrementRequest request) {
+            @Valid @RequestBody NewIncrementRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermHROrManager(currentUser, "salary.revision.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
         }
 
@@ -408,14 +412,14 @@ public class SalaryRevisionController {
         try {
             idVal = parseRevisionId(revisionId);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
         }
 
         Optional<com.example.ems.appraisal.entity.Increment> updated = appraisalService.updateIncrement(
             idVal, request.getIncrementPercentage(), request.getEffectiveDate(), request.getReason()
         );
         if (updated.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Increment request not found with ID: " + revisionId, "INC_002"));
         }
 
@@ -424,16 +428,17 @@ public class SalaryRevisionController {
 
     // ── 5. APPROVE SALARY REVISION ───────────────────────────────────────────
     @PatchMapping("/salary-revisions/{id}/approve")
-    public ResponseEntity<?> approveIncrement(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<SalaryRevisionApproveResponse>> approveIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("id") String revisionId) {
+            @PathVariable("id") String revisionId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPerm(currentUser, "salary.revision.approve", true)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires Finance/Manager approval privileges.", "AUTH_002"));
         }
 
@@ -441,12 +446,12 @@ public class SalaryRevisionController {
         try {
             idVal = parseRevisionId(revisionId);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
         }
 
         Optional<com.example.ems.appraisal.entity.Increment> approved = appraisalService.approveIncrementEntity(idVal, currentUser.getWorkEmail());
         if (approved.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Increment request not found with ID: " + revisionId, "INC_002"));
         }
 
@@ -455,17 +460,18 @@ public class SalaryRevisionController {
 
     // ── 6. REJECT SALARY REVISION ────────────────────────────────────────────
     @PatchMapping("/salary-revisions/{id}/reject")
-    public ResponseEntity<?> rejectIncrement(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<SalaryRevisionRejectResponse>> rejectIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("id") String revisionId,
-            @Valid @RequestBody SalaryRevisionRejectRequest request) {
+            @Valid @RequestBody SalaryRevisionRejectRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPerm(currentUser, "salary.revision.approve", true)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires Finance/Manager rejection privileges.", "AUTH_002"));
         }
 
@@ -473,12 +479,12 @@ public class SalaryRevisionController {
         try {
             idVal = parseRevisionId(revisionId);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
         }
 
         Optional<com.example.ems.appraisal.entity.Increment> rejected = appraisalService.rejectIncrementEntity(idVal, currentUser.getWorkEmail(), request.getReason());
         if (rejected.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Increment request not found with ID: " + revisionId, "INC_002"));
         }
 
@@ -487,16 +493,17 @@ public class SalaryRevisionController {
 
     // ── 7. APPLY SALARY REVISION ─────────────────────────────────────────────
     @PostMapping("/salary-revisions/{id}/apply")
-    public ResponseEntity<?> applyIncrement(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<SalaryRevisionApplyResponse>> applyIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("id") String revisionId) {
+            @PathVariable("id") String revisionId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPerm(currentUser, "salary.revision.apply", true)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires Finance/Manager privileges to apply revision.", "AUTH_002"));
         }
 
@@ -504,12 +511,12 @@ public class SalaryRevisionController {
         try {
             idVal = parseRevisionId(revisionId);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
         }
 
         Optional<com.example.ems.appraisal.entity.Increment> applied = appraisalService.applyIncrementEntity(idVal);
         if (applied.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Increment request not found with ID: " + revisionId, "INC_002"));
         }
 
@@ -518,12 +525,13 @@ public class SalaryRevisionController {
 
     // ── 8. SALARY REVISION HISTORY ───────────────────────────────────────────
     @GetMapping("/employees/{employeeId}/salary-history")
-    public ResponseEntity<?> getSalaryHistory(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getSalaryHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("employeeId") String employeeIdStr) {
+            @PathVariable("employeeId") String employeeIdStr){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -531,13 +539,13 @@ public class SalaryRevisionController {
         try {
             empIdVal = parseEmployeeId(employeeIdStr);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
         }
 
         boolean isSelf = currentUser.getEmployeeId() != null 
                 && currentUser.getEmployeeId().equals(employeeIdStr);
         if (!isSelf && !checkPerm(currentUser, "salary.revision.read", true)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view other employees' salary history.", "AUTH_002"));
         }
 
@@ -550,12 +558,13 @@ public class SalaryRevisionController {
 
     // ── 9. SALARY REVISION LETTER ────────────────────────────────────────────
     @GetMapping("/salary-revisions/{id}/letter")
-    public ResponseEntity<?> getIncrementLetter(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<NewIncrementLetterResponse>> getIncrementLetter(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("id") String revisionId) {
+            @PathVariable("id") String revisionId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -563,7 +572,7 @@ public class SalaryRevisionController {
         try {
             idVal = parseRevisionId(revisionId);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INC_002"));
         }
 
         try {
@@ -573,14 +582,14 @@ public class SalaryRevisionController {
             if (!checkPerm(currentUser, "salary.revision.read", true)) {
                 Optional<Employee> empOpt = employeeRepository.findByEmail(currentUser.getWorkEmail());
                 if (empOpt.isEmpty() || !empOpt.get().getFullName().equals(letter.getEmployeeName())) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(ErrorResponse.error("Access Denied: You cannot view other employees' letters.", "AUTH_002"));
                 }
             }
 
             return ResponseEntity.ok(ApiResponse.success("Salary revision letter generated successfully", mapToNewLetterResponse(idVal, letter)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "INC_002"));
         }
     }

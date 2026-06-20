@@ -72,15 +72,16 @@ public class RecruitmentController {
 
     // ── 1. GET RECRUITMENT DASHBOARD ──────────────────────────────────────────
     @GetMapping("/recruitments/dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
@@ -90,30 +91,32 @@ public class RecruitmentController {
 
     // ── 2. JOBS ENDPOINTS ──────────────────────────────────────────────────
     @PostMapping("/recruitments/jobs")
-    public ResponseEntity<?> createJob(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createJob(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody JobRequest request) {
+            @Valid @RequestBody JobRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         JobResponse response = recruitmentService.createJob(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Job posting created successfully", response));
     }
 
     @GetMapping("/recruitments/jobs")
-    public ResponseEntity<?> listJobs(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> listJobs(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         // Let all employees view active/all jobs for reference, or restrict to recruitment.manage.
@@ -123,40 +126,42 @@ public class RecruitmentController {
     }
 
     @GetMapping("/recruitments/jobs/{jobId}")
-    public ResponseEntity<?> getJob(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getJob(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long jobId) {
+            @PathVariable Long jobId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         JobResponse response = recruitmentService.getJobById(jobId).orElse(null);
         if (response == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Job not found with ID: " + jobId, "JOB_001"));
         }
         return ResponseEntity.ok(ApiResponse.success("Job details retrieved successfully", response));
     }
 
     @GetMapping("/recruitments/jobs/{jobId}/candidates")
-    public ResponseEntity<?> getJobCandidates(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getJobCandidates(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long jobId) {
+            @PathVariable Long jobId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         JobResponse response = recruitmentService.getJobById(jobId).orElse(null);
         if (response == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Job not found with ID: " + jobId, "JOB_001"));
         }
 
@@ -165,29 +170,30 @@ public class RecruitmentController {
     }
 
     @PatchMapping("/recruitments/jobs/{jobId}/status")
-    public ResponseEntity<?> updateJobStatus(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateJobStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long jobId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         String status = body.get("status");
         if (status == null || status.isBlank()) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Status field is required", "VAL_001"));
         }
 
         JobResponse updated = recruitmentService.updateJobStatus(jobId, status).orElse(null);
         if (updated == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Job not found with ID: " + jobId, "JOB_001"));
         }
         return ResponseEntity.ok(ApiResponse.success("Job status updated to " + status.toUpperCase(), updated));
@@ -195,38 +201,40 @@ public class RecruitmentController {
 
     // ── 3. CANDIDATES ENDPOINTS ─────────────────────────────────────────────
     @PostMapping("/recruitments/candidates")
-    public ResponseEntity<?> createCandidate(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createCandidate(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody CandidateRequest request) {
+            @Valid @RequestBody CandidateRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         try {
             CandidateResponse response = recruitmentService.createCandidate(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Candidate profile registered successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "CAND_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "CAND_001"));
         }
     }
 
     @GetMapping("/recruitments/candidates")
-    public ResponseEntity<?> listCandidates(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> listCandidates(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
@@ -235,51 +243,53 @@ public class RecruitmentController {
     }
 
     @GetMapping("/recruitments/candidates/{candidateId}")
-    public ResponseEntity<?> getCandidate(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getCandidate(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long candidateId) {
+            @PathVariable Long candidateId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         CandidateResponse response = recruitmentService.getCandidateById(candidateId).orElse(null);
         if (response == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Candidate not found with ID: " + candidateId, "CAND_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Candidate details retrieved successfully", response));
     }
 
     @PatchMapping("/recruitments/candidates/{candidateId}/status")
-    public ResponseEntity<?> updateCandidateStatus(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateCandidateStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long candidateId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         String status = body.get("status");
         if (status == null || status.isBlank()) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Status field is required", "VAL_001"));
         }
 
         CandidateResponse updated = recruitmentService.updateCandidateStatus(candidateId, status).orElse(null);
         if (updated == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Candidate not found with ID: " + candidateId, "CAND_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Candidate status updated to " + status.toUpperCase(), updated));
@@ -287,38 +297,40 @@ public class RecruitmentController {
 
     // ── 4. INTERVIEWS ENDPOINTS ─────────────────────────────────────────────
     @PostMapping("/recruitments/interviews")
-    public ResponseEntity<?> scheduleInterview(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> scheduleInterview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody InterviewRequest request) {
+            @Valid @RequestBody InterviewRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         try {
             InterviewResponse response = recruitmentService.scheduleInterview(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Interview scheduled successfully", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INT_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "INT_001"));
         }
     }
 
     @GetMapping("/recruitments/interviews")
-    public ResponseEntity<?> listInterviews(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> listInterviews(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
@@ -327,23 +339,24 @@ public class RecruitmentController {
     }
 
     @PostMapping("/recruitments/interviews/{interviewId}/feedback")
-    public ResponseEntity<?> addFeedback(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> addFeedback(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long interviewId,
-            @Valid @RequestBody InterviewFeedbackRequest request) {
+            @Valid @RequestBody InterviewFeedbackRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         InterviewResponse response = recruitmentService.addInterviewFeedback(interviewId, request).orElse(null);
         if (response == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Interview schedule not found with ID: " + interviewId, "INT_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Interview feedback and rating submitted successfully", response));
@@ -351,52 +364,54 @@ public class RecruitmentController {
 
     // ── 5. OFFERS ENDPOINTS ─────────────────────────────────────────────────
     @PostMapping("/recruitments/offers")
-    public ResponseEntity<?> createOffer(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createOffer(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody OfferRequest request) {
+            @Valid @RequestBody OfferRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         try {
             OfferResponse response = recruitmentService.createOffer(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Job offer generated and sent to candidate", response));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "OFF_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "OFF_001"));
         }
     }
 
     @PatchMapping("/recruitments/offers/{offerId}/status")
-    public ResponseEntity<?> updateOfferStatus(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateOfferStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long offerId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         String status = body.get("status");
         if (status == null || status.isBlank()) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Status field is required", "VAL_001"));
         }
 
         OfferResponse response = recruitmentService.updateOfferStatus(offerId, status).orElse(null);
         if (response == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Offer not found with ID: " + offerId, "OFF_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Offer status updated to " + status.toUpperCase(), response));
@@ -404,16 +419,17 @@ public class RecruitmentController {
 
     // ── 6. HIRE ENDPOINT ────────────────────────────────────────────────────
     @PostMapping("/recruitments/candidates/{candidateId}/hire")
-    public ResponseEntity<?> hireCandidate(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> hireCandidate(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long candidateId) {
+            @PathVariable Long candidateId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
@@ -423,22 +439,23 @@ public class RecruitmentController {
                     "Candidate hired successfully! Created employee profile (" + employee.getEmployeeId() + ") and standard user account.",
                     employee));
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "HIRE_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "HIRE_001"));
         }
     }
 
     // ── 7. REPORTS ENDPOINT ─────────────────────────────────────────────────
     @GetMapping("/recruitments/reports/{reportType}")
-    public ResponseEntity<?> getReport(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String reportType) {
+            @PathVariable String reportType){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
@@ -448,16 +465,17 @@ public class RecruitmentController {
 
     // ── 8. NOTIFICATIONS ENDPOINT ───────────────────────────────────────────
     @PostMapping("/recruitments/notifications/send")
-    public ResponseEntity<?> sendNotification(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> sendNotification(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
@@ -467,22 +485,23 @@ public class RecruitmentController {
 
     // ── 9. RESUME UPLOAD / DOWNLOAD ENDPOINTS ────────────────────────────────
     @PostMapping("/recruitments/candidates/{id}/resume")
-    public ResponseEntity<?> uploadResume(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> uploadResume(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         if (file.isEmpty()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("File is empty", "VAL_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("File is empty", "VAL_001"));
         }
 
         try {
@@ -490,35 +509,36 @@ public class RecruitmentController {
                     id, file.getOriginalFilename(), file.getContentType(), file.getBytes());
             return ResponseEntity.ok(ApiResponse.success("Candidate resume uploaded successfully", updated));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "CAND_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "CAND_002"));
         } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Error reading uploaded file: " + e.getMessage(), "SYS_500"));
         }
     }
 
     @GetMapping("/recruitments/candidates/{id}/resume")
-    public ResponseEntity<?> getResume(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<Object> getResume(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkRecruitmentPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
         }
 
         Candidate candidate = recruitmentService.getResumeData(id).orElse(null);
         if (candidate == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Candidate not found with ID: " + id, "CAND_002"));
         }
 
         if (candidate.getResumeData() == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Resume file not found for candidate: " + candidate.getFullName(), "FILE_001"));
         }
 

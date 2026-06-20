@@ -1,12 +1,19 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class ReopenTicketResponse {
 
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "string")
     private String ticketNumber;
+    @Schema(example = "ACTIVE")
     private String previousStatus;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String reopenedAt;
+    @Schema(example = "string")
     private String message;
 
     public ReopenTicketResponse() {}

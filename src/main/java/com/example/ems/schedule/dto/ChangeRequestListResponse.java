@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -8,12 +9,19 @@ public class ChangeRequestListResponse {
     private PaginationInfo pagination;
 
     public static class ChangeRequestItem {
+        @Schema(example = "1")
         private Long requestId;
+        @Schema(example = "string")
         private String requestNumber;
+        @Schema(example = "string")
         private String currentShift;
+        @Schema(example = "string")
         private String requestedShift;
+        @Schema(example = "string")
         private String requestedDate;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String requestedAt;
 
         // Getters and Setters
@@ -40,9 +48,13 @@ public class ChangeRequestListResponse {
     }
 
     public static class PaginationInfo {
+        @Schema(example = "0")
         private Integer page;
+        @Schema(example = "10")
         private Integer size;
+        @Schema(example = "1")
         private Long totalElements;
+        @Schema(example = "0")
         private Integer totalPages;
 
         public PaginationInfo(Integer page, Integer size, Long totalElements, Integer totalPages) {

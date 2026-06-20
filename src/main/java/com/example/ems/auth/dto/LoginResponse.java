@@ -1,10 +1,14 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class LoginResponse {
+    @Schema(example = "true")
     private boolean success;
+    @Schema(example = "string")
     private String message;
+    @Schema(example = "string")
     private String timestamp;
     private LoginData data;
 
@@ -78,10 +82,15 @@ public class LoginResponse {
     }
 
     public static class TokenData {
+        @Schema(example = "string")
         private String accessToken;
+        @Schema(example = "string")
         private String refreshToken;
+        @Schema(example = "string")
         private String tokenType;
+        @Schema(example = "1")
         private long accessTokenExpiresIn;
+        @Schema(example = "1")
         private long refreshTokenExpiresIn;
 
         public TokenData() {}
@@ -136,13 +145,20 @@ public class LoginResponse {
     }
 
     public static class UserData {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "string")
         private String employeeId;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "john.doe@example.com")
         private String email;
+        @Schema(example = "Software Engineer")
         private String role;
         private List<String> permissions;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String lastLogin;
 
         public UserData() {}

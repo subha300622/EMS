@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -6,10 +7,15 @@ public class AppraisalHistoryResponse {
     private List<HistoryItem> history;
 
     public static class HistoryItem {
+        @Schema(example = "string")
         private String year;
+        @Schema(example = "string")
         private String cycleName;
+        @Schema(example = "1")
         private Integer rating;
+        @Schema(example = "string")
         private String incrementPercentage;
+        @Schema(example = "string")
         private String newCtc;
 
         public HistoryItem(String year, String cycleName, Integer rating, String incrementPercentage, String newCtc) {

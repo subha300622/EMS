@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 public class MyScheduleDashboardResponse {
@@ -6,14 +7,21 @@ public class MyScheduleDashboardResponse {
     private EmployeeInfo employee;
     private TodaySummary todaySummary;
     private UpcomingSummary upcomingSummary;
+    @Schema(example = "string")
     private String lastUpdatedAt;
 
     public static class EmployeeInfo {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "John Doe")
         private String fullName;
+        @Schema(example = "Software Engineer")
         private String designation;
+        @Schema(example = "Engineering")
         private String department;
+        @Schema(example = "string")
         private String managerName;
 
         // Getters and Setters
@@ -32,11 +40,17 @@ public class MyScheduleDashboardResponse {
     }
 
     public static class TodaySummary {
+        @Schema(example = "string")
         private String date;
+        @Schema(example = "string")
         private String shift;
+        @Schema(example = "string")
         private String workingHours;
+        @Schema(example = "ACTIVE")
         private String attendanceStatus;
+        @Schema(example = "1")
         private Integer meetingsToday;
+        @Schema(example = "1")
         private Integer tasksToday;
 
         // Getters and Setters
@@ -55,8 +69,11 @@ public class MyScheduleDashboardResponse {
     }
 
     public static class UpcomingSummary {
+        @Schema(example = "1")
         private Integer upcomingMeetings;
+        @Schema(example = "1")
         private Integer upcomingLeaves;
+        @Schema(example = "1")
         private Integer pendingChangeRequests;
 
         // Getters and Setters

@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,10 +33,15 @@ public class MyDocumentHistoryResponse {
     }
 
     public static class HistoryItem {
+        @Schema(example = "1")
         private Long activityId;
+        @Schema(example = "string")
         private String action;
+        @Schema(example = "string")
         private String documentName;
+        @Schema(example = "string")
         private String performedBy;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime performedAt;
 
         public HistoryItem() {}
@@ -61,9 +67,13 @@ public class MyDocumentHistoryResponse {
     }
 
     public static class PaginationInfo {
+        @Schema(example = "0")
         private int page;
+        @Schema(example = "10")
         private int size;
+        @Schema(example = "1")
         private long totalRecords;
+        @Schema(example = "0")
         private int totalPages;
 
         public PaginationInfo() {}

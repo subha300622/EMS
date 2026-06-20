@@ -1,11 +1,15 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class MyGoalListResponse {
     private List<MyGoalItem> goals;
+    @Schema(example = "1")
     private long totalElements;
+    @Schema(example = "0")
     private int totalPages;
+    @Schema(example = "0")
     private int currentPage;
 
     public MyGoalListResponse(List<MyGoalItem> goals, long totalElements, int totalPages, int currentPage) {

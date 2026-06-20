@@ -1,20 +1,29 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class TodayScheduleResponse {
 
+    @Schema(example = "string")
     private String date;
     private ShiftInfo shift;
     private List<TodayEvent> events;
+    @Schema(example = "ACTIVE")
     private String workingStatus; // WORKING, OFF, LEAVE, HOLIDAY
 
     public static class ShiftInfo {
+        @Schema(example = "1")
         private Long shiftId;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "string")
         private String startTime;
+        @Schema(example = "string")
         private String endTime;
+        @Schema(example = "1")
         private Integer breakDurationMinutes;
+        @Schema(example = "Bangalore")
         private String location;
 
         // Getters and Setters
@@ -33,9 +42,13 @@ public class TodayScheduleResponse {
     }
 
     public static class TodayEvent {
+        @Schema(example = "1")
         private Long eventId;
+        @Schema(example = "string")
         private String time;
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "string")
         private String type; // MEETING, SHIFT, LEAVE, etc.
 
         public TodayEvent() {}

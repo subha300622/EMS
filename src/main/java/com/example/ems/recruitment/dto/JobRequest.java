@@ -1,19 +1,27 @@
 package com.example.ems.recruitment.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 
 public class JobRequest {
 
     @NotBlank(message = "Job title is required")
+    @Schema(example = "Project Deliverables")
     private String title;
 
     @NotBlank(message = "Department is required")
+    @Schema(example = "Engineering")
     private String department;
 
+    @Schema(example = "Bangalore")
     private String location;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "string")
     private String requirements;
+    @Schema(example = "string")
     private String salaryRange;
+    @Schema(example = "ACTIVE")
     private String status; // Optional, defaults to DRAFT
 
     public String getTitle() {

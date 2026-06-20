@@ -1,4 +1,5 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -6,7 +7,9 @@ import java.time.LocalDateTime;
 public class MyExpenseDashboardResponse {
     private EmployeeInfo employee;
     private SummaryInfo summary;
+    @Schema(example = "string")
     private String financialYear;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime lastUpdatedAt;
 
     public MyExpenseDashboardResponse() {}
@@ -51,9 +54,13 @@ public class MyExpenseDashboardResponse {
     }
 
     public static class EmployeeInfo {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "John Doe")
         private String fullName;
+        @Schema(example = "Engineering")
         private String department;
 
         public EmployeeInfo() {}
@@ -79,15 +86,25 @@ public class MyExpenseDashboardResponse {
     }
 
     public static class SummaryInfo {
+        @Schema(example = "1")
         private int totalClaims;
+        @Schema(example = "1")
         private int pendingApproval;
+        @Schema(example = "1")
         private int approvedClaims;
+        @Schema(example = "1")
         private int rejectedClaims;
+        @Schema(example = "1")
         private int reimbursedClaims;
+        @Schema(example = "5000.00")
         private BigDecimal totalClaimAmount;
+        @Schema(example = "5000.00")
         private BigDecimal pendingAmount;
+        @Schema(example = "5000.00")
         private BigDecimal approvedAmount;
+        @Schema(example = "5000.00")
         private BigDecimal reimbursedAmount;
+        @Schema(example = "string")
         private String currency;
 
         public SummaryInfo() {}

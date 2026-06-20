@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/directory")
 @CrossOrigin("*")
-@Tag(name = "Directory")
+@Tag(name = "Organization Management")
 public class EmployeeDirectoryController {
 
     @Autowired

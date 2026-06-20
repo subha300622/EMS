@@ -1,10 +1,15 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class MyPayslipPreviewResponse {
 
+    @Schema(example = "1")
     private Long payslipId;
+    @Schema(example = "string")
     private String payslipNumber;
+    @Schema(example = "string")
     private String previewUrl;
+    @Schema(example = "string")
     private String expiresIn;
 
     public MyPayslipPreviewResponse() {}

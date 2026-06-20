@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,11 +18,17 @@ public class UploadedDocumentsResponse {
     public void setDocuments(List<DocumentItem> documents) { this.documents = documents; }
 
     public static class DocumentItem {
+        @Schema(example = "1")
         private Long documentId;
+        @Schema(example = "string")
         private String documentType;
+        @Schema(example = "string")
         private String fileName;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String verifiedBy;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime verifiedAt;
 
         public DocumentItem() {}

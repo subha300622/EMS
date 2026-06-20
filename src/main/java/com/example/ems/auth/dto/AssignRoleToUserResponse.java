@@ -1,8 +1,11 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class AssignRoleToUserResponse {
 
+    @Schema(example = "string")
     private String userId;
+    @Schema(example = "Software Engineer")
     private String role;
 
     public AssignRoleToUserResponse() {}

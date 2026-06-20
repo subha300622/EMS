@@ -1,4 +1,7 @@
 package com.example.ems.auth.controller;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 import com.example.ems.auth.dto.AcceptInvitationRequest;
 import com.example.ems.auth.dto.ChangePasswordRequest;
@@ -104,22 +107,24 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest request) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> register(@RequestBody @Valid RegisterRequest request){
         String result = userService.register(request);
         if (result.startsWith("Registration Successful!")) {
             User user = userRepository.findByWorkEmail(request.getWorkEmail()).orElse(null);
             return ResponseEntity.ok(ApiResponse.success(result, user));
         } else {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(result, "AUTH_016"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(result, "AUTH_016"));
         }
     }
 
     // ── 1. LOGIN ─────────────────────────────────────────────────────────────
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody @Valid LoginRequest request, HttpServletRequest httpRequest) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request, HttpServletRequest httpRequest){
         Optional<User> optUser = userRepository.findByWorkEmail(request.getEmail());
         if (optUser.isEmpty() || !passwordEncoder.matches(request.getPassword(), optUser.get().getPassword())) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Invalid credentials", "AUTH_001"));
         }
 
@@ -128,7 +133,7 @@ public class AuthController {
         // ── Block SUSPENDED / INACTIVE accounts ───────────────────────────────
         // All registered users are ACTIVE by default. Admin can set SUSPENDED to revoke access.
         if (user.getStatus() != null && !user.getStatus().equalsIgnoreCase("ACTIVE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error(
                             "Your account is " + user.getStatus().toLowerCase() + ". Please contact your administrator.",
                             "AUTH_018"));
@@ -178,23 +183,24 @@ public class AuthController {
 
     // ── 2. LOGOUT ────────────────────────────────────────────────────────────
     @PostMapping("/logout")
-    public ResponseEntity<?> logout(@RequestBody @Valid LogoutRequest request) {
+    public ResponseEntity<ApiResponse<Object>> logout(@RequestBody @Valid LogoutRequest request){
         sessionService.revokeSession(request.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success("Logged out successfully"));
     }
 
     // ── 3. REFRESH TOKEN ─────────────────────────────────────────────────────
     @PostMapping("/refresh")
-    public ResponseEntity<?> refresh(@RequestBody @Valid RefreshTokenRequest request) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> refresh(@RequestBody @Valid RefreshTokenRequest request){
         SessionService.SessionMetadata session = sessionService.rotateRefreshToken(request.getRefreshToken());
         if (session == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Invalid or expired refresh token", "AUTH_012"));
         }
 
         Optional<User> optUser = userRepository.findByWorkEmail(session.getEmail());
         if (optUser.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("User not found", "AUTH_013"));
         }
 
@@ -204,7 +210,7 @@ public class AuthController {
         String newAccessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName,
                 session.getSessionId());
 
-        return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", Map.of(
+        return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", Map.of(
                 "accessToken", newAccessToken,
                 "refreshToken", session.getRefreshToken(),
                 "expiresIn", 900)));
@@ -212,8 +218,8 @@ public class AuthController {
 
     // ── 4. FORGOT PASSWORD ───────────────────────────────────────────────────
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(
-            @RequestBody @Valid ForgotPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Object>> forgotPassword(
+            @RequestBody @Valid ForgotPasswordRequest request){
         try {
             otpService.forgotPassword(request.getEmail());
         } catch (Exception e) {
@@ -224,50 +230,53 @@ public class AuthController {
 
     // ── 5. VERIFY OTP ────────────────────────────────────────────────────────
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOtp(
-            @RequestBody @Valid VerifyOtpRequest request) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> verifyOtp(
+            @RequestBody @Valid VerifyOtpRequest request){
         Map<String, Object> result = otpService.verifyOtp(request.getEmail(), request.getOtp());
         boolean verified = Boolean.TRUE.equals(result.get("verified"));
         if (!verified) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Invalid or expired OTP", "AUTH_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Invalid or expired OTP", "AUTH_003"));
         }
-        return ResponseEntity.ok(ApiResponse.success("OTP verified successfully", Map.of(
+        return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("OTP verified successfully", Map.of(
                 "resetToken", result.get("resetToken"),
                 "expiresIn", 600)));
     }
 
     // ── 6. RESET PASSWORD ───────────────────────────────────────────
     @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> resetPassword(@RequestBody @Valid ResetPasswordRequest request){
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Passwords do not match", "AUTH_004"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Passwords do not match", "AUTH_004"));
         }
         try {
             otpService.resetPassword(request.getResetToken(), request.getNewPassword());
             return ResponseEntity.ok(ApiResponse.success("Password reset successfully"));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "AUTH_005"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "AUTH_005"));
         }
     }
 
     // ── 7. CHANGE PASSWORD ───────────────────────────────────────────────────
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> changePassword(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid ChangePasswordRequest request) {
+            @RequestBody @Valid ChangePasswordRequest request){
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Current password does not match", "AUTH_015"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Current password does not match", "AUTH_015"));
         }
 
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Confirm password does not match", "AUTH_004"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Confirm password does not match", "AUTH_004"));
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -280,12 +289,13 @@ public class AuthController {
 
     // ── 8. GET CURRENT USER ──────────────────────────────────────────────────
     @GetMapping("/me")
-    public ResponseEntity<?> getMe(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMe(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -310,16 +320,17 @@ public class AuthController {
 
     // ── 8b. VERIFY TOKEN ─────────────────────────────────────────────────────
     @GetMapping("/verify")
-    public ResponseEntity<?> verifyToken(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> verifyToken(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Token is valid", Map.of(
+        return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Token is valid", Map.of(
                 "valid", true,
                 "employeeId", user.getUserId(),
                 "email", user.getWorkEmail())));
@@ -327,8 +338,8 @@ public class AuthController {
 
     // ── 9. RESEND OTP ───────────────────────────────────────────────────────
     @PostMapping("/resend-otp")
-    public ResponseEntity<?> resendOtp(
-            @RequestBody @Valid ForgotPasswordRequest request) {
+    public ResponseEntity<ApiResponse<Object>> resendOtp(
+            @RequestBody @Valid ForgotPasswordRequest request){
         Map<String, String> result = otpService.resendOtp(request.getEmail());
         Map<String, Object> data = new HashMap<>();
         data.put("otp", result.get("otp"));
@@ -337,13 +348,14 @@ public class AuthController {
 
     // ── 10. ACTIVE SESSIONS ──────────────────────────────────────────────────
     @GetMapping("/sessions")
-    public ResponseEntity<?> getSessions(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getSessions(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            HttpServletRequest httpRequest) {
+            HttpServletRequest httpRequest){
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -367,13 +379,14 @@ public class AuthController {
 
     // ── 11. REVOKE SESSION ───────────────────────────────────────────────────
     @DeleteMapping("/sessions/{sessionId}")
-    public ResponseEntity<?> revokeSession(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> revokeSession(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String sessionId) {
+            @PathVariable String sessionId){
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -383,12 +396,13 @@ public class AuthController {
 
     // ── 12. LOGOUT FROM ALL DEVICES ──────────────────────────────────────────
     @PostMapping("/logout-all")
-    public ResponseEntity<?> logoutAll(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> logoutAll(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -398,18 +412,19 @@ public class AuthController {
 
     // ── 13. INVITE EMPLOYEE ──────────────────────────────────────────────────
     @PostMapping("/invite")
-    public ResponseEntity<?> inviteEmployee(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> inviteEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid InviteRequest request) {
+            @RequestBody @Valid InviteRequest request){
 
         User inviter = resolveUser(authHeader);
         if (inviter == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasRole(inviter, "SUPER_ADMIN") && !roleService.hasRole(inviter, "ADMIN")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Only Super Admin and Admin can invite employees",
                             "AUTH_002"));
         }
@@ -422,12 +437,12 @@ public class AuthController {
                 .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + request.getRoleId()));
 
         if (userRepository.existsByWorkEmail(employee.getEmail())) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Employee email is already registered", "AUTH_006"));
         }
 
         if (invitationRepository.existsByEmail(employee.getEmail())) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("An active invitation already exists for this employee", "AUTH_007"));
         }
 
@@ -442,31 +457,32 @@ public class AuthController {
 
         emailService.sendInvitationEmail(employee.getEmail(), employee.getFullName(), role.getName(), token);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Invitation sent successfully", Map.of("expiresIn", 86400)));
     }
 
     // ── 14. ACCEPT INVITATION ────────────────────────────────────────────────
     @PostMapping("/accept-invitation")
-    public ResponseEntity<?> acceptInvitation(@RequestBody @Valid AcceptInvitationRequest request) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> acceptInvitation(@RequestBody @Valid AcceptInvitationRequest request){
         Optional<Invitation> optInvitation = invitationRepository.findByInvitationToken(request.getInvitationToken());
         if (optInvitation.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Invalid invitation token", "AUTH_008"));
         }
 
         Invitation invitation = optInvitation.get();
         if (invitation.isAccepted()) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Invitation has already been accepted", "AUTH_009"));
         }
 
         if (invitation.getExpiredAt().isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Invitation token has expired", "AUTH_010"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Invitation token has expired", "AUTH_010"));
         }
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Passwords do not match", "AUTH_004"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Passwords do not match", "AUTH_004"));
         }
 
         String normalizedRole = invitation.getRole().trim().toUpperCase().replace(" ", "_");
@@ -478,7 +494,7 @@ public class AuthController {
             optRole = roleRepository.findByName(invitation.getRole());
         }
         if (optRole.isEmpty()) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Role '" + invitation.getRole() + "' does not exist", "AUTH_011"));
         }
 
@@ -528,7 +544,7 @@ public class AuthController {
         invitation.setAccepted(true);
         invitationRepository.save(invitation);
 
-        return ResponseEntity.ok(ApiResponse.success("Account activated successfully", Map.of(
+        return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Account activated successfully", Map.of(
                 "employeeId", userId,
                 "status", "ACTIVE")));
     }

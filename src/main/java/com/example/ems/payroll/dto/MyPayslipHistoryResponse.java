@@ -1,4 +1,5 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,13 +24,21 @@ public class MyPayslipHistoryResponse {
     public void setPagination(PaginationInfo pagination) { this.pagination = pagination; }
 
     public static class PayslipItem {
+        @Schema(example = "1")
         private Long payslipId;
+        @Schema(example = "string")
         private String payslipNumber;
+        @Schema(example = "string")
         private String payPeriod;
+        @Schema(example = "120000.00")
         private BigDecimal grossSalary;
+        @Schema(example = "5000.00")
         private BigDecimal deductions;
+        @Schema(example = "120000.00")
         private BigDecimal netSalary;
+        @Schema(example = "2026-06-19")
         private LocalDate paymentDate;
+        @Schema(example = "ACTIVE")
         private String status;
         private ActionInfo actions;
 
@@ -76,7 +85,9 @@ public class MyPayslipHistoryResponse {
     }
 
     public static class ActionInfo {
+        @Schema(example = "true")
         private boolean canView;
+        @Schema(example = "true")
         private boolean canDownload;
 
         public ActionInfo() {}
@@ -94,9 +105,13 @@ public class MyPayslipHistoryResponse {
     }
 
     public static class PaginationInfo {
+        @Schema(example = "0")
         private int page;
+        @Schema(example = "10")
         private int size;
+        @Schema(example = "1")
         private long totalRecords;
+        @Schema(example = "0")
         private int totalPages;
 
         public PaginationInfo() {}

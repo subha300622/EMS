@@ -1,19 +1,30 @@
 package com.example.ems.recruitment.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.recruitment.entity.Job;
 
 import java.time.LocalDateTime;
 
 public class JobResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "Engineering")
     private String department;
+    @Schema(example = "Bangalore")
     private String location;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "string")
     private String requirements;
+    @Schema(example = "string")
     private String salaryRange;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public JobResponse() {}

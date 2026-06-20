@@ -1,6 +1,8 @@
 package com.example.ems.attendance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class CheckOutRequest {
+    @Schema(example = "string")
     private String notes;
 
     public CheckOutRequest() {}

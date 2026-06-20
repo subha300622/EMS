@@ -1,12 +1,18 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
 public class UploadReceiptResponse {
+    @Schema(example = "1")
     private Long receiptId;
+    @Schema(example = "string")
     private String fileName;
+    @Schema(example = "string")
     private String fileType;
+    @Schema(example = "10")
     private long fileSize;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime uploadedAt;
 
     public UploadReceiptResponse() {}

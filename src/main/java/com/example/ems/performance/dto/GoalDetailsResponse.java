@@ -1,28 +1,45 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class GoalDetailsResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "EMP101")
     private String goalCode;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "string")
     private String category;
+    @Schema(example = "1")
     private Integer weightage;
+    @Schema(example = "string")
     private String target;
+    @Schema(example = "string")
     private String achievement;
+    @Schema(example = "100.00")
     private Double progressPercentage;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String priority;
+    @Schema(example = "string")
     private String startDate;
+    @Schema(example = "string")
     private String dueDate;
     private List<MilestoneDTO> milestones;
     private ReviewDTO employeeReview;
     private ReviewDTO managerReview;
 
     public static class MilestoneDTO {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "ACTIVE")
         private String status;
 
         public MilestoneDTO(Long id, String title, String status) {
@@ -41,7 +58,9 @@ public class GoalDetailsResponse {
     }
 
     public static class ReviewDTO {
+        @Schema(example = "1")
         private Integer rating;
+        @Schema(example = "Excellent progress")
         private String comments;
 
         public ReviewDTO(Integer rating, String comments) {

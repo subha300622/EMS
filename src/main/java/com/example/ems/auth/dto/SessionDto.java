@@ -1,9 +1,14 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class SessionDto {
+    @Schema(example = "string")
     private String sessionId;
+    @Schema(example = "string")
     private String userAgent;
+    @Schema(example = "123 Main St, Springfield")
     private String ipAddress;
+    @Schema(example = "string")
     private String createdAt;
 
     public SessionDto() {}

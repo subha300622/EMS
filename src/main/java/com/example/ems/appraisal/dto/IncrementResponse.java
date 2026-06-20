@@ -1,4 +1,5 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.appraisal.entity.Increment;
 
@@ -7,21 +8,37 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class IncrementResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "john.doe@example.com")
     private String employeeEmail;
+    @Schema(example = "1")
     private Long appraisalId;
+    @Schema(example = "120000.00")
     private BigDecimal currentSalary;
+    @Schema(example = "100.00")
     private BigDecimal incrementPercentage;
+    @Schema(example = "5000.00")
     private BigDecimal incrementAmount;
+    @Schema(example = "120000.00")
     private BigDecimal newSalary;
+    @Schema(example = "2026-06-19")
     private LocalDate effectiveDate;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "1")
     private Long approvedById;
+    @Schema(example = "string")
     private String approvedByName;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime approvedAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime appliedAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
 
     public IncrementResponse() {}

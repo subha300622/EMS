@@ -26,7 +26,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/assets")
 @CrossOrigin("*")
-@Tag(name = "Administration")
+@Tag(name = "Asset Management")
 public class AssetAdminController {
 
     @Autowired
@@ -45,16 +45,17 @@ public class AssetAdminController {
     private JwtService jwtService;
 
     @GetMapping
-    public ResponseEntity<?> getAllAssets(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAllAssets(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
@@ -62,23 +63,24 @@ public class AssetAdminController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getAssetById(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAssetById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
         MyAsset asset = myAssetRepository.findById(id).orElse(null);
         if (asset == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 
@@ -87,17 +89,18 @@ public class AssetAdminController {
 
     @PostMapping
     @Transactional
-    public ResponseEntity<?> createAsset(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody AssetDto request) {
+            @RequestBody AssetDto request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
@@ -130,30 +133,31 @@ public class AssetAdminController {
         asset.setUpdatedAt(LocalDateTime.now());
 
         MyAsset saved = myAssetRepository.save(asset);
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Asset created successfully", saved));
     }
 
     @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity<?> updateAsset(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody AssetDto request) {
+            @RequestBody AssetDto request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
         MyAsset asset = myAssetRepository.findById(id).orElse(null);
         if (asset == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 
@@ -191,17 +195,18 @@ public class AssetAdminController {
 
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity<?> deleteAsset(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
@@ -209,42 +214,43 @@ public class AssetAdminController {
             myAssetRepository.deleteById(id);
             return ResponseEntity.ok(ApiResponse.success("Asset deleted successfully", null));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
     }
 
     @PostMapping("/{id}/assign")
     @Transactional
-    public ResponseEntity<?> assignAsset(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> assignAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, Long> payload) {
+            @RequestBody Map<String, Long> payload){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
         MyAsset asset = myAssetRepository.findById(id).orElse(null);
         if (asset == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 
         Long employeeId = payload.get("employeeId");
         if (employeeId == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Employee ID is required", "ASS_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee ID is required", "ASS_002"));
         }
 
         Employee employee = employeeRepository.findById(employeeId).orElse(null);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee not found with ID: " + employeeId, "EMP_002"));
         }
 
@@ -259,23 +265,24 @@ public class AssetAdminController {
 
     @PostMapping("/{id}/return")
     @Transactional
-    public ResponseEntity<?> returnAsset(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> returnAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
         MyAsset asset = myAssetRepository.findById(id).orElse(null);
         if (asset == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 
@@ -290,23 +297,24 @@ public class AssetAdminController {
 
     @PostMapping("/{id}/dispose")
     @Transactional
-    public ResponseEntity<?> disposeAsset(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> disposeAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
         MyAsset asset = myAssetRepository.findById(id).orElse(null);
         if (asset == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 

@@ -1,4 +1,5 @@
 package com.example.ems.recruitment.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.recruitment.entity.Offer;
 
@@ -7,13 +8,19 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class OfferResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "120000.00")
     private BigDecimal offeredSalary;
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
+    @Schema(example = "ACTIVE")
     private String status;
     private CandidateResponse candidate;
     private JobResponse job;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime sentAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public OfferResponse() {}

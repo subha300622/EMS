@@ -1,4 +1,5 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -20,9 +21,13 @@ public class AssetPoliciesResponse {
     }
 
     public static class PolicyItem {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "Detailed description of the item")
         private String description;
+        @Schema(example = "true")
         private boolean acknowledged;
 
         public PolicyItem() {}

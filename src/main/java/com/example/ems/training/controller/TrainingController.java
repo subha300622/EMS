@@ -38,7 +38,7 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Training")
+@Tag(name = "Training Management")
 public class TrainingController {
 
     @Autowired private TrainingService trainingService;
@@ -149,14 +149,15 @@ public class TrainingController {
 
     // ── 1. DASHBOARD ─────────────────────────────────────────────────────────
     @GetMapping("/trainings/dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         TrainingDashboardResponse stats = trainingService.getDashboardStats();
@@ -165,28 +166,30 @@ public class TrainingController {
 
     // ── 2. COURSES ───────────────────────────────────────────────────────────
     @PostMapping("/trainings/courses")
-    public ResponseEntity<?> createCourse(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createCourse(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody TrainingCourseRequest request) {
+            @Valid @RequestBody TrainingCourseRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         TrainingCourseResponse response = trainingService.createCourse(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Training course created successfully", formatCourseCreated(response)));
     }
 
     @GetMapping("/trainings/courses")
-    public ResponseEntity<?> getCourses(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getCourses(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<TrainingCourseResponse> list = trainingService.getCourses();
@@ -198,58 +201,61 @@ public class TrainingController {
     }
 
     @GetMapping("/trainings/courses/{courseId}")
-    public ResponseEntity<?> getCourseById(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCourseById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long courseId) {
+            @PathVariable Long courseId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<TrainingCourseResponse> course = trainingService.getCourseById(courseId);
         if (course.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Training course not found with ID: " + courseId, "TRN_001"));
 
         return ResponseEntity.ok(ApiResponse.success("Training course details retrieved successfully", formatCourseDetail(course.get())));
     }
 
     @PutMapping("/trainings/courses/{courseId}")
-    public ResponseEntity<?> updateCourse(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> updateCourse(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long courseId,
-            @Valid @RequestBody TrainingCourseRequest request) {
+            @Valid @RequestBody TrainingCourseRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Optional<TrainingCourseResponse> response = trainingService.updateCourse(courseId, request);
         if (response.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Training course not found with ID: " + courseId, "TRN_001"));
         }
         return ResponseEntity.ok(ApiResponse.success("Training course updated successfully", formatCourseUpdate(response.get())));
     }
 
     @DeleteMapping("/trainings/courses/{courseId}")
-    public ResponseEntity<?> deleteCourse(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteCourse(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long courseId) {
+            @PathVariable Long courseId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         boolean deleted = trainingService.deleteCourse(courseId);
         if (!deleted) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Training course not found with ID: " + courseId, "TRN_001"));
         }
         
@@ -260,25 +266,26 @@ public class TrainingController {
     }
 
     @PatchMapping("/trainings/courses/{courseId}/status")
-    public ResponseEntity<?> updateCourseStatus(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateCourseStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long courseId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         String status = body.get("status");
         if (status == null || status.isBlank())
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Status is required", "VAL_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Status is required", "VAL_001"));
 
         Optional<TrainingCourseResponse> updated = trainingService.updateCourseStatus(courseId, status);
         if (updated.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Training course not found with ID: " + courseId, "TRN_001"));
 
         Map<String, Object> data = new LinkedHashMap<>();
@@ -289,32 +296,34 @@ public class TrainingController {
 
     // ── 3. SESSIONS ──────────────────────────────────────────────────────────
     @PostMapping("/trainings/sessions")
-    public ResponseEntity<?> createSession(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> createSession(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody TrainingSessionRequest request) {
+            @Valid @RequestBody TrainingSessionRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         try {
             TrainingSessionResponse response = trainingService.createSession(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Training session scheduled successfully", formatSession(response)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TRN_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TRN_002"));
         }
     }
 
     @GetMapping("/trainings/sessions")
-    public ResponseEntity<?> getSessions(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getSessions(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<TrainingSessionResponse> list = trainingService.getSessions();
@@ -327,35 +336,37 @@ public class TrainingController {
 
     // ── 4. ENROLLMENTS ───────────────────────────────────────────────────────
     @PostMapping("/trainings/enrollments")
-    public ResponseEntity<?> enrollEmployee(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> enrollEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody TrainingEnrollmentRequest request) {
+            @Valid @RequestBody TrainingEnrollmentRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         // Allow HR/Manager, or the target employee themselves
         if (!isManager(currentUser) && (currentUser.getEmployeeId() == null || !currentUser.getEmployeeId().equals(request.getEmployeeId()))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot enroll another employee.", "AUTH_002"));
         }
 
         try {
             TrainingEnrollmentResponse response = trainingService.enrollEmployee(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Employee enrolled successfully", formatEnrollment(response)));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TRN_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TRN_003"));
         }
     }
 
     @GetMapping("/trainings/my")
-    public ResponseEntity<?> getMyEnrollments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyEnrollments(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<TrainingEnrollmentResponse> list = trainingService.getMyEnrollments(currentUser.getWorkEmail());
@@ -367,12 +378,13 @@ public class TrainingController {
     }
 
     @PatchMapping("/trainings/enrollments/{enrollmentId}/withdraw")
-    public ResponseEntity<?> withdrawEnrollment(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> withdrawEnrollment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long enrollmentId) {
+            @PathVariable Long enrollmentId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         // Scoping: allow manager, or the owner
@@ -381,13 +393,13 @@ public class TrainingController {
                 .findFirst();
 
         if (!isManager(currentUser) && check.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot withdraw from this enrollment.", "AUTH_002"));
         }
 
         Optional<TrainingEnrollmentResponse> updated = trainingService.withdrawEnrollment(enrollmentId);
         if (updated.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Training enrollment not found with ID: " + enrollmentId, "TRN_003"));
 
         Map<String, Object> data = new LinkedHashMap<>();
@@ -398,16 +410,17 @@ public class TrainingController {
 
     // ── 5. ATTENDANCE ────────────────────────────────────────────────────────
     @PostMapping("/trainings/sessions/{sessionId}/attendance")
-    public ResponseEntity<?> submitAttendance(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> submitAttendance(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long sessionId,
-            @Valid @RequestBody TrainingAttendanceRequest request) {
+            @Valid @RequestBody TrainingAttendanceRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         try {
@@ -419,22 +432,23 @@ public class TrainingController {
             responseData.put("progressPercent", result.get("progressPercent"));
             return ResponseEntity.ok(ApiResponse.success("Attendance submitted successfully", responseData));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TRN_004"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TRN_004"));
         }
     }
 
     // ── 6. ASSESSMENTS ───────────────────────────────────────────────────────
     @PostMapping("/trainings/assessments/{assessmentId}/submissions")
-    public ResponseEntity<?> submitAssessment(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> submitAssessment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assessmentId,
-            @Valid @RequestBody TrainingAssessmentRequest request) {
+            @Valid @RequestBody TrainingAssessmentRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions to grade assessments.", "AUTH_002"));
 
         try {
@@ -455,23 +469,24 @@ public class TrainingController {
             
             return ResponseEntity.ok(ApiResponse.success("Assessment graded successfully", responseData));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TRN_005"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TRN_005"));
         }
     }
 
     // ── 7. CERTIFICATE ───────────────────────────────────────────────────────
     @GetMapping("/trainings/certificates/{enrollmentId}/download")
-    public ResponseEntity<?> downloadCertificate(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> downloadCertificate(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long enrollmentId) {
+            @PathVariable Long enrollmentId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<TrainingCertificateResponse> cert = trainingService.getCertificate(enrollmentId);
         if (cert.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Certificate not found for enrollment ID: " + enrollmentId, "TRN_006"));
 
         TrainingCertificateResponse certificate = cert.get();
@@ -480,7 +495,7 @@ public class TrainingController {
         if (!isManager(currentUser)) {
             Optional<Employee> empOpt = employeeRepository.findByEmail(currentUser.getWorkEmail());
             if (empOpt.isEmpty() || !empOpt.get().getFullName().equals(certificate.getEmployeeName())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(ErrorResponse.error("Access Denied: You cannot download this certificate.", "AUTH_002"));
             }
         }
@@ -497,15 +512,16 @@ public class TrainingController {
 
     // ── 8. REPORTS ───────────────────────────────────────────────────────────
     @GetMapping("/trainings/reports/{reportType}")
-    public ResponseEntity<?> getTrainingsReport(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getTrainingsReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String reportType) {
+            @PathVariable String reportType){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Map<String, Object> data = trainingService.getTrainingsReport(reportType);
@@ -514,15 +530,16 @@ public class TrainingController {
 
     // ── 9. NOTIFICATIONS ─────────────────────────────────────────────────────
     @PostMapping("/trainings/notifications")
-    public ResponseEntity<?> sendNotification(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> sendNotification(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         String message = body.getOrDefault("message", "Training session reminder alert");
@@ -537,30 +554,31 @@ public class TrainingController {
 
     // ── 10. COMPLETE TRAINING (SELF-SERVICE) ─────────────────────────────────
     @PostMapping("/trainings/{id}/complete")
-    public ResponseEntity<?> completeTrainingModule(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> completeTrainingModule(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.training.complete")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.training.complete' permission.", "AUTH_002"));
         }
 
         TrainingEnrollment enrollment = trainingEnrollmentRepository.findById(id).orElse(null);
         if (enrollment == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Training enrollment not found", "TR_001"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (employee == null || !enrollment.getEmployee().getId().equals(employee.getId())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You are not enrolled in this training.", "AUTH_002"));
         }
 
@@ -573,7 +591,7 @@ public class TrainingController {
             Map<String, Object> result = trainingService.submitAssessment(id, assessment);
             return ResponseEntity.ok(ApiResponse.success("Training module marked as completed", result));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TR_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "TR_002"));
         }
     }
 }

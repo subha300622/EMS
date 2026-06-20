@@ -1,4 +1,6 @@
 package com.example.ems.finance.controller;
+import java.util.List;
+import java.util.Map;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -21,7 +23,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/v1/finance")
 @CrossOrigin("*")
-@Tag(name = "Finance")
+@Tag(name = "Finance Management")
 public class FinanceController {
 
     @Autowired
@@ -60,15 +62,16 @@ public class FinanceController {
 
     // ── 1. GET DASHBOARD ──────────────────────────────────────────────────────
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Finance dashboard statistics retrieved successfully", 
@@ -77,15 +80,16 @@ public class FinanceController {
 
     // ── 2. GET MONTHLY ANALYTICS ──────────────────────────────────────────────
     @GetMapping("/analytics/monthly")
-    public ResponseEntity<?> getMonthlyAnalytics(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getMonthlyAnalytics(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Monthly finance analytics retrieved successfully", 
@@ -94,15 +98,16 @@ public class FinanceController {
 
     // ── 3. GET RECENT TRANSACTIONS ────────────────────────────────────────────
     @GetMapping("/transactions/recent")
-    public ResponseEntity<?> getRecentTransactions(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getRecentTransactions(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Recent finance transactions retrieved successfully", 
@@ -111,15 +116,16 @@ public class FinanceController {
 
     // ── 4. GET EXPENSES BY CATEGORY ───────────────────────────────────────────
     @GetMapping("/expenses/categories")
-    public ResponseEntity<?> getExpensesByCategory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getExpensesByCategory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Expense breakdown by category retrieved successfully", 
@@ -128,15 +134,16 @@ public class FinanceController {
 
     // ── 5. GET SALARY SUMMARY ─────────────────────────────────────────────────
     @GetMapping("/salary/summary")
-    public ResponseEntity<?> getSalarySummary(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getSalarySummary(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Payroll/Salary overview summary retrieved successfully", 
@@ -145,15 +152,16 @@ public class FinanceController {
 
     // ── 6. GET PENDING PAYMENTS ───────────────────────────────────────────────
     @GetMapping("/payments/pending")
-    public ResponseEntity<?> getPendingPayments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPendingPayments(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Pending due payments retrieved successfully", 
@@ -162,18 +170,19 @@ public class FinanceController {
 
     // ── 7. GET CUSTOM REPORT ──────────────────────────────────────────────────
     @GetMapping("/report")
-    public ResponseEntity<?> getCustomReport(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCustomReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) String startDate,
             @RequestParam(required = false) String endDate,
-            @RequestParam(required = false) String type) {
+            @RequestParam(required = false) String type){
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
 
@@ -183,21 +192,22 @@ public class FinanceController {
             return ResponseEntity.ok(ApiResponse.success("Custom finance report generated successfully", 
                     financeService.getCustomReport(start, end, type)));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Invalid date parameters. Expected format: YYYY-MM-DD", "FIN_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Invalid date parameters. Expected format: YYYY-MM-DD", "FIN_001"));
         }
     }
 
     // ── 8. GET SALARY DISTRIBUTION ──────────────────────────────────────────
     @GetMapping("/salary/distribution")
-    public ResponseEntity<?> getSalaryDistribution(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getSalaryDistribution(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Salary distribution retrieved successfully", 

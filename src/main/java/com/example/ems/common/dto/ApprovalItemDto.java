@@ -1,11 +1,18 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class ApprovalItemDto {
+    @Schema(example = "string")
     private String id;
+    @Schema(example = "string")
     private String type;
+    @Schema(example = "string")
     private String requesterName;
+    @Schema(example = "string")
     private String details;
+    @Schema(example = "string")
     private String createdAt;
+    @Schema(example = "ACTIVE")
     private String status;
 
     public ApprovalItemDto() {}

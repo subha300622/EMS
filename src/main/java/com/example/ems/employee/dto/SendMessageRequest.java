@@ -1,7 +1,10 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class SendMessageRequest {
+    @Schema(example = "Request for Leave")
     private String subject;
+    @Schema(example = "string")
     private String message;
 
     public SendMessageRequest() {}

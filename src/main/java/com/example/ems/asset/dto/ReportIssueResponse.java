@@ -1,20 +1,33 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class ReportIssueResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "string")
     private String ticketId;
+    @Schema(example = "1")
     private Long assetId;
+    @Schema(example = "string")
     private String assetName;
+    @Schema(example = "string")
     private String issueType;
+    @Schema(example = "string")
     private String severity;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime reportedAt;
+    @Schema(example = "string")
     private String assignedTeam;
+    @Schema(example = "2026-06-19")
     private LocalDate resolutionETA;
 
     public ReportIssueResponse() {}

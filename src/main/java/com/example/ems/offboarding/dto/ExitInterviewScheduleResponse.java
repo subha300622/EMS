@@ -1,9 +1,13 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class ExitInterviewScheduleResponse {
 
+    @Schema(example = "1")
     private Long interviewId;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String hrRepresentative;
 
     public ExitInterviewScheduleResponse() {}

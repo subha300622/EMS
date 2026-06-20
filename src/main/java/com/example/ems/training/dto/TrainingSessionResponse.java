@@ -1,19 +1,30 @@
 package com.example.ems.training.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.training.entity.TrainingSession;
 
 import java.time.LocalDate;
 
 public class TrainingSessionResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long courseId;
+    @Schema(example = "Project Deliverables")
     private String courseTitle;
+    @Schema(example = "string")
     private String trainerName;
+    @Schema(example = "2026-06-19")
     private LocalDate scheduleDate;
+    @Schema(example = "string")
     private String startTime;
+    @Schema(example = "string")
     private String endTime;
+    @Schema(example = "Bangalore")
     private String location;
+    @Schema(example = "1")
     private Integer capacity;
+    @Schema(example = "1")
     private Integer enrolledCount;
 
     public TrainingSessionResponse() {}

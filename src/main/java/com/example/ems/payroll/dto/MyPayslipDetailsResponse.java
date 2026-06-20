@@ -1,11 +1,14 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.util.List;
 
 public class MyPayslipDetailsResponse {
 
+    @Schema(example = "1")
     private Long payslipId;
+    @Schema(example = "string")
     private String payslipNumber;
     private EmployeeInfo employee;
     private SalaryPeriodInfo salaryPeriod;
@@ -52,10 +55,15 @@ public class MyPayslipDetailsResponse {
     public void setPaymentDetails(PaymentDetailsInfo paymentDetails) { this.paymentDetails = paymentDetails; }
 
     public static class EmployeeInfo {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "Software Engineer")
         private String designation;
+        @Schema(example = "Engineering")
         private String department;
 
         public EmployeeInfo() {}
@@ -85,9 +93,13 @@ public class MyPayslipDetailsResponse {
     }
 
     public static class SalaryPeriodInfo {
+        @Schema(example = "string")
         private String month;
+        @Schema(example = "2026")
         private Integer year;
+        @Schema(example = "1")
         private Integer workingDays;
+        @Schema(example = "1")
         private Integer paidDays;
 
         public SalaryPeriodInfo() {}
@@ -113,7 +125,9 @@ public class MyPayslipDetailsResponse {
     }
 
     public static class ComponentAmount {
+        @Schema(example = "string")
         private String component;
+        @Schema(example = "5000.00")
         private BigDecimal amount;
 
         public ComponentAmount() {}
@@ -131,8 +145,11 @@ public class MyPayslipDetailsResponse {
     }
 
     public static class SummaryInfo {
+        @Schema(example = "120000.00")
         private BigDecimal grossSalary;
+        @Schema(example = "5000.00")
         private BigDecimal totalDeductions;
+        @Schema(example = "120000.00")
         private BigDecimal netSalary;
 
         public SummaryInfo() {}
@@ -154,8 +171,11 @@ public class MyPayslipDetailsResponse {
     }
 
     public static class PaymentDetailsInfo {
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String paymentMode;
+        @Schema(example = "string")
         private String transactionReference;
 
         public PaymentDetailsInfo() {}

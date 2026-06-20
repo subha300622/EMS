@@ -1,4 +1,5 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,7 +24,9 @@ public class MySalaryRevisionsResponse {
     public void setHistory(List<RevisionItem> history) { this.history = history; }
 
     public static class CurrentCTCInfo {
+        @Schema(example = "5000.00")
         private BigDecimal amount;
+        @Schema(example = "string")
         private String currency = "INR";
 
         public CurrentCTCInfo() {}
@@ -41,11 +44,17 @@ public class MySalaryRevisionsResponse {
     }
 
     public static class RevisionItem {
+        @Schema(example = "1")
         private Long revisionId;
+        @Schema(example = "2026-06-19")
         private LocalDate effectiveDate;
+        @Schema(example = "100.00")
         private BigDecimal previousCTC;
+        @Schema(example = "100.00")
         private BigDecimal revisedCTC;
+        @Schema(example = "100.00")
         private BigDecimal incrementPercentage;
+        @Schema(example = "Personal business")
         private String revisionReason;
 
         public RevisionItem() {}

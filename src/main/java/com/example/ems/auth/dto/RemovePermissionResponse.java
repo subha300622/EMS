@@ -1,8 +1,11 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class RemovePermissionResponse {
 
+    @Schema(example = "Software Engineer")
     private Long roleId;
+    @Schema(example = "1")
     private Long removedPermissionId;
 
     public RemovePermissionResponse() {}

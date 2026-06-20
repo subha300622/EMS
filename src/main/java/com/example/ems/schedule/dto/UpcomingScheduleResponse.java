@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -13,10 +14,15 @@ public class UpcomingScheduleResponse {
     }
 
     public static class UpcomingEvent {
+        @Schema(example = "1")
         private Long eventId;
+        @Schema(example = "string")
         private String eventType;
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "string")
         private String dateTime;
+        @Schema(example = "ACTIVE")
         private String status;
 
         public UpcomingEvent() {}

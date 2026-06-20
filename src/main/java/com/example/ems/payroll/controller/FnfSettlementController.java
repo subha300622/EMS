@@ -1,4 +1,5 @@
 package com.example.ems.payroll.controller;
+import java.util.List;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -18,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/fnf-settlements")
 @CrossOrigin("*")
-@Tag(name = "Finance")
+@Tag(name = "Finance Management")
 public class FnfSettlementController {
 
     @Autowired
@@ -34,16 +35,17 @@ public class FnfSettlementController {
     private JwtService jwtService;
 
     @GetMapping
-    public ResponseEntity<?> getAllSettlements(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<FnfSettlement>>> getAllSettlements(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "fnf.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'fnf.manage' permission.", "AUTH_002"));
         }
 
@@ -52,23 +54,24 @@ public class FnfSettlementController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getSettlementById(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getSettlementById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "fnf.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'fnf.manage' permission.", "AUTH_002"));
         }
 
         FnfSettlement settlement = fnfSettlementService.getSettlementById(id).orElse(null);
         if (settlement == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Settlement not found with ID: " + id, "FNF_001"));
         }
 
@@ -76,23 +79,24 @@ public class FnfSettlementController {
     }
 
     @GetMapping("/employee/{employeeId}")
-    public ResponseEntity<?> getSettlementByEmployeeId(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getSettlementByEmployeeId(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId) {
+            @PathVariable Long employeeId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "fnf.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'fnf.manage' permission.", "AUTH_002"));
         }
 
         FnfSettlement settlement = fnfSettlementService.getSettlementByEmployeeId(employeeId).orElse(null);
         if (settlement == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Settlement not found for Employee: " + employeeId, "FNF_001"));
         }
 
@@ -100,83 +104,87 @@ public class FnfSettlementController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createSettlement(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createSettlement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody FnfSettlement request) {
+            @RequestBody FnfSettlement request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "fnf.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'fnf.manage' permission.", "AUTH_002"));
         }
 
         FnfSettlement created = fnfSettlementService.createSettlement(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Settlement created successfully", created));
     }
 
     @PostMapping("/{id}/approve")
-    public ResponseEntity<?> approveSettlement(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> approveSettlement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "fnf.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'fnf.manage' permission.", "AUTH_002"));
         }
 
-        return fnfSettlementService.approveSettlement(id)
+        return (ResponseEntity) fnfSettlementService.approveSettlement(id)
                 .<ResponseEntity<?>>map(settlement -> ResponseEntity.ok(ApiResponse.success("Settlement approved successfully", settlement)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("Settlement not found with ID: " + id, "FNF_001")));
     }
 
-    @PostMapping("/{id}/reject")
-    public ResponseEntity<?> rejectSettlement(
+    @PatchMapping("/{id}/reject")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> rejectSettlement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "fnf.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'fnf.manage' permission.", "AUTH_002"));
         }
 
-        return fnfSettlementService.rejectSettlement(id)
+        return (ResponseEntity) fnfSettlementService.rejectSettlement(id)
                 .<ResponseEntity<?>>map(settlement -> ResponseEntity.ok(ApiResponse.success("Settlement rejected successfully", settlement)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("Settlement not found with ID: " + id, "FNF_001")));
     }
 
     @PostMapping("/{id}/process")
-    public ResponseEntity<?> processSettlement(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> processSettlement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "fnf.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'fnf.manage' permission.", "AUTH_002"));
         }
 
-        return fnfSettlementService.processSettlement(id)
+        return (ResponseEntity) fnfSettlementService.processSettlement(id)
                 .<ResponseEntity<?>>map(settlement -> ResponseEntity.ok(ApiResponse.success("Settlement processed successfully", settlement)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("Settlement not found with ID: " + id, "FNF_001")));

@@ -1,4 +1,5 @@
 package com.example.ems.recruitment.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -10,13 +11,16 @@ import java.time.LocalDate;
 public class OfferRequest {
 
     @NotNull(message = "Candidate ID is required")
+    @Schema(example = "1")
     private Long candidateId;
 
     @NotNull(message = "Offered salary is required")
     @Positive(message = "Offered salary must be positive")
+    @Schema(example = "120000.00")
     private BigDecimal offeredSalary;
 
     @NotNull(message = "Start date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
 
     public Long getCandidateId() { return candidateId; }

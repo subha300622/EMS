@@ -1,18 +1,28 @@
 package com.example.ems.training.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.training.entity.TrainingCertificate;
 
 import java.time.LocalDate;
 
 public class TrainingCertificateResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long enrollmentId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "Project Deliverables")
     private String courseTitle;
+    @Schema(example = "string")
     private String trainerName;
+    @Schema(example = "2026-06-19")
     private LocalDate scheduleDate;
+    @Schema(example = "2026-06-19")
     private LocalDate issueDate;
+    @Schema(example = "string")
     private String certificateNumber;
+    @Schema(example = "string")
     private String fileUrl;
 
     public TrainingCertificateResponse() {}

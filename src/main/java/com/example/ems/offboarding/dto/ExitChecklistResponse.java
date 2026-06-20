@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,13 +23,20 @@ public class ExitChecklistResponse {
     public void setSummary(ChecklistSummary summary) { this.summary = summary; }
 
     public static class ChecklistItem {
+        @Schema(example = "1")
         private Long taskId;
+        @Schema(example = "string")
         private String taskName;
+        @Schema(example = "string")
         private String assignedTo;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime completedAt;
+        @Schema(example = "true")
         private Boolean actionRequired;
         private List<String> allowedActions;
+        @Schema(example = "1")
         private Long assetId;
 
         public ChecklistItem() {}
@@ -70,7 +78,9 @@ public class ExitChecklistResponse {
     }
 
     public static class ChecklistSummary {
+        @Schema(example = "1")
         private int completed;
+        @Schema(example = "1")
         private int pending;
 
         public ChecklistSummary() {}

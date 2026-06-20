@@ -1,4 +1,5 @@
 package com.example.ems.onboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -8,8 +9,10 @@ import java.time.LocalDate;
 public class OnboardingRequest {
 
     @NotNull(message = "Employee ID is required")
+    @Schema(example = "1")
     private Long employeeId;
 
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
 
     public Long getEmployeeId() { return employeeId; }

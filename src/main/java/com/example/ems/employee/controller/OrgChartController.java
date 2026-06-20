@@ -1,4 +1,7 @@
 package com.example.ems.employee.controller;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -22,7 +25,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Directory")
+@Tag(name = "Organization Management")
 public class OrgChartController {
 
     @Autowired
@@ -38,16 +41,17 @@ public class OrgChartController {
     private JwtService jwtService;
 
     @GetMapping("/organization-chart")
-    public ResponseEntity<?> getOrganizationChart(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getOrganizationChart(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.directory.read' permission.",
                             "AUTH_002"));
         }
@@ -65,24 +69,25 @@ public class OrgChartController {
     }
 
     @GetMapping("/organization-chart/{employeeId}")
-    public ResponseEntity<?> getOrganizationChartForEmployee(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getOrganizationChartForEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId) {
+            @PathVariable Long employeeId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.directory.read' permission.",
                             "AUTH_002"));
         }
 
         Employee rootEmployee = employeeRepository.findById(employeeId).orElse(null);
         if (rootEmployee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee not found with ID: " + employeeId, "EMP_002"));
         }
 
@@ -93,24 +98,25 @@ public class OrgChartController {
     }
 
     @GetMapping("/employees/{id}/reporting-chain")
-    public ResponseEntity<?> getReportingChain(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getReportingChain(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.directory.read' permission.",
                             "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findById(id).orElse(null);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
         }
 

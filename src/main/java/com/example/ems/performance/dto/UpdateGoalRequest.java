@@ -1,14 +1,22 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 
 public class UpdateGoalRequest {
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "string")
     private String priority;
+    @Schema(example = "1")
     private Integer weightage;
+    @Schema(example = "2026-06-19")
     private LocalDate targetDate;
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
+    @Schema(example = "string")
     private String goalType;
 
     // Getters and Setters

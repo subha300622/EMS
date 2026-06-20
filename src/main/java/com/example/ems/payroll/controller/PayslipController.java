@@ -26,7 +26,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Payslips")
+@Tag(name = "Payroll Management")
 public class PayslipController {
 
     @Autowired
@@ -63,19 +63,20 @@ public class PayslipController {
 
     // ── 2. GET PAYSLIP BY ID ──────────────────────────────────────────────────
     @GetMapping("/payslips/{id}")
-    public ResponseEntity<?> getPayslipById(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getPayslipById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Payslip ps = payslipService.getPayslipById(id).orElse(null);
         if (ps == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Payslip not found", "PS_001"));
         }
 
@@ -86,7 +87,7 @@ public class PayslipController {
                 || roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage");
 
         if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view this payslip.", "AUTH_002"));
         }
 
@@ -95,41 +96,43 @@ public class PayslipController {
 
     // ── 3. GENERATE PAYSLIPS (FINANCE / ADMIN) ────────────────────────────────
     @PostMapping("/payslips/generate")
-    public ResponseEntity<?> generatePayslips(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> generatePayslips(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid PayrollGenerateRequest request) {
+            @RequestBody @Valid PayrollGenerateRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
         }
 
         List<Payslip> generated = payslipService.generatePayslips(request.getMonth(), request.getYear());
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Payslips generated successfully. Total generated: " + generated.size(), generated));
     }
 
     // ── 4. DOWNLOAD PAYSLIP (SIMULATED CSV) ──────────────────────────────────
     @GetMapping("/payslips/download/{id}")
-    public ResponseEntity<?> downloadPayslip(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> downloadPayslip(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Payslip ps = payslipService.getPayslipById(id).orElse(null);
         if (ps == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Payslip not found", "PS_001"));
         }
 
@@ -140,7 +143,7 @@ public class PayslipController {
                 || roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage");
 
         if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot download this payslip.", "AUTH_002"));
         }
 
@@ -160,22 +163,23 @@ public class PayslipController {
         headers.setContentDispositionFormData("attachment", "payslip-" + id + ".csv");
         headers.setContentLength(data.length);
 
-        return new ResponseEntity<>(data, headers, HttpStatus.OK);
+        return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
     @DeleteMapping("/payslips/{id}")
-    public ResponseEntity<?> deletePayslip(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deletePayslip(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.manage' permission.", "AUTH_002"));
         }
 
@@ -183,24 +187,25 @@ public class PayslipController {
         if (deleted) {
             return ResponseEntity.ok(ApiResponse.success("Payslip deleted successfully"));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Payslip not found with ID: " + id, "PS_001"));
         }
     }
 
     @GetMapping("/payslips/export")
-    public ResponseEntity<?> exportPayslips(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> exportPayslips(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll.read")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "payroll.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll.read' or 'payroll.manage' permission.", "AUTH_002"));
         }
 
@@ -223,6 +228,6 @@ public class PayslipController {
         headers.setContentDispositionFormData("attachment", "payslips_export.csv");
         headers.setContentLength(data.length);
 
-        return new ResponseEntity<>(data, headers, HttpStatus.OK);
+        return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 }

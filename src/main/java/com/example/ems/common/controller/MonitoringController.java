@@ -22,7 +22,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "System Monitoring")
+@Tag(name = "System Administration")
 public class MonitoringController {
 
     @Autowired
@@ -32,7 +32,8 @@ public class MonitoringController {
     private StringRedisTemplate redisTemplate;
 
     @GetMapping("/health")
-    public ResponseEntity<?> checkHealth() {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> checkHealth(){
         Map<String, Object> healthInfo = new LinkedHashMap<>();
         boolean isDbUp = false;
         boolean isRedisUp = false;
@@ -60,13 +61,13 @@ public class MonitoringController {
         if (systemUp) {
             return ResponseEntity.ok(ApiResponse.success("System is healthy", healthInfo));
         } else {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
                     .body(ErrorResponse.error("System is degraded", "SYS_503"));
         }
     }
 
     @GetMapping("/version")
-    public ResponseEntity<?> getVersion() {
+    public ResponseEntity<ApiResponse<Object>> getVersion(){
         Map<String, String> versionInfo = new LinkedHashMap<>();
         versionInfo.put("appName", "Employee Management System");
         versionInfo.put("version", "1.0.0");
@@ -76,7 +77,7 @@ public class MonitoringController {
     }
 
     @GetMapping("/metrics")
-    public ResponseEntity<?> getMetrics() {
+    public ResponseEntity<ApiResponse<Object>> getMetrics(){
         Map<String, Object> metrics = new LinkedHashMap<>();
         
         Runtime runtime = Runtime.getRuntime();

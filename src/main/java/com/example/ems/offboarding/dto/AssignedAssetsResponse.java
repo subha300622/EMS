@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -16,10 +17,15 @@ public class AssignedAssetsResponse {
     public void setAssets(List<AssetItem> assets) { this.assets = assets; }
 
     public static class AssetItem {
+        @Schema(example = "1")
         private Long assetId;
+        @Schema(example = "string")
         private String assetName;
+        @Schema(example = "string")
         private String assetCategory;
+        @Schema(example = "string")
         private String serialNumber;
+        @Schema(example = "ACTIVE")
         private String returnStatus;
 
         public AssetItem() {}

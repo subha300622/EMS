@@ -1,10 +1,12 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 
 public class SalaryRevisionRejectRequest {
 
     @NotBlank(message = "Rejection reason is required")
+    @Schema(example = "Personal business")
     private String reason;
 
     public String getReason() { return reason; }

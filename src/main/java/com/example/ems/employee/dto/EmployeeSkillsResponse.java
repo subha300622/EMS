@@ -1,8 +1,10 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class EmployeeSkillsResponse {
+    @Schema(example = "1")
     private Long employeeId;
     private List<SkillDto> skills;
 
@@ -20,8 +22,11 @@ public class EmployeeSkillsResponse {
     public void setSkills(List<SkillDto> skills) { this.skills = skills; }
 
     public static class SkillDto {
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "string")
         private String level;
+        @Schema(example = "2026")
         private Integer experienceYears;
 
         public SkillDto() {}

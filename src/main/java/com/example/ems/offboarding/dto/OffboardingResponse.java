@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.offboarding.entity.ExitInterview;
 import com.example.ems.offboarding.entity.Offboarding;
@@ -14,14 +15,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OffboardingResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "john.doe@example.com")
     private String employeeEmail;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "Personal business")
     private String reason;
+    @Schema(example = "2026-06-19")
     private LocalDate exitDate;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     private List<OffboardingTaskResponse> tasks;
@@ -111,10 +121,15 @@ public class OffboardingResponse {
 
     // Nested DTO classes
     public static class AssetReturnResponse {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "string")
         private String assetName;
+        @Schema(example = "string")
         private String serialNumber;
+        @Schema(example = "ACTIVE")
         private String returnStatus;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime returnedAt;
 
         public AssetReturnResponse(OffboardingAssetReturn asset) {
@@ -133,13 +148,21 @@ public class OffboardingResponse {
     }
 
     public static class SettlementResponse {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "5000.00")
         private BigDecimal gratuity;
+        @Schema(example = "100.00")
         private BigDecimal severance;
+        @Schema(example = "120000.00")
         private BigDecimal pendingSalary;
+        @Schema(example = "5000.00")
         private BigDecimal deductions;
+        @Schema(example = "5000.00")
         private BigDecimal totalSettlementAmount;
+        @Schema(example = "ACTIVE")
         private String paymentStatus;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime processedAt;
 
         public SettlementResponse(OffboardingSettlement s) {
@@ -164,11 +187,17 @@ public class OffboardingResponse {
     }
 
     public static class HandoverResponse {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "string")
         private String taskName;
+        @Schema(example = "1")
         private Long recipientId;
+        @Schema(example = "string")
         private String recipientName;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime completedAt;
 
         public HandoverResponse(OffboardingHandover h) {
@@ -191,12 +220,19 @@ public class OffboardingResponse {
     }
 
     public static class ExitInterviewResponse {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "2026-06-19")
         private LocalDate interviewDate;
+        @Schema(example = "string")
         private String interviewerName;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "Excellent progress")
         private String feedback;
+        @Schema(example = "Personal business")
         private String reasonsForLeaving;
+        @Schema(example = "1")
         private Integer rating;
 
         public ExitInterviewResponse(ExitInterview e) {

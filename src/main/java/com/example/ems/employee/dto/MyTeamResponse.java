@@ -1,10 +1,12 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class MyTeamResponse {
     private TeamDto team;
     private List<MemberDto> members;
+    @Schema(example = "1")
     private int totalMembers;
 
     public MyTeamResponse() {}
@@ -25,7 +27,9 @@ public class MyTeamResponse {
     public void setTotalMembers(int totalMembers) { this.totalMembers = totalMembers; }
 
     public static class TeamDto {
+        @Schema(example = "1")
         private Long teamId;
+        @Schema(example = "string")
         private String teamName;
         private ManagerDto manager;
 
@@ -48,8 +52,11 @@ public class MyTeamResponse {
     }
 
     public static class ManagerDto {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "Software Engineer")
         private String designation;
 
         public ManagerDto() {}
@@ -71,13 +78,21 @@ public class MyTeamResponse {
     }
 
     public static class MemberDto {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "John Doe")
         private String fullName;
+        @Schema(example = "string")
         private String profileImage;
+        @Schema(example = "Software Engineer")
         private String designation;
+        @Schema(example = "Engineering")
         private String department;
+        @Schema(example = "ACTIVE")
         private String employmentStatus;
+        @Schema(example = "string")
         private String workMode;
         private ContactDto contact;
         private List<String> skills;
@@ -129,7 +144,9 @@ public class MyTeamResponse {
     }
 
     public static class ContactDto {
+        @Schema(example = "john.doe@example.com")
         private String email;
+        @Schema(example = "+1-555-0199")
         private String phone;
 
         public ContactDto() {}

@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -9,15 +10,19 @@ import java.time.LocalDate;
 public class PipRequest {
 
     @NotNull(message = "Employee ID is required")
+    @Schema(example = "1")
     private Long employeeId;
 
     @NotBlank(message = "Improvement plan is required")
+    @Schema(example = "string")
     private String improvementPlan;
 
     @NotNull(message = "Start date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
 
     @NotNull(message = "End date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate endDate;
 
     public Long getEmployeeId() { return employeeId; }

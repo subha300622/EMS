@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -21,13 +22,20 @@ public class MyDocumentTypesResponse {
     }
 
     public static class DocumentTypeItem {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "EMP101")
         private String code;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "string")
         private String category;
+        @Schema(example = "true")
         private boolean mandatory;
+        @Schema(example = "true")
         private boolean requiresExpiryDate;
         private List<String> allowedFormats;
+        @Schema(example = "10")
         private Integer maxFileSizeInMB;
 
         public DocumentTypeItem() {}

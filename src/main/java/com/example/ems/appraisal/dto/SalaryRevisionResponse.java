@@ -1,4 +1,5 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.appraisal.entity.SalaryRevision;
 
@@ -7,14 +8,23 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class SalaryRevisionResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "120000.00")
     private BigDecimal previousSalary;
+    @Schema(example = "120000.00")
     private BigDecimal newSalary;
+    @Schema(example = "100.00")
     private BigDecimal changePercentage;
+    @Schema(example = "2026-06-19")
     private LocalDate effectiveDate;
+    @Schema(example = "Personal business")
     private String reason;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
 
     public SalaryRevisionResponse() {}

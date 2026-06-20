@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.performance.entity.PerformancePip;
 
@@ -7,20 +8,35 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 public class PerformancePipResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "john.doe@example.com")
     private String employeeEmail;
+    @Schema(example = "Software Engineer")
     private String employeeDesignation;
+    @Schema(example = "Engineering")
     private String employeeDepartment;
+    @Schema(example = "string")
     private String improvementPlan;
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
+    @Schema(example = "2026-06-19")
     private LocalDate endDate;
+    @Schema(example = "1")
     private long durationDays;
+    @Schema(example = "1")
     private long daysRemaining;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String outcome;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public PerformancePipResponse() {}

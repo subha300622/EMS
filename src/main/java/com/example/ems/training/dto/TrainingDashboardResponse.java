@@ -1,12 +1,20 @@
 package com.example.ems.training.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class TrainingDashboardResponse {
+    @Schema(example = "1")
     private long totalCourses;
+    @Schema(example = "1")
     private long activeCourses;
+    @Schema(example = "1")
     private long totalSessions;
+    @Schema(example = "1")
     private long totalEnrollments;
+    @Schema(example = "1")
     private long completedEnrollments;
+    @Schema(example = "100.00")
     private double averageProgress;
+    @Schema(example = "100.00")
     private double withdrawalRate;
 
     public long getTotalCourses() { return totalCourses; }

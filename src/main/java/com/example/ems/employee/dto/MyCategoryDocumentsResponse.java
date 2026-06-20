@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -33,7 +34,9 @@ public class MyCategoryDocumentsResponse {
     }
 
     public static class CategoryInfo {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "string")
         private String name;
 
         public CategoryInfo() {}
@@ -50,12 +53,19 @@ public class MyCategoryDocumentsResponse {
     }
 
     public static class DocumentItem {
+        @Schema(example = "1")
         private Long documentId;
+        @Schema(example = "string")
         private String documentName;
+        @Schema(example = "string")
         private String documentType;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "ACTIVE")
         private String verificationStatus;
+        @Schema(example = "2026-06-19")
         private LocalDate expiryDate;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime lastUpdatedAt;
         private ActionInfo actions;
 
@@ -91,9 +101,13 @@ public class MyCategoryDocumentsResponse {
     }
 
     public static class ActionInfo {
+        @Schema(example = "true")
         private Boolean canView;
+        @Schema(example = "true")
         private Boolean canDownload;
+        @Schema(example = "true")
         private Boolean canReplace;
+        @Schema(example = "true")
         private Boolean canUpload;
 
         public ActionInfo() {}

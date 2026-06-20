@@ -1,13 +1,18 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.appraisal.entity.IncrementPolicy;
 
 import java.math.BigDecimal;
 
 public class IncrementPolicyResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Integer rating;
+    @Schema(example = "100.00")
     private BigDecimal recommendedPercentage;
+    @Schema(example = "Detailed description of the item")
     private String description;
 
     public IncrementPolicyResponse() {}

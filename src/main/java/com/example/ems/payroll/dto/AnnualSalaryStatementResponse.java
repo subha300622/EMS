@@ -1,12 +1,15 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public class AnnualSalaryStatementResponse {
 
+    @Schema(example = "string")
     private String financialYear;
     private SalarySummaryInfo salarySummary;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime generatedAt;
 
     public AnnualSalaryStatementResponse() {}
@@ -27,9 +30,13 @@ public class AnnualSalaryStatementResponse {
     public void setGeneratedAt(LocalDateTime generatedAt) { this.generatedAt = generatedAt; }
 
     public static class SalarySummaryInfo {
+        @Schema(example = "120000.00")
         private BigDecimal totalGrossSalary;
+        @Schema(example = "5000.00")
         private BigDecimal totalDeductions;
+        @Schema(example = "120000.00")
         private BigDecimal totalNetSalary;
+        @Schema(example = "6")
         private int monthsProcessed;
 
         public SalarySummaryInfo() {}

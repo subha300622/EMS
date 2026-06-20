@@ -1,4 +1,5 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -9,10 +10,12 @@ public class PayrollGenerateRequest {
     @NotNull(message = "Month is required")
     @Min(value = 1, message = "Month must be between 1 and 12")
     @Max(value = 12, message = "Month must be between 1 and 12")
+    @Schema(example = "6")
     private Integer month;
 
     @NotNull(message = "Year is required")
     @Min(value = 2000, message = "Year must be valid")
+    @Schema(example = "2026")
     private Integer year;
 
     public PayrollGenerateRequest() {}

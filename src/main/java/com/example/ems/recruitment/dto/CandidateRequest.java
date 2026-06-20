@@ -1,4 +1,5 @@
 package com.example.ems.recruitment.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -10,15 +11,19 @@ import jakarta.validation.constraints.NotNull;
 public class CandidateRequest {
 
     @NotBlank(message = "Candidate full name is required")
+    @Schema(example = "John Doe")
     private String fullName;
 
     @NotBlank(message = "Candidate email is required")
     @Email(message = "Candidate email must be a valid email address")
+    @Schema(example = "john.doe@example.com")
     private String email;
 
+    @Schema(example = "+1-555-0199")
     private String phone;
 
     @NotNull(message = "Job ID is required")
+    @Schema(example = "1")
     private Long jobId;
 
     public String getFullName() { return fullName; }

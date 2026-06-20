@@ -1,4 +1,5 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -21,10 +22,15 @@ public class ExpensePoliciesResponse {
     }
 
     public static class PolicyItem {
+        @Schema(example = "1")
         private Long policyId;
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "Detailed description of the item")
         private String description;
+        @Schema(example = "2026-06-19")
         private LocalDate effectiveFrom;
+        @Schema(example = "string")
         private String version;
 
         public PolicyItem() {}

@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,12 +8,15 @@ import java.time.LocalDate;
 public class ExitInterviewRequest {
 
     @NotNull(message = "Offboarding ID is required")
+    @Schema(example = "1")
     private Long offboardingId;
 
     @NotNull(message = "Exit interview date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate interviewDate;
 
     @NotBlank(message = "Interviewer name is required")
+    @Schema(example = "string")
     private String interviewerName;
 
     public Long getOffboardingId() {

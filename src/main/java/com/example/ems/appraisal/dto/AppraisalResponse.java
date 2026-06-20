@@ -1,29 +1,50 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.appraisal.entity.Appraisal;
 
 import java.time.LocalDateTime;
 
 public class AppraisalResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "john.doe@example.com")
     private String employeeEmail;
+    @Schema(example = "Engineering")
     private String employeeDepartment;
+    @Schema(example = "Software Engineer")
     private String employeeDesignation;
+    @Schema(example = "1")
     private Long cycleId;
+    @Schema(example = "string")
     private String cycleName;
+    @Schema(example = "1")
     private Integer selfRating;
+    @Schema(example = "string")
     private String selfReview;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime selfReviewSubmittedAt;
+    @Schema(example = "1")
     private Long reviewerId;
+    @Schema(example = "string")
     private String reviewerName;
+    @Schema(example = "1")
     private Integer managerRating;
+    @Schema(example = "string")
     private String managerReview;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime managerReviewSubmittedAt;
+    @Schema(example = "1")
     private Integer finalRating;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public AppraisalResponse() {}

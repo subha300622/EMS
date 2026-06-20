@@ -1,12 +1,17 @@
 package com.example.ems.attendance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 import java.util.Map;
 
 public class AttendanceStatsResponse {
+    @Schema(example = "1")
     private int totalDays;
+    @Schema(example = "100.00")
     private double attendancePercentage;
+    @Schema(example = "100.00")
     private double absencePercentage;
+    @Schema(example = "1")
     private int lateMarkCount;
 
     private Map<String, Double> statusDistribution;
@@ -39,7 +44,9 @@ public class AttendanceStatsResponse {
     public void setSystemAlerts(List<SystemAlert> systemAlerts) { this.systemAlerts = systemAlerts; }
 
     public static class MonthlyTrend {
+        @Schema(example = "string")
         private String month;
+        @Schema(example = "100.00")
         private double percentage;
 
         public MonthlyTrend(String month, double percentage) {
@@ -55,8 +62,11 @@ public class AttendanceStatsResponse {
     }
 
     public static class SystemAlert {
+        @Schema(example = "string")
         private String type;
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "string")
         private String message;
 
         public SystemAlert(String type, String title, String message) {

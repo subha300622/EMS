@@ -1,9 +1,12 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class TicketTimelineResponse {
+    @Schema(example = "1")
     private Long ticketId;
+    @Schema(example = "string")
     private String ticketNumber;
     private List<TimelineActivityDto> activities;
 
@@ -25,9 +28,13 @@ public class TicketTimelineResponse {
     public void setActivities(List<TimelineActivityDto> activities) { this.activities = activities; }
 
     public static class TimelineActivityDto {
+        @Schema(example = "1")
         private Long activityId;
+        @Schema(example = "string")
         private String event;
+        @Schema(example = "string")
         private String performedBy;
+        @Schema(example = "string")
         private String timestamp;
 
         public TimelineActivityDto() {}

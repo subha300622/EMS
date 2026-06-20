@@ -1,4 +1,5 @@
 package com.example.ems.leave.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -7,12 +8,15 @@ import jakarta.validation.constraints.NotNull;
 public class LeaveTypeRequest {
 
     @NotBlank(message = "Leave type name is required")
+    @Schema(example = "string")
     private String name;
 
+    @Schema(example = "Detailed description of the item")
     private String description;
 
     @NotNull(message = "Default days are required")
     @Min(value = 0, message = "Default days cannot be negative")
+    @Schema(example = "1")
     private Integer defaultDays;
 
     public LeaveTypeRequest() {

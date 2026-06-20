@@ -184,7 +184,7 @@ public class GoalControllerTest {
         GoalDecisionRequest dec = new GoalDecisionRequest();
         dec.setComments("Looks good");
 
-        mockMvc.perform(post("/api/v1/goals/501/approve")
+        mockMvc.perform(patch("/api/v1/goals/501/approve")
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dec)))
@@ -204,7 +204,7 @@ public class GoalControllerTest {
         GoalDecisionRequest dec = new GoalDecisionRequest();
         dec.setReason("Need measurable KPIs");
 
-        mockMvc.perform(post("/api/v1/goals/501/reject")
+        mockMvc.perform(patch("/api/v1/goals/501/reject")
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dec)))
@@ -357,7 +357,7 @@ public class GoalControllerTest {
         GoalDecisionRequest dec = new GoalDecisionRequest();
         dec.setComments("Approve it");
 
-        mockMvc.perform(post("/api/v1/goals/501/approve")
+        mockMvc.perform(patch("/api/v1/goals/501/approve")
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dec)))

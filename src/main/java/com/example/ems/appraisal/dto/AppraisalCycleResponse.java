@@ -1,4 +1,5 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.appraisal.entity.AppraisalCycle;
 
@@ -6,12 +7,19 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class AppraisalCycleResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "string")
     private String name;
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
+    @Schema(example = "2026-06-19")
     private LocalDate endDate;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public AppraisalCycleResponse() {}

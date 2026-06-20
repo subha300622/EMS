@@ -1,10 +1,14 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
 
 public class ApiResponse<T> {
+    @Schema(example = "true")
     private boolean success;
+    @Schema(example = "string")
     private String message;
+    @Schema(example = "string")
     private String timestamp;
     private T data;
 

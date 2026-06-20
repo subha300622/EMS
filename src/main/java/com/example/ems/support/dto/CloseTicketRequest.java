@@ -1,7 +1,10 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class CloseTicketRequest {
+    @Schema(example = "1")
     private Integer rating;
+    @Schema(example = "Excellent progress")
     private String feedback;
 
     public CloseTicketRequest() {}

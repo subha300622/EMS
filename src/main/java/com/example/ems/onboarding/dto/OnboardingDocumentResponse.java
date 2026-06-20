@@ -1,17 +1,26 @@
 package com.example.ems.onboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.onboarding.entity.OnboardingDocument;
 
 import java.time.LocalDateTime;
 
 public class OnboardingDocumentResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "string")
     private String fileName;
+    @Schema(example = "string")
     private String fileType;
+    @Schema(example = "string")
     private String downloadUrl;
+    @Schema(example = "string")
     private String documentType;
+    @Schema(example = "ACTIVE")
     private String verificationStatus;
+    @Schema(example = "string")
     private String verificationNotes;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime uploadedAt;
 
     public OnboardingDocumentResponse() {}

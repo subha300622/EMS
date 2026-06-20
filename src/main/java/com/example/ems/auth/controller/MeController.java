@@ -9,6 +9,7 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -37,22 +38,23 @@ public class MeController {
     private JwtService jwtService;
 
     @GetMapping
-    public ResponseEntity<?> getMyProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.read' permission.", "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
@@ -61,23 +63,24 @@ public class MeController {
 
     @PutMapping
     @Transactional
-    public ResponseEntity<?> updateMyProfile(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.update")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.update' permission.", "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 

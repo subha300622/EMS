@@ -1,21 +1,33 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class MyPerformanceDashboardResponse {
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "string")
     private String employeeId;
+    @Schema(example = "Software Engineer")
     private String designation;
+    @Schema(example = "Engineering")
     private String department;
+    @Schema(example = "100.00")
     private Double overallRating;
+    @Schema(example = "1")
     private Integer activeGoals;
+    @Schema(example = "1")
     private Integer completedGoals;
+    @Schema(example = "100.00")
     private Double goalCompletionPercentage;
+    @Schema(example = "string")
     private String nextReviewDate;
     private List<RecentActivity> recentActivities;
 
     public static class RecentActivity {
+        @Schema(example = "string")
         private String event;
+        @Schema(example = "string")
         private String date;
 
         public RecentActivity(String event, String date) {

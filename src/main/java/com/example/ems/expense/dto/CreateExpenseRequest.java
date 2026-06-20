@@ -1,4 +1,5 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,22 +11,29 @@ import java.util.List;
 public class CreateExpenseRequest {
 
     @NotBlank(message = "Expense category is required")
+    @Schema(example = "string")
     private String category;
 
     @NotBlank(message = "Expense title is required")
+    @Schema(example = "Project Deliverables")
     private String title;
 
+    @Schema(example = "Detailed description of the item")
     private String description;
 
     @NotNull(message = "Expense date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate expenseDate;
 
     @NotNull(message = "Expense amount is required")
     @Positive(message = "Amount must be greater than zero")
+    @Schema(example = "5000.00")
     private BigDecimal amount;
 
+    @Schema(example = "string")
     private String currency = "INR";
 
+    @Schema(example = "EMP101")
     private String projectCode;
 
     private List<Long> receiptIds;

@@ -1,21 +1,35 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class MyAssignedAssetItem {
+    @Schema(example = "1")
     private Long assetId;
+    @Schema(example = "EMP101")
     private String assetCode;
+    @Schema(example = "string")
     private String assetName;
+    @Schema(example = "string")
     private String category;
+    @Schema(example = "string")
     private String brand;
+    @Schema(example = "string")
     private String model;
+    @Schema(example = "string")
     private String serialNumber;
+    @Schema(example = "2026-06-19")
     private LocalDate purchaseDate;
+    @Schema(example = "100.00")
     private BigDecimal purchasePrice;
+    @Schema(example = "100.00")
     private BigDecimal currentValue;
+    @Schema(example = "2026-06-19")
     private LocalDate assignedDate;
+    @Schema(example = "string")
     private String condition;
+    @Schema(example = "ACTIVE")
     private String status;
 
     public MyAssignedAssetItem() {}

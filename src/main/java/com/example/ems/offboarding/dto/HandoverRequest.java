@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -6,12 +7,15 @@ import jakarta.validation.constraints.NotNull;
 public class HandoverRequest {
 
     @NotNull(message = "Offboarding ID is required")
+    @Schema(example = "1")
     private Long offboardingId;
 
     @NotBlank(message = "Task description/name is required")
+    @Schema(example = "string")
     private String taskName;
 
     @NotNull(message = "Recipient Employee ID is required")
+    @Schema(example = "1")
     private Long recipientId;
 
     public Long getOffboardingId() {

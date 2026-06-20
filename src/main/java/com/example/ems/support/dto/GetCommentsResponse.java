@@ -1,10 +1,13 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class GetCommentsResponse {
 
+    @Schema(example = "1")
     private Long ticketId;
+    @Schema(example = "string")
     private String ticketNumber;
     private List<CommentDto> comments;
 
@@ -26,9 +29,13 @@ public class GetCommentsResponse {
     public void setComments(List<CommentDto> comments) { this.comments = comments; }
 
     public static class CommentDto {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "Excellent progress")
         private String commentText;
+        @Schema(example = "string")
         private String createdBy;
+        @Schema(example = "string")
         private String createdAt;
 
         public CommentDto() {}

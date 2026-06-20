@@ -1,16 +1,24 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.common.entity.DmsDocumentShare;
 
 import java.time.LocalDateTime;
 
 public class DmsDocumentShareResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "1")
     private Long sharedWithEmployeeId;
+    @Schema(example = "string")
     private String sharedWithEmployeeName;
+    @Schema(example = "john.doe@example.com")
     private String sharedByEmail;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime sharedAt;
+    @Schema(example = "string")
     private String accessLevel;
 
     public DmsDocumentShareResponse() {}

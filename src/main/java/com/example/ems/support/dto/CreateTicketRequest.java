@@ -1,14 +1,21 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class CreateTicketRequest {
+    @Schema(example = "1")
     private Long categoryId;
+    @Schema(example = "1")
     private Long subCategoryId;
+    @Schema(example = "Request for Leave")
     private String subject;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "string")
     private String priority; // LOW, MEDIUM, HIGH, CRITICAL
     private List<AttachmentRef> attachments;
+    @Schema(example = "string")
     private String preferredContactMethod; // EMAIL, PHONE
 
     public CreateTicketRequest() {}
@@ -35,6 +42,7 @@ public class CreateTicketRequest {
     public void setPreferredContactMethod(String preferredContactMethod) { this.preferredContactMethod = preferredContactMethod; }
 
     public static class AttachmentRef {
+        @Schema(example = "string")
         private String fileId;
 
         public AttachmentRef() {}

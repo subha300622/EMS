@@ -1,4 +1,5 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -30,11 +31,17 @@ public class MyExpenseListResponse {
     }
 
     public static class PaginationInfo {
+        @Schema(example = "0")
         private int page;
+        @Schema(example = "10")
         private int size;
+        @Schema(example = "1")
         private long totalElements;
+        @Schema(example = "0")
         private int totalPages;
+        @Schema(example = "true")
         private boolean hasNext;
+        @Schema(example = "true")
         private boolean hasPrevious;
 
         public PaginationInfo() {}

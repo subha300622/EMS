@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -13,9 +14,13 @@ public class ScheduleTimelineResponse {
     }
 
     public static class TimelineActivity {
+        @Schema(example = "string")
         private String event;
+        @Schema(example = "string")
         private String performedBy;
+        @Schema(example = "string")
         private String performedAt;
+        @Schema(example = "Detailed description of the item")
         private String description;
 
         public TimelineActivity() {}

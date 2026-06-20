@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -15,8 +16,11 @@ public class DepartmentListResponse {
     public void setDepartments(List<DepartmentItemDto> departments) { this.departments = departments; }
 
     public static class DepartmentItemDto {
+        @Schema(example = "Engineering")
         private Long departmentId;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "1")
         private long employeeCount;
 
         public DepartmentItemDto() {}

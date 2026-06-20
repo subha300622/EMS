@@ -22,7 +22,7 @@ import java.util.HashMap;
 @RestController
 @RequestMapping("/api/v1/settings")
 @CrossOrigin("*")
-@Tag(name = "Settings")
+@Tag(name = "System Administration")
 public class SystemSettingController {
 
     @Autowired
@@ -55,27 +55,29 @@ public class SystemSettingController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllSettings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<SystemSetting>>> getAllSettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'settings.manage' permission.", "AUTH_002"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'settings.manage' permission.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("System settings retrieved successfully", systemSettingService.getAllSettings()));
     }
 
     @PutMapping
-    public ResponseEntity<?> updateSettings(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateSettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> settingsMap) {
+            @RequestBody Map<String, String> settingsMap){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(currentUser)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'settings.manage' permission.", "AUTH_002"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'settings.manage' permission.", "AUTH_002"));
         }
         Map<String, SystemSetting> updatedSettings = new HashMap<>();
         for (Map.Entry<String, String> entry : settingsMap.entrySet()) {
@@ -87,71 +89,72 @@ public class SystemSettingController {
 
     // --- Sub-modules: Company ---
     @GetMapping("/company")
-    public ResponseEntity<?> getCompanySettings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<List<SystemSetting>> getCompanySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "company");
     }
 
     @PutMapping("/company")
-    public ResponseEntity<?> updateCompanySettings(
+    public ResponseEntity<Map<String, SystemSetting>> updateCompanySettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> settingsMap) {
+            @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "company");
     }
 
     // --- Sub-modules: Security ---
     @GetMapping("/security")
-    public ResponseEntity<?> getSecuritySettings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<List<SystemSetting>> getSecuritySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "security");
     }
 
     @PutMapping("/security")
-    public ResponseEntity<?> updateSecuritySettings(
+    public ResponseEntity<Map<String, SystemSetting>> updateSecuritySettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> settingsMap) {
+            @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "security");
     }
 
     // --- Sub-modules: Email ---
     @GetMapping("/email")
-    public ResponseEntity<?> getEmailSettings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<List<SystemSetting>> getEmailSettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "email");
     }
 
     @PutMapping("/email")
-    public ResponseEntity<?> updateEmailSettings(
+    public ResponseEntity<Map<String, SystemSetting>> updateEmailSettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> settingsMap) {
+            @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "email");
     }
 
     // --- Sub-modules: Integrations ---
     @GetMapping("/integrations")
-    public ResponseEntity<?> getIntegrationsSettings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<List<SystemSetting>> getIntegrationsSettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "integrations");
     }
 
     @PutMapping("/integrations")
-    public ResponseEntity<?> updateIntegrationsSettings(
+    public ResponseEntity<Map<String, SystemSetting>> updateIntegrationsSettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> settingsMap) {
+            @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "integrations");
     }
 
     // --- Sub-modules: Password Policy ---
     @GetMapping("/password-policy")
-    public ResponseEntity<?> getPasswordPolicySettings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<List<SystemSetting>> getPasswordPolicySettings(@RequestHeader(value = "Authorization", required = false) String authHeader){
         return getSettingsByCategory(authHeader, "password-policy");
     }
 
     @PutMapping("/password-policy")
-    public ResponseEntity<?> updatePasswordPolicySettings(
+    public ResponseEntity<Map<String, SystemSetting>> updatePasswordPolicySettings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> settingsMap) {
+            @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "password-policy");
     }
 
     // --- Helper Methods ---
-    private ResponseEntity<?> getSettingsByCategory(String authHeader, String category) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity getSettingsByCategory(String authHeader, String category) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
@@ -163,7 +166,8 @@ public class SystemSettingController {
         return ResponseEntity.ok(ApiResponse.success(category + " settings retrieved successfully", settings));
     }
 
-    private ResponseEntity<?> updateSettingsByCategory(String authHeader, Map<String, String> settingsMap, String category) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity updateSettingsByCategory(String authHeader, Map<String, String> settingsMap, String category) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));

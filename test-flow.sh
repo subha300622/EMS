@@ -103,10 +103,10 @@ else
   echo "⚠ Manager login failed"
 fi
 
-# ── Step 9: Verify SUPER_ADMIN permissions via /users/profile ─
+# ── Step 9: Verify SUPER_ADMIN permissions via /employees/me/profile ─
 echo ""
 echo "▶ Step 9: SUPER_ADMIN Profile (should show role=SUPER_ADMIN)"
-curl -s "$BASE/users/profile" -H "$AUTH" | python3 -m json.tool
+curl -s "$BASE/employees/me/profile" -H "$AUTH" | python3 -m json.tool
 
 echo ""
 echo "============================================"

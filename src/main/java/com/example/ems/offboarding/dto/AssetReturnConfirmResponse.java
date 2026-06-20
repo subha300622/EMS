@@ -1,10 +1,15 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class AssetReturnConfirmResponse {
 
+    @Schema(example = "1")
     private Long assetId;
+    @Schema(example = "string")
     private String assetName;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String verifiedBy;
 
     public AssetReturnConfirmResponse() {}

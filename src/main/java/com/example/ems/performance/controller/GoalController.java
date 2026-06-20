@@ -28,7 +28,7 @@ import java.util.ArrayList;
 @RestController
 @RequestMapping("/api/v1/goals")
 @CrossOrigin("*")
-@Tag(name = "Goals")
+@Tag(name = "Performance Management")
 public class GoalController {
 
     @Autowired
@@ -65,12 +65,14 @@ public class GoalController {
         return employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
     }
 
-    private ResponseEntity<?> unauthorizedResponse() {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private ResponseEntity<?> forbiddenResponse(String permission) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
@@ -98,11 +100,12 @@ public class GoalController {
 
     // 1. Create Goal
     @PostMapping
-    public ResponseEntity<?> createGoal(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody CreateGoalRequest request) {
+            @Valid @RequestBody CreateGoalRequest request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Employee employee = resolveEmployee(currentUser);
         boolean isSelf = employee != null && request.getEmployeeId().equals(employee.getId());
@@ -112,24 +115,25 @@ public class GoalController {
                 || roleService.hasPermission(currentUser.getWorkEmail(), "goal.create");
 
         if (!allowed) {
-            return forbiddenResponse("goal.create");
+            return (ResponseEntity) forbiddenResponse("goal.create");
         }
 
         try {
             Map<String, Object> data = goalService.createGoal(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Goal created successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     @GetMapping
-    public ResponseEntity<?> getAllGoals(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAllGoals(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestParam(required = false) Long employeeId) {
+            @RequestParam(required = false) Long employeeId){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Employee employee = resolveEmployee(currentUser);
         
@@ -139,7 +143,7 @@ public class GoalController {
                     Map<String, Object> data = goalService.getMyGoals(currentUser.getWorkEmail());
                     return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", data.get("goals")));
                 } catch (Exception e) {
-                    return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+                    return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
                 }
             }
             
@@ -148,7 +152,7 @@ public class GoalController {
             boolean hasGlobalRead = roleService.hasPermission(currentUser.getWorkEmail(), "goal.read");
             
             if (!isManager && !hasGlobalRead && !roleService.isSuperAdmin(currentUser.getWorkEmail())) {
-                return forbiddenResponse("goal.read");
+                return (ResponseEntity) forbiddenResponse("goal.read");
             }
             
             try {
@@ -158,7 +162,7 @@ public class GoalController {
                     return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", java.util.Collections.emptyList()));
                 }
             } catch (Exception e) {
-                return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+                return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
             }
         }
 
@@ -179,101 +183,105 @@ public class GoalController {
 
     // 2. Get My Goals
     @GetMapping("/my")
-    public ResponseEntity<?> getMyGoals(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyGoals(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         boolean allowed = roleService.isSuperAdmin(currentUser.getWorkEmail())
                 || roleService.hasPermission(currentUser.getWorkEmail(), "goal.self.read")
                 || roleService.hasPermission(currentUser.getWorkEmail(), "goal.read");
 
         if (!allowed) {
-            return forbiddenResponse("goal.self.read");
+            return (ResponseEntity) forbiddenResponse("goal.self.read");
         }
 
         try {
             Map<String, Object> data = goalService.getMyGoals(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Goals retrieved successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 3. Get Goal Details
     @GetMapping("/{goalId}")
-    public ResponseEntity<?> getGoalDetails(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getGoalDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long goalId) {
+            @PathVariable Long goalId){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Goal goal = goalRepository.findById(goalId).orElse(null);
         if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + goalId, "GOAL_001"));
         }
 
         if (!hasAccessToGoal(currentUser, goal, "goal.self.read", "goal.read")) {
-            return forbiddenResponse("goal.read");
+            return (ResponseEntity) forbiddenResponse("goal.read");
         }
 
         try {
             Map<String, Object> data = goalService.getGoalDetails(goalId);
             return ResponseEntity.ok(ApiResponse.success("Goal details retrieved successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 4. Update Goal
     @PutMapping("/{goalId}")
-    public ResponseEntity<?> updateGoal(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long goalId,
-            @RequestBody UpdateGoalRequest request) {
+            @RequestBody UpdateGoalRequest request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Goal goal = goalRepository.findById(goalId).orElse(null);
         if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + goalId, "GOAL_001"));
         }
 
         if (!hasAccessToGoal(currentUser, goal, "goal.self.update", "goal.update")) {
-            return forbiddenResponse("goal.update");
+            return (ResponseEntity) forbiddenResponse("goal.update");
         }
 
         try {
             goalService.updateGoal(goalId, request);
             return ResponseEntity.ok(ApiResponse.success("Goal updated successfully", null));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 5. Update Goal Progress
     @PatchMapping("/{goalId}/progress")
-    public ResponseEntity<?> updateGoalProgress(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateGoalProgress(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long goalId,
-            @Valid @RequestBody UpdateGoalProgressRequest request) {
+            @Valid @RequestBody UpdateGoalProgressRequest request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Goal goal = goalRepository.findById(goalId).orElse(null);
         if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + goalId, "GOAL_001"));
         }
 
         if (!hasAccessToGoal(currentUser, goal, "goal.self.update", "goal.update")) {
-            return forbiddenResponse("goal.update");
+            return (ResponseEntity) forbiddenResponse("goal.update");
         }
 
         if (request.getProgress() == null) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("progress field is required", "VAL_001"));
         }
 
@@ -281,49 +289,51 @@ public class GoalController {
             Map<String, Object> data = goalService.updateGoalProgress(goalId, request, currentUser.getFullName());
             return ResponseEntity.ok(ApiResponse.success("Progress updated successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
 
     }
 
     // 6. Submit Goal for Approval
     @PostMapping("/{goalId}/submit")
-    public ResponseEntity<?> submitGoal(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> submitGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long goalId) {
+            @PathVariable Long goalId){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Goal goal = goalRepository.findById(goalId).orElse(null);
         if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + goalId, "GOAL_001"));
         }
 
         if (!hasAccessToGoal(currentUser, goal, "goal.self.update", "goal.submit")) {
-            return forbiddenResponse("goal.submit");
+            return (ResponseEntity) forbiddenResponse("goal.submit");
         }
 
         try {
             goalService.submitGoal(goalId);
             return ResponseEntity.ok(ApiResponse.success("Goal submitted for manager review", null));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 7. Approve Goal
-    @PostMapping("/{goalId}/approve")
-    public ResponseEntity<?> approveGoal(
+    @PatchMapping("/{goalId}/approve")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> approveGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long goalId,
-            @RequestBody(required = false) GoalDecisionRequest request) {
+            @RequestBody(required = false) GoalDecisionRequest request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Goal goal = goalRepository.findById(goalId).orElse(null);
         if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + goalId, "GOAL_001"));
         }
 
@@ -335,29 +345,30 @@ public class GoalController {
                 || isManager;
 
         if (!allowed) {
-            return forbiddenResponse("goal.approve");
+            return (ResponseEntity) forbiddenResponse("goal.approve");
         }
 
         try {
             goalService.approveGoal(goalId, request, employee);
             return ResponseEntity.ok(ApiResponse.success("Goal approved successfully", null));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 8. Reject Goal
-    @PostMapping("/{goalId}/reject")
-    public ResponseEntity<?> rejectGoal(
+    @PatchMapping("/{goalId}/reject")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> rejectGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long goalId,
-            @RequestBody(required = false) GoalDecisionRequest request) {
+            @RequestBody(required = false) GoalDecisionRequest request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Goal goal = goalRepository.findById(goalId).orElse(null);
         if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + goalId, "GOAL_001"));
         }
 
@@ -369,87 +380,90 @@ public class GoalController {
                 || isManager;
 
         if (!allowed) {
-            return forbiddenResponse("goal.reject");
+            return (ResponseEntity) forbiddenResponse("goal.reject");
         }
 
         try {
             goalService.rejectGoal(goalId, request, employee);
             return ResponseEntity.ok(ApiResponse.success("Goal rejected", null));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 9. Goal Comments
     @PostMapping("/{goalId}/comments")
-    public ResponseEntity<?> addComment(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> addComment(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long goalId,
-            @Valid @RequestBody GoalCommentRequest request) {
+            @Valid @RequestBody GoalCommentRequest request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Goal goal = goalRepository.findById(goalId).orElse(null);
         if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + goalId, "GOAL_001"));
         }
 
         if (!hasAccessToGoal(currentUser, goal, "goal.self.update", "goal.update")) {
-            return forbiddenResponse("goal.update");
+            return (ResponseEntity) forbiddenResponse("goal.update");
         }
 
         Employee employee = resolveEmployee(currentUser);
-        if (employee == null) return unauthorizedResponse();
+        if (employee == null) return (ResponseEntity) unauthorizedResponse();
 
         try {
             Map<String, Object> data = goalService.addComment(goalId, request, employee);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Comment added successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 10. Goal Progress History
     @GetMapping("/{goalId}/history")
-    public ResponseEntity<?> getGoalHistory(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getGoalHistory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long goalId) {
+            @PathVariable Long goalId){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         Goal goal = goalRepository.findById(goalId).orElse(null);
         if (goal == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + goalId, "GOAL_001"));
         }
 
         if (!hasAccessToGoal(currentUser, goal, "goal.self.read", "goal.read")) {
-            return forbiddenResponse("goal.read");
+            return (ResponseEntity) forbiddenResponse("goal.read");
         }
 
         try {
             List<Map<String, Object>> data = goalService.getHistory(goalId);
             return ResponseEntity.ok(ApiResponse.success("Progress history retrieved successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 11. Goal Dashboard
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         boolean allowed = roleService.isSuperAdmin(currentUser.getWorkEmail())
                 || roleService.hasPermission(currentUser.getWorkEmail(), "goal.self.read")
                 || roleService.hasPermission(currentUser.getWorkEmail(), "goal.read");
 
         if (!allowed) {
-            return forbiddenResponse("goal.self.read");
+            return (ResponseEntity) forbiddenResponse("goal.self.read");
         }
 
         boolean hasAllAccess = roleService.isSuperAdmin(currentUser.getWorkEmail())
@@ -459,29 +473,30 @@ public class GoalController {
             Map<String, Object> data = goalService.getDashboardData(currentUser.getWorkEmail(), hasAllAccess);
             return ResponseEntity.ok(ApiResponse.success("Goal dashboard data retrieved successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 
     // 12. Goal Analytics
     @GetMapping("/analytics")
-    public ResponseEntity<?> getAnalytics(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAnalytics(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
 
         boolean allowed = roleService.isSuperAdmin(currentUser.getWorkEmail())
                 || roleService.hasPermission(currentUser.getWorkEmail(), "goal.analytics.read");
 
         if (!allowed) {
-            return forbiddenResponse("goal.analytics.read");
+            return (ResponseEntity) forbiddenResponse("goal.analytics.read");
         }
 
         try {
             Map<String, Object> data = goalService.getAnalytics();
             return ResponseEntity.ok(ApiResponse.success("Goal analytics data retrieved successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "GOAL_ERR"));
         }
     }
 }

@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -6,11 +7,17 @@ public class ReviewCyclesResponse {
     private List<CycleSummary> cycles;
 
     public static class CycleSummary {
+        @Schema(example = "1")
         private Long reviewId;
+        @Schema(example = "string")
         private String cycleName;
+        @Schema(example = "string")
         private String period;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String dueDate;
+        @Schema(example = "1")
         private Integer completionPercentage;
 
         // Getters and Setters

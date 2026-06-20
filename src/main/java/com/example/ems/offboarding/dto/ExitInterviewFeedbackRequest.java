@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -8,14 +9,17 @@ import jakarta.validation.constraints.NotNull;
 public class ExitInterviewFeedbackRequest {
 
     @NotBlank(message = "Exit interview feedback narrative is required")
+    @Schema(example = "Excellent progress")
     private String feedback;
 
     @NotBlank(message = "Reason for leaving is required")
+    @Schema(example = "Personal business")
     private String reasonsForLeaving;
 
     @NotNull(message = "Rating is required")
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating must be at most 5")
+    @Schema(example = "1")
     private Integer rating;
 
     public String getFeedback() { return feedback; }

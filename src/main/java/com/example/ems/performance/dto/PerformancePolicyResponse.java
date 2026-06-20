@@ -1,15 +1,20 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class PerformancePolicyResponse {
+    @Schema(example = "Project Deliverables")
     private String policyTitle;
+    @Schema(example = "string")
     private String lastUpdated;
     private List<PolicySection> sections;
     private List<RatingScale> ratingScales;
 
     public static class PolicySection {
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "string")
         private String content;
 
         public PolicySection(String title, String content) {
@@ -25,8 +30,11 @@ public class PerformancePolicyResponse {
     }
 
     public static class RatingScale {
+        @Schema(example = "1")
         private Integer score;
+        @Schema(example = "string")
         private String label;
+        @Schema(example = "Detailed description of the item")
         private String description;
 
         public RatingScale(Integer score, String label, String description) {

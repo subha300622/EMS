@@ -1,25 +1,42 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.performance.entity.PerformanceReview;
 
 import java.time.LocalDateTime;
 
 public class PerformanceReviewResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "john.doe@example.com")
     private String employeeEmail;
+    @Schema(example = "1")
     private Long cycleId;
+    @Schema(example = "string")
     private String cycleName;
+    @Schema(example = "string")
     private String reviewType;
+    @Schema(example = "1")
     private Long reviewerId;
+    @Schema(example = "string")
     private String reviewerName;
+    @Schema(example = "string")
     private String achievements;
+    @Schema(example = "string")
     private String areasForImprovement;
+    @Schema(example = "Excellent progress")
     private String comments;
+    @Schema(example = "1")
     private Integer rating;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public PerformanceReviewResponse() {}

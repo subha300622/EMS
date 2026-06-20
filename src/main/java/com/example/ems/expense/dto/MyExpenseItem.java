@@ -1,19 +1,30 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class MyExpenseItem {
+    @Schema(example = "1")
     private Long expenseId;
+    @Schema(example = "string")
     private String expenseNumber;
+    @Schema(example = "string")
     private String category;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "2026-06-19")
     private LocalDate expenseDate;
+    @Schema(example = "5000.00")
     private BigDecimal amount;
+    @Schema(example = "string")
     private String currency;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime submittedAt;
+    @Schema(example = "ACTIVE")
     private String reimbursementStatus;
     private ActionInfo actions;
 
@@ -67,8 +78,11 @@ public class MyExpenseItem {
     public void setActions(ActionInfo actions) { this.actions = actions; }
 
     public static class ActionInfo {
+        @Schema(example = "true")
         private boolean canEdit;
+        @Schema(example = "true")
         private boolean canWithdraw;
+        @Schema(example = "true")
         private boolean canView;
 
         public ActionInfo() {}

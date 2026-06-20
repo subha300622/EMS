@@ -1,9 +1,12 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class SelfAssessmentRequest {
+    @Schema(example = "1")
     private Integer selfRating;
+    @Schema(example = "string")
     private String selfReview;
     private List<String> achievements;
     private List<String> strengths;

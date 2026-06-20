@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class SchedulePoliciesResponse {
 
@@ -11,10 +12,15 @@ public class SchedulePoliciesResponse {
     }
 
     public static class PolicyInfo {
+        @Schema(example = "1")
         private Integer workingDaysPerWeek;
+        @Schema(example = "string")
         private String standardWorkingHours;
+        @Schema(example = "true")
         private Boolean flexibleWorkingAllowed;
+        @Schema(example = "1")
         private Integer minimumShiftChangeNoticeHours;
+        @Schema(example = "true")
         private Boolean remoteWorkAllowed;
 
         public PolicyInfo() {}

@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -9,15 +10,20 @@ import java.time.LocalDate;
 public class PerformanceGoalRequest {
 
     @NotNull(message = "Employee ID is required")
+    @Schema(example = "1")
     private Long employeeId;
 
+    @Schema(example = "1")
     private Long cycleId;
 
     @NotBlank(message = "Goal title is required")
+    @Schema(example = "Project Deliverables")
     private String title;
 
+    @Schema(example = "Detailed description of the item")
     private String description;
 
+    @Schema(example = "2026-06-19")
     private LocalDate dueDate;
 
     public Long getEmployeeId() { return employeeId; }

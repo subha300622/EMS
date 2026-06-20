@@ -1,4 +1,5 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,15 +8,19 @@ import jakarta.validation.constraints.Positive;
 public class DmsDocumentVersionRequest {
 
     @NotBlank(message = "File name is required")
+    @Schema(example = "string")
     private String fileName;
 
     @NotNull(message = "File size is required")
     @Positive(message = "File size must be positive")
+    @Schema(example = "10")
     private Long fileSize;
 
     @NotBlank(message = "Download URL is required")
+    @Schema(example = "string")
     private String downloadUrl;
 
+    @Schema(example = "string")
     private String changeNotes;
 
     public DmsDocumentVersionRequest() {}

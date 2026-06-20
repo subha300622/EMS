@@ -26,7 +26,7 @@ import java.math.BigDecimal;
 @RestController
 @RequestMapping("/api/v1/payroll-settings")
 @CrossOrigin("*")
-@Tag(name = "Payroll Settings")
+@Tag(name = "Payroll Management")
 public class PayrollSettingsController {
 
     @Autowired
@@ -67,16 +67,17 @@ public class PayrollSettingsController {
 
     // --- PARAMETERS ---
     @GetMapping("/parameters")
-    public ResponseEntity<?> getParameters(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getParameters(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
@@ -85,17 +86,18 @@ public class PayrollSettingsController {
 
     @PostMapping("/parameters")
     @Transactional
-    public ResponseEntity<?> saveParameter(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> saveParameter(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody PayrollSetting request) {
+            @RequestBody PayrollSetting request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
@@ -105,23 +107,24 @@ public class PayrollSettingsController {
             existing.setDescription(request.getDescription());
             return ResponseEntity.ok(ApiResponse.success("Payroll parameter updated", payrollSettingRepository.save(existing)));
         } else {
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Payroll parameter created", payrollSettingRepository.save(request)));
         }
     }
 
     // --- COMPONENTS ---
     @GetMapping("/components")
-    public ResponseEntity<?> getComponents(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getComponents(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
@@ -130,44 +133,46 @@ public class PayrollSettingsController {
 
     @PostMapping("/components")
     @Transactional
-    public ResponseEntity<?> createComponent(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createComponent(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody SalaryComponent component) {
+            @RequestBody SalaryComponent component){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Salary component created", salaryComponentRepository.save(component)));
     }
 
     @PutMapping("/components/{id}")
     @Transactional
-    public ResponseEntity<?> updateComponent(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateComponent(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody SalaryComponent request) {
+            @RequestBody SalaryComponent request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
         SalaryComponent component = salaryComponentRepository.findById(id).orElse(null);
         if (component == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Salary component not found with ID: " + id, "COM_001"));
         }
 
@@ -182,17 +187,18 @@ public class PayrollSettingsController {
 
     @DeleteMapping("/components/{id}")
     @Transactional
-    public ResponseEntity<?> deleteComponent(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteComponent(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
@@ -200,23 +206,24 @@ public class PayrollSettingsController {
             salaryComponentRepository.deleteById(id);
             return ResponseEntity.ok(ApiResponse.success("Salary component deleted", null));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Salary component not found with ID: " + id, "COM_001"));
         }
     }
 
     // --- TAX SLABS ---
     @GetMapping("/tax-slabs")
-    public ResponseEntity<?> getTaxSlabs(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getTaxSlabs(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
@@ -225,44 +232,46 @@ public class PayrollSettingsController {
 
     @PostMapping("/tax-slabs")
     @Transactional
-    public ResponseEntity<?> createTaxSlab(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createTaxSlab(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody TaxSlab slab) {
+            @RequestBody TaxSlab slab){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Tax slab created", taxSlabRepository.save(slab)));
     }
 
     @PutMapping("/tax-slabs/{id}")
     @Transactional
-    public ResponseEntity<?> updateTaxSlab(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateTaxSlab(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody TaxSlab request) {
+            @RequestBody TaxSlab request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
         TaxSlab slab = taxSlabRepository.findById(id).orElse(null);
         if (slab == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Tax slab not found with ID: " + id, "SLB_001"));
         }
 
@@ -276,17 +285,18 @@ public class PayrollSettingsController {
 
     @DeleteMapping("/tax-slabs/{id}")
     @Transactional
-    public ResponseEntity<?> deleteTaxSlab(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteTaxSlab(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "payroll-settings.manage")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'payroll-settings.manage' permission.", "AUTH_002"));
         }
 
@@ -294,7 +304,7 @@ public class PayrollSettingsController {
             taxSlabRepository.deleteById(id);
             return ResponseEntity.ok(ApiResponse.success("Tax slab deleted", null));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Tax slab not found with ID: " + id, "SLB_001"));
         }
     }

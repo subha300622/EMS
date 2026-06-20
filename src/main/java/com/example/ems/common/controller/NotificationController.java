@@ -1,4 +1,5 @@
 package com.example.ems.common.controller;
+import java.util.List;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Administration")
+@Tag(name = "Notifications")
 public class NotificationController {
 
     @Autowired
@@ -42,12 +43,13 @@ public class NotificationController {
 
     // ── 1. GET ALL MY NOTIFICATIONS ──────────────────────────────────────────
     @GetMapping("/notifications/my")
-    public ResponseEntity<?> getMyNotifications(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Notification>>> getMyNotifications(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -57,37 +59,39 @@ public class NotificationController {
 
     // ── 2. MARK NOTIFICATION AS READ ─────────────────────────────────────────
     @PutMapping("/notifications/{id}/read")
-    public ResponseEntity<?> markAsRead(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> markAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         try {
             Notification n = notificationService.getNotificationById(id).orElse(null);
             if (n == null || !n.getUser().getId().equals(currentUser.getId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(ErrorResponse.error("Access Denied: You cannot modify this notification.", "AUTH_002"));
             }
             Notification updated = notificationService.markAsRead(id);
             return ResponseEntity.ok(ApiResponse.success("Notification marked as read", updated));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "NT_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "NT_001"));
         }
     }
 
     // ── 3. MARK ALL AS READ ──────────────────────────────────────────────────
     @PutMapping("/notifications/read-all")
-    public ResponseEntity<?> markAllAsRead(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> markAllAsRead(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -97,19 +101,20 @@ public class NotificationController {
 
     // ── 4. DELETE NOTIFICATION ───────────────────────────────────────────────
     @DeleteMapping("/notifications/{id}")
-    public ResponseEntity<?> deleteNotification(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteNotification(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         boolean deleted = notificationService.deleteNotification(id, currentUser.getId());
         if (!deleted) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied or notification not found", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Notification deleted successfully"));

@@ -1,4 +1,5 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,17 +8,22 @@ import java.time.LocalDate;
 public class CreateAssetRequest {
 
     @NotBlank(message = "Asset category is required")
+    @Schema(example = "string")
     private String assetCategory;
 
     @NotBlank(message = "Requested model is required")
+    @Schema(example = "string")
     private String requestedModel;
 
     @NotBlank(message = "Business reason is required")
+    @Schema(example = "Personal business")
     private String businessReason;
 
+    @Schema(example = "string")
     private String priority = "MEDIUM"; // default
 
     @NotNull(message = "Required by date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate requiredByDate;
 
     public CreateAssetRequest() {}

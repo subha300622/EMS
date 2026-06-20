@@ -18,6 +18,13 @@ public class Department {
 
     private String description;
 
+    private Long parentDepartmentId;
+    private Long managerId;
+    private java.math.BigDecimal budget = java.math.BigDecimal.ZERO;
+    private String status = "ACTIVE";
+    private String costCenter;
+    private java.math.BigDecimal utilizedBudget = java.math.BigDecimal.ZERO;
+
     public Department() {}
 
     public Department(Long id, String name, String code, String description) {
@@ -25,6 +32,17 @@ public class Department {
         this.name = name;
         this.code = code;
         this.description = description;
+    }
+
+    public Department(Long id, String name, String code, String description, Long parentDepartmentId, Long managerId, java.math.BigDecimal budget, String status) {
+        this.id = id;
+        this.name = name;
+        this.code = code;
+        this.description = description;
+        this.parentDepartmentId = parentDepartmentId;
+        this.managerId = managerId;
+        this.budget = budget != null ? budget : java.math.BigDecimal.ZERO;
+        this.status = status != null ? status : "ACTIVE";
     }
 
     public Long getId() {
@@ -57,5 +75,53 @@ public class Department {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Long getParentDepartmentId() {
+        return parentDepartmentId;
+    }
+
+    public void setParentDepartmentId(Long parentDepartmentId) {
+        this.parentDepartmentId = parentDepartmentId;
+    }
+
+    public Long getManagerId() {
+        return managerId;
+    }
+
+    public void setManagerId(Long managerId) {
+        this.managerId = managerId;
+    }
+
+    public java.math.BigDecimal getBudget() {
+        return budget;
+    }
+
+    public void setBudget(java.math.BigDecimal budget) {
+        this.budget = budget;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getCostCenter() {
+        return costCenter;
+    }
+
+    public void setCostCenter(String costCenter) {
+        this.costCenter = costCenter;
+    }
+
+    public java.math.BigDecimal getUtilizedBudget() {
+        return utilizedBudget;
+    }
+
+    public void setUtilizedBudget(java.math.BigDecimal utilizedBudget) {
+        this.utilizedBudget = utilizedBudget;
     }
 }

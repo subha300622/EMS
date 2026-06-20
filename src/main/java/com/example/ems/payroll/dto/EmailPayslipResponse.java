@@ -1,11 +1,15 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
 public class EmailPayslipResponse {
 
+    @Schema(example = "string")
     private String message;
+    @Schema(example = "1")
     private Long payslipId;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime sentAt;
 
     public EmailPayslipResponse() {}

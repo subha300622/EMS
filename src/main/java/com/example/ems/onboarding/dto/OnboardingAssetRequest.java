@@ -1,4 +1,5 @@
 package com.example.ems.onboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -8,11 +9,14 @@ import jakarta.validation.constraints.NotNull;
 public class OnboardingAssetRequest {
 
     @NotNull(message = "Onboarding ID is required")
+    @Schema(example = "1")
     private Long onboardingId;
 
     @NotBlank(message = "Asset name is required")
+    @Schema(example = "string")
     private String assetName;
 
+    @Schema(example = "string")
     private String serialNumber;
 
     public Long getOnboardingId() { return onboardingId; }

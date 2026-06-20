@@ -1,4 +1,6 @@
 package com.example.ems.common.controller;
+import java.util.List;
+import java.util.Map;
 
 import com.example.ems.appraisal.repository.IncrementRepository;
 import com.example.ems.attendance.service.AttendanceService;
@@ -31,7 +33,7 @@ import java.util.*;
 @RestController
 @RequestMapping("/api/v1/dashboard")
 @CrossOrigin("*")
-@Tag(name = "Dashboard")
+@Tag(name = "Reports & Analytics")
 public class DashboardController {
 
     @Autowired
@@ -68,11 +70,12 @@ public class DashboardController {
     private ApprovalCenterService approvalCenterService;
 
     @GetMapping
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -115,7 +118,7 @@ public class DashboardController {
         } else {
             // Default: Employee Dashboard
             if (employee == null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
             }
 
@@ -198,11 +201,12 @@ public class DashboardController {
     }
 
     @GetMapping("/widgets")
-    public ResponseEntity<?> getWidgets(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getWidgets(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 

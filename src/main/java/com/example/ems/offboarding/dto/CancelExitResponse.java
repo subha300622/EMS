@@ -1,9 +1,13 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class CancelExitResponse {
 
+    @Schema(example = "1")
     private Long exitRequestId;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String message;
 
     public CancelExitResponse() {}

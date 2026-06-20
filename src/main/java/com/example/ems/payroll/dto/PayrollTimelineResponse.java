@@ -1,4 +1,5 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -17,8 +18,11 @@ public class PayrollTimelineResponse {
     public void setEvents(List<TimelineEventItem> events) { this.events = events; }
 
     public static class TimelineEventItem {
+        @Schema(example = "2026-06-19")
         private LocalDate date;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String performedBy;
 
         public TimelineEventItem() {}

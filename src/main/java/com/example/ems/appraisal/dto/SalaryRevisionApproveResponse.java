@@ -1,13 +1,18 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class SalaryRevisionApproveResponse {
 
+    @Schema(example = "string")
     private String revisionId;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String approvedAt;
+    @Schema(example = "string")
     private String approvedBy;
 
     public SalaryRevisionApproveResponse() {}

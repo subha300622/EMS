@@ -1,13 +1,20 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
 public class EmployeeProfileResponse {
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "EMP101")
     private String employeeCode;
+    @Schema(example = "John Doe")
     private String fullName;
+    @Schema(example = "string")
     private String profileImage;
+    @Schema(example = "Software Engineer")
     private String designation;
+    @Schema(example = "Engineering")
     private String department;
     private ManagerProfileDto manager;
     private ContactProfileDto contact;
@@ -60,7 +67,9 @@ public class EmployeeProfileResponse {
     public void setSkills(List<String> skills) { this.skills = skills; }
 
     public static class ManagerProfileDto {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "string")
         private String name;
 
         public ManagerProfileDto() {}
@@ -78,7 +87,9 @@ public class EmployeeProfileResponse {
     }
 
     public static class ContactProfileDto {
+        @Schema(example = "john.doe@example.com")
         private String email;
+        @Schema(example = "+1-555-0199")
         private String phone;
 
         public ContactProfileDto() {}
@@ -96,9 +107,13 @@ public class EmployeeProfileResponse {
     }
 
     public static class WorkInformationDto {
+        @Schema(example = "Bangalore")
         private String location;
+        @Schema(example = "string")
         private String workMode;
+        @Schema(example = "string")
         private String joiningDate;
+        @Schema(example = "ACTIVE")
         private String status;
 
         public WorkInformationDto() {}

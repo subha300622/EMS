@@ -1,4 +1,5 @@
 package com.example.ems.onboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.onboarding.entity.Onboarding;
 import com.example.ems.onboarding.entity.OnboardingAsset;
@@ -12,14 +13,23 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class OnboardingResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "john.doe@example.com")
     private String employeeEmail;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
+    @Schema(example = "2026-06-19")
     private LocalDate completionDate;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     private List<OnboardingTaskResponse> tasks;
@@ -101,10 +111,15 @@ public class OnboardingResponse {
 
     // Nested DTO classes
     public static class AssetResponse {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "string")
         private String assetName;
+        @Schema(example = "string")
         private String serialNumber;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime assignedAt;
 
         public AssetResponse(OnboardingAsset asset) {
@@ -123,9 +138,13 @@ public class OnboardingResponse {
     }
 
     public static class TrainingResponse {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "string")
         private String courseName;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime completedAt;
 
         public TrainingResponse(OnboardingTraining t) {

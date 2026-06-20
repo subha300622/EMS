@@ -1,13 +1,22 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class DmsDashboardResponse {
+    @Schema(example = "1")
     private long totalDocuments;
+    @Schema(example = "1")
     private long pendingApprovals;
+    @Schema(example = "1")
     private long approvedDocuments;
+    @Schema(example = "1")
     private long rejectedDocuments;
+    @Schema(example = "1")
     private long expiringSoon;
+    @Schema(example = "1")
     private long totalShares;
+    @Schema(example = "1")
     private long totalSignatureRequests;
+    @Schema(example = "1")
     private long pendingSignatureRequests;
 
     public DmsDashboardResponse() {}

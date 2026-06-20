@@ -1,4 +1,5 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.common.entity.DmsDocument;
 
@@ -6,20 +7,35 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class DmsDocumentResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "Project Deliverables")
     private String title;
+    @Schema(example = "Detailed description of the item")
     private String description;
+    @Schema(example = "string")
     private String fileName;
+    @Schema(example = "string")
     private String fileType;
+    @Schema(example = "10")
     private Long fileSize;
+    @Schema(example = "string")
     private String downloadUrl;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String category;
+    @Schema(example = "2026-06-19")
     private LocalDate expiryDate;
+    @Schema(example = "1")
     private Long employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "john.doe@example.com")
     private String uploadedByEmail;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime updatedAt;
 
     public DmsDocumentResponse() {}

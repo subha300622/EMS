@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -8,27 +9,36 @@ import java.util.List;
 public class CreateGoalRequest {
 
     @NotBlank(message = "Title is required")
+    @Schema(example = "Project Deliverables")
     private String title;
 
+    @Schema(example = "Detailed description of the item")
     private String description;
 
     @NotBlank(message = "Goal type is required")
+    @Schema(example = "string")
     private String goalType; // INDIVIDUAL, DEPARTMENT, ORGANIZATIONAL
 
     @NotBlank(message = "Priority is required")
+    @Schema(example = "string")
     private String priority; // LOW, MEDIUM, HIGH, CRITICAL
 
+    @Schema(example = "1")
     private Integer weightage;
 
     @NotNull(message = "Start date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate startDate;
 
     @NotNull(message = "Target date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate targetDate;
 
     @NotNull(message = "Employee ID is required")
+    @Schema(example = "1")
     private Long employeeId;
 
+    @Schema(example = "1")
     private Long managerId;
 
     private List<KeyResultItem> keyResults;
@@ -65,8 +75,11 @@ public class CreateGoalRequest {
     public void setKeyResults(List<KeyResultItem> keyResults) { this.keyResults = keyResults; }
 
     public static class KeyResultItem {
+        @Schema(example = "Project Deliverables")
         private String title;
+        @Schema(example = "1")
         private Integer targetValue;
+        @Schema(example = "string")
         private String unit;
 
         public String getTitle() { return title; }

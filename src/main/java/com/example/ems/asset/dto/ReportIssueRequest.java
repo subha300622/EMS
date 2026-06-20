@@ -1,19 +1,24 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 
 public class ReportIssueRequest {
 
     @NotBlank(message = "Issue type is required")
+    @Schema(example = "string")
     private String issueType; // HARDWARE, SOFTWARE, NETWORK
 
     @NotBlank(message = "Severity is required")
+    @Schema(example = "string")
     private String severity; // LOW, MEDIUM, HIGH
 
     @NotBlank(message = "Title is required")
+    @Schema(example = "Project Deliverables")
     private String title;
 
     @NotBlank(message = "Description is required")
+    @Schema(example = "Detailed description of the item")
     private String description;
 
     public ReportIssueRequest() {}

@@ -1,4 +1,5 @@
 package com.example.ems.attendance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 
 
@@ -10,18 +11,22 @@ import java.time.LocalTime;
 public class AttendanceRequest {
 
     @NotNull(message = "Employee ID is required")
+    @Schema(example = "1")
     private Long employeeId;
 
     @NotNull(message = "Date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate date;
 
     @NotBlank(message = "Status is required")
+    @Schema(example = "ACTIVE")
     private String status;
 
     private LocalTime punchInTime;
 
     private LocalTime punchOutTime;
 
+    @Schema(example = "string")
     private String notes;
 
     public AttendanceRequest() {}

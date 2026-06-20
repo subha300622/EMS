@@ -1,10 +1,15 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class MyDocumentPreviewResponse {
 
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "string")
     private String documentName;
+    @Schema(example = "string")
     private String previewUrl;
+    @Schema(example = "1")
     private int expiresInSeconds;
 
     public MyDocumentPreviewResponse() {}

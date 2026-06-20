@@ -1,22 +1,35 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class MyDocumentDetailsResponse {
 
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "string")
     private String documentName;
+    @Schema(example = "string")
     private String documentType;
+    @Schema(example = "string")
     private String category;
+    @Schema(example = "string")
     private String fileName;
+    @Schema(example = "string")
     private String fileType;
+    @Schema(example = "string")
     private String fileSize;
+    @Schema(example = "string")
     private String documentNumber;
+    @Schema(example = "2026-06-19")
     private LocalDate issuedDate;
+    @Schema(example = "2026-06-19")
     private LocalDate expiryDate;
+    @Schema(example = "1")
     private int version;
     private VerificationInfo verification;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
 
     public MyDocumentDetailsResponse() {}
@@ -65,9 +78,13 @@ public class MyDocumentDetailsResponse {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public static class VerificationInfo {
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String verifiedBy;
+        @Schema(example = "2026-06-19T10:00:00")
         private LocalDateTime verifiedAt;
+        @Schema(example = "string")
         private String remarks;
 
         public VerificationInfo() {}

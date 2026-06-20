@@ -1,8 +1,10 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class EmployeeDirectoryDashboardResponse {
     private MyTeamSummary myTeam;
     private DirectorySummary directorySummary;
+    @Schema(example = "string")
     private String lastUpdatedAt;
 
     public EmployeeDirectoryDashboardResponse() {}
@@ -23,8 +25,11 @@ public class EmployeeDirectoryDashboardResponse {
     public void setLastUpdatedAt(String lastUpdatedAt) { this.lastUpdatedAt = lastUpdatedAt; }
 
     public static class MyTeamSummary {
+        @Schema(example = "Engineering")
         private String department;
+        @Schema(example = "string")
         private String teamName;
+        @Schema(example = "1")
         private int totalMembers;
 
         public MyTeamSummary() {}
@@ -46,9 +51,13 @@ public class EmployeeDirectoryDashboardResponse {
     }
 
     public static class DirectorySummary {
+        @Schema(example = "1")
         private long totalEmployees;
+        @Schema(example = "1")
         private long activeEmployees;
+        @Schema(example = "1")
         private long remoteEmployees;
+        @Schema(example = "1")
         private long onLeaveEmployees;
 
         public DirectorySummary() {}

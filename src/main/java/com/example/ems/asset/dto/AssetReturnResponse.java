@@ -1,18 +1,28 @@
 package com.example.ems.asset.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class AssetReturnResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "string")
     private String returnReference;
+    @Schema(example = "1")
     private Long assetId;
+    @Schema(example = "string")
     private String assetName;
+    @Schema(example = "Personal business")
     private String returnReason;
+    @Schema(example = "string")
     private String assetCondition;
     private List<String> accessoriesReturned;
+    @Schema(example = "Excellent progress")
     private String comments;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime requestedAt;
 
     public AssetReturnResponse() {}

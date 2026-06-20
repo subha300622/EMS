@@ -1,4 +1,6 @@
 package com.example.ems.employee.controller;
+import java.util.List;
+import com.example.ems.payroll.entity.Payroll;
 
 import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.attendance.service.AttendanceService;
@@ -23,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Employees")
+@Tag(name = "Employee Management")
 public class EmployeeController {
     @Autowired
     private EmployeeService employeeService;
@@ -47,42 +49,44 @@ public class EmployeeController {
     private com.example.ems.payroll.service.PayrollService payrollService;
 
     @PostMapping("/employees")
-    public ResponseEntity<?> createEmployee(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid EmployeeRequest request) {
+            @RequestBody @Valid EmployeeRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.create' permission.", "AUTH_002"));
         }
 
         try {
             Employee created = employeeService.createEmployee(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Employee created successfully", created));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_001"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_001"));
         }
     }
 
     @GetMapping("/employees")
-    public ResponseEntity<?> getAllEmployees(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Employee>>> getAllEmployees(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
 
@@ -90,67 +94,70 @@ public class EmployeeController {
     }
 
     @GetMapping("/employees/{id}")
-    public ResponseEntity<?> getEmployeeById(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEmployeeById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
 
-        return employeeService.getEmployeeById(id)
+        return (ResponseEntity) employeeService.getEmployeeById(id)
                 .<ResponseEntity<?>>map(emp -> ResponseEntity.ok(ApiResponse.success("Employee details retrieved successfully", emp)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002")));
     }
 
     @PutMapping("/employees/{id}")
-    public ResponseEntity<?> updateEmployee(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ErrorResponse> updateEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody @Valid EmployeeRequest request) {
+            @RequestBody @Valid EmployeeRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.write")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.write' permission.", "AUTH_002"));
         }
 
         try {
-            return employeeService.updateEmployee(id, request)
+            return (ResponseEntity) employeeService.updateEmployee(id, request)
                     .<ResponseEntity<?>>map(emp -> ResponseEntity.ok(ApiResponse.success("Employee updated successfully", emp)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002")));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_003"));
         }
     }
 
     @DeleteMapping("/employees/{id}")
-    public ResponseEntity<?> deleteEmployee(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.delete")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.delete' permission.", "AUTH_002"));
         }
 
@@ -158,24 +165,25 @@ public class EmployeeController {
         if (deleted) {
             return ResponseEntity.ok(ApiResponse.success("Employee deleted successfully"));
         } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
         }
     }
 
     @GetMapping("/employees/department/{departmentId}")
-    public ResponseEntity<?> getEmployeesByDepartment(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEmployeesByDepartment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("departmentId") String departmentId) {
+            @PathVariable("departmentId") String departmentId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
 
@@ -184,18 +192,19 @@ public class EmployeeController {
     }
 
     @GetMapping("/employees/manager/{managerId}")
-    public ResponseEntity<?> getEmployeesByManager(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEmployeesByManager(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("managerId") Long managerId) {
+            @PathVariable("managerId") Long managerId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
 
@@ -206,26 +215,27 @@ public class EmployeeController {
 
     // ── 10. Get Salary Details ───────────────────────────────────────────────
     @GetMapping("/employees/{id}/salary")
-    public ResponseEntity<?> getEmployeeSalary(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEmployeeSalary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Employee employee = employeeService.getEmployeeById(id).orElse(null);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
         }
 
         boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(employee.getEmail());
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view this employee's salary details.", "AUTH_002"));
         }
 
@@ -244,26 +254,27 @@ public class EmployeeController {
 
     // ── 11. Get Attendance Summary ───────────────────────────────────────────
     @GetMapping("/employees/{id}/attendance-summary")
-    public ResponseEntity<?> getEmployeeAttendanceSummary(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEmployeeAttendanceSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Employee employee = employeeService.getEmployeeById(id).orElse(null);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
         }
 
         boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(employee.getEmail());
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view this employee's attendance summary.", "AUTH_002"));
         }
 
@@ -286,26 +297,27 @@ public class EmployeeController {
 
     // ── 12. Get Leave Summary ────────────────────────────────────────────────
     @GetMapping("/employees/{id}/leave-summary")
-    public ResponseEntity<?> getEmployeeLeaveSummary(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEmployeeLeaveSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Employee employee = employeeService.getEmployeeById(id).orElse(null);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
         }
 
         boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(employee.getEmail());
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view this employee's leave summary.", "AUTH_002"));
         }
 
@@ -319,54 +331,56 @@ public class EmployeeController {
     }
 
     @PatchMapping("/employees/{id}/status")
-    public ResponseEntity<?> updateEmployeeStatus(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ErrorResponse> updateEmployeeStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody @Valid com.example.ems.auth.dto.UpdateStatusRequest request) {
+            @RequestBody @Valid com.example.ems.auth.dto.UpdateStatusRequest request){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.write")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.write' permission.", "AUTH_002"));
         }
 
         try {
-            return employeeService.updateEmployeeStatus(id, request.getStatus())
+            return (ResponseEntity) employeeService.updateEmployeeStatus(id, request.getStatus())
                     .<ResponseEntity<?>>map(emp -> ResponseEntity.ok(ApiResponse.success("Employee status updated successfully", emp)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002")));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_003"));
         }
     }
 
 
     @GetMapping("/employees/{id}/payroll")
-    public ResponseEntity<?> getEmployeePayroll(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<Payroll>>> getEmployeePayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Employee employee = employeeService.getEmployeeById(id).orElse(null);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
         }
 
         boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(employee.getEmail());
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view this employee's payroll details.", "AUTH_002"));
         }
 

@@ -1,10 +1,15 @@
 package com.example.ems.auth.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class RoleUserResponse {
 
+    @Schema(example = "string")
     private String userId;
+    @Schema(example = "John Doe")
     private String fullName;
+    @Schema(example = "john.doe@example.com")
     private String email;
+    @Schema(example = "ACTIVE")
     private String status;
 
     public RoleUserResponse() {}

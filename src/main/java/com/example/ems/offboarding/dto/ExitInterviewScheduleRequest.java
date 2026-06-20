@@ -1,4 +1,5 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -7,11 +8,14 @@ import java.time.LocalDate;
 public class ExitInterviewScheduleRequest {
 
     @NotNull(message = "Preferred date is required")
+    @Schema(example = "2026-06-19")
     private LocalDate preferredDate;
 
     @NotBlank(message = "Preferred time is required")
+    @Schema(example = "string")
     private String preferredTime;
 
+    @Schema(example = "Excellent progress")
     private String comments;
 
     public LocalDate getPreferredDate() { return preferredDate; }

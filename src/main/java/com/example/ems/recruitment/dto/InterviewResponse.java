@@ -1,19 +1,28 @@
 package com.example.ems.recruitment.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.recruitment.entity.Interview;
 
 import java.time.LocalDateTime;
 
 public class InterviewResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "string")
     private String interviewerName;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime interviewDate;
+    @Schema(example = "string")
     private String type;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "Excellent progress")
     private String feedback;
+    @Schema(example = "1")
     private Integer rating;
     private CandidateResponse candidate;
     private JobResponse job;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime createdAt;
 
     public InterviewResponse() {}

@@ -108,27 +108,30 @@ public class MyExpenseController {
                 || roleService.isSuperAdmin(currentUser.getWorkEmail());
     }
 
-    private ResponseEntity<?> unauthorizedResponse() {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private ResponseEntity<?> forbiddenResponse(String permission) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
 
     // 1. Get Expense Dashboard
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.read")) return forbiddenResponse("expense.self.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.read")) return (ResponseEntity) forbiddenResponse("expense.self.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
@@ -138,7 +141,8 @@ public class MyExpenseController {
 
     // 2. Get My Expense List
     @GetMapping
-    public ResponseEntity<?> getMyExpenses(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyExpenses(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String category,
@@ -146,15 +150,15 @@ public class MyExpenseController {
             @RequestParam(required = false) String toDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "expenseDate,desc") String sort) {
+            @RequestParam(defaultValue = "expenseDate,desc") String sort){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.read")) return forbiddenResponse("expense.self.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.read")) return (ResponseEntity) forbiddenResponse("expense.self.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
@@ -181,17 +185,18 @@ public class MyExpenseController {
 
     // 3. Create Expense Claim
     @PostMapping
-    public ResponseEntity<?> createExpense(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody CreateExpenseRequest request) {
+            @Valid @RequestBody CreateExpenseRequest request){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.create")) return forbiddenResponse("expense.self.create");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.create")) return (ResponseEntity) forbiddenResponse("expense.self.create");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
@@ -199,35 +204,36 @@ public class MyExpenseController {
             CreateExpenseResponse response = expenseService.createExpense(request, employee);
             return ResponseEntity.ok(ApiResponse.success("Expense claim submitted successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
         }
     }
 
     // 4. Get Expense Details
     @GetMapping("/{expenseId}")
-    public ResponseEntity<?> getExpenseDetails(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getExpenseDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("expenseId") Long expenseId) {
+            @PathVariable("expenseId") Long expenseId){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.read")) return forbiddenResponse("expense.self.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.read")) return (ResponseEntity) forbiddenResponse("expense.self.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<Expense> expOpt = expenseRepository.findById(expenseId);
         if (expOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Expense claim not found with ID: " + expenseId, "EXP_404"));
         }
 
         if (!isExpenseOwnerOrAdmin(currentUser, employee, expOpt.get())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not own this claim.", "EXP_403"));
         }
 
@@ -235,36 +241,37 @@ public class MyExpenseController {
             ExpenseDetailsResponse response = expenseService.getExpenseDetails(expenseId, employee);
             return ResponseEntity.ok(ApiResponse.success("Expense claim details retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
         }
     }
 
     // 5. Update Expense Claim
     @PutMapping("/{expenseId}")
-    public ResponseEntity<?> updateExpense(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId,
-            @Valid @RequestBody UpdateExpenseRequest request) {
+            @Valid @RequestBody UpdateExpenseRequest request){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.update")) return forbiddenResponse("expense.self.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.update")) return (ResponseEntity) forbiddenResponse("expense.self.update");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<Expense> expOpt = expenseRepository.findById(expenseId);
         if (expOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Expense claim not found with ID: " + expenseId, "EXP_404"));
         }
 
         if (!isExpenseOwnerOrAdmin(currentUser, employee, expOpt.get())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not own this claim.", "EXP_403"));
         }
 
@@ -272,36 +279,37 @@ public class MyExpenseController {
             UpdateExpenseResponse response = expenseService.updateExpense(expenseId, request, employee);
             return ResponseEntity.ok(ApiResponse.success("Expense updated successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
         }
     }
 
     // 6. Withdraw Expense Claim
     @PatchMapping("/{expenseId}/withdraw")
-    public ResponseEntity<?> withdrawExpense(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> withdrawExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId,
-            @Valid @RequestBody WithdrawExpenseRequest request) {
+            @Valid @RequestBody WithdrawExpenseRequest request){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.withdraw")) return forbiddenResponse("expense.self.withdraw");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.withdraw")) return (ResponseEntity) forbiddenResponse("expense.self.withdraw");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<Expense> expOpt = expenseRepository.findById(expenseId);
         if (expOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Expense claim not found with ID: " + expenseId, "EXP_404"));
         }
 
         if (!isExpenseOwnerOrAdmin(currentUser, employee, expOpt.get())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not own this claim.", "EXP_403"));
         }
 
@@ -309,25 +317,26 @@ public class MyExpenseController {
             WithdrawExpenseResponse response = expenseService.withdrawExpense(expenseId, request, employee);
             return ResponseEntity.ok(ApiResponse.success("Expense claim withdrawn successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
         }
     }
 
     // 7. Upload Expense Receipt
     @PostMapping(value = "/receipts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> uploadReceipt(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> uploadReceipt(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "receiptType", required = false) String receiptType) {
+            @RequestParam(value = "receiptType", required = false) String receiptType){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.receipt.upload")) return forbiddenResponse("expense.self.receipt.upload");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.receipt.upload")) return (ResponseEntity) forbiddenResponse("expense.self.receipt.upload");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
@@ -335,16 +344,17 @@ public class MyExpenseController {
             UploadReceiptResponse response = expenseService.uploadReceipt(file, receiptType, employee);
             return ResponseEntity.ok(ApiResponse.success("Receipt uploaded successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
         }
     }
 
     // 8. Download Receipt
     @GetMapping("/receipts/{receiptId}/download")
-    public ResponseEntity<?> downloadReceipt(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<byte[]> downloadReceipt(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("receiptId") Long receiptId) {
+            @PathVariable("receiptId") Long receiptId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) return unauthorizedResponse();
@@ -352,18 +362,18 @@ public class MyExpenseController {
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<MyExpenseReceipt> receiptOpt = receiptRepository.findById(receiptId);
         if (receiptOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Receipt not found with ID: " + receiptId, "EXP_404"));
         }
 
         if (!isReceiptOwnerOrAdmin(currentUser, employee, receiptOpt.get())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not own this receipt.", "EXP_403"));
         }
 
@@ -373,37 +383,38 @@ public class MyExpenseController {
             headers.setContentType(MediaType.parseMediaType(doc.getFileType()));
             headers.setContentDispositionFormData("attachment", doc.getFileName());
             headers.setContentLength(doc.getFileData().length);
-            return new ResponseEntity<>(doc.getFileData(), headers, HttpStatus.OK);
+            return (ResponseEntity) new ResponseEntity<>(doc.getFileData(), headers, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
         }
     }
 
     // 9. Get Expense Timeline
     @GetMapping("/{expenseId}/timeline")
-    public ResponseEntity<?> getExpenseTimeline(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getExpenseTimeline(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("expenseId") Long expenseId) {
+            @PathVariable("expenseId") Long expenseId){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.timeline.read")) return forbiddenResponse("expense.self.timeline.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.timeline.read")) return (ResponseEntity) forbiddenResponse("expense.self.timeline.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<Expense> expOpt = expenseRepository.findById(expenseId);
         if (expOpt.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Expense claim not found with ID: " + expenseId, "EXP_404"));
         }
 
         if (!isExpenseOwnerOrAdmin(currentUser, employee, expOpt.get())) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not own this claim.", "EXP_403"));
         }
 
@@ -411,18 +422,19 @@ public class MyExpenseController {
             ExpenseTimelineResponse response = expenseService.getExpenseTimeline(expenseId, employee);
             return ResponseEntity.ok(ApiResponse.success("Timeline events retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
         }
     }
 
     // 10. Get Expense Categories
     @GetMapping("/categories")
-    public ResponseEntity<?> getCategories(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getCategories(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.read")) return forbiddenResponse("expense.self.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.read")) return (ResponseEntity) forbiddenResponse("expense.self.read");
 
         ExpenseCategoriesResponse response = expenseService.getCategories();
         return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", response));
@@ -430,11 +442,12 @@ public class MyExpenseController {
 
     // 11. Get Expense Policy
     @GetMapping("/policies")
-    public ResponseEntity<?> getPolicies(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getPolicies(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.read")) return forbiddenResponse("expense.self.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.read")) return (ResponseEntity) forbiddenResponse("expense.self.read");
 
         ExpensePoliciesResponse response = expenseService.getPolicies();
         return ResponseEntity.ok(ApiResponse.success("Expense policies retrieved successfully", response));

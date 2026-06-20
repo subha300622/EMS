@@ -1,11 +1,17 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class ChangeRequestResponse {
 
+    @Schema(example = "1")
     private Long requestId;
+    @Schema(example = "string")
     private String requestNumber;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String submittedAt;
+    @Schema(example = "string")
     private String message;
 
     public ChangeRequestResponse() {}

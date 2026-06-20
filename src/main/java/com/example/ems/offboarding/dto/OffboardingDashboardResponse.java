@@ -1,14 +1,24 @@
 package com.example.ems.offboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class OffboardingDashboardResponse {
+    @Schema(example = "1")
     private long totalOffboardings;
+    @Schema(example = "1")
     private long pendingOffboardings;
+    @Schema(example = "75")
     private long inProgressOffboardings;
+    @Schema(example = "1")
     private long completedOffboardings;
+    @Schema(example = "1")
     private long approvedOffboardings;
+    @Schema(example = "1")
     private long rejectedOffboardings;
+    @Schema(example = "1")
     private long totalTasksAssigned;
+    @Schema(example = "1")
     private long completedTasksCount;
+    @Schema(example = "100.00")
     private double taskCompletionRate; // completed / total
 
     public long getTotalOffboardings() { return totalOffboardings; }

@@ -1,15 +1,22 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.common.entity.DmsDocumentAuditLog;
 
 import java.time.LocalDateTime;
 
 public class DmsDocumentAuditLogResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "string")
     private String action;
+    @Schema(example = "john.doe@example.com")
     private String performedByEmail;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime performedAt;
+    @Schema(example = "string")
     private String details;
 
     public DmsDocumentAuditLogResponse() {}

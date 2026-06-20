@@ -1,11 +1,16 @@
 package com.example.ems.expense.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
 public class WithdrawExpenseResponse {
+    @Schema(example = "1")
     private Long expenseId;
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime withdrawnAt;
+    @Schema(example = "string")
     private String message;
 
     public WithdrawExpenseResponse() {}

@@ -1,4 +1,5 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -13,10 +14,15 @@ public class ScheduleNotificationsResponse {
     }
 
     public static class NotificationItem {
+        @Schema(example = "1")
         private Long notificationId;
+        @Schema(example = "string")
         private String type;
+        @Schema(example = "string")
         private String message;
+        @Schema(example = "string")
         private String createdAt;
+        @Schema(example = "true")
         private Boolean isRead;
 
         public NotificationItem() {}

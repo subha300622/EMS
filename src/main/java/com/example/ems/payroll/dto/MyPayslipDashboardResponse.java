@@ -1,4 +1,5 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -32,10 +33,15 @@ public class MyPayslipDashboardResponse {
     public void setStatistics(StatisticsInfo statistics) { this.statistics = statistics; }
 
     public static class EmployeeInfo {
+        @Schema(example = "1")
         private Long id;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "string")
         private String name;
+        @Schema(example = "Software Engineer")
         private String designation;
+        @Schema(example = "Engineering")
         private String department;
 
         public EmployeeInfo() {}
@@ -66,6 +72,7 @@ public class MyPayslipDashboardResponse {
 
     public static class SalaryOverviewInfo {
         private CTCInfo currentCTC;
+        @Schema(example = "2026-06-19")
         private LocalDate lastRevisionDate;
 
         public SalaryOverviewInfo() {}
@@ -83,8 +90,11 @@ public class MyPayslipDashboardResponse {
     }
 
     public static class CTCInfo {
+        @Schema(example = "5000.00")
         private BigDecimal amount;
+        @Schema(example = "string")
         private String currency = "INR";
+        @Schema(example = "string")
         private String formatted;
 
         public CTCInfo() {}
@@ -106,11 +116,17 @@ public class MyPayslipDashboardResponse {
     }
 
     public static class LatestPayrollInfo {
+        @Schema(example = "string")
         private String payPeriod;
+        @Schema(example = "120000.00")
         private BigDecimal grossSalary;
+        @Schema(example = "5000.00")
         private BigDecimal totalDeductions;
+        @Schema(example = "120000.00")
         private BigDecimal netSalary;
+        @Schema(example = "2026-06-19")
         private LocalDate salaryCreditedDate;
+        @Schema(example = "ACTIVE")
         private String paymentStatus;
 
         public LatestPayrollInfo() {}
@@ -144,7 +160,9 @@ public class MyPayslipDashboardResponse {
     }
 
     public static class StatisticsInfo {
+        @Schema(example = "1")
         private int availablePayslips;
+        @Schema(example = "string")
         private String financialYear;
 
         public StatisticsInfo() {}

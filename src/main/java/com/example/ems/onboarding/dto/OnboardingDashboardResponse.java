@@ -1,14 +1,24 @@
 package com.example.ems.onboarding.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class OnboardingDashboardResponse {
+    @Schema(example = "1")
     private long totalOnboardings;
+    @Schema(example = "1")
     private long pendingOnboardings;
+    @Schema(example = "75")
     private long inProgressOnboardings;
+    @Schema(example = "1")
     private long completedOnboardings;
+    @Schema(example = "1")
     private long approvedOnboardings;
+    @Schema(example = "1")
     private long totalTasksAssigned;
+    @Schema(example = "1")
     private long completedTasksCount;
+    @Schema(example = "100.00")
     private double taskCompletionRate; // completed / total tasks
+    @Schema(example = "1")
     private long pendingVerifications; // documents with PENDING status
 
     public long getTotalOnboardings() { return totalOnboardings; }

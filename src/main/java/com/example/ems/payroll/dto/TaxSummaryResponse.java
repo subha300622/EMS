@@ -1,9 +1,11 @@
 package com.example.ems.payroll.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.math.BigDecimal;
 
 public class TaxSummaryResponse {
 
+    @Schema(example = "string")
     private String financialYear;
     private TaxDetailsInfo taxDetails;
 
@@ -21,8 +23,11 @@ public class TaxSummaryResponse {
     public void setTaxDetails(TaxDetailsInfo taxDetails) { this.taxDetails = taxDetails; }
 
     public static class TaxDetailsInfo {
+        @Schema(example = "100.00")
         private BigDecimal incomeTaxDeducted;
+        @Schema(example = "100.00")
         private BigDecimal providentFundContribution;
+        @Schema(example = "100.00")
         private BigDecimal professionalTax;
 
         public TaxDetailsInfo() {}

@@ -33,7 +33,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("*")
-@Tag(name = "Performance Reviews")
+@Tag(name = "Performance Management")
 public class PerformanceController {
 
     @Autowired private PerformanceService performanceService;
@@ -61,14 +61,15 @@ public class PerformanceController {
 
     // ── 1. DASHBOARD ─────────────────────────────────────────────────────────
     @GetMapping("/performance-reviews/dashboard")
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         PerformanceDashboardResponse stats = performanceService.getDashboardStats();
@@ -77,11 +78,12 @@ public class PerformanceController {
 
     // ── 2. CYCLES ────────────────────────────────────────────────────────────
     @GetMapping("/performance-reviews/cycles")
-    public ResponseEntity<?> getCycles(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getCycles(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<PerformanceCycleResponse> cycles = performanceService.getCycles();
@@ -89,49 +91,52 @@ public class PerformanceController {
     }
 
     @PostMapping("/performance-reviews/cycles")
-    public ResponseEntity<?> createCycle(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody PerformanceCycleRequest request) {
+            @Valid @RequestBody PerformanceCycleRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         PerformanceCycleResponse cycle = performanceService.createCycle(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
+        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Performance cycle created successfully", cycle));
     }
 
     @PutMapping("/performance-reviews/cycles/{id}")
-    public ResponseEntity<?> updateCycle(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @Valid @RequestBody PerformanceCycleRequest request) {
+            @Valid @RequestBody PerformanceCycleRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Optional<PerformanceCycleResponse> updated = performanceService.updateCycle(id, request);
         if (updated.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Performance cycle not found with ID: " + id, "PERF_001"));
         return ResponseEntity.ok(ApiResponse.success("Performance cycle updated successfully", updated.get()));
     }
 
     // ── 3. GOALS ─────────────────────────────────────────────────────────────
     @GetMapping("/performance-reviews/goals")
-    public ResponseEntity<?> getGoals(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getGoals(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<PerformanceGoalResponse> goals;
@@ -149,113 +154,119 @@ public class PerformanceController {
     }
 
     @PostMapping("/performance-reviews/goals")
-    public ResponseEntity<?> createGoal(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createGoal(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody PerformanceGoalRequest request) {
+            @Valid @RequestBody PerformanceGoalRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         try {
             PerformanceGoalResponse goal = performanceService.createGoal(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Performance goal created successfully", goal));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PERF_002"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PERF_002"));
         }
     }
 
     @PatchMapping("/performance-reviews/goals/{id}/progress")
-    public ResponseEntity<?> updateGoalProgress(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateGoalProgress(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, Integer> body) {
+            @RequestBody Map<String, Integer> body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Integer progress = body.get("progressPercent");
         if (progress == null)
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("progressPercent field is required", "VAL_001"));
 
         Optional<PerformanceGoalResponse> updated = performanceService.updateGoalProgress(id, progress);
         if (updated.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + id, "PERF_002"));
         return ResponseEntity.ok(ApiResponse.success("Goal progress updated to " + progress + "%", updated.get()));
     }
 
     @DeleteMapping("/performance-reviews/goals/{id}")
-    public ResponseEntity<?> deleteGoal(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteGoal(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         boolean deleted = performanceService.deleteGoal(id);
         if (!deleted)
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Goal not found with ID: " + id, "PERF_002"));
-        return ResponseEntity.ok(ApiResponse.success("Performance goal deleted successfully",
+        return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Performance goal deleted successfully",
                 Map.of("deletedGoalId", id)));
     }
 
     // ── 4. SELF-REVIEWS ──────────────────────────────────────────────────────
     @PostMapping("/performance-reviews/self-reviews")
-    public ResponseEntity<?> submitSelfReview(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> submitSelfReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody SelfReviewRequest request) {
+            @Valid @RequestBody SelfReviewRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         try {
             PerformanceReviewResponse review = performanceService.submitSelfReview(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Self-review submitted successfully", review));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PERF_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PERF_003"));
         }
     }
 
     // ── 5. MANAGER REVIEWS ───────────────────────────────────────────────────
     @PostMapping("/performance-reviews/manager-reviews")
-    public ResponseEntity<?> submitManagerReview(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> submitManagerReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody ManagerReviewRequest request) {
+            @Valid @RequestBody ManagerReviewRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Only managers can submit manager reviews.", "AUTH_002"));
 
         try {
             PerformanceReviewResponse review = performanceService.submitManagerReview(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Manager review submitted successfully", review));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PERF_003"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PERF_003"));
         }
     }
 
     // ── 6. FEEDBACKS ─────────────────────────────────────────────────────────
     @GetMapping("/performance-reviews/feedbacks")
-    public ResponseEntity<?> getFeedbacks(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getFeedbacks(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         List<PerformanceReviewResponse> feedbacks;
@@ -273,57 +284,60 @@ public class PerformanceController {
 
     // ── 7. FINALIZE REVIEW ───────────────────────────────────────────────────
     @PostMapping("/performance-reviews/reviews/{id}/finalize")
-    public ResponseEntity<?> finalizeReview(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> finalizeReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Only managers can finalize reviews.", "AUTH_002"));
 
         Optional<PerformanceReviewResponse> finalized = performanceService.finalizeReview(id);
         if (finalized.isEmpty())
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Review not found with ID: " + id, "PERF_004"));
         return ResponseEntity.ok(ApiResponse.success("Performance review finalized successfully", finalized.get()));
     }
 
     // ── 8. PIP ────────────────────────────────────────────────────────────────
     @PostMapping("/performance-reviews/pips")
-    public ResponseEntity<?> createPip(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createPip(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody PipRequest request) {
+            @Valid @RequestBody PipRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Only managers can create PIPs.", "AUTH_002"));
 
         try {
             PerformancePipResponse pip = performanceService.createPip(request);
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Performance Improvement Plan (PIP) created successfully", pip));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PERF_005"));
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PERF_005"));
         }
     }
 
     // ── 9. REPORTS ───────────────────────────────────────────────────────────
     @GetMapping("/performance-reviews/reports/{reportType}")
-    public ResponseEntity<?> getReport(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String reportType) {
+            @PathVariable String reportType){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Map<String, Object> data = performanceService.getReportData(reportType);
@@ -332,15 +346,16 @@ public class PerformanceController {
 
     // ── 10. NOTIFICATIONS ─────────────────────────────────────────────────────
     @PostMapping("/performance-reviews/notifications")
-    public ResponseEntity<?> sendNotification(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> sendNotification(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         String message = body.getOrDefault("message", "Performance review reminder");

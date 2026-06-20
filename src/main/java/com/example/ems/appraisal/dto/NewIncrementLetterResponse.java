@@ -1,4 +1,5 @@
 package com.example.ems.appraisal.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import java.math.BigDecimal;
@@ -7,16 +8,27 @@ import java.time.LocalDate;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class NewIncrementLetterResponse {
 
+    @Schema(example = "string")
     private String letterId;
+    @Schema(example = "string")
     private String employeeId;
+    @Schema(example = "string")
     private String employeeName;
+    @Schema(example = "Software Engineer")
     private String designation;
+    @Schema(example = "Engineering")
     private String department;
+    @Schema(example = "120000.00")
     private BigDecimal previousSalary;
+    @Schema(example = "100.00")
     private BigDecimal incrementPercentage;
+    @Schema(example = "5000.00")
     private BigDecimal incrementAmount;
+    @Schema(example = "120000.00")
     private BigDecimal newSalary;
+    @Schema(example = "2026-06-19")
     private LocalDate effectiveDate;
+    @Schema(example = "string")
     private String generatedAt;
 
     public NewIncrementLetterResponse() {}

@@ -1,9 +1,13 @@
 package com.example.ems.schedule.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class AvailabilityResponse {
 
+    @Schema(example = "ACTIVE")
     private String status;
+    @Schema(example = "string")
     private String updatedAt;
+    @Schema(example = "string")
     private String message;
 
     public AvailabilityResponse() {}

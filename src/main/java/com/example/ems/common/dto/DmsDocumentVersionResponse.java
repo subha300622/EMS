@@ -1,18 +1,28 @@
 package com.example.ems.common.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.common.entity.DmsDocumentVersion;
 
 import java.time.LocalDateTime;
 
 public class DmsDocumentVersionResponse {
+    @Schema(example = "1")
     private Long id;
+    @Schema(example = "1")
     private Long documentId;
+    @Schema(example = "1")
     private Integer versionNumber;
+    @Schema(example = "string")
     private String fileName;
+    @Schema(example = "10")
     private Long fileSize;
+    @Schema(example = "string")
     private String downloadUrl;
+    @Schema(example = "john.doe@example.com")
     private String uploadedByEmail;
+    @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime uploadedAt;
+    @Schema(example = "string")
     private String changeNotes;
 
     public DmsDocumentVersionResponse() {}

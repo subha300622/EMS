@@ -1,4 +1,5 @@
 package com.example.ems.performance.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -6,9 +7,13 @@ public class PerformanceTimelineResponse {
     private List<TimelineItem> timeline;
 
     public static class TimelineItem {
+        @Schema(example = "string")
         private String event;
+        @Schema(example = "string")
         private String performedBy;
+        @Schema(example = "string")
         private String date;
+        @Schema(example = "Detailed description of the item")
         private String description;
 
         // Getters and Setters

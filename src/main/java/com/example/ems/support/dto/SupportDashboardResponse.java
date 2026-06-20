@@ -1,4 +1,5 @@
 package com.example.ems.support.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -30,8 +31,11 @@ public class SupportDashboardResponse {
     public void setRecentTickets(List<RecentTicketDto> recentTickets) { this.recentTickets = recentTickets; }
 
     public static class EmployeeDto {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "EMP101")
         private String employeeCode;
+        @Schema(example = "string")
         private String name;
 
         public EmployeeDto() {}
@@ -53,11 +57,17 @@ public class SupportDashboardResponse {
     }
 
     public static class SummaryDto {
+        @Schema(example = "1")
         private long totalTickets;
+        @Schema(example = "1")
         private long open;
+        @Schema(example = "75")
         private long inProgress;
+        @Schema(example = "1")
         private long resolved;
+        @Schema(example = "1")
         private long closed;
+        @Schema(example = "1")
         private long averageResolutionHours;
 
         public SummaryDto() {}
@@ -91,7 +101,9 @@ public class SupportDashboardResponse {
     }
 
     public static class SlaDto {
+        @Schema(example = "1")
         private long withinSla;
+        @Schema(example = "1")
         private long breached;
 
         public SlaDto() {}
@@ -109,11 +121,17 @@ public class SupportDashboardResponse {
     }
 
     public static class RecentTicketDto {
+        @Schema(example = "1")
         private Long ticketId;
+        @Schema(example = "string")
         private String ticketNumber;
+        @Schema(example = "Request for Leave")
         private String subject;
+        @Schema(example = "ACTIVE")
         private String status;
+        @Schema(example = "string")
         private String priority;
+        @Schema(example = "string")
         private String updatedAt;
 
         public RecentTicketDto() {}

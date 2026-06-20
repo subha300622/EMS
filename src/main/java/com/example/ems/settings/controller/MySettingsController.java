@@ -29,7 +29,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/my-settings")
 @CrossOrigin("*")
-@Tag(name = "Settings")
+@Tag(name = "My Settings")
 public class MySettingsController {
 
     @Autowired
@@ -63,58 +63,63 @@ public class MySettingsController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    private ResponseEntity<?> unauthorizedResponse() {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private ResponseEntity<?> forbiddenResponse(String permission) {
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private ResponseEntity forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
 
     // 1. Settings Dashboard
     @GetMapping
-    public ResponseEntity<?> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDashboard(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.self.read")) return forbiddenResponse("settings.self.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.self.read")) return (ResponseEntity) forbiddenResponse("settings.self.read");
 
         try {
             Map<String, Object> response = mySettingsService.getSettingsDashboard(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Settings dashboard retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 2. Get Security Settings
     @GetMapping("/security")
-    public ResponseEntity<?> getSecuritySettings(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getSecuritySettings(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.security.read")) return forbiddenResponse("settings.security.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.security.read")) return (ResponseEntity) forbiddenResponse("settings.security.read");
 
         try {
             Map<String, Object> response = mySettingsService.getSecuritySettings(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Security settings retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 3. Change Password
     @PostMapping("/security/change-password")
-    public ResponseEntity<?> changePassword(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> changePassword(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.security.update")) return forbiddenResponse("settings.security.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.security.update")) return (ResponseEntity) forbiddenResponse("settings.security.update");
 
         try {
             mySettingsService.changePassword(currentUser.getWorkEmail(), request);
@@ -122,19 +127,20 @@ public class MySettingsController {
             data.put("changedAt", LocalDateTime.now().format(ISO_FORMATTER));
             return ResponseEntity.ok(ApiResponse.success("Password changed successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 4. Enable MFA
     @PutMapping("/security/mfa")
-    public ResponseEntity<?> enableMfa(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> enableMfa(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestBody Map<String, Boolean> request) {
+            @RequestBody Map<String, Boolean> request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.security.update")) return forbiddenResponse("settings.security.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.security.update")) return (ResponseEntity) forbiddenResponse("settings.security.update");
 
         try {
             Boolean enabled = request.getOrDefault("enabled", true);
@@ -142,218 +148,230 @@ public class MySettingsController {
             String message = enabled ? "MFA enabled successfully" : "MFA disabled successfully";
             return ResponseEntity.ok(ApiResponse.success(message));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 5. Get Privacy Settings
     @GetMapping("/privacy")
-    public ResponseEntity<?> getPrivacySettings(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getPrivacySettings(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.privacy.read")) return forbiddenResponse("settings.privacy.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.privacy.read")) return (ResponseEntity) forbiddenResponse("settings.privacy.read");
 
         try {
             Map<String, Object> response = mySettingsService.getPrivacySettings(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Privacy settings retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 6. Update Privacy Settings
     @PutMapping("/privacy")
-    public ResponseEntity<?> updatePrivacySettings(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updatePrivacySettings(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.privacy.update")) return forbiddenResponse("settings.privacy.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.privacy.update")) return (ResponseEntity) forbiddenResponse("settings.privacy.update");
 
         try {
             mySettingsService.updatePrivacySettings(currentUser.getWorkEmail(), request);
             return ResponseEntity.ok(ApiResponse.success("Privacy settings updated successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 7. Get Notification Preferences
     @GetMapping("/notifications")
-    public ResponseEntity<?> getNotificationPreferences(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getNotificationPreferences(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.notifications.read")) return forbiddenResponse("settings.notifications.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.notifications.read")) return (ResponseEntity) forbiddenResponse("settings.notifications.read");
 
         try {
             List<Map<String, Object>> response = mySettingsService.getNotificationPreferences(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Notification preferences retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 8. Update Notification Preferences for category
     @PutMapping("/notifications/{category}")
-    public ResponseEntity<?> updateNotificationCategory(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateNotificationCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("category") String category,
-            @RequestBody Map<String, Boolean> request) {
+            @RequestBody Map<String, Boolean> request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.notifications.update")) return forbiddenResponse("settings.notifications.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.notifications.update")) return (ResponseEntity) forbiddenResponse("settings.notifications.update");
 
         try {
             mySettingsService.updateNotificationCategory(currentUser.getWorkEmail(), category.toUpperCase(), request);
             return ResponseEntity.ok(ApiResponse.success("Notification preference for " + category + " updated successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 9. Get Notification Timing
     @GetMapping("/notifications/timing")
-    public ResponseEntity<?> getNotificationTiming(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getNotificationTiming(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.notifications.read")) return forbiddenResponse("settings.notifications.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.notifications.read")) return (ResponseEntity) forbiddenResponse("settings.notifications.read");
 
         try {
             Map<String, Object> response = mySettingsService.getNotificationTiming(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Notification timing preferences retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 10. Update Notification Timing
     @PutMapping("/notifications/timing")
-    public ResponseEntity<?> updateNotificationTiming(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateNotificationTiming(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.notifications.update")) return forbiddenResponse("settings.notifications.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.notifications.update")) return (ResponseEntity) forbiddenResponse("settings.notifications.update");
 
         try {
             mySettingsService.updateNotificationTiming(currentUser.getWorkEmail(), request);
             return ResponseEntity.ok(ApiResponse.success("Notification timing preferences updated successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 11. Get Appearance
     @GetMapping("/appearance")
-    public ResponseEntity<?> getAppearance(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAppearance(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.appearance.read")) return forbiddenResponse("settings.appearance.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.appearance.read")) return (ResponseEntity) forbiddenResponse("settings.appearance.read");
 
         try {
             Map<String, Object> response = mySettingsService.getAppearance(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Appearance settings retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 12. Update Appearance
     @PutMapping("/appearance")
-    public ResponseEntity<?> updateAppearance(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateAppearance(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.appearance.update")) return forbiddenResponse("settings.appearance.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.appearance.update")) return (ResponseEntity) forbiddenResponse("settings.appearance.update");
 
         try {
             mySettingsService.updateAppearance(currentUser.getWorkEmail(), request);
             return ResponseEntity.ok(ApiResponse.success("Appearance settings updated successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 13. Get Language & Region
     @GetMapping("/language-region")
-    public ResponseEntity<?> getLanguageRegion(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getLanguageRegion(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.language.read")) return forbiddenResponse("settings.language.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.language.read")) return (ResponseEntity) forbiddenResponse("settings.language.read");
 
         try {
             Map<String, Object> response = mySettingsService.getLanguageRegion(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Language and region settings retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 14. Update Language & Region
     @PutMapping("/language-region")
-    public ResponseEntity<?> updateLanguageRegion(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateLanguageRegion(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestBody Map<String, Object> request) {
+            @RequestBody Map<String, Object> request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.language.update")) return forbiddenResponse("settings.language.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.language.update")) return (ResponseEntity) forbiddenResponse("settings.language.update");
 
         try {
             mySettingsService.updateLanguageRegion(currentUser.getWorkEmail(), request);
             return ResponseEntity.ok(ApiResponse.success("Language and region settings updated successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 15. Get Connected Devices
     @GetMapping("/devices")
-    public ResponseEntity<?> getDevices(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDevices(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.devices.read")) return forbiddenResponse("settings.devices.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.devices.read")) return (ResponseEntity) forbiddenResponse("settings.devices.read");
 
         try {
             List<Map<String, Object>> response = mySettingsService.getDevices(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Connected devices retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 16. Remove Connected Device
     @DeleteMapping("/devices/{id}")
-    public ResponseEntity<?> removeDevice(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> removeDevice(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("id") Long deviceId) {
+            @PathVariable("id") Long deviceId){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.devices.remove")) return forbiddenResponse("settings.devices.remove");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.devices.remove")) return (ResponseEntity) forbiddenResponse("settings.devices.remove");
 
         try {
             mySettingsService.removeDevice(currentUser.getWorkEmail(), deviceId);
             return ResponseEntity.ok(ApiResponse.success("Device removed successfully"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
@@ -362,69 +380,73 @@ public class MySettingsController {
 
     // 20. GET FAQs
     @GetMapping("/faqs")
-    public ResponseEntity<?> getFaqs(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getFaqs(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.support.read")) return forbiddenResponse("settings.support.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.support.read")) return (ResponseEntity) forbiddenResponse("settings.support.read");
 
         try {
             List<Map<String, Object>> response = mySettingsService.getFaqs();
             return ResponseEntity.ok(ApiResponse.success("FAQs retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 21. Create Support Request
     @PostMapping("/support-tickets")
-    public ResponseEntity<?> createSupportRequest(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createSupportRequest(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody SupportTicketRequest request) {
+            @Valid @RequestBody SupportTicketRequest request){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.support.create")) return forbiddenResponse("settings.support.create");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.support.create")) return (ResponseEntity) forbiddenResponse("settings.support.create");
 
         try {
             CreateTicketResponse ticketResp = mySettingsService.createSupportRequest(currentUser.getWorkEmail(), request);
             Map<String, Object> data = new HashMap<>();
             data.put("ticketId", ticketResp.getTicketNumber());
             data.put("status", ticketResp.getStatus());
-            return ResponseEntity.status(HttpStatus.CREATED)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Support ticket created successfully", data));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 22. Get Backup Codes Info
     @GetMapping("/security/2fa/backup-codes")
-    public ResponseEntity<?> getBackupCodesInfo(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getBackupCodesInfo(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.security.read")) return forbiddenResponse("settings.security.read");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.security.read")) return (ResponseEntity) forbiddenResponse("settings.security.read");
 
         try {
             Map<String, Object> response = mySettingsService.getBackupCodesInfo(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Backup codes info retrieved successfully", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest()
+            return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }
 
     // 23. Regenerate Backup Codes
     @PostMapping("/security/2fa/backup-codes/regenerate")
-    public ResponseEntity<?> regenerateBackupCodes(
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> regenerateBackupCodes(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody RegenerateBackupCodesRequest request,
-            jakarta.servlet.http.HttpServletRequest httpRequest) {
+            jakarta.servlet.http.HttpServletRequest httpRequest){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.security.update")) return forbiddenResponse("settings.security.update");
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.security.update")) return (ResponseEntity) forbiddenResponse("settings.security.update");
 
         try {
             String ipAddress = httpRequest.getHeader("X-Forwarded-For");
@@ -436,16 +458,16 @@ public class MySettingsController {
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if ("INVALID_PASSWORD".equals(msg)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(ErrorResponse.error("Current password is incorrect", "INVALID_PASSWORD"));
             } else if ("INVALID_OTP".equals(msg)) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(ErrorResponse.error("Invalid verification code", "INVALID_OTP"));
             }
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error(msg, "SET_500"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error(e.getMessage(), "SET_500"));
         }
     }

@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
 
@@ -25,7 +26,9 @@ public class EmployeeHierarchyResponse {
     public void setReportees(List<EmployeeRefDto> reportees) { this.reportees = reportees; }
 
     public static class EmployeeRefDto {
+        @Schema(example = "1")
         private Long employeeId;
+        @Schema(example = "string")
         private String name;
 
         public EmployeeRefDto() {}
