@@ -10,6 +10,7 @@ import com.example.ems.finance.service.FinanceExpenseService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -73,6 +74,7 @@ public class FinanceExpenseController {
     }
 
     // ── 1. GET DASHBOARD ──────────────────────────────────────────────────────
+    @Operation(summary = "Get Expense Dashboard Stats", description = "Retrieves high-level counts of pending, approved, and reimbursed expense claims.")
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -85,6 +87,7 @@ public class FinanceExpenseController {
     }
 
     // ── 2. GET EXPENSE CLAIMS (LIST) ──────────────────────────────────────────
+    @Operation(summary = "Get Expense Claims List", description = "Retrieves a paginated and filtered list of all employee expense claims.")
     @GetMapping
     public ResponseEntity<?> getExpenses(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -107,6 +110,7 @@ public class FinanceExpenseController {
     }
 
     // ── 3. GET EXPENSE DETAILS ───────────────────────────────────────────────
+    @Operation(summary = "Get Expense Claim Details", description = "Retrieves full information for a specific expense claim by ID, including audit logs.")
     @GetMapping("/{expenseId}")
     public ResponseEntity<?> getExpenseDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -125,6 +129,7 @@ public class FinanceExpenseController {
     }
 
     // ── 4. VIEW RECEIPT METADATA ─────────────────────────────────────────────
+    @Operation(summary = "Get Expense Claim Receipt Metadata", description = "Retrieves attachment and file metadata for the receipt of the specified expense claim.")
     @GetMapping("/{expenseId}/receipt")
     public ResponseEntity<?> getReceiptMetadata(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -143,6 +148,7 @@ public class FinanceExpenseController {
     }
 
     // ── 5. APPROVE CLAIM ─────────────────────────────────────────────────────
+    @Operation(summary = "Approve Expense Claim", description = "Approves a pending expense claim.")
     @PatchMapping("/{expenseId}/approve")
     public ResponseEntity<?> approveExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -166,6 +172,7 @@ public class FinanceExpenseController {
     }
 
     // ── 6. REJECT CLAIM ──────────────────────────────────────────────────────
+    @Operation(summary = "Reject Expense Claim", description = "Rejects a pending expense claim.")
     @PatchMapping("/{expenseId}/reject")
     public ResponseEntity<?> rejectExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -189,6 +196,7 @@ public class FinanceExpenseController {
     }
 
     // ── 7. SEND BACK FOR CORRECTION ──────────────────────────────────────────
+    @Operation(summary = "Return Expense Claim for Correction", description = "Returns an expense claim back to the employee requesting clarification or missing receipts.")
     @PatchMapping("/{expenseId}/send-back")
     public ResponseEntity<?> sendBackExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -212,6 +220,7 @@ public class FinanceExpenseController {
     }
 
     // ── 8. REIMBURSE CLAIM ───────────────────────────────────────────────────
+    @Operation(summary = "Reimburse Expense Claim", description = "Reimburses an approved expense claim, logging the payment mode and transaction ID.")
     @PatchMapping("/{expenseId}/reimburse")
     public ResponseEntity<?> reimburseExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -239,6 +248,7 @@ public class FinanceExpenseController {
     }
 
     // ── 9. BULK APPROVE ──────────────────────────────────────────────────────
+    @Operation(summary = "Bulk Approve Expense Claims", description = "Approves multiple pending expense claims in a single request.")
     @PatchMapping("/bulk-approve")
     public ResponseEntity<?> bulkApprove(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -265,6 +275,7 @@ public class FinanceExpenseController {
     }
 
     // ── 10. BULK REJECT ──────────────────────────────────────────────────────
+    @Operation(summary = "Bulk Reject Expense Claims", description = "Rejects multiple pending expense claims in a single request.")
     @PatchMapping("/bulk-reject")
     public ResponseEntity<?> bulkReject(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -291,6 +302,7 @@ public class FinanceExpenseController {
     }
 
     // ── 11. TIMELINE APIs ────────────────────────────────────────────────────
+    @Operation(summary = "Get Expense Claim Timeline", description = "Retrieves chronological audit trail logs showing transitions on the specified expense claim.")
     @GetMapping("/{expenseId}/timeline")
     public ResponseEntity<?> getTimeline(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -309,6 +321,7 @@ public class FinanceExpenseController {
     }
 
     // ── 12. REPORTS API (SUMMARY) ────────────────────────────────────────────
+    @Operation(summary = "Get Expense Reports Summary", description = "Retrieves consolidated financial stats on expense reports grouped by category and department.")
     @GetMapping("/reports/summary")
     public ResponseEntity<?> getReportsSummary(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -321,6 +334,7 @@ public class FinanceExpenseController {
     }
 
     // ── 13. EXPORT APIs (CSV / PDF / XLSX) ────────────────────────────────────
+    @Operation(summary = "Export Expenses to CSV", description = "Generates and downloads a CSV spreadsheet report of expense claims.")
     @GetMapping("/export/csv")
     public ResponseEntity<?> exportCsv(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -340,6 +354,7 @@ public class FinanceExpenseController {
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
+    @Operation(summary = "Export Expenses to XLSX", description = "Generates and downloads an Excel spreadsheet report of expense claims.")
     @GetMapping("/export/xlsx")
     public ResponseEntity<?> exportXlsx(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -359,6 +374,7 @@ public class FinanceExpenseController {
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
+    @Operation(summary = "Export Expenses to PDF", description = "Generates and downloads a printable PDF report of expense claims.")
     @GetMapping("/export/pdf")
     public ResponseEntity<?> exportPdf(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
