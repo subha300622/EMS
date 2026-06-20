@@ -9,6 +9,7 @@ import com.example.ems.employee.service.MyEmployeeDirectoryService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -53,6 +54,7 @@ public class EmployeeDirectoryController {
                roleService.hasPermission(user.getWorkEmail(), "employee.directory.read");
     }
 
+    @Operation(summary = "Get Employee Directory Dashboard", description = "Retrieves high-level counts and statistics for the employee directory dashboard.")
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<EmployeeDirectoryDashboardResponse>> getDashboard(
             @RequestHeader("Authorization") String authHeader) {
@@ -63,6 +65,7 @@ public class EmployeeDirectoryController {
         return ResponseEntity.ok(ApiResponse.success("Dashboard retrieved", directoryService.getDashboard(user.getWorkEmail())));
     }
 
+    @Operation(summary = "Get My Team Directory", description = "Retrieves direct reports and team mates of the logged-in employee.")
     @GetMapping("/my-team")
     public ResponseEntity<ApiResponse<MyTeamResponse>> getMyTeam(
             @RequestHeader("Authorization") String authHeader) {
@@ -73,6 +76,7 @@ public class EmployeeDirectoryController {
         return ResponseEntity.ok(ApiResponse.success("My Team retrieved", directoryService.getMyTeam(user.getWorkEmail())));
     }
 
+    @Operation(summary = "Get Employee List", description = "Retrieves a paginated list of employees with search and multi-field filters.")
     @GetMapping("")
     public ResponseEntity<ApiResponse<EmployeeDirectoryListResponse>> getEmployeeList(
             @RequestHeader("Authorization") String authHeader,
@@ -97,6 +101,7 @@ public class EmployeeDirectoryController {
                 directoryService.getEmployeeList(search, department, designation, status, workMode, skill, pageable)));
     }
 
+    @Operation(summary = "Get Employee Profile", description = "Retrieves a comprehensive view of a specific employee's professional profile.")
     @GetMapping("/{employeeId}")
     public ResponseEntity<ApiResponse<EmployeeProfileResponse>> getEmployeeProfile(
             @RequestHeader("Authorization") String authHeader,
@@ -108,6 +113,7 @@ public class EmployeeDirectoryController {
         return ResponseEntity.ok(ApiResponse.success("Profile retrieved", directoryService.getEmployeeProfile(employeeId)));
     }
 
+    @Operation(summary = "Quick Search Employees", description = "Provides high-performance autocomplete or keyword search for employees by keyword name/email.")
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<EmployeeSearchResponse>> searchEmployees(
             @RequestHeader("Authorization") String authHeader,
@@ -120,6 +126,7 @@ public class EmployeeDirectoryController {
         return ResponseEntity.ok(ApiResponse.success("Search results retrieved", directoryService.searchEmployees(keyword, limit)));
     }
 
+    @Operation(summary = "Get Employee Skills", description = "Retrieves technical competencies and certs recorded on the employee's profile.")
     @GetMapping("/{employeeId}/skills")
     public ResponseEntity<ApiResponse<EmployeeSkillsResponse>> getEmployeeSkills(
             @RequestHeader("Authorization") String authHeader,
@@ -131,6 +138,7 @@ public class EmployeeDirectoryController {
         return ResponseEntity.ok(ApiResponse.success("Skills retrieved", directoryService.getEmployeeSkills(employeeId)));
     }
 
+    @Operation(summary = "Get Employee Team Hierarchy", description = "Retrieves details of managers and direct reports nested around the employee.")
     @GetMapping("/{employeeId}/hierarchy")
     public ResponseEntity<ApiResponse<EmployeeHierarchyResponse>> getHierarchy(
             @RequestHeader("Authorization") String authHeader,
@@ -142,6 +150,7 @@ public class EmployeeDirectoryController {
         return ResponseEntity.ok(ApiResponse.success("Hierarchy retrieved", directoryService.getHierarchy(employeeId)));
     }
 
+    @Operation(summary = "Get Departments Listing", description = "Retrieves department classifications and metadata for directory browsing.")
     @GetMapping("/departments")
     public ResponseEntity<ApiResponse<DepartmentListResponse>> getDepartments(
             @RequestHeader("Authorization") String authHeader) {
@@ -152,6 +161,7 @@ public class EmployeeDirectoryController {
         return ResponseEntity.ok(ApiResponse.success("Departments retrieved", directoryService.getDepartments()));
     }
 
+    @Operation(summary = "Send Message to Employee", description = "Dispatches a secure message or notice to the target employee's inbox.")
     @PostMapping("/{employeeId}/messages")
     public ResponseEntity<ApiResponse<SendMessageResponse>> sendMessage(
             @RequestHeader("Authorization") String authHeader,
@@ -165,6 +175,7 @@ public class EmployeeDirectoryController {
                 directoryService.sendMessage(user.getWorkEmail(), employeeId, request)));
     }
 
+    @Operation(summary = "Get Employee Availability", description = "Retrieves shift status and real-time calendar availability of the employee.")
     @GetMapping("/{employeeId}/availability")
     public ResponseEntity<ApiResponse<EmployeeAvailabilityResponse>> getAvailability(
             @RequestHeader("Authorization") String authHeader,
