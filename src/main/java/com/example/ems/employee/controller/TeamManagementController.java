@@ -18,6 +18,7 @@ import com.example.ems.security.service.JwtService;
 import com.example.ems.training.service.TrainingService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -59,6 +60,7 @@ public class TeamManagementController {
     @Autowired
     private MyAssetService myAssetService;
 
+    @Operation(summary = "Get Team Directory", description = "Retrieves profiles of all direct reports reporting to the authenticated manager.")
     @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamDirectory(
@@ -83,6 +85,7 @@ public class TeamManagementController {
         return ResponseEntity.ok(ApiResponse.success("Team directory retrieved successfully", directReports));
     }
 
+    @Operation(summary = "Get Team Member Details", description = "Retrieves detailed profile metadata for a specific direct report.")
     @GetMapping("/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamMemberDetails(
@@ -117,6 +120,7 @@ public class TeamManagementController {
         return ResponseEntity.ok(ApiResponse.success("Team member details retrieved successfully", employee));
     }
 
+    @Operation(summary = "Get Team Attendance", description = "Retrieves today's punch status and shift notes for all team members.")
     @GetMapping("/attendance")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamAttendance(
@@ -168,6 +172,7 @@ public class TeamManagementController {
         return ResponseEntity.ok(ApiResponse.success("Team attendance retrieved successfully", attendanceList));
     }
 
+    @Operation(summary = "Get Team Schedules", description = "Retrieves shift scheduling and work timings for the team members for today.")
     @GetMapping("/schedules")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamSchedules(
@@ -207,6 +212,7 @@ public class TeamManagementController {
         return ResponseEntity.ok(ApiResponse.success("Team schedules retrieved successfully", scheduleList));
     }
 
+    @Operation(summary = "Get Team Performance Summary", description = "Retrieves active performance goals and feedback loops for all team members.")
     @GetMapping("/performance")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamPerformance(
@@ -248,6 +254,7 @@ public class TeamManagementController {
         return ResponseEntity.ok(ApiResponse.success("Team performance retrieved successfully", performanceList));
     }
 
+    @Operation(summary = "Get Team Trainings Status", description = "Retrieves course enrollment and training completion logs for all team members.")
     @GetMapping("/trainings")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamTrainings(
@@ -287,6 +294,7 @@ public class TeamManagementController {
         return ResponseEntity.ok(ApiResponse.success("Team trainings retrieved successfully", trainingList));
     }
 
+    @Operation(summary = "Get Team Assets Allocation", description = "Retrieves hardware and software assets allocated to the team members.")
     @GetMapping("/assets")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamAssets(
