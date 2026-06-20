@@ -13,6 +13,7 @@ import com.example.ems.payroll.service.PayslipService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -62,6 +63,7 @@ public class PayslipController {
 
 
     // ── 2. GET PAYSLIP BY ID ──────────────────────────────────────────────────
+    @Operation(summary = "Get Payslip Details", description = "Retrieves the detail fields of a specific employee payslip by ID.")
     @GetMapping("/payslips/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getPayslipById(
@@ -95,6 +97,7 @@ public class PayslipController {
     }
 
     // ── 3. GENERATE PAYSLIPS (FINANCE / ADMIN) ────────────────────────────────
+    @Operation(summary = "Generate Employee Payslips", description = "Triggers bulk generation of employee payslips for the specified month and year.")
     @PostMapping("/payslips/generate")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> generatePayslips(
@@ -118,6 +121,7 @@ public class PayslipController {
     }
 
     // ── 4. DOWNLOAD PAYSLIP (SIMULATED CSV) ──────────────────────────────────
+    @Operation(summary = "Download Payslip", description = "Downloads a simulated CSV format payslip document for the specified payslip ID.")
     @GetMapping("/payslips/download/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<byte[]> downloadPayslip(
@@ -166,6 +170,7 @@ public class PayslipController {
         return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
+    @Operation(summary = "Delete Payslip", description = "Deletes a specific payslip entry from records.")
     @DeleteMapping("/payslips/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deletePayslip(
@@ -192,6 +197,7 @@ public class PayslipController {
         }
     }
 
+    @Operation(summary = "Export Payslips list to CSV", description = "Generates and downloads a CSV spreadsheet listing all payslips records.")
     @GetMapping("/payslips/export")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<byte[]> exportPayslips(
