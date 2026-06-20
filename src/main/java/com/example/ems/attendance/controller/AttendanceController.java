@@ -169,6 +169,7 @@ public class AttendanceController {
     }
 
     // ── 5. GET ALL ATTENDANCE RECORDS (ADMIN / HR) ───────────────────────────
+    @Operation(summary = "Get All Attendance Records", description = "Admin/HR API to retrieve daily punch and check-in records for all employees.")
     @GetMapping("/attendance")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Attendance>>> getAllAttendanceRecords(
@@ -191,6 +192,7 @@ public class AttendanceController {
     }
 
     // ── 6. GET ATTENDANCE BY ID (ADMIN / HR) ──────────────────────────────────
+    @Operation(summary = "Get Attendance Record by ID", description = "Admin/HR API to retrieve a specific attendance punch record details by ID.")
     @GetMapping("/attendance/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAttendanceById(
@@ -219,6 +221,7 @@ public class AttendanceController {
     }
 
     // ── 7. GET ATTENDANCE BY EMPLOYEE ID (ADMIN / HR) ─────────────────────────
+    @Operation(summary = "Get Employee Attendance History", description = "Admin/HR API to retrieve the complete attendance history logs for a specific employee.")
     @GetMapping("/attendance/employee/{employeeId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Attendance>>> getAttendanceByEmployeeId(
@@ -243,6 +246,7 @@ public class AttendanceController {
     }
 
     // ── 8. CORRECT ATTENDANCE (ADMIN / HR) ────────────────────────────────────
+    @Operation(summary = "Correct Attendance Record", description = "Admin/HR API to adjust check-in/out times, status, or notes on a specific attendance record.")
     @PutMapping({"/attendance/{id}/correct", "/attendance/{id}"})
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> correctAttendance(
@@ -269,6 +273,7 @@ public class AttendanceController {
         }
     }
 
+    @Operation(summary = "Delete Attendance Record", description = "Admin/HR API to delete an attendance punch entry.")
     @DeleteMapping("/attendance/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteAttendance(
@@ -296,6 +301,7 @@ public class AttendanceController {
     }
 
     // ── 9. GET TODAY'S ATTENDANCE RECORDS (ADMIN / HR) ────────────────────────
+    @Operation(summary = "Get Today's Attendance Records", description = "Admin/HR API to retrieve today's punch statuses for all active employees.")
     @GetMapping("/attendance/today")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Attendance>>> getTodayAttendanceRecords(
@@ -318,6 +324,7 @@ public class AttendanceController {
     }
 
     // ── 10. GET STATS ─────────────────────────────────────────────────────────
+    @Operation(summary = "Get Attendance Stats", description = "Admin/HR API to retrieve compiled attendance counts and statistics, optionally filtered by employee.")
     @GetMapping("/attendance/stats")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<AttendanceStatsResponse>> getAttendanceStats(
@@ -341,6 +348,7 @@ public class AttendanceController {
     }
 
     // ── 11. GET ATTENDANCE DASHBOARD ──────────────────────────────────────────
+    @Operation(summary = "Get Attendance Dashboard", description = "Admin/HR API to retrieve today's compiled breakdown stats of present, late, absent, and half-day employees.")
     @GetMapping("/attendance/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAttendanceDashboard(
@@ -375,6 +383,7 @@ public class AttendanceController {
     }
 
     // ── 12. GET MONTHLY ATTENDANCE GRID ───────────────────────────────────────
+    @Operation(summary = "Get Monthly Attendance Grid", description = "Admin/HR API to retrieve attendance records for a specific month and year.")
     @GetMapping("/attendance/monthly")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMonthlyAttendance(
@@ -405,6 +414,7 @@ public class AttendanceController {
     }
 
     // ── 13. EXPORT ATTENDANCE ────────────────────────────────────────────────
+    @Operation(summary = "Export Attendance to CSV", description = "Admin/HR API to generate and download a CSV report of employee attendance records.")
     @GetMapping("/attendance/export")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<byte[]> exportAttendance(
@@ -444,6 +454,7 @@ public class AttendanceController {
     }
 
     // ── 14. GET PAYROLL SUMMARY ──────────────────────────────────────────────
+    @Operation(summary = "Get Payroll Attendance Summary", description = "Admin/HR API to retrieve working, present, and absent day counts for payroll calculation.")
     @GetMapping("/attendance/payroll-summary")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPayrollSummary(
