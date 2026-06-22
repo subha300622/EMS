@@ -6,6 +6,12 @@ import com.example.ems.payroll.entity.Payroll;
 import com.example.ems.payroll.repository.PayrollRepository;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.finance.entity.Budget;
+import com.example.ems.finance.entity.Vendor;
+import com.example.ems.finance.entity.Invoice;
+import com.example.ems.finance.repository.BudgetRepository;
+import com.example.ems.finance.repository.VendorRepository;
+import com.example.ems.finance.repository.InvoiceRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -385,5 +391,100 @@ public class FinanceService {
         dist.put("50k-80k", range3);
         dist.put("80k+", range4);
         return dist;
+    }
+
+    // ── 9. BUDGET CRUD ───────────────────────────────────────────────────────
+    @Autowired
+    private BudgetRepository budgetRepository;
+
+    public List<Budget> getAllBudgets() {
+        return budgetRepository.findAll();
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Budget createBudget(Budget budget) {
+        budget.setCreatedAt(LocalDateTime.now());
+        budget.setUpdatedAt(LocalDateTime.now());
+        return budgetRepository.save(budget);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Optional<Budget> updateBudget(Long id, Budget budgetDetails) {
+        return budgetRepository.findById(id).map(budget -> {
+            budget.setDepartment(budgetDetails.getDepartment());
+            budget.setAllocatedFunds(budgetDetails.getAllocatedFunds());
+            budget.setUtilizedFunds(budgetDetails.getUtilizedFunds());
+            budget.setStatus(budgetDetails.getStatus());
+            budget.setUpdatedAt(LocalDateTime.now());
+            return budgetRepository.save(budget);
+        });
+    }
+
+    // ── 10. VENDOR CRUD ──────────────────────────────────────────────────────
+    @Autowired
+    private VendorRepository vendorRepository;
+
+    public List<Vendor> getAllVendors() {
+        return vendorRepository.findAll();
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Vendor createVendor(Vendor vendor) {
+        vendor.setCreatedAt(LocalDateTime.now());
+        vendor.setUpdatedAt(LocalDateTime.now());
+        return vendorRepository.save(vendor);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Optional<Vendor> updateVendor(Long id, Vendor vendorDetails) {
+        return vendorRepository.findById(id).map(vendor -> {
+            vendor.setCompanyName(vendorDetails.getCompanyName());
+            vendor.setContactPerson(vendorDetails.getContactPerson());
+            vendor.setEmail(vendorDetails.getEmail());
+            vendor.setPhone(vendorDetails.getPhone());
+            vendor.setDetails(vendorDetails.getDetails());
+            vendor.setActive(vendorDetails.getActive());
+            vendor.setUpdatedAt(LocalDateTime.now());
+            return vendorRepository.save(vendor);
+        });
+    }
+
+    // ── 11. INVOICE CRUD ─────────────────────────────────────────────────────
+    @Autowired
+    private InvoiceRepository invoiceRepository;
+
+    public List<Invoice> getAllInvoices() {
+        return invoiceRepository.findAll();
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Invoice createInvoice(Invoice invoice) {
+        if (invoice.getVendor() != null && invoice.getVendor().getId() != null) {
+            Vendor vendor = vendorRepository.findById(invoice.getVendor().getId())
+                    .orElseThrow(() -> new IllegalArgumentException("Vendor not found with ID: " + invoice.getVendor().getId()));
+            invoice.setVendor(vendor);
+        }
+        invoice.setStatus("PENDING");
+        invoice.setCreatedAt(LocalDateTime.now());
+        invoice.setUpdatedAt(LocalDateTime.now());
+        return invoiceRepository.save(invoice);
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Optional<Invoice> approveInvoice(Long id) {
+        return invoiceRepository.findById(id).map(invoice -> {
+            invoice.setStatus("APPROVED");
+            invoice.setUpdatedAt(LocalDateTime.now());
+            return invoiceRepository.save(invoice);
+        });
+    }
+
+    @org.springframework.transaction.annotation.Transactional
+    public Optional<Invoice> payInvoice(Long id) {
+        return invoiceRepository.findById(id).map(invoice -> {
+            invoice.setStatus("PAID");
+            invoice.setUpdatedAt(LocalDateTime.now());
+            return invoiceRepository.save(invoice);
+        });
     }
 }

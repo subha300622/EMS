@@ -132,7 +132,7 @@ public class PayrollManagementTest {
         p.setStatus("APPROVED");
         when(payrollService.approvePayroll(15L)).thenReturn(p);
 
-        mockMvc.perform(post("/api/v1/payroll/15/approve")
+        mockMvc.perform(patch("/api/v1/payroll-runs/15/approve")
                         .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

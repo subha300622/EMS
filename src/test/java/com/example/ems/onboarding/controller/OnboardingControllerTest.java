@@ -86,7 +86,7 @@ public class OnboardingControllerTest {
         when(onboardingService.getOrCreateOnboardingForEmployee(any())).thenReturn(onboarding);
         when(onboardingService.getTasks(10L)).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/onboarding/my")
+        mockMvc.perform(get("/api/v1/onboarding/me")
                 .header("Authorization", "Bearer mock-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -112,7 +112,7 @@ public class OnboardingControllerTest {
         when(employeeRepository.findByEmail(testEmail)).thenReturn(Optional.of(employee));
         when(onboardingService.getOrCreateOnboardingForEmployee(any())).thenReturn(onboarding);
 
-        mockMvc.perform(put("/api/v1/onboarding/my")
+        mockMvc.perform(put("/api/v1/onboarding/me")
                 .header("Authorization", "Bearer mock-token")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"phone\": \"1234567890\"}"))
@@ -141,7 +141,7 @@ public class OnboardingControllerTest {
         when(onboardingService.getOrCreateOnboardingForEmployee(any())).thenReturn(onboarding);
         when(onboardingService.getDocuments(10L)).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/onboarding/my/documents")
+        mockMvc.perform(get("/api/v1/onboarding/me/documents")
                 .header("Authorization", "Bearer mock-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -166,7 +166,7 @@ public class OnboardingControllerTest {
         when(employeeRepository.findByEmail(testEmail)).thenReturn(Optional.of(employee));
         when(onboardingService.getOrCreateOnboardingForEmployee(any())).thenReturn(onboarding);
 
-        mockMvc.perform(post("/api/v1/onboarding/my/submit")
+        mockMvc.perform(post("/api/v1/onboarding/me/submit")
                 .header("Authorization", "Bearer mock-token"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

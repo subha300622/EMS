@@ -59,6 +59,47 @@ public class ApprovalCenterController {
         return getPendingApprovals(authHeader);
     }
 
+    @GetMapping("/history")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<ApprovalItemDto>>> getApprovalHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Approval history retrieved successfully",
+                approvalCenterService.getApprovalHistory()));
+    }
+
+    @GetMapping("/{id}")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<ApprovalItemDto>> getApprovalById(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String id){
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+        }
+
+        return approvalCenterService.getApprovalById(id)
+                .map(item -> ResponseEntity.ok(ApiResponse.success("Approval retrieved successfully", item)))
+                .orElseGet(() -> (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ErrorResponse.error("Approval not found with ID: " + id, "APP_003")));
+    }
+
     @PatchMapping("/{id}/approve")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approveItem(

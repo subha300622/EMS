@@ -16,13 +16,16 @@ import com.example.ems.recruitment.dto.JobResponse;
 import com.example.ems.recruitment.dto.OfferRequest;
 import com.example.ems.recruitment.dto.OfferResponse;
 import com.example.ems.recruitment.dto.RecruitmentDashboardResponse;
+import com.example.ems.recruitment.dto.BackgroundVerificationRequest;
 import com.example.ems.recruitment.entity.Candidate;
+import com.example.ems.recruitment.entity.BackgroundVerification;
 
 
 
 import com.example.ems.recruitment.service.RecruitmentService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -546,5 +549,78 @@ public class RecruitmentController {
                 .contentType(MediaType.parseMediaType(candidate.getResumeFileType() != null ? candidate.getResumeFileType() : "application/pdf"))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + candidate.getResumeFileName() + "\"")
                 .body(candidate.getResumeData());
+    }
+
+    @Operation(summary = "Publish Job Posting", description = "Publishes a job posting, setting status to PUBLISHED.")
+    @PostMapping("/recruitments/jobs/{jobId}/publish")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> publishJob(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long jobId){
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkRecruitmentPermission(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
+        }
+
+        JobResponse updated = recruitmentService.updateJobStatus(jobId, "PUBLISHED").orElse(null);
+        if (updated == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Job not found with ID: " + jobId, "JOB_001"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Job published successfully", updated));
+    }
+
+    @Operation(summary = "Create Background Verification", description = "Registers background check information for a candidate.")
+    @PostMapping("/recruitments/background-verification")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createBackgroundVerification(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody @Valid BackgroundVerificationRequest request){
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkRecruitmentPermission(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
+        }
+
+        try {
+            BackgroundVerification record = recruitmentService.createBackgroundVerification(request);
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Background verification recorded successfully", record));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "BV_001"));
+        }
+    }
+
+    @Operation(summary = "Get Background Verification", description = "Retrieves background check details by ID.")
+    @GetMapping("/recruitments/background-verification/{id}")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getBackgroundVerification(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id){
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkRecruitmentPermission(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'recruitment.manage' permission.", "AUTH_002"));
+        }
+
+        BackgroundVerification record = recruitmentService.getBackgroundVerification(id).orElse(null);
+        if (record == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Background verification record not found with ID: " + id, "BV_002"));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Background verification record retrieved successfully", record));
     }
 }

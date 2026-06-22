@@ -19,6 +19,7 @@ import com.example.ems.performance.dto.SelfReviewRequest;
 import com.example.ems.performance.service.PerformanceService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,9 +32,8 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/performance")
 @CrossOrigin("*")
-@Tag(name = "Performance Management")
 public class PerformanceController {
 
     @Autowired private PerformanceService performanceService;
@@ -60,7 +60,8 @@ public class PerformanceController {
     }
 
     // ── 1. DASHBOARD ─────────────────────────────────────────────────────────
-    @GetMapping("/performance-reviews/dashboard")
+    @Operation(summary = "Get Dashboard Stats", tags = {"Performance Reviews"})
+    @GetMapping("/reviews/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -77,7 +78,8 @@ public class PerformanceController {
     }
 
     // ── 2. CYCLES ────────────────────────────────────────────────────────────
-    @GetMapping("/performance-reviews/cycles")
+    @Operation(summary = "Get Performance Cycles", tags = {"Performance Cycles"})
+    @GetMapping("/reviews/cycles")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getCycles(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -90,7 +92,8 @@ public class PerformanceController {
         return ResponseEntity.ok(ApiResponse.success("Performance cycles retrieved successfully", cycles));
     }
 
-    @PostMapping("/performance-reviews/cycles")
+    @Operation(summary = "Create Performance Cycle", tags = {"Performance Cycles"})
+    @PostMapping("/reviews/cycles")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -108,7 +111,8 @@ public class PerformanceController {
                 .body(ApiResponse.success("Performance cycle created successfully", cycle));
     }
 
-    @PutMapping("/performance-reviews/cycles/{id}")
+    @Operation(summary = "Update Performance Cycle", tags = {"Performance Cycles"})
+    @PutMapping("/reviews/cycles/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -130,7 +134,8 @@ public class PerformanceController {
     }
 
     // ── 3. GOALS ─────────────────────────────────────────────────────────────
-    @GetMapping("/performance-reviews/goals")
+    @Operation(summary = "Get Goals", tags = {"Performance Reviews"})
+    @GetMapping("/reviews/goals")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getGoals(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -153,7 +158,8 @@ public class PerformanceController {
         return ResponseEntity.ok(ApiResponse.success("Performance goals retrieved successfully", goals));
     }
 
-    @PostMapping("/performance-reviews/goals")
+    @Operation(summary = "Create Goal", tags = {"Performance Reviews"})
+    @PostMapping("/reviews/goals")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createGoal(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -172,7 +178,8 @@ public class PerformanceController {
         }
     }
 
-    @PatchMapping("/performance-reviews/goals/{id}/progress")
+    @Operation(summary = "Update Goal Progress", tags = {"Performance Reviews"})
+    @PatchMapping("/reviews/goals/{id}/progress")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateGoalProgress(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -195,7 +202,8 @@ public class PerformanceController {
         return ResponseEntity.ok(ApiResponse.success("Goal progress updated to " + progress + "%", updated.get()));
     }
 
-    @DeleteMapping("/performance-reviews/goals/{id}")
+    @Operation(summary = "Delete Goal", tags = {"Performance Reviews"})
+    @DeleteMapping("/reviews/goals/{id}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> deleteGoal(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -217,7 +225,8 @@ public class PerformanceController {
     }
 
     // ── 4. SELF-REVIEWS ──────────────────────────────────────────────────────
-    @PostMapping("/performance-reviews/self-reviews")
+    @Operation(summary = "Submit Self Review", tags = {"Performance Reviews"})
+    @PostMapping("/reviews/self-reviews")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> submitSelfReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -237,7 +246,8 @@ public class PerformanceController {
     }
 
     // ── 5. MANAGER REVIEWS ───────────────────────────────────────────────────
-    @PostMapping("/performance-reviews/manager-reviews")
+    @Operation(summary = "Submit Manager Review", tags = {"Performance Reviews"})
+    @PostMapping("/reviews/manager-reviews")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> submitManagerReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -260,7 +270,8 @@ public class PerformanceController {
     }
 
     // ── 6. FEEDBACKS ─────────────────────────────────────────────────────────
-    @GetMapping("/performance-reviews/feedbacks")
+    @Operation(summary = "Get Feedbacks", tags = {"Performance Reviews"})
+    @GetMapping("/reviews/feedbacks")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getFeedbacks(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -283,7 +294,8 @@ public class PerformanceController {
     }
 
     // ── 7. FINALIZE REVIEW ───────────────────────────────────────────────────
-    @PostMapping("/performance-reviews/reviews/{id}/finalize")
+    @Operation(summary = "Finalize Review", tags = {"Performance Reviews"})
+    @PostMapping("/reviews/reviews/{id}/finalize")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> finalizeReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -304,7 +316,8 @@ public class PerformanceController {
     }
 
     // ── 8. PIP ────────────────────────────────────────────────────────────────
-    @PostMapping("/performance-reviews/pips")
+    @Operation(summary = "Create PIP", tags = {"Performance Reviews"})
+    @PostMapping("/reviews/pips")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createPip(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -327,7 +340,8 @@ public class PerformanceController {
     }
 
     // ── 9. REPORTS ───────────────────────────────────────────────────────────
-    @GetMapping("/performance-reviews/reports/{reportType}")
+    @Operation(summary = "Get Performance Report", tags = {"Performance Reviews"})
+    @GetMapping("/reviews/reports/{reportType}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -345,7 +359,8 @@ public class PerformanceController {
     }
 
     // ── 10. NOTIFICATIONS ─────────────────────────────────────────────────────
-    @PostMapping("/performance-reviews/notifications")
+    @Operation(summary = "Send Performance Notification", tags = {"Performance Reviews"})
+    @PostMapping("/reviews/notifications")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> sendNotification(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

@@ -16,6 +16,7 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,9 +29,8 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/performance")
 @CrossOrigin("*")
-@Tag(name = "Performance Management")
 public class AppraisalController {
 
     @Autowired
@@ -81,6 +81,7 @@ public class AppraisalController {
     }
 
     // ── 1. DASHBOARD ─────────────────────────────────────────────────────────
+    @Operation(summary = "Get Appraisal Dashboard", tags = {"Appraisals"})
     @GetMapping("/appraisals/dashboard")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getDashboard(
@@ -98,6 +99,7 @@ public class AppraisalController {
     }
 
     // ── 2. APPRAISALS ────────────────────────────────────────────────────────
+    @Operation(summary = "Create Appraisal Record", tags = {"Appraisals"})
     @PostMapping("/appraisals")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> createAppraisal(
@@ -120,6 +122,7 @@ public class AppraisalController {
         }
     }
 
+    @Operation(summary = "Get Appraisals", tags = {"Appraisals"})
     @GetMapping("/appraisals")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAppraisals(
@@ -140,6 +143,7 @@ public class AppraisalController {
         return ResponseEntity.ok(ApiResponse.success("Appraisals retrieved successfully", list));
     }
 
+    @Operation(summary = "Get Appraisal by ID", tags = {"Appraisals"})
     @GetMapping("/appraisals/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAppraisalById(
@@ -166,6 +170,7 @@ public class AppraisalController {
         return ResponseEntity.ok(ApiResponse.success("Appraisal details retrieved successfully", app));
     }
 
+    @Operation(summary = "Update Appraisal", tags = {"Appraisals"})
     @PutMapping("/appraisals/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> updateAppraisal(
@@ -192,6 +197,7 @@ public class AppraisalController {
         }
     }
 
+    @Operation(summary = "Delete Appraisal", tags = {"Appraisals"})
     @DeleteMapping("/appraisals/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> deleteAppraisal(
@@ -213,6 +219,7 @@ public class AppraisalController {
         return ResponseEntity.ok(ApiResponse.success("Appraisal record deleted successfully"));
     }
 
+    @Operation(summary = "Submit Self Review", tags = {"Appraisals"})
     @PostMapping("/appraisals/{id}/self-review")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> submitSelfReview(
@@ -242,6 +249,7 @@ public class AppraisalController {
         return ResponseEntity.ok(ApiResponse.success("Self-review submitted successfully", updated.get()));
     }
 
+    @Operation(summary = "Submit Manager Review", tags = {"Appraisals"})
     @PostMapping("/appraisals/{id}/manager-review")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> submitManagerReview(
@@ -265,6 +273,7 @@ public class AppraisalController {
         return ResponseEntity.ok(ApiResponse.success("Manager review submitted successfully", updated.get()));
     }
 
+    @Operation(summary = "Finalize Appraisal", tags = {"Appraisals"})
     @PostMapping("/appraisals/{id}/finalize")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> finalizeAppraisal(
@@ -287,33 +296,82 @@ public class AppraisalController {
         return ResponseEntity.ok(ApiResponse.success("Appraisal finalized successfully", updated.get()));
     }
 
+    @Operation(summary = "Approve Appraisal", tags = {"Appraisals"})
+    @PatchMapping("/appraisals/{id}/approve")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> approveAppraisal(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (!isManager(currentUser))
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
+
+        Optional<AppraisalResponse> updated = appraisalService.approveAppraisal(id);
+        if (updated.isEmpty())
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Appraisal not found with ID: " + id, "APP_002"));
+
+        return ResponseEntity.ok(ApiResponse.success("Appraisal approved successfully", updated.get()));
+    }
+
+    @Operation(summary = "Reject Appraisal", tags = {"Appraisals"})
+    @PatchMapping("/appraisals/{id}/reject")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> rejectAppraisal(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (!isManager(currentUser))
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
+
+        Optional<AppraisalResponse> updated = appraisalService.rejectAppraisal(id);
+        if (updated.isEmpty())
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Appraisal not found with ID: " + id, "APP_002"));
+
+        return ResponseEntity.ok(ApiResponse.success("Appraisal rejected successfully", updated.get()));
+    }
+
+    @Operation(summary = "Get Appraisal Cycles", tags = {"Performance Cycles"})
     @GetMapping("/appraisal-cycles")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAppraisalCycles(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null)
+        if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
 
         List<AppraisalCycleResponse> list = appraisalService.getAppraisalCycles();
         return ResponseEntity.ok(ApiResponse.success("Appraisal cycles retrieved successfully", list));
     }
 
+    @Operation(summary = "Get Increment Policies", tags = {"Increment Policies"})
     @GetMapping("/increment-policies")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getIncrementPolicies(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null)
+        if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
 
         List<IncrementPolicyResponse> list = appraisalService.getIncrementPolicies();
         return ResponseEntity.ok(ApiResponse.success("Increment policies retrieved successfully", list));
     }
 
     // ── 4. REPORTS ───────────────────────────────────────────────────────────
+    @Operation(summary = "Get Appraisals Report", tags = {"Appraisals"})
     @GetMapping("/appraisals/reports/{reportType}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAppraisalsReport(
@@ -331,6 +389,7 @@ public class AppraisalController {
         return ResponseEntity.ok(ApiResponse.success("Appraisals report generated successfully", data));
     }
 
+    @Operation(summary = "Get Increments Report", tags = {"Increment Policies"})
     @GetMapping("/increments/reports/{reportType}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getIncrementsReport(

@@ -27,4 +27,6 @@ public interface MyGoalRepository extends JpaRepository<MyGoal, Long> {
     List<MyGoal> findByEmployeeEmailAndCycleId(String email, Long cycleId);
     
     Optional<MyGoal> findByIdAndEmployeeEmail(Long id, String email);
+
+    List<MyGoal> findByEmployeeId(Long employeeId);
 }

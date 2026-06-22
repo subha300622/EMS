@@ -17,6 +17,7 @@ import com.example.ems.offboarding.dto.SettlementRequest;
 import com.example.ems.offboarding.service.OffboardingService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -477,5 +478,33 @@ public class OffboardingController {
         Map<String, Object> data = offboardingService.getAnalyticsData();
         return ResponseEntity
                 .ok(ApiResponse.success("Offboarding exit satisfaction and analytics indices compiled", data));
+    }
+
+    @Operation(summary = "Get Offboarding clearance status", description = "Retrieves the clearance checklist completion status grouped by department.")
+    @GetMapping("/offboarding-records/{id}/clearance-status")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getClearanceStatus(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id){
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        OffboardingResponse response = offboardingService.getOffboardingById(id).orElse(null);
+        if (response == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Offboarding record not found with ID: " + id, "OFB_002"));
+        }
+
+        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(response.getEmployeeEmail());
+        if (!isSelf && !checkManagerPermission(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: You cannot view clearance status for this exit record.", "AUTH_002"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Offboarding clearance status retrieved successfully",
+                offboardingService.getClearanceStatus(id)));
     }
 }

@@ -435,4 +435,47 @@ public class OffboardingService {
 
         return data;
     }
+
+    public Map<String, Object> getClearanceStatus(Long offboardingId) {
+        Offboarding offboarding = offboardingRepository.findById(offboardingId)
+                .orElseThrow(() -> new IllegalArgumentException("Offboarding record not found with ID: " + offboardingId));
+
+        List<OffboardingTask> tasks = offboardingTaskRepository.findByOffboardingId(offboardingId);
+
+        Map<String, Map<String, Object>> deptStats = new LinkedHashMap<>();
+        
+        // Group tasks by assignedTo
+        Map<String, List<OffboardingTask>> tasksByDept = tasks.stream()
+                .collect(Collectors.groupingBy(t -> t.getAssignedTo() != null ? t.getAssignedTo() : "EMPLOYEE"));
+
+        for (Map.Entry<String, List<OffboardingTask>> entry : tasksByDept.entrySet()) {
+            String dept = entry.getKey();
+            List<OffboardingTask> deptTasks = entry.getValue();
+            long total = deptTasks.size();
+            long completed = deptTasks.stream().filter(t -> "COMPLETED".equalsIgnoreCase(t.getStatus())).count();
+            double ratio = total > 0 ? (double) completed / total : 0.0;
+
+            Map<String, Object> stats = new LinkedHashMap<>();
+            stats.put("totalTasks", total);
+            stats.put("completedTasks", completed);
+            stats.put("completionRatio", Math.round(ratio * 100.0) / 100.0);
+            stats.put("status", (completed == total && total > 0) ? "CLEARED" : "PENDING");
+
+            deptStats.put(dept, stats);
+        }
+
+        // Add overall stats
+        long overallTotal = tasks.size();
+        long overallCompleted = tasks.stream().filter(t -> "COMPLETED".equalsIgnoreCase(t.getStatus())).count();
+        double overallRatio = overallTotal > 0 ? (double) overallCompleted / overallTotal : 0.0;
+
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("offboardingId", offboardingId);
+        response.put("employeeName", offboarding.getEmployee().getFullName());
+        response.put("departmentClearance", deptStats);
+        response.put("overallCompletionRatio", Math.round(overallRatio * 100.0) / 100.0);
+        response.put("isFullyCleared", overallCompleted == overallTotal && overallTotal > 0);
+
+        return response;
+    }
 }

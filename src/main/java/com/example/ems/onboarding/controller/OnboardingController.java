@@ -11,6 +11,7 @@ import com.example.ems.onboarding.dto.*;
 import com.example.ems.onboarding.service.OnboardingService;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,7 @@ public class OnboardingController {
     }
 
     // ── 0. SELF-SERVICE ONBOARDING ──────────────────────────────────────────
-    @GetMapping("/onboarding/my")
+    @GetMapping("/onboarding/me")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMyOnboardingDetails(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -102,7 +103,7 @@ public class OnboardingController {
         return ResponseEntity.ok(ApiResponse.success("My onboarding details retrieved", response));
     }
 
-    @PutMapping("/onboarding/my")
+    @PutMapping("/onboarding/me")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateMyOnboardingProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -125,7 +126,7 @@ public class OnboardingController {
         return ResponseEntity.ok(ApiResponse.success("Onboarding profile updated successfully"));
     }
 
-    @PostMapping(value = "/onboarding/my/documents", consumes = "multipart/form-data")
+    @PostMapping(value = "/onboarding/me/documents", consumes = "multipart/form-data")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> uploadMyOnboardingDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -159,7 +160,7 @@ public class OnboardingController {
         }
     }
 
-    @GetMapping("/onboarding/my/documents")
+    @GetMapping("/onboarding/me/documents")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMyOnboardingDocuments(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -181,7 +182,7 @@ public class OnboardingController {
         return ResponseEntity.ok(ApiResponse.success("My onboarding documents retrieved", docs));
     }
 
-    @PostMapping("/onboarding/my/submit")
+    @PostMapping("/onboarding/me/submit")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> submitMyOnboarding(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -651,4 +652,33 @@ public class OnboardingController {
 
         Map<String, Object> response = onboardingService.triggerNotification(body);
         return ResponseEntity.ok(ApiResponse.success("Onboarding reminder alert triggered", response));
-    }}
+    }
+
+    @Operation(summary = "Get Onboarding Record Timeline", description = "Retrieves the onboarding lifecycle events and task completions.")
+    @GetMapping("/onboarding-records/{id}/timeline")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getOnboardingTimeline(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id){
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        OnboardingResponse onboarding = onboardingService.getOnboardingById(id).orElse(null);
+        if (onboarding == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Onboarding record not found with ID: " + id, "ONB_002"));
+        }
+
+        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(onboarding.getEmployeeEmail());
+        if (!isSelf && !checkManagerPermission(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: You cannot view this onboarding record timeline.", "AUTH_002"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Onboarding timeline retrieved successfully",
+                onboardingService.getOnboardingTimeline(id)));
+    }
+}

@@ -150,7 +150,7 @@ public class PayrollControllerTest {
         when(roleService.hasPermission(email, "payroll.read")).thenReturn(true);
         when(payrollService.getPayrollStats()).thenReturn(Map.of("totalNetPay", BigDecimal.valueOf(5000)));
 
-        mockMvc.perform(get("/api/v1/payroll-runs/reports")
+        mockMvc.perform(get("/api/v1/payroll/reports/summary")
                 .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));

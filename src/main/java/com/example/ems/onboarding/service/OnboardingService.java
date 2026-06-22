@@ -430,4 +430,56 @@ public class OnboardingService {
             return buildResponse(onboardingRepository.save(onboarding));
         });
     }
+
+    public List<Map<String, Object>> getOnboardingTimeline(Long onboardingId) {
+        Onboarding onboarding = onboardingRepository.findById(onboardingId)
+                .orElseThrow(() -> new IllegalArgumentException("Onboarding record not found with ID: " + onboardingId));
+
+        List<Map<String, Object>> timeline = new ArrayList<>();
+
+        // 1. Initialized
+        Map<String, Object> init = new LinkedHashMap<>();
+        init.put("date", onboarding.getCreatedAt().toString());
+        init.put("type", "INITIALIZED");
+        init.put("title", "Onboarding Initialized");
+        init.put("description", "Onboarding process initialized for employee: " + onboarding.getEmployee().getFullName());
+        timeline.add(init);
+
+        // 2. Tasks completed
+        List<OnboardingTask> tasks = onboardingTaskRepository.findByOnboardingId(onboardingId);
+        for (OnboardingTask task : tasks) {
+            if ("COMPLETED".equalsIgnoreCase(task.getStatus()) && task.getCompletedAt() != null) {
+                Map<String, Object> tEvent = new LinkedHashMap<>();
+                tEvent.put("date", task.getCompletedAt().toString());
+                tEvent.put("type", "TASK_COMPLETED");
+                tEvent.put("title", "Task Completed");
+                tEvent.put("description", "Completed task: '" + task.getTitle() + "'");
+                timeline.add(tEvent);
+            }
+        }
+
+        // 3. Status changes
+        if ("COMPLETED".equalsIgnoreCase(onboarding.getStatus()) && onboarding.getCompletionDate() != null) {
+            Map<String, Object> comp = new LinkedHashMap<>();
+            comp.put("date", onboarding.getCompletionDate().atStartOfDay().toString());
+            comp.put("type", "COMPLETED");
+            comp.put("title", "Onboarding Completed");
+            comp.put("description", "Employee completed all self-service onboarding steps.");
+            timeline.add(comp);
+        }
+
+        if ("APPROVED".equalsIgnoreCase(onboarding.getStatus())) {
+            Map<String, Object> app = new LinkedHashMap<>();
+            app.put("date", onboarding.getUpdatedAt().toString());
+            app.put("type", "APPROVED");
+            app.put("title", "HR Approved");
+            app.put("description", "HR manager approved the employee onboarding profile.");
+            timeline.add(app);
+        }
+
+        // Sort by date ascending
+        timeline.sort((a, b) -> ((String) a.get("date")).compareTo((String) b.get("date")));
+
+        return timeline;
+    }
 }

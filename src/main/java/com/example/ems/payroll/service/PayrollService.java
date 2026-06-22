@@ -429,4 +429,20 @@ public class PayrollService {
         }
         return false;
     }
+
+    @Transactional
+    public Payroll publishPayroll(Long id) {
+        Payroll p = payrollRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Payroll record not found with ID: " + id));
+        p.setStatus("PUBLISHED");
+        return payrollRepository.save(p);
+    }
+
+    @Transactional
+    public Payroll lockPayroll(Long id) {
+        Payroll p = payrollRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Payroll record not found with ID: " + id));
+        p.setStatus("LOCKED");
+        return payrollRepository.save(p);
+    }
 }

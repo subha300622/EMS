@@ -11,8 +11,10 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.leave.dto.LeaveRequest;
 import com.example.ems.leave.dto.LeaveTypeRequest;
+import com.example.ems.leave.dto.LeavePolicyRequest;
 import com.example.ems.leave.entity.Leave;
 import com.example.ems.leave.entity.LeaveType;
+import com.example.ems.leave.entity.LeavePolicy;
 import com.example.ems.leave.service.LeaveService;
 import com.example.ems.security.service.JwtService;
 
@@ -65,9 +67,8 @@ public class LeaveController {
     }
 
     // ── 1. APPLY LEAVE ────────────────────────────────────────────────────────
-    @Operation(summary = "Apply for Leave", description = "Submits a new leave request with date range, leave type, and reason.")
+    @Operation(summary = "Apply for Leave", description = "Submits a new leave request with date range, leave type, and reason.", tags = {"Employee Self Service"})
     @PostMapping("/leaves")
-    @Tag(name = "Employee Self Service - Leave")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> applyLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -95,9 +96,8 @@ public class LeaveController {
     }
 
     // ── 1b. GET MY LEAVES ─────────────────────────────────────────────────────
-    @Operation(summary = "Get My Leave History", description = "Retrieves the logged-in employee's complete leave application history and statuses.")
+    @Operation(summary = "Get My Leave History", description = "Retrieves the logged-in employee's complete leave application history and statuses.", tags = {"Employee Self Service"})
     @GetMapping("/leaves/my")
-    @Tag(name = "Employee Self Service - Leave")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Leave>>> getMyLeaves(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -580,5 +580,121 @@ public class LeaveController {
         impact.put("unpaidLeave", 2);
 
         return ResponseEntity.ok(ApiResponse.success("Leaves payroll impact retrieved successfully", impact));
+    }
+
+    // ── Leave Balance and Policy Mappings ───────────────────────────────────
+    @Operation(summary = "Get My Leave Balance", description = "Retrieves leave balances for the currently logged in employee.")
+    @GetMapping("/leaves/balance")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyLeaveBalance(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Leave balance retrieved successfully",
+                leaveService.getLeaveBalance(employee.getId())));
+    }
+
+    @Operation(summary = "Get Employee Leave Balance", description = "Admin/HR API to retrieve leave balances for a specific employee.")
+    @GetMapping("/leaves/balance/{employeeId}")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEmployeeLeaveBalance(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long employeeId){
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "leave.read")
+                && !roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'leave.read' or 'leave.manage' permission.", "AUTH_002"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Leave balance retrieved successfully",
+                leaveService.getLeaveBalance(employeeId)));
+    }
+
+    @Operation(summary = "Get All Leave Policies", description = "Retrieves configurations for all leave policies.")
+    @GetMapping("/leave-policies")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<List<LeavePolicy>>> getLeavePolicies(
+            @RequestHeader(value = "Authorization", required = false) String authHeader){
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Leave policies retrieved successfully",
+                leaveService.getAllLeavePolicies()));
+    }
+
+    @Operation(summary = "Create Leave Policy", description = "Creates a new leave policy rule configuration.")
+    @PostMapping("/leave-policies")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createLeavePolicy(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody @Valid LeavePolicyRequest request){
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'leave.manage' permission.", "AUTH_002"));
+        }
+
+        try {
+            LeavePolicy policy = leaveService.createLeavePolicy(request);
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Leave policy created successfully", policy));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LVP_001"));
+        }
+    }
+
+    @Operation(summary = "Update Leave Policy", description = "Updates settings on a specific leave policy rule.")
+    @PutMapping("/leave-policies/{id}")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateLeavePolicy(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id,
+            @RequestBody @Valid LeavePolicyRequest request){
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "leave.manage")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'leave.manage' permission.", "AUTH_002"));
+        }
+
+        try {
+            LeavePolicy policy = leaveService.updateLeavePolicy(id, request);
+            return ResponseEntity.ok(ApiResponse.success("Leave policy updated successfully", policy));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LVP_002"));
+        }
     }
 }

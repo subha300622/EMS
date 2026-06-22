@@ -17,6 +17,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.ems.leave.entity.LeavePolicy;
+import com.example.ems.leave.repository.LeavePolicyRepository;
+import com.example.ems.leave.dto.LeavePolicyRequest;
+
 @Service
 public class LeaveService {
 
@@ -25,6 +29,9 @@ public class LeaveService {
 
     @Autowired
     private LeaveTypeRepository leaveTypeRepository;
+
+    @Autowired
+    private LeavePolicyRepository leavePolicyRepository;
 
     // ── LEAVE TYPE CONFIGURATION ─────────────────────────────────────────────
 
@@ -250,5 +257,41 @@ public class LeaveService {
             }
         }
         return usedDays;
+    }
+
+    public List<LeavePolicy> getAllLeavePolicies() {
+        return leavePolicyRepository.findAll();
+    }
+
+    public LeavePolicy createLeavePolicy(LeavePolicyRequest request) {
+        LeaveType type = leaveTypeRepository.findById(request.getLeaveTypeId())
+                .orElseThrow(() -> new IllegalArgumentException("Leave type not found with ID: " + request.getLeaveTypeId()));
+
+        LeavePolicy policy = new LeavePolicy();
+        policy.setName(request.getName());
+        policy.setLeaveType(type);
+        policy.setCarryingLimit(request.getCarryingLimit());
+        policy.setAccrualType(request.getAccrualType());
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            policy.setStatus(request.getStatus());
+        }
+        return leavePolicyRepository.save(policy);
+    }
+
+    public LeavePolicy updateLeavePolicy(Long id, LeavePolicyRequest request) {
+        LeavePolicy policy = leavePolicyRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Leave policy not found with ID: " + id));
+
+        LeaveType type = leaveTypeRepository.findById(request.getLeaveTypeId())
+                .orElseThrow(() -> new IllegalArgumentException("Leave type not found with ID: " + request.getLeaveTypeId()));
+
+        policy.setName(request.getName());
+        policy.setLeaveType(type);
+        policy.setCarryingLimit(request.getCarryingLimit());
+        policy.setAccrualType(request.getAccrualType());
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            policy.setStatus(request.getStatus());
+        }
+        return leavePolicyRepository.save(policy);
     }
 }

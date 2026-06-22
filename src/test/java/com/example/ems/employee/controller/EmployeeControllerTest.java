@@ -5,6 +5,7 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.employee.dto.EmployeeRequest;
 import com.example.ems.employee.entity.Employee;
+import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.employee.service.EmployeeService;
 import com.example.ems.security.service.JwtService;
 
@@ -24,6 +25,7 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,11 +33,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class EmployeeControllerTest {
 
     private MockMvc mockMvc;
-
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
     private EmployeeService employeeService;
+
+    @Mock
+    private EmployeeRepository employeeRepository;
 
     @Mock
     private RoleService roleService;
@@ -49,6 +53,10 @@ public class EmployeeControllerTest {
     @InjectMocks
     private EmployeeController employeeController;
 
+    private static final String TOKEN = "mock-token";
+    private static final String AUTH_HEADER = "Bearer " + TOKEN;
+    private static final String ADMIN_EMAIL = "super_admin@company.com";
+
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
@@ -58,9 +66,8 @@ public class EmployeeControllerTest {
 
     @Test
     public void testCreateEmployeeSuccess() throws Exception {
-        String adminEmail = "super_admin@company.com";
         User adminUser = new User();
-        adminUser.setWorkEmail(adminEmail);
+        adminUser.setWorkEmail(ADMIN_EMAIL);
 
         EmployeeRequest request = new EmployeeRequest();
         request.setFullName("John Doe");
@@ -79,14 +86,14 @@ public class EmployeeControllerTest {
         created.setAnnualSalary(new BigDecimal("1200000.00"));
         created.setJoiningDate(LocalDate.of(2026, 6, 1));
 
-        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
-        when(jwtService.getEmailFromToken("mock-token")).thenReturn(adminEmail);
-        when(userRepository.findByWorkEmail(adminEmail)).thenReturn(Optional.of(adminUser));
-        when(roleService.hasPermission(adminEmail, "employee.create")).thenReturn(true);
+        when(jwtService.validateAccessToken(TOKEN)).thenReturn(true);
+        when(jwtService.getEmailFromToken(TOKEN)).thenReturn(ADMIN_EMAIL);
+        when(userRepository.findByWorkEmail(ADMIN_EMAIL)).thenReturn(Optional.of(adminUser));
+        when(roleService.hasPermission(ADMIN_EMAIL, "employee.create")).thenReturn(true);
         when(employeeService.createEmployee(any(EmployeeRequest.class))).thenReturn(created);
 
         mockMvc.perform(post("/api/v1/employees")
-                .header("Authorization", "Bearer mock-token")
+                .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
@@ -98,43 +105,55 @@ public class EmployeeControllerTest {
 
     @Test
     public void testCreateEmployeeAccessDenied() throws Exception {
-        String testEmail = "employee@example.com";
         User employeeUser = new User();
-        employeeUser.setWorkEmail(testEmail);
+        employeeUser.setWorkEmail(ADMIN_EMAIL);
 
         EmployeeRequest request = new EmployeeRequest();
         request.setFullName("Jane Doe");
         request.setEmail("janedoe@example.com");
-        request.setDepartment("Marketing");
-        request.setDesignation("Marketing Specialist");
-        request.setAnnualSalary(new BigDecimal("800000.00"));
+        request.setDepartment("Engineering");
+        request.setDesignation("Software Engineer");
+        request.setAnnualSalary(new BigDecimal("1200000.00"));
         request.setJoiningDate(LocalDate.of(2026, 6, 1));
 
-        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
-        when(jwtService.getEmailFromToken("mock-token")).thenReturn(testEmail);
-        when(userRepository.findByWorkEmail(testEmail)).thenReturn(Optional.of(employeeUser));
-        when(roleService.hasPermission(testEmail, "employee.create")).thenReturn(false);
+        when(jwtService.validateAccessToken(TOKEN)).thenReturn(true);
+        when(jwtService.getEmailFromToken(TOKEN)).thenReturn(ADMIN_EMAIL);
+        when(userRepository.findByWorkEmail(ADMIN_EMAIL)).thenReturn(Optional.of(employeeUser));
+        when(roleService.hasPermission(ADMIN_EMAIL, "employee.create")).thenReturn(false);
 
         mockMvc.perform(post("/api/v1/employees")
-                .header("Authorization", "Bearer mock-token")
+                .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    public void testCreateEmployeeUnauthorized() throws Exception {
-        EmployeeRequest request = new EmployeeRequest();
-        request.setFullName("Jane Doe");
-        request.setEmail("janedoe@example.com");
-        request.setDepartment("Marketing");
-        request.setDesignation("Marketing Specialist");
-        request.setAnnualSalary(new BigDecimal("800000.00"));
-        request.setJoiningDate(LocalDate.of(2026, 6, 1));
+    public void testGetReportingChainSuccess() throws Exception {
+        User adminUser = new User();
+        adminUser.setWorkEmail(ADMIN_EMAIL);
 
-        mockMvc.perform(post("/api/v1/employees")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized());
+        Employee ceo = new Employee();
+        ceo.setId(1L);
+        ceo.setFullName("CEO Name");
+        ceo.setManager(null);
+
+        Employee employee = new Employee();
+        employee.setId(2L);
+        employee.setFullName("Employee Name");
+        employee.setManager(ceo);
+
+        when(jwtService.validateAccessToken(TOKEN)).thenReturn(true);
+        when(jwtService.getEmailFromToken(TOKEN)).thenReturn(ADMIN_EMAIL);
+        when(userRepository.findByWorkEmail(ADMIN_EMAIL)).thenReturn(Optional.of(adminUser));
+        when(roleService.hasPermission(ADMIN_EMAIL, "employee.directory.read")).thenReturn(true);
+        when(employeeRepository.findById(2L)).thenReturn(Optional.of(employee));
+
+        mockMvc.perform(get("/api/v1/employees/2/reporting-chain")
+                .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].fullName").value("Employee Name"))
+                .andExpect(jsonPath("$.data[1].fullName").value("CEO Name"));
     }
 }

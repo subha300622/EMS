@@ -136,6 +136,149 @@ public class ApprovalCenterService {
         return items;
     }
 
+    public java.util.Optional<ApprovalItemDto> getApprovalById(String compoundId) {
+        String[] parts = compoundId.split("-", 2);
+        if (parts.length < 2) {
+            return java.util.Optional.empty();
+        }
+        String type = parts[0].toUpperCase();
+        Long id;
+        try {
+            id = Long.parseLong(parts[1]);
+        } catch (NumberFormatException e) {
+            return java.util.Optional.empty();
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        switch (type) {
+            case "LEAVE":
+                return leaveRepository.findById(id).map(leave -> {
+                    String requester = leave.getEmployee() != null ? leave.getEmployee().getFullName() : "Unknown";
+                    String details = String.format("%s Leave: %s to %s. Reason: %s",
+                            leave.getLeaveType() != null ? leave.getLeaveType().getName() : "General",
+                            leave.getStartDate(), leave.getEndDate(), leave.getReason());
+                    String dateStr = leave.getAppliedAt() != null ? leave.getAppliedAt().format(formatter) : "";
+                    return new ApprovalItemDto("LEAVE-" + leave.getId(), "LEAVE", requester, details, dateStr, leave.getStatus());
+                });
+            case "GOAL":
+                return goalRepository.findById(id).map(goal -> {
+                    String requester = goal.getEmployee() != null ? goal.getEmployee().getFullName() : "Unknown";
+                    String details = String.format("Goal: %s. Description: %s", goal.getTitle(), goal.getDescription());
+                    String dateStr = goal.getCreatedAt() != null ? goal.getCreatedAt().format(formatter) : "";
+                    return new ApprovalItemDto("GOAL-" + goal.getId(), "GOAL", requester, details, dateStr, goal.getStatus());
+                });
+            case "ONBOARDING":
+                return onboardingRepository.findById(id).map(onboarding -> {
+                    String requester = onboarding.getEmployee() != null ? onboarding.getEmployee().getFullName() : "Unknown";
+                    String details = String.format("Onboarding profile for employee %s (Start Date: %s)", requester, onboarding.getStartDate());
+                    String dateStr = onboarding.getCreatedAt() != null ? onboarding.getCreatedAt().format(formatter) : "";
+                    return new ApprovalItemDto("ONBOARDING-" + onboarding.getId(), "ONBOARDING", requester, details, dateStr, onboarding.getStatus());
+                });
+            case "OFFBOARDING":
+                return offboardingRepository.findById(id).map(offboarding -> {
+                    String requester = offboarding.getEmployee() != null ? offboarding.getEmployee().getFullName() : "Unknown";
+                    String details = String.format("Exit Offboarding: Last Working Day %s. Reason: %s",
+                            offboarding.getExitDate() != null ? offboarding.getExitDate() : offboarding.getRequestedLastWorkingDay(), offboarding.getReason());
+                    String dateStr = offboarding.getCreatedAt() != null ? offboarding.getCreatedAt().format(formatter) : "";
+                    return new ApprovalItemDto("OFFBOARDING-" + offboarding.getId(), "OFFBOARDING", requester, details, dateStr, offboarding.getStatus());
+                });
+            case "SALARY_REVISION":
+                return incrementRepository.findById(id).map(inc -> {
+                    String requester = inc.getEmployee() != null ? inc.getEmployee().getFullName() : "Unknown";
+                    String details = String.format("Salary Revision: Current %s -> New %s (Effective: %s). Reason: %s",
+                            inc.getCurrentSalary(), inc.getNewSalary(), inc.getEffectiveDate(), inc.getReason());
+                    String dateStr = inc.getCreatedAt() != null ? inc.getCreatedAt().format(formatter) : "";
+                    return new ApprovalItemDto("SALARY_REVISION-" + inc.getId(), "SALARY_REVISION", requester, details, dateStr, inc.getStatus());
+                });
+            case "EXP":
+                return expenseRepository.findById(id).map(exp -> {
+                    String requester = exp.getEmployee() != null ? exp.getEmployee().getFullName() : "Unknown";
+                    String details = String.format("Expense Claim: Amount %s. Purpose: %s", exp.getAmount(), exp.getBusinessPurpose());
+                    String dateStr = exp.getCreatedAt() != null ? exp.getCreatedAt().format(formatter) : "";
+                    return new ApprovalItemDto("EXP-" + exp.getId(), "EXP", requester, details, dateStr, exp.getStatus());
+                });
+            default:
+                return java.util.Optional.empty();
+        }
+    }
+
+    public List<ApprovalItemDto> getApprovalHistory() {
+        List<ApprovalItemDto> items = new ArrayList<>();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        // 1. Leaves (non-PENDING)
+        List<Leave> leaves = leaveRepository.findAll().stream()
+                .filter(l -> !"PENDING".equalsIgnoreCase(l.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+        for (Leave leave : leaves) {
+            String requester = leave.getEmployee() != null ? leave.getEmployee().getFullName() : "Unknown";
+            String details = String.format("%s Leave: %s to %s. Reason: %s",
+                    leave.getLeaveType() != null ? leave.getLeaveType().getName() : "General",
+                    leave.getStartDate(), leave.getEndDate(), leave.getReason());
+            String dateStr = leave.getAppliedAt() != null ? leave.getAppliedAt().format(formatter) : "";
+            items.add(new ApprovalItemDto("LEAVE-" + leave.getId(), "LEAVE", requester, details, dateStr, leave.getStatus()));
+        }
+
+        // 2. Goals (non-SUBMITTED)
+        List<Goal> goals = goalRepository.findAll().stream()
+                .filter(g -> !"SUBMITTED".equalsIgnoreCase(g.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+        for (Goal goal : goals) {
+            String requester = goal.getEmployee() != null ? goal.getEmployee().getFullName() : "Unknown";
+            String details = String.format("Goal: %s. Description: %s", goal.getTitle(), goal.getDescription());
+            String dateStr = goal.getCreatedAt() != null ? goal.getCreatedAt().format(formatter) : "";
+            items.add(new ApprovalItemDto("GOAL-" + goal.getId(), "GOAL", requester, details, dateStr, goal.getStatus()));
+        }
+
+        // 3. Onboarding (non-UNDER_REVIEW)
+        List<Onboarding> onboardings = onboardingRepository.findAll().stream()
+                .filter(o -> !"UNDER_REVIEW".equalsIgnoreCase(o.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+        for (Onboarding onboarding : onboardings) {
+            String requester = onboarding.getEmployee() != null ? onboarding.getEmployee().getFullName() : "Unknown";
+            String details = String.format("Onboarding profile for employee %s (Start Date: %s)", requester, onboarding.getStartDate());
+            String dateStr = onboarding.getCreatedAt() != null ? onboarding.getCreatedAt().format(formatter) : "";
+            items.add(new ApprovalItemDto("ONBOARDING-" + onboarding.getId(), "ONBOARDING", requester, details, dateStr, onboarding.getStatus()));
+        }
+
+        // 4. Offboarding (non-PENDING)
+        List<Offboarding> offboardings = offboardingRepository.findAll().stream()
+                .filter(o -> !"PENDING".equalsIgnoreCase(o.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+        for (Offboarding offboarding : offboardings) {
+            String requester = offboarding.getEmployee() != null ? offboarding.getEmployee().getFullName() : "Unknown";
+            String details = String.format("Exit Offboarding: Last Working Day %s. Reason: %s",
+                    offboarding.getExitDate() != null ? offboarding.getExitDate() : offboarding.getRequestedLastWorkingDay(), offboarding.getReason());
+            String dateStr = offboarding.getCreatedAt() != null ? offboarding.getCreatedAt().format(formatter) : "";
+            items.add(new ApprovalItemDto("OFFBOARDING-" + offboarding.getId(), "OFFBOARDING", requester, details, dateStr, offboarding.getStatus()));
+        }
+
+        // 5. Salary Revision (non-PENDING)
+        List<Increment> increments = incrementRepository.findAll().stream()
+                .filter(i -> !"PENDING".equalsIgnoreCase(i.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+        for (Increment inc : increments) {
+            String requester = inc.getEmployee() != null ? inc.getEmployee().getFullName() : "Unknown";
+            String details = String.format("Salary Revision: Current %s -> New %s (Effective: %s). Reason: %s",
+                    inc.getCurrentSalary(), inc.getNewSalary(), inc.getEffectiveDate(), inc.getReason());
+            String dateStr = inc.getCreatedAt() != null ? inc.getCreatedAt().format(formatter) : "";
+            items.add(new ApprovalItemDto("SALARY_REVISION-" + inc.getId(), "SALARY_REVISION", requester, details, dateStr, inc.getStatus()));
+        }
+
+        // 6. Expenses (non-PENDING / non-SUBMITTED)
+        List<Expense> expenses = expenseRepository.findAll().stream()
+                .filter(e -> !"PENDING".equalsIgnoreCase(e.getStatus()) && !"SUBMITTED".equalsIgnoreCase(e.getStatus()))
+                .collect(java.util.stream.Collectors.toList());
+        for (Expense exp : expenses) {
+            String requester = exp.getEmployee() != null ? exp.getEmployee().getFullName() : "Unknown";
+            String details = String.format("Expense Claim: Amount %s. Purpose: %s", exp.getAmount(), exp.getBusinessPurpose());
+            String dateStr = exp.getCreatedAt() != null ? exp.getCreatedAt().format(formatter) : "";
+            items.add(new ApprovalItemDto("EXP-" + exp.getId(), "EXP", requester, details, dateStr, exp.getStatus()));
+        }
+
+        return items;
+    }
+
     @Transactional
     public void approveItem(String compoundId, String approverEmail) {
         String[] parts = compoundId.split("-", 2);

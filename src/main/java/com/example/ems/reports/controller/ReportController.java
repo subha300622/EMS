@@ -4,6 +4,8 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
+import com.example.ems.reports.entity.ReportTemplate;
+import com.example.ems.reports.repository.ReportTemplateRepository;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,6 +33,9 @@ public class ReportController {
 
     @Autowired
     private JwtService jwtService;
+
+    @Autowired
+    private ReportTemplateRepository templateRepository;
 
     // In-memory state storage
     private static final Map<Long, Map<String, Object>> scheduledReports = new ConcurrentHashMap<>();
@@ -529,5 +534,99 @@ public class ReportController {
 
         List<String> periods = List.of("MONTH", "QUARTER", "YEAR");
         return ResponseEntity.ok(ApiResponse.success("Report periods retrieved successfully", periods));
+    }
+
+    // ── 15. REPORT TEMPLATE CRUD ─────────────────────────────────────────────
+    @Operation(summary = "Get all report templates")
+    @GetMapping("/reports/templates")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getReportTemplates(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) String category) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        List<ReportTemplate> templates;
+        if (category != null && !category.trim().isEmpty()) {
+            templates = templateRepository.findByCategory(category.trim().toUpperCase());
+        } else {
+            templates = templateRepository.findAll();
+        }
+        return ResponseEntity.ok(ApiResponse.success("Report templates retrieved successfully", templates));
+    }
+
+    @Operation(summary = "Create a new report template")
+    @PostMapping("/reports/templates")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createReportTemplate(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody ReportTemplate template) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        template.setCreatedAt(LocalDateTime.now());
+        template.setUpdatedAt(LocalDateTime.now());
+        ReportTemplate saved = templateRepository.save(template);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Report template created successfully", saved));
+    }
+
+    @Operation(summary = "Update an existing report template")
+    @PutMapping("/reports/templates/{id}")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateReportTemplate(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id,
+            @RequestBody ReportTemplate templateDetails) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Optional<ReportTemplate> templateOpt = templateRepository.findById(id);
+        if (templateOpt.isEmpty()) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Report template not found with ID: " + id, "REP_006"));
+        }
+
+        ReportTemplate template = templateOpt.get();
+        template.setName(templateDetails.getName());
+        template.setCategory(templateDetails.getCategory());
+        template.setColumns(templateDetails.getColumns());
+        template.setUpdatedAt(LocalDateTime.now());
+        ReportTemplate saved = templateRepository.save(template);
+
+        return ResponseEntity.ok(ApiResponse.success("Report template updated successfully", saved));
+    }
+
+    @Operation(summary = "Delete an existing report template")
+    @DeleteMapping("/reports/templates/{id}")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> deleteReportTemplate(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!templateRepository.existsById(id)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Report template not found with ID: " + id, "REP_006"));
+        }
+
+        templateRepository.deleteById(id);
+        Map<String, Object> res = new HashMap<>();
+        res.put("success", true);
+        res.put("message", "Report template deleted successfully");
+        return ResponseEntity.ok(ApiResponse.success("Report template deleted successfully", res));
     }
 }

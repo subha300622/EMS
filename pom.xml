@@ -13,6 +13,7 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ems-backend</name>
 	<description>Employee Management System Backend</description>
+	<!-- Trigger rebuild -->
 	<url/>
 	<licenses>
 		<license/>
@@ -186,6 +187,61 @@
 					<xmlOutput>true</xmlOutput>
 					<excludeFilterFile>spotbugs-exclude.xml</excludeFilterFile>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.6.1</version>
+				<configuration>
+					<ignoreNonCompile>true</ignoreNonCompile>
+					<ignoredDependencies>
+						<ignoredDependency>org.springframework.boot:spring-boot-starter*</ignoredDependency>
+						<ignoredDependency>org.postgresql:postgresql</ignoredDependency>
+						<ignoredDependency>org.projectlombok:lombok</ignoredDependency>
+						<ignoredDependency>com.h2database:h2</ignoredDependency>
+						<ignoredDependency>org.springdoc:springdoc-openapi-starter-webmvc-ui</ignoredDependency>
+						<ignoredDependency>io.jsonwebtoken:jjwt-impl</ignoredDependency>
+						<ignoredDependency>io.jsonwebtoken:jjwt-jackson</ignoredDependency>
+					</ignoredDependencies>
+					<ignoredUsedUndeclaredDependencies>
+						<ignoredUsedUndeclaredDependency>org.springframework:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.springframework.boot:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.springframework.data:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.fasterxml.jackson.core:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.fasterxml.jackson.datatype:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>tools.jackson.core:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>jakarta.persistence:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>jakarta.annotation:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>jakarta.validation:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>io.swagger.core.v3:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.slf4j:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.hamcrest:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.mockito:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>commons-logging:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.apache.poi:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.junit.jupiter:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.apache.tomcat.embed:*</ignoredUsedUndeclaredDependency>
+					</ignoredUsedUndeclaredDependencies>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<version>3.28.0</version>
+				<configuration>
+					<failOnViolation>false</failOnViolation>
+					<printFailingErrors>true</printFailingErrors>
+					<linkXRef>false</linkXRef>
+					<typeResolution>false</typeResolution>
+				</configuration>
+				<executions>
+					<execution>
+						<id>pmd-check</id>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 
 		</plugins>

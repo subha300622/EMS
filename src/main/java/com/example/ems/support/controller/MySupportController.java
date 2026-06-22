@@ -1,4 +1,5 @@
 package com.example.ems.support.controller;
+
 import java.util.List;
 
 import com.example.ems.auth.entity.User;
@@ -57,7 +58,8 @@ public class MySupportController {
     }
 
     private boolean checkPermission(User user, String permission) {
-        if (user == null) return false;
+        if (user == null)
+            return false;
         if (roleService.hasPermission(user.getWorkEmail(), permission) || roleService.isSuperAdmin(user.getWorkEmail()))
             return true;
         if ("support.self.read".equals(permission))
@@ -85,12 +87,14 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     @Operation(summary = "Get My Support Dashboard")
     @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<SupportDashboardResponse>> getDashboard(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Dashboard statistics retrieved successfully",
                     supportService.getDashboard(currentUser.getWorkEmail())));
@@ -98,15 +102,18 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Create Support Ticket")
     @PostMapping("/tickets")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<CreateTicketResponse>> createTicket(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody CreateTicketRequest request){
+            @Valid @RequestBody CreateTicketRequest request) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.create")) return (ResponseEntity) forbiddenResponse("support.self.create");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.create"))
+            return (ResponseEntity) forbiddenResponse("support.self.create");
         try {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Support ticket created successfully",
@@ -115,9 +122,10 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Get My Tickets (paginated/filtered by status, priority, categoryId, search)")
     @GetMapping("/tickets")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<MyTicketsResponse>> getMyTickets(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(value = "status", required = false) String status,
@@ -125,27 +133,33 @@ public class MySupportController {
             @RequestParam(value = "categoryId", required = false) Long categoryId,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "10") int size){
+            @RequestParam(value = "size", defaultValue = "10") int size) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             Pageable pageable = PageRequest.of(page, size, Sort.by("updatedAt").descending());
             return ResponseEntity.ok(ApiResponse.success("Tickets list retrieved successfully",
-                    supportService.getMyTickets(currentUser.getWorkEmail(), status, priority, categoryId, search, pageable)));
+                    supportService.getMyTickets(currentUser.getWorkEmail(), status, priority, categoryId, search,
+                            pageable)));
         } catch (Exception e) {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Get Ticket Details")
     @GetMapping("/tickets/{ticketId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<TicketDetailsResponse>> getTicketDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("ticketId") Long ticketId){
+            @PathVariable("ticketId") Long ticketId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Ticket details retrieved successfully",
                     supportService.getTicketDetails(currentUser.getWorkEmail(), ticketId)));
@@ -153,16 +167,19 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Update Ticket (subject, description, priority) — only OPEN tickets")
     @PutMapping("/tickets/{ticketId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<UpdateTicketResponse>> updateTicket(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("ticketId") Long ticketId,
-            @RequestBody UpdateTicketRequest request){
+            @RequestBody UpdateTicketRequest request) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.create")) return (ResponseEntity) forbiddenResponse("support.self.create");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.create"))
+            return (ResponseEntity) forbiddenResponse("support.self.create");
         try {
             return ResponseEntity.ok(ApiResponse.success("Ticket updated successfully",
                     supportService.updateTicket(currentUser.getWorkEmail(), ticketId, request)));
@@ -170,16 +187,19 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Close Ticket (with optional rating + feedback)")
     @PatchMapping("/tickets/{ticketId}/close")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<CloseTicketResponse>> closeTicket(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("ticketId") Long ticketId,
-            @Valid @RequestBody CloseTicketRequest request){
+            @Valid @RequestBody CloseTicketRequest request) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.close")) return (ResponseEntity) forbiddenResponse("support.self.close");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.close"))
+            return (ResponseEntity) forbiddenResponse("support.self.close");
         try {
             return ResponseEntity.ok(ApiResponse.success("Ticket closed successfully",
                     supportService.closeTicket(currentUser.getWorkEmail(), ticketId, request)));
@@ -187,15 +207,18 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Reopen a CLOSED ticket")
     @PatchMapping("/tickets/{ticketId}/reopen")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<ReopenTicketResponse>> reopenTicket(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("ticketId") Long ticketId){
+            @PathVariable("ticketId") Long ticketId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.create")) return (ResponseEntity) forbiddenResponse("support.self.create");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.create"))
+            return (ResponseEntity) forbiddenResponse("support.self.create");
         try {
             return ResponseEntity.ok(ApiResponse.success("Ticket reopened successfully",
                     supportService.reopenTicket(currentUser.getWorkEmail(), ticketId)));
@@ -203,16 +226,19 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Escalate Ticket to CRITICAL priority")
     @PatchMapping("/tickets/{ticketId}/escalate")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<EscalateTicketResponse>> escalateTicket(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("ticketId") Long ticketId,
-            @Valid @RequestBody EscalateTicketRequest request){
+            @Valid @RequestBody EscalateTicketRequest request) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.create")) return (ResponseEntity) forbiddenResponse("support.self.create");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.create"))
+            return (ResponseEntity) forbiddenResponse("support.self.create");
         try {
             return ResponseEntity.ok(ApiResponse.success("Ticket escalated successfully",
                     supportService.escalateTicket(currentUser.getWorkEmail(), ticketId, request)));
@@ -220,15 +246,18 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Delete an OPEN ticket")
     @DeleteMapping("/tickets/{ticketId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> deleteTicket(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("ticketId") Long ticketId){
+            @PathVariable("ticketId") Long ticketId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.create")) return (ResponseEntity) forbiddenResponse("support.self.create");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.create"))
+            return (ResponseEntity) forbiddenResponse("support.self.create");
         try {
             supportService.deleteTicket(currentUser.getWorkEmail(), ticketId);
             return ResponseEntity.ok(ApiResponse.success("Ticket deleted successfully"));
@@ -236,15 +265,18 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Get Ticket Activity Timeline")
     @GetMapping("/tickets/{ticketId}/timeline")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<TicketTimelineResponse>> getTicketTimeline(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("ticketId") Long ticketId){
+            @PathVariable("ticketId") Long ticketId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Ticket timeline retrieved successfully",
                     supportService.getTicketTimeline(currentUser.getWorkEmail(), ticketId)));
@@ -252,16 +284,19 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Submit satisfaction feedback for a RESOLVED or CLOSED ticket")
     @PostMapping("/tickets/{ticketId}/feedback")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<TicketFeedbackResponse>> submitFeedback(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("ticketId") Long ticketId,
-            @Valid @RequestBody TicketFeedbackRequest request){
+            @Valid @RequestBody TicketFeedbackRequest request) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Feedback submitted successfully",
                     supportService.submitFeedback(currentUser.getWorkEmail(), ticketId, request)));
@@ -275,13 +310,15 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     @Operation(summary = "Get All Comments on a Ticket")
     @GetMapping("/tickets/{ticketId}/comments")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<GetCommentsResponse>> getComments(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("ticketId") Long ticketId){
+            @PathVariable("ticketId") Long ticketId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Comments retrieved successfully",
                     supportService.getComments(currentUser.getWorkEmail(), ticketId)));
@@ -289,16 +326,19 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Add a Comment to a Ticket")
     @PostMapping("/tickets/{ticketId}/comments")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<AddCommentResponse>> addComment(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("ticketId") Long ticketId,
-            @Valid @RequestBody AddCommentRequest request){
+            @Valid @RequestBody AddCommentRequest request) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.comment.create")) return (ResponseEntity) forbiddenResponse("support.self.comment.create");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.comment.create"))
+            return (ResponseEntity) forbiddenResponse("support.self.comment.create");
         try {
             return ResponseEntity.ok(ApiResponse.success("Comment added successfully",
                     supportService.addComment(currentUser.getWorkEmail(), ticketId, request)));
@@ -312,13 +352,15 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     @Operation(summary = "Upload an Attachment (returns fileId to attach to ticket/comment)")
     @PostMapping(value = "/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<AttachmentUploadResponse>> uploadAttachment(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestParam("file") MultipartFile file){
+            @RequestParam("file") MultipartFile file) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.create")) return (ResponseEntity) forbiddenResponse("support.self.create");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.create"))
+            return (ResponseEntity) forbiddenResponse("support.self.create");
         try {
             return ResponseEntity.ok(ApiResponse.success("Attachment uploaded successfully",
                     supportService.uploadAttachment(file)));
@@ -326,15 +368,18 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Download an Attachment by fileId")
     @GetMapping("/attachments/{attachmentId}/download")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "rawtypes" })
     public ResponseEntity<?> downloadAttachment(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("attachmentId") String attachmentId){
+            @PathVariable("attachmentId") String attachmentId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return forbiddenResponse("support.self.read");
         try {
             MySupportAttachment att = supportService.getAttachmentForDownload(currentUser.getWorkEmail(), attachmentId);
             String contentType = att.getFileType() != null ? att.getFileType() : "application/octet-stream";
@@ -353,12 +398,14 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     @Operation(summary = "Get Support Categories (with subcategories)")
     @GetMapping("/categories")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<List<SupportCategoryResponse>>> getCategories(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Support categories retrieved successfully",
                     supportService.getCategories()));
@@ -366,15 +413,18 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Search Knowledge Base (legacy — use /knowledge-base/articles instead)")
     @GetMapping("/knowledge-base")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<FAQSearchResponse>> searchFAQ(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestParam(value = "keyword", required = false) String keyword){
+            @RequestParam(value = "keyword", required = false) String keyword) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Knowledge base articles retrieved successfully",
                     supportService.searchFAQ(keyword)));
@@ -382,15 +432,18 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "List Knowledge Base Articles (optional ?category= filter)")
     @GetMapping("/knowledge-base/articles")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<FAQSearchResponse>> getKnowledgeBaseArticles(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestParam(value = "category", required = false) String category){
+            @RequestParam(value = "category", required = false) String category) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Knowledge base articles retrieved successfully",
                     supportService.getKnowledgeBaseArticles(category)));
@@ -398,15 +451,18 @@ public class MySupportController {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
+
     @Operation(summary = "Get Knowledge Base Article by ID (increments view count)")
     @GetMapping("/knowledge-base/articles/{articleId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<FAQSearchResponse.FAQArticleDto>> getKnowledgeBaseArticleById(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("articleId") Long articleId){
+            @PathVariable("articleId") Long articleId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return (ResponseEntity) forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return (ResponseEntity) forbiddenResponse("support.self.read");
         try {
             return ResponseEntity.ok(ApiResponse.success("Article retrieved successfully",
                     supportService.getKnowledgeBaseArticleById(articleId)));
@@ -420,12 +476,14 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     @Operation(summary = "Export My Tickets as CSV")
     @GetMapping("/tickets/export")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<?> exportTickets(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "support.self.read")) return forbiddenResponse("support.self.read");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "support.self.read"))
+            return forbiddenResponse("support.self.read");
         try {
             String csv = supportService.exportTicketsCsv(currentUser.getWorkEmail());
             return ResponseEntity.ok()

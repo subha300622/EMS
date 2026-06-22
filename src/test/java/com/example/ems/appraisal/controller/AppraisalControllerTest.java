@@ -6,10 +6,6 @@ import com.example.ems.appraisal.dto.AppraisalManagerReviewRequest;
 import com.example.ems.appraisal.dto.AppraisalRequest;
 import com.example.ems.appraisal.dto.AppraisalResponse;
 import com.example.ems.appraisal.dto.AppraisalSelfReviewRequest;
-
-
-
-
 import com.example.ems.appraisal.service.AppraisalService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -25,8 +21,6 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-
-
 
 import java.util.List;
 import java.util.Map;
@@ -120,7 +114,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.getDashboardStats()).thenReturn(stats);
 
-        mockMvc.perform(get("/api/v1/appraisals/dashboard")
+        mockMvc.perform(get("/api/v1/performance/appraisals/dashboard")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -132,7 +126,7 @@ public class AppraisalControllerTest {
     public void testGetDashboardForbidden() throws Exception {
         setupEmployee();
 
-        mockMvc.perform(get("/api/v1/appraisals/dashboard")
+        mockMvc.perform(get("/api/v1/performance/appraisals/dashboard")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden());
     }
@@ -150,7 +144,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.getDashboardStats()).thenReturn(stats);
 
-        mockMvc.perform(get("/api/v1/appraisals/dashboard")
+        mockMvc.perform(get("/api/v1/performance/appraisals/dashboard")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -174,7 +168,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.createAppraisal(any(AppraisalRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(post("/api/v1/appraisals")
+        mockMvc.perform(post("/api/v1/performance/appraisals")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -193,7 +187,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.getAppraisals()).thenReturn(List.of(app));
 
-        mockMvc.perform(get("/api/v1/appraisals")
+        mockMvc.perform(get("/api/v1/performance/appraisals")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -210,7 +204,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.getAppraisals()).thenReturn(List.of(app));
 
-        mockMvc.perform(get("/api/v1/appraisals")
+        mockMvc.perform(get("/api/v1/performance/appraisals")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -228,7 +222,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.getAppraisalById(15L)).thenReturn(Optional.of(app));
 
-        mockMvc.perform(get("/api/v1/appraisals/15")
+        mockMvc.perform(get("/api/v1/performance/appraisals/15")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -246,7 +240,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.getAppraisalById(15L)).thenReturn(Optional.of(app));
 
-        mockMvc.perform(get("/api/v1/appraisals/15")
+        mockMvc.perform(get("/api/v1/performance/appraisals/15")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -274,7 +268,7 @@ public class AppraisalControllerTest {
         when(appraisalService.getAppraisalById(10L)).thenReturn(Optional.of(oldApp));
         when(appraisalService.submitSelfReview(eq(10L), any(AppraisalSelfReviewRequest.class))).thenReturn(Optional.of(newApp));
 
-        mockMvc.perform(post("/api/v1/appraisals/10/self-review")
+        mockMvc.perform(post("/api/v1/performance/appraisals/10/self-review")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -298,7 +292,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.submitManagerReview(eq(10L), any(AppraisalManagerReviewRequest.class), eq(hrEmail))).thenReturn(Optional.of(updated));
 
-        mockMvc.perform(post("/api/v1/appraisals/10/manager-review")
+        mockMvc.perform(post("/api/v1/performance/appraisals/10/manager-review")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -321,7 +315,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.finalizeAppraisal(eq(10L), any(AppraisalFinalizeRequest.class))).thenReturn(Optional.of(updated));
 
-        mockMvc.perform(post("/api/v1/appraisals/10/finalize")
+        mockMvc.perform(post("/api/v1/performance/appraisals/10/finalize")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -346,7 +340,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.updateAppraisal(eq(10L), any(AppraisalRequest.class))).thenReturn(Optional.of(updated));
 
-        mockMvc.perform(put("/api/v1/appraisals/10")
+        mockMvc.perform(put("/api/v1/performance/appraisals/10")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -365,7 +359,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.updateAppraisal(eq(10L), any(AppraisalRequest.class))).thenReturn(Optional.empty());
 
-        mockMvc.perform(put("/api/v1/appraisals/10")
+        mockMvc.perform(put("/api/v1/performance/appraisals/10")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -379,7 +373,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.deleteAppraisal(10L)).thenReturn(true);
 
-        mockMvc.perform(delete("/api/v1/appraisals/10")
+        mockMvc.perform(delete("/api/v1/performance/appraisals/10")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -391,7 +385,7 @@ public class AppraisalControllerTest {
 
         when(appraisalService.deleteAppraisal(10L)).thenReturn(false);
 
-        mockMvc.perform(delete("/api/v1/appraisals/10")
+        mockMvc.perform(delete("/api/v1/performance/appraisals/10")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false));
@@ -405,7 +399,7 @@ public class AppraisalControllerTest {
         Map<String, Object> mockReport = Map.of("totalAppraisalsCount", 10, "averageFinalRating", 4.2);
         when(appraisalService.getAppraisalsReport("summary")).thenReturn(mockReport);
 
-        mockMvc.perform(get("/api/v1/appraisals/reports/summary")
+        mockMvc.perform(get("/api/v1/performance/appraisals/reports/summary")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

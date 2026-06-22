@@ -3,7 +3,9 @@ package com.example.ems.attendance.service;
 import com.example.ems.attendance.dto.AttendanceRequest;
 import com.example.ems.attendance.dto.AttendanceStatsResponse;
 import com.example.ems.attendance.entity.Attendance;
+import com.example.ems.attendance.entity.AttendanceRegularization;
 import com.example.ems.attendance.repository.AttendanceRepository;
+import com.example.ems.attendance.repository.AttendanceRegularizationRepository;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 
@@ -25,6 +27,9 @@ public class AttendanceService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private AttendanceRegularizationRepository attendanceRegularizationRepository;
 
     @Transactional
     public Attendance addAttendanceRecord(AttendanceRequest request) {
@@ -221,5 +226,70 @@ public class AttendanceService {
 
     public List<Attendance> getTodayAllAttendance() {
         return attendanceRepository.findByDate(java.time.LocalDate.now());
+    }
+
+    @Transactional
+    public AttendanceRegularization submitRegularization(Long employeeId, java.time.LocalDate date, java.time.LocalTime proposedPunchIn, java.time.LocalTime proposedPunchOut, String reason) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+
+        AttendanceRegularization regularization = new AttendanceRegularization();
+        regularization.setEmployee(employee);
+        regularization.setDate(date);
+        regularization.setProposedPunchInTime(proposedPunchIn);
+        regularization.setProposedPunchOutTime(proposedPunchOut);
+        regularization.setReason(reason);
+        regularization.setStatus("PENDING");
+
+        return attendanceRegularizationRepository.save(regularization);
+    }
+
+    public List<AttendanceRegularization> getRegularizations(String status) {
+        if (status == null || status.isBlank()) {
+            return attendanceRegularizationRepository.findAll();
+        }
+        return attendanceRegularizationRepository.findByStatus(status);
+    }
+
+    @Transactional
+    public AttendanceRegularization approveRegularization(Long id) {
+        AttendanceRegularization reg = attendanceRegularizationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Regularization not found with ID: " + id));
+        if (!"PENDING".equalsIgnoreCase(reg.getStatus())) {
+            throw new IllegalArgumentException("Regularization request is already processed: " + reg.getStatus());
+        }
+        reg.setStatus("APPROVED");
+        attendanceRegularizationRepository.save(reg);
+
+        Attendance attendance = attendanceRepository.findByEmployeeIdAndDate(reg.getEmployee().getId(), reg.getDate())
+                .orElseGet(() -> {
+                    Attendance newRecord = new Attendance();
+                    newRecord.setEmployee(reg.getEmployee());
+                    newRecord.setDate(reg.getDate());
+                    return newRecord;
+                });
+
+        attendance.setPunchInTime(reg.getProposedPunchInTime());
+        attendance.setPunchOutTime(reg.getProposedPunchOutTime());
+        if (reg.getProposedPunchInTime() != null && reg.getProposedPunchInTime().isAfter(java.time.LocalTime.of(9, 30))) {
+            attendance.setStatus("Late");
+        } else {
+            attendance.setStatus("Present");
+        }
+        attendance.setNotes("Regularized: " + reg.getReason());
+        attendanceRepository.save(attendance);
+
+        return reg;
+    }
+
+    @Transactional
+    public AttendanceRegularization rejectRegularization(Long id) {
+        AttendanceRegularization reg = attendanceRegularizationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Regularization not found with ID: " + id));
+        if (!"PENDING".equalsIgnoreCase(reg.getStatus())) {
+            throw new IllegalArgumentException("Regularization request is already processed: " + reg.getStatus());
+        }
+        reg.setStatus("REJECTED");
+        return attendanceRegularizationRepository.save(reg);
     }
 }

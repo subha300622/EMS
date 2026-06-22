@@ -101,8 +101,6 @@ public class FinanceSettlementService {
                 processed++;
             } else if (s.getStatus() == FnfSettlementStatus.REJECTED) {
                 rejected++;
-            } else if (s.getStatus() == FnfSettlementStatus.SENT_BACK) {
-                // Count sent_back under pendingReview or omit, let's keep dashboard strictly mapping pendingReview to PENDING status
             }
 
             if (s.getStatus() != FnfSettlementStatus.REJECTED) {
@@ -585,7 +583,7 @@ public class FinanceSettlementService {
 
             document.close();
             return baos.toByteArray();
-        } catch (Exception e) {
+        } catch (com.lowagie.text.DocumentException | java.io.IOException e) {
             throw new RuntimeException("Error during FNF PDF statement generation: " + e.getMessage(), e);
         }
     }

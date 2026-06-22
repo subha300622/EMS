@@ -23,17 +23,25 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
+    @Column(nullable = false, columnDefinition = "varchar(50) default 'SYSTEM'")
+    private String type = "SYSTEM";
+
+    @Column(nullable = false, columnDefinition = "varchar(50) default 'MEDIUM'")
+    private String priority = "MEDIUM";
+
     private boolean isRead = false;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public Notification() {}
 
-    public Notification(Long id, User user, String title, String message, boolean isRead, LocalDateTime createdAt) {
+    public Notification(Long id, User user, String title, String message, String type, String priority, boolean isRead, LocalDateTime createdAt) {
         this.id = id;
         this.user = user;
         this.title = title;
         this.message = message;
+        this.type = type;
+        this.priority = priority;
         this.isRead = isRead;
         this.createdAt = createdAt;
     }
@@ -68,6 +76,22 @@ public class Notification {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getPriority() {
+        return priority;
+    }
+
+    public void setPriority(String priority) {
+        this.priority = priority;
     }
 
     public boolean isRead() {

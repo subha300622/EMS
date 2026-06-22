@@ -113,7 +113,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.getDashboardStats()).thenReturn(stats);
 
-        mockMvc.perform(get("/api/v1/performance-reviews/dashboard")
+        mockMvc.perform(get("/api/v1/performance/reviews/dashboard")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -134,7 +134,7 @@ public class PerformanceControllerTest {
     public void testGetDashboardForbidden() throws Exception {
         setupEmployee();
 
-        mockMvc.perform(get("/api/v1/performance-reviews/dashboard")
+        mockMvc.perform(get("/api/v1/performance/reviews/dashboard")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.success").value(false))
@@ -157,7 +157,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.getCycles()).thenReturn(List.of(resp));
 
-        mockMvc.perform(get("/api/v1/performance-reviews/cycles")
+        mockMvc.perform(get("/api/v1/performance/reviews/cycles")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -184,7 +184,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.createCycle(any(PerformanceCycleRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(post("/api/v1/performance-reviews/cycles")
+        mockMvc.perform(post("/api/v1/performance/reviews/cycles")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -214,7 +214,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.updateCycle(eq(2L), any(PerformanceCycleRequest.class))).thenReturn(Optional.of(resp));
 
-        mockMvc.perform(put("/api/v1/performance-reviews/cycles/2")
+        mockMvc.perform(put("/api/v1/performance/reviews/cycles/2")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -242,7 +242,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.createGoal(any(PerformanceGoalRequest.class))).thenReturn(goal);
 
-        mockMvc.perform(post("/api/v1/performance-reviews/goals")
+        mockMvc.perform(post("/api/v1/performance/reviews/goals")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -263,7 +263,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.updateGoalProgress(5L, 75)).thenReturn(Optional.of(goal));
 
-        mockMvc.perform(patch("/api/v1/performance-reviews/goals/5/progress")
+        mockMvc.perform(patch("/api/v1/performance/reviews/goals/5/progress")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"progressPercent\": 75}"))
@@ -278,7 +278,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.deleteGoal(5L)).thenReturn(true);
 
-        mockMvc.perform(delete("/api/v1/performance-reviews/goals/5")
+        mockMvc.perform(delete("/api/v1/performance/reviews/goals/5")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -290,7 +290,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.deleteGoal(99L)).thenReturn(false);
 
-        mockMvc.perform(delete("/api/v1/performance-reviews/goals/99")
+        mockMvc.perform(delete("/api/v1/performance/reviews/goals/99")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isNotFound());
     }
@@ -315,7 +315,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.submitSelfReview(any(SelfReviewRequest.class))).thenReturn(review);
 
-        mockMvc.perform(post("/api/v1/performance-reviews/self-reviews")
+        mockMvc.perform(post("/api/v1/performance/reviews/self-reviews")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -344,7 +344,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.submitManagerReview(any(ManagerReviewRequest.class))).thenReturn(review);
 
-        mockMvc.perform(post("/api/v1/performance-reviews/manager-reviews")
+        mockMvc.perform(post("/api/v1/performance/reviews/manager-reviews")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -362,7 +362,7 @@ public class PerformanceControllerTest {
         req.setEmployeeId(2L);
         req.setReviewerId(1L);
 
-        mockMvc.perform(post("/api/v1/performance-reviews/manager-reviews")
+        mockMvc.perform(post("/api/v1/performance/reviews/manager-reviews")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -381,7 +381,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.getFeedbacks()).thenReturn(List.of(r));
 
-        mockMvc.perform(get("/api/v1/performance-reviews/feedbacks")
+        mockMvc.perform(get("/api/v1/performance/reviews/feedbacks")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -399,7 +399,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.finalizeReview(11L)).thenReturn(Optional.of(review));
 
-        mockMvc.perform(post("/api/v1/performance-reviews/reviews/11/finalize")
+        mockMvc.perform(post("/api/v1/performance/reviews/reviews/11/finalize")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -425,7 +425,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.createPip(any(PipRequest.class))).thenReturn(resp);
 
-        mockMvc.perform(post("/api/v1/performance-reviews/pips")
+        mockMvc.perform(post("/api/v1/performance/reviews/pips")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -446,7 +446,7 @@ public class PerformanceControllerTest {
         );
         when(performanceService.getReportData("summary")).thenReturn(reportData);
 
-        mockMvc.perform(get("/api/v1/performance-reviews/reports/summary")
+        mockMvc.perform(get("/api/v1/performance/reviews/reports/summary")
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -461,7 +461,7 @@ public class PerformanceControllerTest {
 
         Map<String, String> body = Map.of("message", "Please complete your self-review");
 
-        mockMvc.perform(post("/api/v1/performance-reviews/notifications")
+        mockMvc.perform(post("/api/v1/performance/reviews/notifications")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(body)))

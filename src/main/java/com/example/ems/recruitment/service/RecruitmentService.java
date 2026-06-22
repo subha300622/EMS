@@ -20,10 +20,13 @@ import com.example.ems.recruitment.entity.Candidate;
 import com.example.ems.recruitment.entity.Interview;
 import com.example.ems.recruitment.entity.Job;
 import com.example.ems.recruitment.entity.Offer;
+import com.example.ems.recruitment.entity.BackgroundVerification;
 import com.example.ems.recruitment.repository.CandidateRepository;
 import com.example.ems.recruitment.repository.InterviewRepository;
 import com.example.ems.recruitment.repository.JobRepository;
 import com.example.ems.recruitment.repository.OfferRepository;
+import com.example.ems.recruitment.repository.BackgroundVerificationRepository;
+import com.example.ems.recruitment.dto.BackgroundVerificationRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -62,6 +65,9 @@ public class RecruitmentService {
 
     @Autowired
     private RoleRepository roleRepository;
+
+    @Autowired
+    private BackgroundVerificationRepository backgroundVerificationRepository;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
@@ -435,5 +441,27 @@ public class RecruitmentService {
         return candidateRepository.findByJobId(jobId).stream()
                 .map(CandidateResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public BackgroundVerification createBackgroundVerification(BackgroundVerificationRequest request) {
+        Candidate candidate = candidateRepository.findById(request.getCandidateId())
+                .orElseThrow(() -> new IllegalArgumentException("Candidate not found with ID: " + request.getCandidateId()));
+
+        BackgroundVerification bv = new BackgroundVerification();
+        bv.setCandidate(candidate);
+        bv.setVerificationAgency(request.getVerificationAgency());
+        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+            bv.setStatus(request.getStatus().toUpperCase());
+        } else {
+            bv.setStatus("PENDING");
+        }
+        bv.setReportsMetadata(request.getReportsMetadata());
+
+        return backgroundVerificationRepository.save(bv);
+    }
+
+    public Optional<BackgroundVerification> getBackgroundVerification(Long id) {
+        return backgroundVerificationRepository.findById(id);
     }
 }

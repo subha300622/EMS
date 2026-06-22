@@ -29,9 +29,7 @@ public class Candidate {
     private String resumeFileName;
     private String resumeFileType;
 
-    @Lob
-    @Basic(fetch = FetchType.LAZY)
-    @Column(columnDefinition = "BYTEA")
+    @Column(name = "resume_data", columnDefinition = "BYTEA")
     private byte[] resumeData;
 
     private String resumeUrl;

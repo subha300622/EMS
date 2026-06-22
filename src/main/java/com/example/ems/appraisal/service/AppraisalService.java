@@ -193,6 +193,26 @@ public class AppraisalService {
         });
     }
 
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Optional<AppraisalResponse> approveAppraisal(Long id) {
+        return appraisalRepository.findById(id).map(app -> {
+            app.setStatus("APPROVED");
+            app.setUpdatedAt(LocalDateTime.now());
+            return new AppraisalResponse(appraisalRepository.save(app));
+        });
+    }
+
+    @Transactional
+    @CacheEvict(value = "appraisalDashboard", allEntries = true)
+    public Optional<AppraisalResponse> rejectAppraisal(Long id) {
+        return appraisalRepository.findById(id).map(app -> {
+            app.setStatus("REJECTED");
+            app.setUpdatedAt(LocalDateTime.now());
+            return new AppraisalResponse(appraisalRepository.save(app));
+        });
+    }
+
     // ── 2.1 NEW SALARY REVISION BUSINESS METHODS ─────────────────────────────
     @Transactional
     @CacheEvict(value = "appraisalDashboard", allEntries = true)

@@ -11,11 +11,24 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 
+import com.example.ems.employee.repository.DepartmentRepository;
+import com.example.ems.employee.repository.DepartmentTransferRepository;
+import com.example.ems.appraisal.repository.IncrementRepository;
+
 @Service
 public class EmployeeService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private DepartmentTransferRepository departmentTransferRepository;
+
+    @Autowired
+    private IncrementRepository incrementRepository;
 
     @Transactional
     public Employee createEmployee(EmployeeRequest request) {
@@ -144,6 +157,74 @@ public class EmployeeService {
             employee.setStatus(status);
             return employeeRepository.save(employee);
         });
+    }
+
+    public List<java.util.Map<String, Object>> getEmployeeTimeline(Long employeeId) {
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+
+        List<java.util.Map<String, Object>> timeline = new java.util.ArrayList<>();
+
+        // 1. Joined event
+        if (employee.getJoiningDate() != null) {
+            java.util.Map<String, Object> joined = new java.util.LinkedHashMap<>();
+            joined.put("date", employee.getJoiningDate().toString());
+            joined.put("type", "JOINED");
+            joined.put("title", "Joined Company");
+            joined.put("description", "Joined the company as " + employee.getDesignation() + " in " + employee.getDepartment() + " department.");
+            timeline.add(joined);
+        }
+
+        // 2. Department transfer events
+        List<com.example.ems.employee.entity.DepartmentTransfer> transfers = departmentTransferRepository.findByEmployeeId(employeeId);
+        for (com.example.ems.employee.entity.DepartmentTransfer transfer : transfers) {
+            String fromName = "Unknown";
+            String toName = "Unknown";
+            if (transfer.getFromDepartmentId() != null) {
+                fromName = departmentRepository.findById(transfer.getFromDepartmentId())
+                        .map(com.example.ems.employee.entity.Department::getName)
+                        .orElse("Unknown");
+            }
+            if (transfer.getToDepartmentId() != null) {
+                toName = departmentRepository.findById(transfer.getToDepartmentId())
+                        .map(com.example.ems.employee.entity.Department::getName)
+                        .orElse("Unknown");
+            }
+
+            java.util.Map<String, Object> event = new java.util.LinkedHashMap<>();
+            event.put("date", transfer.getEffectiveDate() != null ? transfer.getEffectiveDate().toString() : transfer.getTransferDate().toLocalDate().toString());
+            event.put("type", "DEPARTMENT_TRANSFER");
+            event.put("title", "Department Transfer");
+            event.put("description", "Transferred from department '" + fromName + "' to '" + toName + "'. Remarks: " + transfer.getRemarks());
+            timeline.add(event);
+        }
+
+        // 3. Salary Revision (Increment) events
+        List<com.example.ems.appraisal.entity.Increment> increments = incrementRepository.findByEmployeeId(employeeId);
+        for (com.example.ems.appraisal.entity.Increment inc : increments) {
+            if ("APPROVED".equalsIgnoreCase(inc.getStatus()) || "APPLIED".equalsIgnoreCase(inc.getStatus())) {
+                java.util.Map<String, Object> event = new java.util.LinkedHashMap<>();
+                event.put("date", inc.getEffectiveDate() != null ? inc.getEffectiveDate().toString() : inc.getCreatedAt().toLocalDate().toString());
+                event.put("type", "SALARY_REVISION");
+                event.put("title", "Salary Revision");
+                event.put("description", "Salary revised from " + inc.getCurrentSalary() + " to " + inc.getNewSalary() + ". Reason: " + inc.getReason());
+                timeline.add(event);
+            }
+        }
+
+        // Sort chronological
+        timeline.sort((a, b) -> ((String) a.get("date")).compareTo((String) b.get("date")));
+
+        return timeline;
+    }
+
+    @Transactional
+    public List<Employee> importEmployees(List<EmployeeRequest> requests) {
+        List<Employee> imported = new java.util.ArrayList<>();
+        for (EmployeeRequest req : requests) {
+            imported.add(createEmployee(req));
+        }
+        return imported;
     }
 }
 

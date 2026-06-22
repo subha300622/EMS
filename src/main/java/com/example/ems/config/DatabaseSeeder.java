@@ -16,6 +16,18 @@ import com.example.ems.expense.entity.Expense;
 import com.example.ems.expense.entity.ExpenseCategory;
 import com.example.ems.expense.entity.ExpenseStatus;
 import com.example.ems.expense.entity.ExpenseAuditLog;
+import com.example.ems.employee.entity.Department;
+import com.example.ems.employee.repository.DepartmentRepository;
+import com.example.ems.recruitment.entity.Job;
+import com.example.ems.recruitment.repository.JobRepository;
+import com.example.ems.recruitment.entity.Candidate;
+import com.example.ems.recruitment.repository.CandidateRepository;
+import com.example.ems.leave.entity.Leave;
+import com.example.ems.leave.entity.LeaveType;
+import com.example.ems.leave.repository.LeaveRepository;
+import com.example.ems.leave.repository.LeaveTypeRepository;
+import com.example.ems.payroll.entity.Payroll;
+import com.example.ems.payroll.repository.PayrollRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -83,6 +95,24 @@ public class DatabaseSeeder implements CommandLineRunner {
 
     @Autowired
     private com.example.ems.expense.repository.ExpenseAuditLogRepository expenseAuditLogRepository;
+
+    @Autowired
+    private JobRepository jobRepository;
+
+    @Autowired
+    private CandidateRepository candidateRepository;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private LeaveTypeRepository leaveTypeRepository;
+
+    @Autowired
+    private LeaveRepository leaveRepository;
+
+    @Autowired
+    private PayrollRepository payrollRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.seed.domain:company.com}")
     private String seedDomain;
@@ -387,6 +417,9 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         // 9. Seed Expense Approvals data
         seedExpenses();
+
+        // 10. Seed Dashboard search items
+        seedDashboardSearchEntities();
     }
 
     private void seedSettlements() {
@@ -736,6 +769,139 @@ public class DatabaseSeeder implements CommandLineRunner {
             ExpenseAuditLog sbLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SENT_BACK, "Upload missing GST invoice", "Eran");
             sbLog.setUpdatedAt(subTime.plusDays(1));
             expenseAuditLogRepository.save(sbLog);
+        }
+    }
+
+    private void seedDashboardSearchEntities() {
+        // A. Seed Departments if empty
+        if (departmentRepository.count() == 0) {
+            Department eng = new Department(null, "Engineering", "ENG", "Engineering and Software Development");
+            eng.setBudget(BigDecimal.valueOf(5000000));
+            departmentRepository.save(eng);
+
+            Department sales = new Department(null, "Sales", "SAL", "Sales and Business Development");
+            sales.setBudget(BigDecimal.valueOf(3000000));
+            departmentRepository.save(sales);
+
+            Department hr = new Department(null, "HR", "HRD", "Human Resources and People Operations");
+            hr.setBudget(BigDecimal.valueOf(1500000));
+            departmentRepository.save(hr);
+
+            Department fin = new Department(null, "Finance", "FIN", "Finance and Accounting");
+            fin.setBudget(BigDecimal.valueOf(2500000));
+            departmentRepository.save(fin);
+        }
+
+        // B. Seed Jobs if empty
+        if (jobRepository.count() == 0) {
+            Job engJob = new Job();
+            engJob.setTitle("Software Engineer");
+            engJob.setDepartment("Engineering");
+            engJob.setLocation("Remote");
+            engJob.setDescription("Java Spring Boot Developer");
+            engJob.setRequirements("Java, Spring Boot, SQL");
+            engJob.setSalaryRange("80k-120k");
+            engJob.setStatus("ACTIVE");
+            jobRepository.save(engJob);
+
+            Job salesJob = new Job();
+            salesJob.setTitle("Sales Executive");
+            salesJob.setDepartment("Sales");
+            salesJob.setLocation("Headquarters");
+            salesJob.setDescription("Enterprise B2B Sales");
+            salesJob.setRequirements("B2B sales experience");
+            salesJob.setSalaryRange("60k-90k");
+            salesJob.setStatus("ACTIVE");
+            jobRepository.save(salesJob);
+
+            Job hrJob = new Job();
+            hrJob.setTitle("HR Generalist");
+            hrJob.setDepartment("HR");
+            hrJob.setLocation("Headquarters");
+            hrJob.setDescription("Talent acquisition and employee relations");
+            hrJob.setRequirements("3+ years in HR");
+            hrJob.setSalaryRange("50k-70k");
+            hrJob.setStatus("ACTIVE");
+            jobRepository.save(hrJob);
+        }
+
+        // C. Seed Candidates if empty
+        if (candidateRepository.count() == 0) {
+            Job engJob = jobRepository.findAll().stream()
+                    .filter(j -> "Software Engineer".equalsIgnoreCase(j.getTitle()))
+                    .findFirst().orElse(null);
+            if (engJob != null) {
+                Candidate john = new Candidate();
+                john.setFullName("John Doe");
+                john.setEmail("john.doe@gmail.com");
+                john.setPhone("5551234");
+                john.setJob(engJob);
+                john.setStatus("APPLIED");
+                candidateRepository.save(john);
+            }
+
+            Job salesJob = jobRepository.findAll().stream()
+                    .filter(j -> "Sales Executive".equalsIgnoreCase(j.getTitle()))
+                    .findFirst().orElse(null);
+            if (salesJob != null) {
+                Candidate jane = new Candidate();
+                jane.setFullName("Jane Smith");
+                jane.setEmail("jane.smith@yahoo.com");
+                jane.setPhone("5555678");
+                jane.setJob(salesJob);
+                jane.setStatus("INTERVIEWING");
+                candidateRepository.save(jane);
+            }
+        }
+
+        // D. Seed LeaveTypes and Leaves if empty
+        if (leaveTypeRepository.count() == 0) {
+            LeaveType casual = new LeaveType(null, "Casual Leave", "Casual Leave", 12, true);
+            leaveTypeRepository.save(casual);
+
+            LeaveType sick = new LeaveType(null, "Sick Leave", "Sick / Medical Leave", 10, true);
+            leaveTypeRepository.save(sick);
+
+            LeaveType paid = new LeaveType(null, "Paid Leave", "Paid / Annual Leave", 15, true);
+            leaveTypeRepository.save(paid);
+        }
+
+        if (leaveRepository.count() == 0) {
+            Employee robert = employeeRepository.findByEmail("robert@company.com").orElse(null);
+            LeaveType casual = leaveTypeRepository.findAll().stream()
+                    .filter(lt -> "Casual Leave".equalsIgnoreCase(lt.getName()))
+                    .findFirst().orElse(null);
+            if (robert != null && casual != null) {
+                Leave leave = new Leave();
+                leave.setEmployee(robert);
+                leave.setLeaveType(casual);
+                leave.setStartDate(LocalDate.now().plusDays(5));
+                leave.setEndDate(LocalDate.now().plusDays(7));
+                leave.setReason("Family function");
+                leave.setStatus("PENDING");
+                leave.setAppliedAt(LocalDateTime.now());
+                leave.setUpdatedAt(LocalDateTime.now());
+                leaveRepository.save(leave);
+            }
+        }
+
+        // E. Seed Payroll records if empty
+        if (payrollRepository.count() == 0) {
+            Employee robert = employeeRepository.findByEmail("robert@company.com").orElse(null);
+            if (robert != null) {
+                Payroll payroll = new Payroll();
+                payroll.setEmployee(robert);
+                payroll.setMonth(5);
+                payroll.setYear(2026);
+                payroll.setBasicSalary(BigDecimal.valueOf(80000));
+                payroll.setAllowances(BigDecimal.valueOf(15000));
+                payroll.setDeductions(BigDecimal.valueOf(5000));
+                payroll.setNetPay(BigDecimal.valueOf(90000));
+                payroll.setStatus("PAID");
+                payroll.setGeneratedAt(LocalDateTime.now().minusDays(10));
+                payroll.setProcessedAt(LocalDateTime.now().minusDays(5));
+                payrollRepository.save(payroll);
+            }
         }
     }
 }

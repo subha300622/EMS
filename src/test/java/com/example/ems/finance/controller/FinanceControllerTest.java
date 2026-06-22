@@ -131,17 +131,6 @@ public class FinanceControllerTest {
                 .andExpect(jsonPath("$.data[0].type").value("EXPENSE"));
     }
 
-    @Test
-    public void testGetExpensesByCategorySuccess() throws Exception {
-        mockAuthSuccess();
-        when(financeService.getExpensesByCategory()).thenReturn(List.of(Map.of("category", "Meals", "amount", BigDecimal.valueOf(150))));
-
-        mockMvc.perform(get("/api/v1/finance/expenses/categories")
-                .header("Authorization", token))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].category").value("Meals"));
-    }
 
     @Test
     public void testGetSalarySummarySuccess() throws Exception {

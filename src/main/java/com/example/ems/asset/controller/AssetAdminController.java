@@ -14,12 +14,14 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
 import com.example.ems.asset.dto.AssetDetailResponse;
+import com.example.ems.asset.dto.AssetTimelineResponse;
 import com.example.ems.asset.entity.MyAssetAssignment;
 import com.example.ems.asset.entity.MyAssetMaintenance;
 import com.example.ems.asset.entity.MyAssetDocument;
 import com.example.ems.asset.repository.MyAssetAssignmentRepository;
 import com.example.ems.asset.repository.MyAssetMaintenanceRepository;
 import com.example.ems.asset.repository.MyAssetDocumentRepository;
+import com.example.ems.asset.service.MyAssetService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -74,6 +76,9 @@ public class AssetAdminController {
 
     @Autowired
     private MyAssetDocumentRepository myAssetDocumentRepository;
+
+    @Autowired
+    private MyAssetService assetService;
 
     @GetMapping("/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -363,6 +368,30 @@ public class AssetAdminController {
         } else {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
+        }
+    }
+
+    @GetMapping("/{id}/timeline")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getAssetTimeline(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
+        }
+
+        try {
+            AssetTimelineResponse response = assetService.getAssetTimeline(id, null);
+            return ResponseEntity.ok(ApiResponse.success("Asset timeline retrieved successfully", response));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error(e.getMessage(), "ASS_001"));
         }
     }
 

@@ -570,7 +570,7 @@ public class FinanceExpenseService {
             document.add(table);
             document.close();
             return baos.toByteArray();
-        } catch (Exception ex) {
+        } catch (com.lowagie.text.DocumentException | java.io.IOException ex) {
             throw new RuntimeException("Error generating PDF: " + ex.getMessage(), ex);
         }
     }
