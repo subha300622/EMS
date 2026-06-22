@@ -1,12 +1,9 @@
 package com.example.ems.attendance.controller;
 
-import com.example.ems.attendance.dto.CheckInRequest;
-import com.example.ems.attendance.dto.CheckOutRequest;
 import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -26,7 +23,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

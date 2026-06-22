@@ -29,7 +29,6 @@ import com.example.ems.leave.service.LeaveService;
 import com.example.ems.leave.entity.Leave;
 import com.example.ems.appraisal.repository.AppraisalRepository;
 import com.example.ems.appraisal.entity.Appraisal;
-import com.example.ems.common.service.TeamWidgetService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -85,9 +84,6 @@ public class EmployeeDirectoryController {
 
     @Autowired
     private AppraisalRepository appraisalRepository;
-
-    @Autowired
-    private TeamWidgetService teamWidgetService;
 
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

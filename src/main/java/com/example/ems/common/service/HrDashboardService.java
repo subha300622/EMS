@@ -3,21 +3,16 @@ package com.example.ems.common.service;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.employee.repository.DepartmentRepository;
-import com.example.ems.recruitment.entity.Candidate;
 import com.example.ems.recruitment.repository.CandidateRepository;
-import com.example.ems.recruitment.entity.Job;
 import com.example.ems.recruitment.repository.JobRepository;
 import com.example.ems.leave.entity.Leave;
 import com.example.ems.leave.repository.LeaveRepository;
-import com.example.ems.payroll.entity.Payroll;
 import com.example.ems.payroll.repository.PayrollRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -191,7 +186,6 @@ public class HrDashboardService {
                         .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
                         .collect(Collectors.toList());
 
-                long sumPercentage = 0;
                 for (int i = 0; i < sortedDepts.size(); i++) {
                     Map.Entry<String, Long> entry = sortedDepts.get(i);
                     long percentage = Math.round((entry.getValue() * 100.0) / totalValid);
