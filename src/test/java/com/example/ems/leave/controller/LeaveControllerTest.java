@@ -64,7 +64,7 @@ public class LeaveControllerTest {
     public void testApplyLeaveSuccess() throws Exception {
         String token = "Bearer mock-token";
         String email = "john.doe@example.com";
-        
+
         User user = new User();
         user.setWorkEmail(email);
 
@@ -74,7 +74,8 @@ public class LeaveControllerTest {
 
         LeaveRequest request = new LeaveRequest(1L, LocalDate.now(), LocalDate.now().plusDays(2), "Vacation");
         LeaveType type = new LeaveType(1L, "Sick Leave", "Sick description", 10, true);
-        Leave leave = new Leave(1L, employee, type, request.getStartDate(), request.getEndDate(), request.getReason(), "PENDING", null, null, null);
+        Leave leave = new Leave(1L, employee, type, request.getStartDate(), request.getEndDate(), request.getReason(),
+                "PENDING", null, null, null);
 
         when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
         when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
@@ -83,9 +84,9 @@ public class LeaveControllerTest {
         when(leaveService.applyLeave(any(Employee.class), any(LeaveRequest.class))).thenReturn(leave);
 
         mockMvc.perform(post("/api/v1/leaves")
-                        .header("Authorization", token)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                .header("Authorization", token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Leave request submitted successfully"))
@@ -97,7 +98,7 @@ public class LeaveControllerTest {
     public void testGetMyLeavesSuccess() throws Exception {
         String token = "Bearer mock-token";
         String email = "john.doe@example.com";
-        
+
         User user = new User();
         user.setWorkEmail(email);
 
@@ -112,7 +113,7 @@ public class LeaveControllerTest {
         when(leaveService.getLeavesByEmployeeId(1L)).thenReturn(java.util.List.of());
 
         mockMvc.perform(get("/api/v1/leaves?my=true")
-                        .header("Authorization", token))
+                .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Leave history retrieved successfully"));
@@ -132,7 +133,7 @@ public class LeaveControllerTest {
         when(leaveService.deactivateLeaveType(1L)).thenReturn(new LeaveType());
 
         mockMvc.perform(patch("/api/v1/leave-types/1/deactivate")
-                        .header("Authorization", token))
+                .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
@@ -151,7 +152,7 @@ public class LeaveControllerTest {
         when(leaveService.activateLeaveType(1L)).thenReturn(new LeaveType());
 
         mockMvc.perform(patch("/api/v1/leave-types/1/activate")
-                        .header("Authorization", token))
+                .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
@@ -180,7 +181,7 @@ public class LeaveControllerTest {
         when(leaveService.approveLeave(any(Long.class), any(Employee.class))).thenReturn(leave);
 
         mockMvc.perform(patch("/api/v1/leaves/1/approve")
-                        .header("Authorization", token))
+                .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Leave request approved successfully"))
@@ -212,11 +213,10 @@ public class LeaveControllerTest {
         when(leaveService.rejectLeave(any(Long.class), any(Employee.class))).thenReturn(leave);
 
         mockMvc.perform(patch("/api/v1/leaves/1/reject")
-                        .header("Authorization", token))
+                .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.message").value("Leave request rejected successfully"))
                 .andExpect(jsonPath("$.data.status").value("REJECTED"));
     }
 }
-

@@ -243,14 +243,14 @@ public class HrDashboardControllerTest {
         @Test
         public void testGetDashboardManagerSuccess() throws Exception {
                 User manager = new User();
-                manager.setWorkEmail("manager@example.com");
+                manager.setWorkEmail("sarah.chen@example.com");
                 Role role = new Role();
                 role.setName("MANAGER");
                 manager.setRole(role);
 
                 when(jwtService.validateAccessToken("mgr-token")).thenReturn(true);
-                when(jwtService.getEmailFromToken("mgr-token")).thenReturn("manager@example.com");
-                when(userRepository.findByWorkEmail("manager@example.com")).thenReturn(Optional.of(manager));
+                when(jwtService.getEmailFromToken("mgr-token")).thenReturn("sarah.chen@example.com");
+                when(userRepository.findByWorkEmail("sarah.chen@example.com")).thenReturn(Optional.of(manager));
 
                 Map<String, Object> mockSummary = Map.of("totalEmployees", 1284);
                 when(hrDashboardService.getDashboardSummary()).thenReturn(mockSummary);
