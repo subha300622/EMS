@@ -5,8 +5,6 @@ import com.example.ems.attendance.dto.AttendanceStatsResponse;
 
 import com.example.ems.attendance.dto.AttendanceRequest;
 import com.example.ems.attendance.dto.AttendanceRegularizationRequest;
-import com.example.ems.attendance.dto.CheckInRequest;
-import com.example.ems.attendance.dto.CheckOutRequest;
 import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.attendance.entity.AttendanceRegularization;
 import com.example.ems.attendance.service.AttendanceService;

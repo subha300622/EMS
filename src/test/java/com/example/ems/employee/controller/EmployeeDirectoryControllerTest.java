@@ -10,7 +10,6 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.employee.service.MyEmployeeDirectoryService;
 import com.example.ems.security.service.JwtService;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

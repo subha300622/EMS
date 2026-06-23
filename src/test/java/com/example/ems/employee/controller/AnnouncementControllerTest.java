@@ -11,7 +11,6 @@ import com.example.ems.employee.repository.AnnouncementRepository;
 import com.example.ems.employee.repository.AnnouncementCommentRepository;
 import com.example.ems.security.service.JwtService;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;

@@ -476,7 +476,6 @@ public class MySupportController {
     // ═══════════════════════════════════════════════════════════════════════════
     @Operation(summary = "Export My Tickets as CSV")
     @GetMapping("/tickets/export")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<?> exportTickets(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
@@ -492,7 +491,7 @@ public class MySupportController {
                             ContentDisposition.attachment().filename("my-support-tickets.csv").build().toString())
                     .body(csv);
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SUP_500"));
         }
     }
 }

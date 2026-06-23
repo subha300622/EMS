@@ -37,9 +37,6 @@ public class FinanceExpenseService {
     @Autowired
     private ExpenseAuditLogRepository expenseAuditLogRepository;
 
-    @Autowired
-    private MyExpenseReceiptRepository receiptRepository;
-
     private boolean isPending(ExpenseStatus status) {
         return status == ExpenseStatus.PENDING
                 || status == ExpenseStatus.SUBMITTED

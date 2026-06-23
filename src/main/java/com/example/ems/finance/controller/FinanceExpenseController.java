@@ -395,16 +395,5 @@ public class FinanceExpenseController {
     }
 
     // Helper workflow response DTO
-    private static class ExpenseWorkflowResponse {
-        private String message;
-        private String status;
-
-        public ExpenseWorkflowResponse(String message, String status) {
-            this.message = message;
-            this.status = status;
-        }
-
-        public String getMessage() { return message; }
-        public String getStatus() { return status; }
-    }
+    private record ExpenseWorkflowResponse(String message, String status) {}
 }

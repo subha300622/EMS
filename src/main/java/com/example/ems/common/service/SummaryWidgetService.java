@@ -1,7 +1,6 @@
 package com.example.ems.common.service;
 
 import com.example.ems.employee.entity.Employee;
-import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.attendance.repository.AttendanceRepository;
 import com.example.ems.leave.entity.Leave;
@@ -19,9 +18,6 @@ import java.util.stream.Collectors;
 
 @Service
 public class SummaryWidgetService {
-
-    @Autowired
-    private EmployeeRepository employeeRepository;
 
     @Autowired
     private AttendanceRepository attendanceRepository;

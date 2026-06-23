@@ -5,7 +5,6 @@ import com.example.ems.auth.dto.UpdateStatusRequest;
 import com.example.ems.auth.dto.UserCreateRequest;
 import com.example.ems.auth.dto.UserUpdateRequest;
 import com.example.ems.auth.dto.AdminResetPasswordRequest;
-import com.example.ems.auth.dto.ProfileUpdateRequest;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
