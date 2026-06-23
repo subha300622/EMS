@@ -227,7 +227,7 @@ public class LeaveController {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approveLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(value = "leaveId") Long leaveId){
+            @PathVariable(value = "id") Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -251,7 +251,7 @@ public class LeaveController {
         }
 
         try {
-            Leave record = leaveService.approveLeave(leaveId, approver);
+            Leave record = leaveService.approveLeave(id, approver);
             return ResponseEntity.ok(ApiResponse.success("Leave request approved successfully", record));
         } catch (IllegalArgumentException e) {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LV_003"));
@@ -264,7 +264,7 @@ public class LeaveController {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> rejectLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(value = "leaveId") Long leaveId){
+            @PathVariable(value = "id") Long id){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -288,7 +288,7 @@ public class LeaveController {
         }
 
         try {
-            Leave record = leaveService.rejectLeave(leaveId, approver);
+            Leave record = leaveService.rejectLeave(id, approver);
             return ResponseEntity.ok(ApiResponse.success("Leave request rejected successfully", record));
         } catch (IllegalArgumentException e) {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "LV_004"));

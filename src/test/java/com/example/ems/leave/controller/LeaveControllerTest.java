@@ -155,4 +155,68 @@ public class LeaveControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
+
+    @Test
+    public void testApproveLeaveSuccess() throws Exception {
+        String token = "Bearer mock-token";
+        String email = "manager@example.com";
+        User user = new User();
+        user.setWorkEmail(email);
+
+        Employee approver = new Employee();
+        approver.setId(2L);
+        approver.setEmail(email);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
+        when(userRepository.findByWorkEmail(email)).thenReturn(Optional.of(user));
+        when(roleService.hasPermission(email, "leave.approve")).thenReturn(true);
+        when(employeeRepository.findByEmail(email)).thenReturn(Optional.of(approver));
+
+        Leave leave = new Leave();
+        leave.setId(1L);
+        leave.setStatus("APPROVED");
+
+        when(leaveService.approveLeave(any(Long.class), any(Employee.class))).thenReturn(leave);
+
+        mockMvc.perform(patch("/api/v1/leaves/1/approve")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Leave request approved successfully"))
+                .andExpect(jsonPath("$.data.status").value("APPROVED"));
+    }
+
+    @Test
+    public void testRejectLeaveSuccess() throws Exception {
+        String token = "Bearer mock-token";
+        String email = "manager@example.com";
+        User user = new User();
+        user.setWorkEmail(email);
+
+        Employee approver = new Employee();
+        approver.setId(2L);
+        approver.setEmail(email);
+
+        when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("mock-token")).thenReturn(email);
+        when(userRepository.findByWorkEmail(email)).thenReturn(Optional.of(user));
+        when(roleService.hasPermission(email, "leave.approve")).thenReturn(false);
+        when(roleService.hasPermission(email, "leave.team.approve")).thenReturn(true);
+        when(employeeRepository.findByEmail(email)).thenReturn(Optional.of(approver));
+
+        Leave leave = new Leave();
+        leave.setId(1L);
+        leave.setStatus("REJECTED");
+
+        when(leaveService.rejectLeave(any(Long.class), any(Employee.class))).thenReturn(leave);
+
+        mockMvc.perform(patch("/api/v1/leaves/1/reject")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Leave request rejected successfully"))
+                .andExpect(jsonPath("$.data.status").value("REJECTED"));
+    }
 }
+
