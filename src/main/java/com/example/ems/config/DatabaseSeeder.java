@@ -113,6 +113,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private com.example.ems.audit.service.AuditLogService auditLogService;
 
+    @Autowired
+    private com.example.ems.schedule.service.MyScheduleService myScheduleService;
+
     @org.springframework.beans.factory.annotation.Value("${app.seed.domain:company.com}")
     private String seedDomain;
 
@@ -442,6 +445,11 @@ public class DatabaseSeeder implements CommandLineRunner {
 
         // 10. Seed Dashboard search items
         seedDashboardSearchEntities();
+
+        // 11. Seed schedule data for all users
+        userRepository.findAll().forEach(user -> {
+            myScheduleService.seedScheduleData(user.getWorkEmail());
+        });
     }
 
     private void seedSettlements() {

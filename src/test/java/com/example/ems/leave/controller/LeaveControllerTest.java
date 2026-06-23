@@ -111,7 +111,7 @@ public class LeaveControllerTest {
         when(employeeRepository.findByEmail(email)).thenReturn(Optional.of(employee));
         when(leaveService.getLeavesByEmployeeId(1L)).thenReturn(java.util.List.of());
 
-        mockMvc.perform(get("/api/v1/leaves/my")
+        mockMvc.perform(get("/api/v1/leaves?my=true")
                         .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

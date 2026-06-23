@@ -246,10 +246,11 @@ public class PerformanceController {
 
     // ── 5. MANAGER REVIEWS ───────────────────────────────────────────────────
     @Operation(summary = "Submit Manager Review", tags = {"Performance Reviews"})
-    @PostMapping("/reviews/manager-reviews")
+    @PostMapping("/reviews/{id}/manager-review")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> submitManagerReview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable("id") Long id,
             @Valid @RequestBody ManagerReviewRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
@@ -260,6 +261,7 @@ public class PerformanceController {
                     .body(ErrorResponse.error("Access Denied: Only managers can submit manager reviews.", "AUTH_002"));
 
         try {
+            request.setEmployeeId(id);
             PerformanceReviewResponse review = performanceService.submitManagerReview(request);
             return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Manager review submitted successfully", review));

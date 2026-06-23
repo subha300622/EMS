@@ -70,17 +70,17 @@ public class MyScheduleService {
 
         // 1. Seed Shift Templates (Manually set IDs to match change-requests requests)
         MyShiftTemplate general = templateRepository.findById(101L).orElseGet(() -> {
-            MyShiftTemplate t = new MyShiftTemplate(101L, "GENERAL_SHIFT", "09:00", "18:00", 60, "Chennai Office");
+            MyShiftTemplate t = new MyShiftTemplate(101L, "GENERAL_SHIFT", "09:00", "18:00", 60, "GLOBAL");
             return templateRepository.save(t);
         });
 
         MyShiftTemplate evening = templateRepository.findById(102L).orElseGet(() -> {
-            MyShiftTemplate t = new MyShiftTemplate(102L, "EVENING_SHIFT", "14:00", "22:00", 45, "Chennai Office");
+            MyShiftTemplate t = new MyShiftTemplate(102L, "EVENING_SHIFT", "14:00", "22:00", 45, "GLOBAL");
             return templateRepository.save(t);
         });
 
         templateRepository.findById(103L).orElseGet(() -> {
-            MyShiftTemplate t = new MyShiftTemplate(103L, "NIGHT_SHIFT", "22:00", "06:00", 45, "Chennai Office");
+            MyShiftTemplate t = new MyShiftTemplate(103L, "NIGHT_SHIFT", "22:00", "06:00", 45, "GLOBAL");
             return templateRepository.save(t);
         });
 
@@ -233,7 +233,7 @@ public class MyScheduleService {
         if (changeRequestRepository.findByEmployeeEmail(email).isEmpty()) {
             MyScheduleChangeRequest scr = new MyScheduleChangeRequest();
             scr.setEmployee(employee);
-            scr.setRequestNumber("SCR-2026-0001");
+            scr.setRequestNumber("SCR-2026-0001-" + employee.getId());
             scr.setCurrentShift(general);
             scr.setRequestedShift(evening);
             scr.setRequestedDate(LocalDate.of(2026, 6, 20));
@@ -320,7 +320,7 @@ public class MyScheduleService {
                 ev.setTitle(s.getTemplate().getName());
                 ev.setStartDate(s.getDate().toString());
                 ev.setEndDate(s.getDate().toString());
-                ev.setLocation(s.getTemplate().getLocation());
+                ev.setLocation(s.getEmployee().getLocation() != null ? s.getEmployee().getLocation() : "Headquarters");
                 ev.setStatus(s.getStatus());
                 eventList.add(ev);
             }
@@ -387,6 +387,7 @@ public class MyScheduleService {
         res.setDate(today.toString());
 
         Optional<MyShift> shiftOpt = shiftRepository.findByEmployeeEmailAndDate(email, today);
+        Employee employee = employeeRepository.findByEmail(email).orElse(null);
         TodayScheduleResponse.ShiftInfo sInfo = new TodayScheduleResponse.ShiftInfo();
         if (shiftOpt.isPresent()) {
             MyShiftTemplate t = shiftOpt.get().getTemplate();
@@ -395,7 +396,7 @@ public class MyScheduleService {
             sInfo.setStartTime(t.getStartTime());
             sInfo.setEndTime(t.getEndTime());
             sInfo.setBreakDurationMinutes(t.getBreakDurationMinutes());
-            sInfo.setLocation(t.getLocation());
+            sInfo.setLocation(employee != null && employee.getLocation() != null ? employee.getLocation() : "Headquarters");
             res.setWorkingStatus("WORKING");
         } else {
             sInfo.setShiftId(101L);
@@ -403,7 +404,7 @@ public class MyScheduleService {
             sInfo.setStartTime("09:00");
             sInfo.setEndTime("18:00");
             sInfo.setBreakDurationMinutes(60);
-            sInfo.setLocation("Chennai Office");
+            sInfo.setLocation(employee != null && employee.getLocation() != null ? employee.getLocation() : "Headquarters");
             res.setWorkingStatus("WORKING");
         }
         res.setShift(sInfo);
@@ -455,7 +456,7 @@ public class MyScheduleService {
             item.setStartTime(s.getTemplate().getStartTime());
             item.setEndTime(s.getTemplate().getEndTime());
             item.setDurationHours(8); // Standard 8 hours
-            item.setLocation(s.getTemplate().getLocation());
+            item.setLocation(s.getEmployee().getLocation() != null ? s.getEmployee().getLocation() : "Headquarters");
             item.setStatus(s.getStatus());
             return item;
         }).collect(Collectors.toList()));

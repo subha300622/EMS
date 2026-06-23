@@ -95,40 +95,29 @@ public class LeaveController {
         }
     }
 
-    // ── 1b. GET MY LEAVES ─────────────────────────────────────────────────────
-    @Operation(summary = "Get My Leave History", description = "Retrieves the logged-in employee's complete leave application history and statuses.", tags = {"Employee Self Service"})
-    @GetMapping("/leaves/my")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<Leave>>> getMyLeaves(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("Leave history retrieved successfully",
-                leaveService.getLeavesByEmployeeId(employee.getId())));
-    }
-
-    // ── 2. GET ALL LEAVES (ADMIN / HR) ────────────────────────────────────────
-    @Operation(summary = "Get All Leaves", description = "Admin/HR API to retrieve all leave request applications.")
+    // ── 2. GET LEAVES (ALL OR MY) ─────────────────────────────────────────────
+    @Operation(summary = "Get Leaves", description = "Retrieves leave request applications. If my=true or employeeId=me, retrieves the logged-in employee's leave applications. Otherwise, Admin/HR API to retrieve all leave requests.")
     @GetMapping("/leaves")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<Leave>>> getAllLeaves(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<ApiResponse<List<Leave>>> getLeaves(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) Boolean my,
+            @RequestParam(required = false) String employeeId){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (Boolean.TRUE.equals(my) || "me".equalsIgnoreCase(employeeId)) {
+            Employee employee = resolveEmployee(currentUser);
+            if (employee == null) {
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+            }
+            return ResponseEntity.ok(ApiResponse.success("Leave history retrieved successfully",
+                    leaveService.getLeavesByEmployeeId(employee.getId())));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "leave.read")

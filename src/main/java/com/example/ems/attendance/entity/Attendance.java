@@ -30,6 +30,10 @@ public class Attendance {
 
     private LocalTime punchOutTime;
 
+    private LocalTime originalPunchInTime;
+
+    private LocalTime originalPunchOutTime;
+
     @Column(columnDefinition = "TEXT")
     private String notes;
 
@@ -50,6 +54,12 @@ public class Attendance {
 
     public LocalTime getPunchOutTime() { return punchOutTime; }
     public void setPunchOutTime(LocalTime punchOutTime) { this.punchOutTime = punchOutTime; }
+
+    public LocalTime getOriginalPunchInTime() { return originalPunchInTime; }
+    public void setOriginalPunchInTime(LocalTime originalPunchInTime) { this.originalPunchInTime = originalPunchInTime; }
+
+    public LocalTime getOriginalPunchOutTime() { return originalPunchOutTime; }
+    public void setOriginalPunchOutTime(LocalTime originalPunchOutTime) { this.originalPunchOutTime = originalPunchOutTime; }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

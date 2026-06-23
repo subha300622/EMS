@@ -335,28 +335,6 @@ public class EmployeeController {
         }
     }
 
-    @Operation(summary = "Get Employees by Department", description = "Retrieves all employees assigned to the specified department code.")
-    @GetMapping("/employees/department/{departmentId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getEmployeesByDepartment(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("departmentId") String departmentId){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
-        }
-
-        List<Employee> list = employeeService.getEmployeesByDepartment(departmentId);
-        return ResponseEntity.ok(ApiResponse.success("Employees for department retrieved successfully", list));
-    }
-
     @Operation(summary = "Get Employees by Manager", description = "Retrieves all direct reports under the specified manager's employee ID.")
     @GetMapping("/employees/manager/{managerId}")
     @SuppressWarnings({"unchecked", "rawtypes"})

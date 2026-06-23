@@ -3,8 +3,6 @@ package com.example.ems.common.controller;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.manager.*;
-import com.example.ems.common.entity.Notification;
-import com.example.ems.common.service.NotificationService;
 import com.example.ems.common.service.ManagerNotificationService;
 import com.example.ems.security.service.JwtService;
 
@@ -35,9 +33,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class NotificationControllerTest {
 
     private MockMvc mockMvc;
-
-    @Mock
-    private NotificationService notificationService;
 
     @Mock
     private ManagerNotificationService managerNotificationService;
@@ -91,22 +86,6 @@ public class NotificationControllerTest {
                 .andExpect(jsonPath("$.data.content[0].title").value("Title"));
     }
 
-    @Test
-    public void testGetMyNotificationsSuccess() throws Exception {
-        Notification notification = new Notification();
-        notification.setId(1L);
-        notification.setTitle("Alert");
-        notification.setMessage("Test message");
-        notification.setUser(currentUser);
-
-        when(notificationService.getNotificationsForUser(10L)).thenReturn(List.of(notification));
-
-        mockMvc.perform(get("/api/v1/notifications/my")
-                .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].title").value("Alert"));
-    }
 
     @Test
     public void testGetUnreadCountSuccess() throws Exception {

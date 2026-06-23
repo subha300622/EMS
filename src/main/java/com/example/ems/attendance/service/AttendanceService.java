@@ -3,17 +3,16 @@ package com.example.ems.attendance.service;
 import com.example.ems.attendance.dto.AttendanceRequest;
 import com.example.ems.attendance.dto.AttendanceStatsResponse;
 import com.example.ems.attendance.entity.Attendance;
-import com.example.ems.attendance.entity.AttendanceRegularization;
 import com.example.ems.attendance.repository.AttendanceRepository;
-import com.example.ems.attendance.repository.AttendanceRegularizationRepository;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Map;
@@ -29,7 +28,7 @@ public class AttendanceService {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private AttendanceRegularizationRepository attendanceRegularizationRepository;
+    private AttendanceLogService attendanceLogService;
 
     @Transactional
     public Attendance addAttendanceRecord(AttendanceRequest request) {
@@ -178,7 +177,11 @@ public class AttendanceService {
 
     @Transactional
     public Attendance checkIn(Employee employee, String notes) {
-        java.time.LocalDate today = java.time.LocalDate.now();
+        LocalDate today = LocalDate.now();
+
+        // Idempotency validation and log swipe trail
+        attendanceLogService.logSwipe(employee, "SWIPE_IN", "OFFICE_GATE");
+
         Optional<Attendance> existing = attendanceRepository.findByEmployeeIdAndDate(employee.getId(), today);
         if (existing.isPresent()) {
             throw new IllegalArgumentException("Already checked in today");
@@ -187,12 +190,13 @@ public class AttendanceService {
         Attendance attendance = new Attendance();
         attendance.setEmployee(employee);
         attendance.setDate(today);
-        
-        java.time.LocalTime now = java.time.LocalTime.now();
+
+        LocalTime now = LocalTime.now();
         attendance.setPunchInTime(now);
-        
+        attendance.setOriginalPunchInTime(now);
+
         // Mark as Late if punch-in is after 09:30 AM
-        if (now.isAfter(java.time.LocalTime.of(9, 30))) {
+        if (now.isAfter(LocalTime.of(9, 30))) {
             attendance.setStatus("Late");
         } else {
             attendance.setStatus("Present");
@@ -204,7 +208,11 @@ public class AttendanceService {
 
     @Transactional
     public Attendance checkOut(Employee employee, String notes) {
-        java.time.LocalDate today = java.time.LocalDate.now();
+        LocalDate today = LocalDate.now();
+
+        // Log the swipe trail first (which includes 5-second idempotency check)
+        attendanceLogService.logSwipe(employee, "SWIPE_OUT", "OFFICE_GATE");
+
         Attendance attendance = attendanceRepository.findByEmployeeIdAndDate(employee.getId(), today)
                 .orElseThrow(() -> new IllegalArgumentException("No check-in record found for today"));
 
@@ -212,7 +220,10 @@ public class AttendanceService {
             throw new IllegalArgumentException("Already checked out today");
         }
 
-        attendance.setPunchOutTime(java.time.LocalTime.now());
+        LocalTime now = LocalTime.now();
+        attendance.setPunchOutTime(now);
+        attendance.setOriginalPunchOutTime(now);
+
         if (notes != null && !notes.isBlank()) {
             attendance.setNotes(notes);
         }
@@ -221,75 +232,10 @@ public class AttendanceService {
     }
 
     public Optional<Attendance> getTodayAttendance(Employee employee) {
-        return attendanceRepository.findByEmployeeIdAndDate(employee.getId(), java.time.LocalDate.now());
+        return attendanceRepository.findByEmployeeIdAndDate(employee.getId(), LocalDate.now());
     }
 
     public List<Attendance> getTodayAllAttendance() {
-        return attendanceRepository.findByDate(java.time.LocalDate.now());
-    }
-
-    @Transactional
-    public AttendanceRegularization submitRegularization(Long employeeId, java.time.LocalDate date, java.time.LocalTime proposedPunchIn, java.time.LocalTime proposedPunchOut, String reason) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
-
-        AttendanceRegularization regularization = new AttendanceRegularization();
-        regularization.setEmployee(employee);
-        regularization.setDate(date);
-        regularization.setProposedPunchInTime(proposedPunchIn);
-        regularization.setProposedPunchOutTime(proposedPunchOut);
-        regularization.setReason(reason);
-        regularization.setStatus("PENDING");
-
-        return attendanceRegularizationRepository.save(regularization);
-    }
-
-    public List<AttendanceRegularization> getRegularizations(String status) {
-        if (status == null || status.isBlank()) {
-            return attendanceRegularizationRepository.findAll();
-        }
-        return attendanceRegularizationRepository.findByStatus(status);
-    }
-
-    @Transactional
-    public AttendanceRegularization approveRegularization(Long id) {
-        AttendanceRegularization reg = attendanceRegularizationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Regularization not found with ID: " + id));
-        if (!"PENDING".equalsIgnoreCase(reg.getStatus())) {
-            throw new IllegalArgumentException("Regularization request is already processed: " + reg.getStatus());
-        }
-        reg.setStatus("APPROVED");
-        attendanceRegularizationRepository.save(reg);
-
-        Attendance attendance = attendanceRepository.findByEmployeeIdAndDate(reg.getEmployee().getId(), reg.getDate())
-                .orElseGet(() -> {
-                    Attendance newRecord = new Attendance();
-                    newRecord.setEmployee(reg.getEmployee());
-                    newRecord.setDate(reg.getDate());
-                    return newRecord;
-                });
-
-        attendance.setPunchInTime(reg.getProposedPunchInTime());
-        attendance.setPunchOutTime(reg.getProposedPunchOutTime());
-        if (reg.getProposedPunchInTime() != null && reg.getProposedPunchInTime().isAfter(java.time.LocalTime.of(9, 30))) {
-            attendance.setStatus("Late");
-        } else {
-            attendance.setStatus("Present");
-        }
-        attendance.setNotes("Regularized: " + reg.getReason());
-        attendanceRepository.save(attendance);
-
-        return reg;
-    }
-
-    @Transactional
-    public AttendanceRegularization rejectRegularization(Long id) {
-        AttendanceRegularization reg = attendanceRegularizationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Regularization not found with ID: " + id));
-        if (!"PENDING".equalsIgnoreCase(reg.getStatus())) {
-            throw new IllegalArgumentException("Regularization request is already processed: " + reg.getStatus());
-        }
-        reg.setStatus("REJECTED");
-        return attendanceRegularizationRepository.save(reg);
+        return attendanceRepository.findByDate(LocalDate.now());
     }
 }

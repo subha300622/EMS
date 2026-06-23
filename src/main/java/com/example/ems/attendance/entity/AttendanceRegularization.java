@@ -29,6 +29,8 @@ public class AttendanceRegularization {
 
     private String reason;
 
+    private String managerNotes;
+
     public AttendanceRegularization() {}
 
     public Long getId() {
@@ -85,5 +87,13 @@ public class AttendanceRegularization {
 
     public void setReason(String reason) {
         this.reason = reason;
+    }
+
+    public String getManagerNotes() {
+        return managerNotes;
+    }
+
+    public void setManagerNotes(String managerNotes) {
+        this.managerNotes = managerNotes;
     }
 }

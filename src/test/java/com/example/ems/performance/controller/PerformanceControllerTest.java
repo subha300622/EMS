@@ -344,7 +344,7 @@ public class PerformanceControllerTest {
 
         when(performanceService.submitManagerReview(any(ManagerReviewRequest.class))).thenReturn(review);
 
-        mockMvc.perform(post("/api/v1/performance/reviews/manager-reviews")
+        mockMvc.perform(post("/api/v1/performance/reviews/2/manager-review")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
@@ -362,7 +362,7 @@ public class PerformanceControllerTest {
         req.setEmployeeId(2L);
         req.setReviewerId(1L);
 
-        mockMvc.perform(post("/api/v1/performance/reviews/manager-reviews")
+        mockMvc.perform(post("/api/v1/performance/reviews/2/manager-review")
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(req)))
