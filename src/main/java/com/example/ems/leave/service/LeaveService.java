@@ -1,14 +1,21 @@
 package com.example.ems.leave.service;
 
 import com.example.ems.employee.entity.Employee;
-import com.example.ems.leave.dto.LeaveRequest;
-import com.example.ems.leave.dto.LeaveTypeRequest;
+import com.example.ems.employee.entity.Department;
+import com.example.ems.employee.repository.DepartmentRepository;
+import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.leave.dto.*;
 import com.example.ems.leave.entity.Leave;
 import com.example.ems.leave.entity.LeaveType;
+import com.example.ems.leave.entity.LeaveStatus;
 import com.example.ems.leave.repository.LeaveRepository;
 import com.example.ems.leave.repository.LeaveTypeRepository;
+import com.example.ems.common.exception.BadRequestException;
+import com.example.ems.common.exception.AccessDeniedException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -19,7 +26,6 @@ import java.util.stream.Collectors;
 
 import com.example.ems.leave.entity.LeavePolicy;
 import com.example.ems.leave.repository.LeavePolicyRepository;
-import com.example.ems.leave.dto.LeavePolicyRequest;
 
 @Service
 public class LeaveService {
@@ -32,6 +38,12 @@ public class LeaveService {
 
     @Autowired
     private LeavePolicyRepository leavePolicyRepository;
+
+    @Autowired
+    private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
     // ── LEAVE TYPE CONFIGURATION ─────────────────────────────────────────────
 
@@ -111,13 +123,19 @@ public class LeaveService {
             throw new IllegalArgumentException("Insufficient leave balance. Remaining: " + remaining + " days, Requested: " + duration + " days");
         }
 
+        Employee approver = resolveApprover(employee);
+        if (approver == null) {
+            throw new BadRequestException("No approver configured for employee");
+        }
+
         Leave leave = new Leave();
         leave.setEmployee(employee);
         leave.setLeaveType(leaveType);
         leave.setStartDate(request.getStartDate());
         leave.setEndDate(request.getEndDate());
         leave.setReason(request.getReason());
-        leave.setStatus("PENDING");
+        leave.setStatus(LeaveStatus.PENDING);
+        leave.setApprover(approver);
         leave.setAppliedAt(LocalDateTime.now());
         leave.setUpdatedAt(LocalDateTime.now());
 
@@ -293,5 +311,131 @@ public class LeaveService {
             policy.setStatus(request.getStatus());
         }
         return leavePolicyRepository.save(policy);
+    }
+
+    private Employee resolveApprover(Employee employee) {
+        if (employee.getDepartment() != null && !employee.getDepartment().isBlank()) {
+            Optional<Department> department =
+                    departmentRepository.findByNameIgnoreCase(employee.getDepartment().trim());
+            if (department.isPresent() && department.get().getManagerId() != null) {
+                Optional<Employee> manager = employeeRepository.findById(department.get().getManagerId());
+                if (manager.isPresent()) {
+                    return manager.get();
+                }
+            }
+        }
+        return employee.getManager();
+    }
+
+    public Page<LeaveApprovalResponseDto> getManagerLeaveApprovals(
+            Employee manager, String status, Long employeeId, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+        Page<Leave> leaves = leaveRepository.findManagerLeaveApprovals(
+                manager.getId(), status, employeeId, fromDate, toDate, pageable);
+        return leaves.map(l -> {
+            long days = ChronoUnit.DAYS.between(l.getStartDate(), l.getEndDate()) + 1;
+            return new LeaveApprovalResponseDto(
+                    l.getId(),
+                    l.getEmployee().getId(),
+                    l.getEmployee().getEmployeeId(),
+                    l.getEmployee().getFullName(),
+                    l.getEmployee().getDepartment(),
+                    l.getLeaveType().getName(),
+                    l.getStartDate(),
+                    l.getEndDate(),
+                    days,
+                    l.getReason(),
+                    l.getAppliedAt(),
+                    l.getStatus()
+            );
+        });
+    }
+
+    public LeaveApprovalSummaryDto getLeaveApprovalSummary(Employee manager) {
+        long pending = leaveRepository.countPendingForManager(manager.getId());
+        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        long approved = leaveRepository.countApprovedTodayForManager(manager.getId(), startOfToday);
+        long rejected = leaveRepository.countRejectedTodayForManager(manager.getId(), startOfToday);
+        return new LeaveApprovalSummaryDto(pending, approved, rejected);
+    }
+
+    public LeaveApprovalResponseDto getManagerLeaveApprovalDetails(Long leaveId, Employee manager) {
+        Leave l = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new IllegalArgumentException("Leave request not found with ID: " + leaveId));
+        if (l.getApprover() == null || !l.getApprover().getId().equals(manager.getId())) {
+            throw new AccessDeniedException("You are not assigned to this leave request");
+        }
+        long days = ChronoUnit.DAYS.between(l.getStartDate(), l.getEndDate()) + 1;
+        return new LeaveApprovalResponseDto(
+                l.getId(),
+                l.getEmployee().getId(),
+                l.getEmployee().getEmployeeId(),
+                l.getEmployee().getFullName(),
+                l.getEmployee().getDepartment(),
+                l.getLeaveType().getName(),
+                l.getStartDate(),
+                l.getEndDate(),
+                days,
+                l.getReason(),
+                l.getAppliedAt(),
+                l.getStatus()
+        );
+    }
+
+    public ManagerApprovalActionResponseDto approveLeaveWithComment(Long leaveId, String comment, Employee manager) {
+        Leave l = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new IllegalArgumentException("Leave request not found with ID: " + leaveId));
+        if (l.getApprover() == null || !l.getApprover().getId().equals(manager.getId())) {
+            throw new AccessDeniedException("You are not assigned to this leave request");
+        }
+        if (l.getStatus() != LeaveStatus.PENDING) {
+            throw new BadRequestException("Leave request has already been reviewed");
+        }
+        l.setStatus(LeaveStatus.APPROVED);
+        l.setApprovedBy(manager);
+        l.setManagerComment(comment);
+        l.setApprovedAt(LocalDateTime.now());
+        l.setUpdatedAt(LocalDateTime.now());
+        Leave saved = leaveRepository.save(l);
+        ManagerApprovalActionResponseDto resp = new ManagerApprovalActionResponseDto();
+        resp.setLeaveId(saved.getId());
+        resp.setStatus(saved.getStatus());
+        resp.setApprovedBy(manager.getId());
+        resp.setApprovedAt(saved.getApprovedAt());
+        return resp;
+    }
+
+    public ManagerApprovalActionResponseDto rejectLeaveWithComment(Long leaveId, String comment, Employee manager) {
+        Leave l = leaveRepository.findById(leaveId)
+                .orElseThrow(() -> new IllegalArgumentException("Leave request not found with ID: " + leaveId));
+        if (l.getApprover() == null || !l.getApprover().getId().equals(manager.getId())) {
+            throw new AccessDeniedException("You are not assigned to this leave request");
+        }
+        if (l.getStatus() != LeaveStatus.PENDING) {
+            throw new BadRequestException("Leave request has already been reviewed");
+        }
+        l.setStatus(LeaveStatus.REJECTED);
+        l.setApprovedBy(manager);
+        l.setManagerComment(comment);
+        l.setRejectedAt(LocalDateTime.now());
+        l.setUpdatedAt(LocalDateTime.now());
+        Leave saved = leaveRepository.save(l);
+        ManagerApprovalActionResponseDto resp = new ManagerApprovalActionResponseDto();
+        resp.setLeaveId(saved.getId());
+        resp.setStatus(saved.getStatus());
+        resp.setRejectedBy(manager.getId());
+        resp.setRejectedAt(saved.getRejectedAt());
+        return resp;
+    }
+
+    public void bulkApproveLeaves(List<Long> leaveIds, String comment, Employee manager) {
+        for (Long id : leaveIds) {
+            approveLeaveWithComment(id, comment, manager);
+        }
+    }
+
+    public void bulkRejectLeaves(List<Long> leaveIds, String comment, Employee manager) {
+        for (Long id : leaveIds) {
+            rejectLeaveWithComment(id, comment, manager);
+        }
     }
 }
