@@ -1,6 +1,5 @@
 package com.example.ems.config;
 
-
 import com.example.ems.auth.entity.Permission;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
@@ -31,9 +30,6 @@ import com.example.ems.payroll.repository.PayrollRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
-
-
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -114,6 +110,9 @@ public class DatabaseSeeder implements CommandLineRunner {
     @Autowired
     private PayrollRepository payrollRepository;
 
+    @Autowired
+    private com.example.ems.audit.service.AuditLogService auditLogService;
+
     @org.springframework.beans.factory.annotation.Value("${app.seed.domain:company.com}")
     private String seedDomain;
 
@@ -138,14 +137,15 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Additional
                 "recruitment.manage", "task.assign", "performance.review", "expense.manage",
                 // Onboarding Self-Service
-                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
+                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload",
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
                 // New Self Service Permissions
                 "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read", "asset.self.read",
                 // Enterprise Self-Service Permissions
                 "employee.dashboard.read",
                 "employee.profile.read", "employee.profile.update",
-                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit",
+                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload",
+                "employee.onboarding.document.read", "employee.onboarding.submit",
                 "employee.attendance.read", "employee.attendance.create",
                 "employee.leave.create", "employee.leave.read", "employee.leave.cancel",
                 "employee.payslip.read", "employee.payslip.download",
@@ -160,7 +160,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.schedule.read",
                 "employee.announcement.read",
                 // My Performance Permissions
-                "performance.self.goal.update", "performance.self.assessment.submit", 
+                "performance.self.goal.update", "performance.self.assessment.submit",
                 "performance.self.feedback.read", "performance.self.history.read",
                 "schedule.self.read", "schedule.self.change.create", "schedule.self.availability.update",
                 "schedule.self.notification.read", "schedule.self.timeline.read",
@@ -169,13 +169,14 @@ public class DatabaseSeeder implements CommandLineRunner {
                 // Support Ticket Permissions
                 "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
                 // Goals Module Permissions
-                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.update", "goal.submit",
+                "goal.approve", "goal.reject", "goal.analytics.read",
                 // Settings Module Permissions
-                "settings.self.read", "settings.security.read", "settings.security.update", 
-                "settings.privacy.read", "settings.privacy.update", "settings.notifications.read", 
-                "settings.notifications.update", "settings.appearance.read", "settings.appearance.update", 
-                "settings.language.read", "settings.language.update", "settings.devices.read", 
-                "settings.devices.remove", "settings.data.export", "settings.support.create", 
+                "settings.self.read", "settings.security.read", "settings.security.update",
+                "settings.privacy.read", "settings.privacy.update", "settings.notifications.read",
+                "settings.notifications.update", "settings.appearance.read", "settings.appearance.update",
+                "settings.language.read", "settings.language.update", "settings.devices.read",
+                "settings.devices.remove", "settings.data.export", "settings.support.create",
                 "settings.support.read",
                 // Enterprise Module Permissions
                 "audit.read", "audit.export", "settings.manage", "team.read", "asset.manage",
@@ -205,12 +206,13 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
                 "reports.view", "reports.hr", "reports.finance", "reports.manager",
                 "recruitment.manage", "task.assign", "performance.review", "expense.manage",
-                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
+                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload",
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
                 "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read", "asset.self.read",
                 "employee.dashboard.read",
                 "employee.profile.read", "employee.profile.update",
-                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit",
+                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload",
+                "employee.onboarding.document.read", "employee.onboarding.submit",
                 "employee.attendance.read", "employee.attendance.create",
                 "employee.leave.create", "employee.leave.read", "employee.leave.cancel",
                 "employee.payslip.read", "employee.payslip.download",
@@ -224,11 +226,13 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.goal.read", "employee.goal.update",
                 "employee.schedule.read",
                 "employee.announcement.read",
-                "performance.self.goal.update", "performance.self.assessment.submit", 
+                "performance.self.goal.update", "performance.self.assessment.submit",
                 "performance.self.feedback.read", "performance.self.history.read",
                 "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
-                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
-                "audit.read", "audit.export", "settings.manage", "team.read", "asset.manage", "fnf.manage", "payroll-settings.manage", "announcement.manage"));
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.update", "goal.submit",
+                "goal.approve", "goal.reject", "goal.analytics.read",
+                "audit.read", "audit.export", "settings.manage", "team.read", "asset.manage", "fnf.manage",
+                "payroll-settings.manage", "announcement.manage"));
 
         rolePermissionsMap.put("ADMIN", Arrays.asList(
                 "user.manage",
@@ -237,24 +241,28 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "attendance.manage", "leave.manage", "reports.view",
                 "payroll.read", "payroll.manage", "salary.manage", "payslip.read",
                 "expense.manage",
-                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.approve", "goal.reject", "goal.analytics.read",
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.approve", "goal.reject",
+                "goal.analytics.read",
                 "performance.review",
                 "role.manage", "permission.manage",
-                "audit.read", "audit.export", "settings.manage", "team.read", "asset.manage", "fnf.manage", "payroll-settings.manage", "announcement.manage"));
+                "audit.read", "audit.export", "settings.manage", "team.read", "asset.manage", "fnf.manage",
+                "payroll-settings.manage", "announcement.manage"));
 
         rolePermissionsMap.put("HR", Arrays.asList(
                 "employee.create", "employee.read", "employee.update",
                 "attendance.read", "leave.approve", "leave.read",
                 "recruitment.manage", "reports.hr",
-                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
-                "team.read", "asset.manage", "fnf.manage", "announcement.manage"));
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update",
+                "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
+                "team.read", "asset.manage", "fnf.manage", "announcement.manage", "audit.read", "audit.export"));
 
         rolePermissionsMap.put("MANAGER", Arrays.asList(
                 "employee.read", "employee.team.read", "attendance.read", "attendance.team.read", "leave.team.approve",
                 "task.assign", "performance.review",
                 "employee.directory.read", "employee.profile.read", "employee.message.create",
                 "employee.contact.read", "employee.team.hierarchy.read",
-                "goal.create", "goal.read", "goal.update", "goal.self.read", "goal.self.update", "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read",
+                "goal.create", "goal.read", "goal.update", "goal.self.read", "goal.self.update", "goal.submit",
+                "goal.approve", "goal.reject", "goal.analytics.read",
                 "team.read"));
 
         rolePermissionsMap.put("FINANCE", Arrays.asList(
@@ -262,17 +270,18 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "salary.manage", "reports.finance",
                 "payslip.read", "employee.payslip.read", "employee.payslip.download",
                 "payslip.self.read", "payslip.self.preview", "payslip.self.download",
-                "fnf.manage", "payroll-settings.manage", "team.read"));
+                "fnf.manage", "payroll-settings.manage", "team.read", "audit.read", "audit.export"));
 
         rolePermissionsMap.put("EMPLOYEE", Arrays.asList(
                 "attendance.self.read",
                 "leave.create", "leave.self.read", "payslip.self.read",
-                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", 
+                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload",
                 "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
                 "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read", "asset.self.read",
                 "employee.dashboard.read",
                 "employee.profile.read", "employee.profile.update",
-                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit",
+                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload",
+                "employee.onboarding.document.read", "employee.onboarding.submit",
                 "employee.attendance.read", "employee.attendance.create",
                 "employee.leave.create", "employee.leave.read", "employee.leave.cancel",
                 "employee.payslip.read", "employee.payslip.download",
@@ -286,7 +295,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "employee.goal.read", "employee.goal.update",
                 "employee.schedule.read",
                 "employee.announcement.read",
-                "performance.self.goal.update", "performance.self.assessment.submit", 
+                "performance.self.goal.update", "performance.self.assessment.submit",
                 "performance.self.feedback.read", "performance.self.history.read",
                 "schedule.self.read", "schedule.self.change.create", "schedule.self.availability.update",
                 "schedule.self.notification.read", "schedule.self.timeline.read",
@@ -296,11 +305,11 @@ public class DatabaseSeeder implements CommandLineRunner {
                 "goal.self.update", "goal.submit"));
 
         List<String> settingsPerms = Arrays.asList(
-                "settings.self.read", "settings.security.read", "settings.security.update", 
-                "settings.privacy.read", "settings.privacy.update", "settings.notifications.read", 
-                "settings.notifications.update", "settings.appearance.read", "settings.appearance.update", 
-                "settings.language.read", "settings.language.update", "settings.devices.read", 
-                "settings.devices.remove", "settings.data.export", "settings.support.create", 
+                "settings.self.read", "settings.security.read", "settings.security.update",
+                "settings.privacy.read", "settings.privacy.update", "settings.notifications.read",
+                "settings.notifications.update", "settings.appearance.read", "settings.appearance.update",
+                "settings.language.read", "settings.language.update", "settings.devices.read",
+                "settings.devices.remove", "settings.data.export", "settings.support.create",
                 "settings.support.read");
 
         Map<String, Role> roleMap = new HashMap<>();
@@ -335,16 +344,17 @@ public class DatabaseSeeder implements CommandLineRunner {
             String email = roleCleanName + "@" + seedDomain;
             String password = roleCleanName + "@" + role.getId();
             String displayName = role.getName().charAt(0) + role.getName().substring(1).toLowerCase().replace("_", " ");
-            
+
             if ("SUPER_ADMIN".equalsIgnoreCase(role.getName())) {
                 displayName = "Super Admin";
             }
-            
+
             if (userRepository.findByWorkEmail(email).isEmpty()) {
                 User user = new User();
                 user.setFullName(displayName + ("SUPER_ADMIN".equalsIgnoreCase(role.getName()) ? "" : " User"));
                 user.setWorkEmail(email);
-                user.setMobileNumber("SUPER_ADMIN".equalsIgnoreCase(role.getName()) ? "1234567890" : "5550" + String.format("%03d", role.getId()));
+                user.setMobileNumber("SUPER_ADMIN".equalsIgnoreCase(role.getName()) ? "1234567890"
+                        : "5550" + String.format("%03d", role.getId()));
                 user.setDepartment("SUPER_ADMIN".equalsIgnoreCase(role.getName()) ? "IT" : displayName);
                 user.setRequestedRole(role.getName());
                 user.setRole(role);
@@ -381,23 +391,35 @@ public class DatabaseSeeder implements CommandLineRunner {
         for (User u : userRepository.findAll()) {
             Employee emp = employeeRepository.findByEmail(u.getWorkEmail())
                     .orElseGet(Employee::new);
-            
+
             emp.setFullName(u.getFullName());
             emp.setEmail(u.getWorkEmail());
             emp.setEmployeeId(u.getUserId());
-            if (emp.getPhone() == null) emp.setPhone(u.getMobileNumber() != null ? u.getMobileNumber() : "1234567890");
-            if (emp.getGender() == null) emp.setGender("MALE");
-            if (emp.getDob() == null) emp.setDob(LocalDate.of(1990, 1, 1));
-            if (emp.getAddress() == null) emp.setAddress("123 Corporate Way");
-            if (emp.getEmergencyContact() == null) emp.setEmergencyContact("9876543210");
-            if (emp.getDepartment() == null) emp.setDepartment(u.getDepartment() != null ? u.getDepartment() : "Engineering");
-            if (emp.getDesignation() == null) emp.setDesignation(u.getRole() != null ? u.getRole().getName() : "Software Engineer");
-            if (emp.getAnnualSalary() == null) emp.setAnnualSalary(BigDecimal.valueOf(85000));
-            if (emp.getJoiningDate() == null) emp.setJoiningDate(LocalDate.of(2026, 6, 10));
-            if (emp.getLocation() == null) emp.setLocation(u.getLocation() != null ? u.getLocation() : "Headquarters");
-            if (emp.getEmploymentType() == null) emp.setEmploymentType("FULL_TIME");
-            if (emp.getStatus() == null || emp.getStatus().isBlank()) emp.setStatus("ACTIVE");
-            
+            if (emp.getPhone() == null)
+                emp.setPhone(u.getMobileNumber() != null ? u.getMobileNumber() : "1234567890");
+            if (emp.getGender() == null)
+                emp.setGender("MALE");
+            if (emp.getDob() == null)
+                emp.setDob(LocalDate.of(1990, 1, 1));
+            if (emp.getAddress() == null)
+                emp.setAddress("123 Corporate Way");
+            if (emp.getEmergencyContact() == null)
+                emp.setEmergencyContact("9876543210");
+            if (emp.getDepartment() == null)
+                emp.setDepartment(u.getDepartment() != null ? u.getDepartment() : "Engineering");
+            if (emp.getDesignation() == null)
+                emp.setDesignation(u.getRole() != null ? u.getRole().getName() : "Software Engineer");
+            if (emp.getAnnualSalary() == null)
+                emp.setAnnualSalary(BigDecimal.valueOf(85000));
+            if (emp.getJoiningDate() == null)
+                emp.setJoiningDate(LocalDate.of(2026, 6, 10));
+            if (emp.getLocation() == null)
+                emp.setLocation(u.getLocation() != null ? u.getLocation() : "Headquarters");
+            if (emp.getEmploymentType() == null)
+                emp.setEmploymentType("FULL_TIME");
+            if (emp.getStatus() == null || emp.getStatus().isBlank())
+                emp.setStatus("ACTIVE");
+
             employeeRepository.save(emp);
         }
 
@@ -474,8 +496,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 raviSett.getId(),
                 com.example.ems.payroll.entity.FnfSettlementStatus.PENDING,
                 "HR Admin",
-                "Settlement created automatically during offboarding approval."
-        ));
+                "Settlement created automatically during offboarding approval."));
 
         // Seed Assets for Ravi
         List<MyAsset> raviAssets = myAssetRepository.findByAssignedToId(ravi.getId());
@@ -562,8 +583,7 @@ public class DatabaseSeeder implements CommandLineRunner {
                 priyaSett.getId(),
                 com.example.ems.payroll.entity.FnfSettlementStatus.PENDING,
                 "HR Admin",
-                "Settlement created automatically during offboarding approval."
-        ));
+                "Settlement created automatically during offboarding approval."));
     }
 
     private void seedExpenses() {
@@ -614,7 +634,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                     return expenseCategoryRepository.save(c);
                 });
 
-        // 3. Seed Robert Chen's main pending expense (amount: 4200.00, receipt size: 254321)
+        // 3. Seed Robert Chen's main pending expense (amount: 4200.00, receipt size:
+        // 254321)
         Expense mainExp = new Expense();
         mainExp.setEmployee(robert);
         mainExp.setTitle("Flight to Delhi - Client Meeting");
@@ -638,10 +659,13 @@ public class DatabaseSeeder implements CommandLineRunner {
         mainExp.setAttachmentData(new byte[254321]);
         mainExp = expenseRepository.save(mainExp);
 
-        timelineEventRepository.save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(mainExp, "SUBMITTED", robert.getFullName()));
-        expenseAuditLogRepository.save(new ExpenseAuditLog(mainExp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName()));
+        timelineEventRepository.save(
+                new com.example.ems.expense.entity.MyExpenseTimelineEvent(mainExp, "SUBMITTED", robert.getFullName()));
+        expenseAuditLogRepository
+                .save(new ExpenseAuditLog(mainExp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName()));
 
-        // 4. Seed other 35 pending expenses to make totalPending = 36 and pendingAmount = 154000
+        // 4. Seed other 35 pending expenses to make totalPending = 36 and pendingAmount
+        // = 154000
         // Robert's main pending = 4200.00. Remaining = 154000 - 4200 = 149800.
         // We seed 35 pending expenses with 4280.00 each (35 * 4280 = 149800).
         for (int i = 1; i <= 35; i++) {
@@ -663,11 +687,14 @@ public class DatabaseSeeder implements CommandLineRunner {
             exp.setExpenseNumber("EXP-PEND-" + i);
             exp = expenseRepository.save(exp);
 
-            timelineEventRepository.save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
-            expenseAuditLogRepository.save(new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName()));
+            timelineEventRepository.save(
+                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
+            expenseAuditLogRepository
+                    .save(new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName()));
         }
 
-        // 5. Seed 84 approved expenses totaling 128400 with average approval days of 1.8
+        // 5. Seed 84 approved expenses totaling 128400 with average approval days of
+        // 1.8
         // Sum = 83 * 1500 + 3900 = 124500 + 3900 = 128400.
         // Duration: 1.8 days is 43 hours and 12 minutes.
         LocalDateTime baseApprovalTime = LocalDateTime.now().minusDays(1); // approved yesterday, so it's this month
@@ -692,15 +719,19 @@ public class DatabaseSeeder implements CommandLineRunner {
             exp = expenseRepository.save(exp);
 
             // Timeline Events
-            timelineEventRepository.save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
-            timelineEventRepository.save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "APPROVED", "Eran"));
+            timelineEventRepository.save(
+                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
+            timelineEventRepository
+                    .save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "APPROVED", "Eran"));
 
             // Audit logs
-            ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName());
+            ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted",
+                    robert.getFullName());
             subLog.setUpdatedAt(subTime);
             expenseAuditLogRepository.save(subLog);
 
-            ExpenseAuditLog appLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.APPROVED, "Verified and approved", "Eran");
+            ExpenseAuditLog appLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.APPROVED, "Verified and approved",
+                    "Eran");
             appLog.setUpdatedAt(baseApprovalTime);
             expenseAuditLogRepository.save(appLog);
         }
@@ -727,14 +758,18 @@ public class DatabaseSeeder implements CommandLineRunner {
             exp.setExpenseNumber("EXP-REJ-" + i);
             exp = expenseRepository.save(exp);
 
-            timelineEventRepository.save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
-            timelineEventRepository.save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "REJECTED", "Finance Officer"));
+            timelineEventRepository.save(
+                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
+            timelineEventRepository.save(
+                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "REJECTED", "Finance Officer"));
 
-            ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName());
+            ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted",
+                    robert.getFullName());
             subLog.setUpdatedAt(subTime);
             expenseAuditLogRepository.save(subLog);
 
-            ExpenseAuditLog rejLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.REJECTED, "Receipt is invalid", "Eran");
+            ExpenseAuditLog rejLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.REJECTED, "Receipt is invalid",
+                    "Eran");
             rejLog.setUpdatedAt(subTime.plusDays(1));
             expenseAuditLogRepository.save(rejLog);
         }
@@ -759,14 +794,18 @@ public class DatabaseSeeder implements CommandLineRunner {
             exp.setExpenseNumber("EXP-SB-" + i);
             exp = expenseRepository.save(exp);
 
-            timelineEventRepository.save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
-            timelineEventRepository.save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SENT_BACK", "Finance Officer"));
+            timelineEventRepository.save(
+                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
+            timelineEventRepository.save(
+                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SENT_BACK", "Finance Officer"));
 
-            ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName());
+            ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted",
+                    robert.getFullName());
             subLog.setUpdatedAt(subTime);
             expenseAuditLogRepository.save(subLog);
 
-            ExpenseAuditLog sbLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SENT_BACK, "Upload missing GST invoice", "Eran");
+            ExpenseAuditLog sbLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SENT_BACK,
+                    "Upload missing GST invoice", "Eran");
             sbLog.setUpdatedAt(subTime.plusDays(1));
             expenseAuditLogRepository.save(sbLog);
         }
@@ -903,5 +942,8 @@ public class DatabaseSeeder implements CommandLineRunner {
                 payrollRepository.save(payroll);
             }
         }
+
+        // 11. Seed Audit Logs
+        auditLogService.seedAuditLogs();
     }
 }

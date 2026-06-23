@@ -7,5 +7,7 @@ public record EmployeeListItemDto(
     String designation,
     String department,
     String status,
-    String workMode
+    String workMode,
+    Long managerId,
+    String managerName
 ) {}

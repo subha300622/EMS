@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -456,6 +457,12 @@ public class MyEmployeeDirectoryService {
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
         Employee manager = emp.getManager();
+        if (manager == null && emp.getDepartment() != null) {
+            Optional<com.example.ems.employee.entity.Department> deptOpt = departmentRepository.findByName(emp.getDepartment());
+            if (deptOpt.isPresent() && deptOpt.get().getManagerId() != null) {
+                manager = employeeRepository.findById(deptOpt.get().getManagerId()).orElse(null);
+            }
+        }
         EmployeeProfileResponse.ManagerProfileDto managerDto = null;
         if (manager != null) {
             managerDto = new EmployeeProfileResponse.ManagerProfileDto(
@@ -541,6 +548,12 @@ public class MyEmployeeDirectoryService {
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
         Employee manager = emp.getManager();
+        if (manager == null && emp.getDepartment() != null) {
+            Optional<com.example.ems.employee.entity.Department> deptOpt = departmentRepository.findByName(emp.getDepartment());
+            if (deptOpt.isPresent() && deptOpt.get().getManagerId() != null) {
+                manager = employeeRepository.findById(deptOpt.get().getManagerId()).orElse(null);
+            }
+        }
         EmployeeHierarchyResponse.EmployeeRefDto managerDto = null;
         if (manager != null) {
             managerDto = new EmployeeHierarchyResponse.EmployeeRefDto(

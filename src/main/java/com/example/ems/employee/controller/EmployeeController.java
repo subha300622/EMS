@@ -35,10 +35,14 @@ import com.example.ems.performance.repository.MyGoalRepository;
 import com.example.ems.performance.entity.MyGoal;
 import com.example.ems.appraisal.repository.AppraisalRepository;
 import com.example.ems.appraisal.entity.Appraisal;
+import com.example.ems.employee.repository.DepartmentRepository;
+import com.example.ems.employee.entity.Department;
+import java.util.HashMap;
 
 import com.example.ems.leave.service.LeaveService;
 import com.example.ems.security.service.JwtService;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.ArrayList;
@@ -109,6 +113,9 @@ public class EmployeeController {
     private AppraisalRepository appraisalRepository;
 
     @Autowired
+    private DepartmentRepository departmentRepository;
+
+    @Autowired
     private MyEmployeeDirectoryService directoryService;
 
     @Operation(summary = "Create Employee Record", description = "Creates a new employee profile in the system with contact details, department, role, and salary parameters.")
@@ -162,6 +169,21 @@ public class EmployeeController {
         }
 
         List<Employee> all = employeeService.getAllEmployees();
+
+        // Load departments and build department manager mapping to avoid N+1 queries
+        List<Department> departments = departmentRepository.findAll();
+        Map<Long, Employee> employeeMap = all.stream()
+                .collect(Collectors.toMap(Employee::getId, e -> e, (a, b) -> a));
+        Map<String, Employee> deptManagerMap = new HashMap<>();
+        for (Department d : departments) {
+            if (d.getManagerId() != null) {
+                Employee mgr = employeeMap.get(d.getManagerId());
+                if (mgr != null) {
+                    deptManagerMap.put(d.getName().toLowerCase(), mgr);
+                }
+            }
+        }
+
         List<EmployeeListItemDto> filtered = all.stream()
                 .filter(emp -> {
                     if (search != null && !search.isBlank()) {
@@ -180,15 +202,23 @@ public class EmployeeController {
                     }
                     return true;
                 })
-                .map(emp -> new EmployeeListItemDto(
-                        emp.getId(),
-                        emp.getEmployeeId(),
-                        emp.getFullName(),
-                        emp.getDesignation(),
-                        emp.getDepartment(),
-                        emp.getStatus(),
-                        emp.getWorkMode()
-                ))
+                .map(emp -> {
+                    Employee manager = emp.getManager();
+                    if (manager == null && emp.getDepartment() != null) {
+                        manager = deptManagerMap.get(emp.getDepartment().toLowerCase());
+                    }
+                    return new EmployeeListItemDto(
+                            emp.getId(),
+                            emp.getEmployeeId(),
+                            emp.getFullName(),
+                            emp.getDesignation(),
+                            emp.getDepartment(),
+                            emp.getStatus(),
+                            emp.getWorkMode(),
+                            manager != null ? manager.getId() : null,
+                            manager != null ? manager.getFullName() : "Unassigned"
+                    );
+                })
                 .collect(Collectors.toList());
 
         int totalElements = filtered.size();
@@ -263,9 +293,9 @@ public class EmployeeController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.write")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.update")) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.write' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.update' permission.", "AUTH_002"));
         }
 
         try {
@@ -540,9 +570,9 @@ public class EmployeeController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.write")) {
+        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.update")) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.write' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.update' permission.", "AUTH_002"));
         }
 
         try {
@@ -688,7 +718,15 @@ public class EmployeeController {
             node.put("email", current.getEmail());
             node.put("department", current.getDepartment());
             chain.add(node);
-            current = current.getManager();
+
+            Employee nextManager = current.getManager();
+            if (nextManager == null && current.getDepartment() != null) {
+                Optional<Department> deptOpt = departmentRepository.findByName(current.getDepartment());
+                if (deptOpt.isPresent() && deptOpt.get().getManagerId() != null) {
+                    nextManager = employeeRepository.findById(deptOpt.get().getManagerId()).orElse(null);
+                }
+            }
+            current = nextManager;
         }
 
         return ResponseEntity.ok(ApiResponse.success("Reporting chain retrieved successfully", chain));

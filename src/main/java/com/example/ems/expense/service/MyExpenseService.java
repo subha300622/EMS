@@ -310,7 +310,10 @@ public class MyExpenseService {
 
     @Transactional(readOnly = true)
     public MyExpenseListResponse getMyExpenses(Employee employee, String status, String category, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
-        Page<Expense> page = expenseRepository.findByFilters(employee.getId(), status, category, fromDate, toDate, pageable);
+        com.example.ems.expense.entity.ExpenseStatus statusEnum = (status != null && !status.trim().isEmpty())
+                ? com.example.ems.expense.entity.ExpenseStatus.valueOf(status.trim().toUpperCase())
+                : null;
+        Page<Expense> page = expenseRepository.findByFilters(employee.getId(), statusEnum, category, fromDate, toDate, pageable);
 
         List<MyExpenseItem> items = page.getContent().stream()
                 .map(exp -> {

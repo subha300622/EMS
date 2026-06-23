@@ -12,8 +12,8 @@ import java.util.List;
 
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
-    List<Expense> findByStatus(String status);
-    List<Expense> findByStatusIn(List<String> statuses);
+    List<Expense> findByStatus(com.example.ems.expense.entity.ExpenseStatus status);
+    List<Expense> findByStatusIn(List<com.example.ems.expense.entity.ExpenseStatus> statuses);
     List<Expense> findByEmployeeId(Long employeeId);
 
     java.util.Optional<Expense> findByExpenseNumber(String expenseNumber);
@@ -25,7 +25,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
            "AND (:toDate IS NULL OR e.expenseDate <= :toDate)")
     Page<Expense> findByFilters(
         @Param("employeeId") Long employeeId,
-        @Param("status") String status,
+        @Param("status") com.example.ems.expense.entity.ExpenseStatus status,
         @Param("categoryCode") String categoryCode,
         @Param("fromDate") LocalDate fromDate,
         @Param("toDate") LocalDate toDate,
