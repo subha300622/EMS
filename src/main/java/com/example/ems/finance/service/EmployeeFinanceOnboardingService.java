@@ -490,4 +490,48 @@ public class EmployeeFinanceOnboardingService {
                 String.format("Batch verification: Bank=%s, PAN=%s, UAN=%s. Remarks: %s", bankVerified, panVerified, uanVerified, remarks)));
         return saved;
     }
+
+    @Transactional
+    public EmployeeFinanceOnboarding reinitialize(Long id, String userEmail) {
+        EmployeeFinanceOnboarding ob = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Onboarding record not found with ID: " + id));
+        ob.setBankName(null);
+        ob.setBankAccountNumber(null);
+        ob.setBankIfsc(null);
+        ob.setBankVerificationStatus("PENDING");
+        ob.setBankVerificationNotes(null);
+
+        ob.setPanNumber(null);
+        ob.setPanVerificationStatus("PENDING");
+        ob.setPanVerificationNotes(null);
+
+        ob.setUanNumber(null);
+        ob.setUanVerificationStatus("PENDING");
+        ob.setUanVerificationNotes(null);
+
+        ob.setBasicSalary(BigDecimal.ZERO);
+        ob.setHra(BigDecimal.ZERO);
+        ob.setAllowances(BigDecimal.ZERO);
+        ob.setMonthlyCtc(BigDecimal.ZERO);
+        ob.setSalaryStructureAssigned(false);
+
+        ob.setPayrollActivated(false);
+        ob.setPayrollActivatedAt(null);
+
+        ob.setStatus("DRAFT");
+
+        EmployeeFinanceOnboarding saved = repository.save(ob);
+        historyRepository.save(new FinanceOnboardingHistory(id, "REINITIALIZED", userEmail, "Finance onboarding record reinitialized to draft/empty state"));
+        return saved;
+    }
+
+    @Transactional
+    public EmployeeFinanceOnboarding submit(Long id, String userEmail) {
+        EmployeeFinanceOnboarding ob = repository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Onboarding record not found with ID: " + id));
+        ob.setStatus("PENDING");
+        EmployeeFinanceOnboarding saved = repository.save(ob);
+        historyRepository.save(new FinanceOnboardingHistory(id, "SUBMITTED", userEmail, "Finance details submitted for review"));
+        return saved;
+    }
 }

@@ -63,12 +63,14 @@ public class Expense {
     @Column(unique = true)
     private String expenseNumber;
 
-    @Column(nullable = false, columnDefinition = "varchar(255) default 'INR'")
+    @Column(nullable = false, length = 255)
+    @org.hibernate.annotations.ColumnDefault("'INR'")
     private String currency = "INR";
 
     private String projectCode;
 
-    @Column(nullable = false, columnDefinition = "varchar(255) default 'NOT_PAID'")
+    @Column(nullable = false, length = 255)
+    @org.hibernate.annotations.ColumnDefault("'NOT_PAID'")
     private String reimbursementStatus = "NOT_PAID";
 
     private LocalDateTime submittedAt;
@@ -76,12 +78,15 @@ public class Expense {
     private String expectedPaymentMonth;
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 50)
     private List<MyExpenseReceipt> receipts = new ArrayList<>();
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 50)
     private List<MyExpenseApprovalStep> approvalFlow = new ArrayList<>();
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 50)
     private List<MyExpenseTimelineEvent> timelineEvents = new ArrayList<>();
 
     public Expense() {}

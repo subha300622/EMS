@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.mockito.Mockito.when;
@@ -65,20 +66,37 @@ public class AuditLogControllerTest {
     @Test
     public void testGetAllLogsSuccess() throws Exception {
         mockPermission("audit.read", true);
-        AuditLog log = new AuditLog("EMP001", "emp@example.com", "CREATE_EMPLOYEE", "Employee", "1", "127.0.0.1", "Created John");
-        when(auditLogService.getAllLogs()).thenReturn(List.of(log));
+        AuditLog log = new AuditLog("EMP001", "emp@example.com", "CREATE_EMPLOYEE", "Employee", "1", "127.0.0.1",
+                "Created John");
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0, 10);
+        org.springframework.data.domain.Page<AuditLog> page = new org.springframework.data.domain.PageImpl<>(
+                List.of(log), pageable, 1);
+
+        when(auditLogService.getFilteredLogs(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/audit-logs")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].action").value("CREATE_EMPLOYEE"));
+                .andExpect(jsonPath("$.data.content[0].action").value("CREATE_EMPLOYEE"));
     }
 
     @Test
     public void testGetLogByIdSuccess() throws Exception {
         mockPermission("audit.read", true);
-        AuditLog log = new AuditLog("EMP001", "emp@example.com", "UPDATE_EMPLOYEE", "Employee", "1", "127.0.0.1", "Updated John");
+        AuditLog log = new AuditLog("EMP001", "emp@example.com", "UPDATE_EMPLOYEE", "Employee", "1", "127.0.0.1",
+                "Updated John");
         when(auditLogService.getLogById(1L)).thenReturn(Optional.of(log));
 
         mockMvc.perform(get("/api/v1/audit-logs/1")
@@ -92,12 +110,53 @@ public class AuditLogControllerTest {
     public void testExportLogsSuccess() throws Exception {
         mockPermission("audit.export", true);
         byte[] csvData = "ID,Timestamp,User ID,Action\n1,2026-06-17T12:00:00,EMP001,LOGIN".getBytes();
-        when(auditLogService.exportLogsToCsv()).thenReturn(csvData);
+        when(auditLogService.exportLogsToCsv(org.mockito.ArgumentMatchers.any())).thenReturn(csvData);
 
         mockMvc.perform(get("/api/v1/audit-logs/export")
                 .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetDashboardStatsSuccess() throws Exception {
+        mockPermission("audit.read", true);
+        when(auditLogService.getDashboardStats(org.mockito.ArgumentMatchers.any()))
+                .thenReturn(Map.of("flaggedCount", 5L));
+
+        mockMvc.perform(get("/api/v1/audit-logs/dashboard")
+                .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
-                .andExpect(status().is(200));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.flaggedCount").value(5));
+    }
+
+    @Test
+    public void testReviewLogSuccess() throws Exception {
+        mockPermission("audit.read", true);
+        AuditLog log = new AuditLog("EMP001", "emp@example.com", "UPDATE_EMPLOYEE", "Employee", "1", "127.0.0.1",
+                "Updated John");
+        when(auditLogService.reviewLog(org.mockito.ArgumentMatchers.eq(1L), org.mockito.ArgumentMatchers.anyString(),
+                org.mockito.ArgumentMatchers.any()))
+                .thenReturn(log);
+
+        mockMvc.perform(
+                org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/v1/audit-logs/1/review")
+                        .header("Authorization", AUTH_HEADER)
+                        .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                        .content("{\"remarks\":\"Clear flag\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
+    public void testDismissAllFlagsSuccess() throws Exception {
+        mockPermission("audit.read", true);
+
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+                .post("/api/v1/audit-logs/dismiss-all")
+                .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
     }
 
     @Test
@@ -115,7 +174,8 @@ public class AuditLogControllerTest {
     @Test
     public void testGetLogsByEntitySuccess() throws Exception {
         mockPermission("audit.read", true);
-        AuditLog log = new AuditLog("EMP002", "emp2@example.com", "DELETE_ASSET", "Asset", "10", "127.0.0.1", "Deleted Laptop");
+        AuditLog log = new AuditLog("EMP002", "emp2@example.com", "DELETE_ASSET", "Asset", "10", "127.0.0.1",
+                "Deleted Laptop");
         when(auditLogService.getLogsByEntity("Asset", "10")).thenReturn(List.of(log));
 
         mockMvc.perform(get("/api/v1/audit-logs/entity/Asset/10")

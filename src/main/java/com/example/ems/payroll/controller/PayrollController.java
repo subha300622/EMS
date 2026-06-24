@@ -362,20 +362,6 @@ public class PayrollController {
         }
     }
 
-    // 10. Payroll History
-    @Operation(summary = "Get Monthly Payroll History", description = "Retrieves historical logs of monthly payroll distributions.")
-    @GetMapping("/payroll/history")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getPayrollHistory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        return ResponseEntity.ok(ApiResponse.success("Payroll history retrieved successfully",
-                payrollService.getMonthlyReport()));
-    }
 
 
     // 12. Tax Configuration

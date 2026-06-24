@@ -245,7 +245,12 @@ public class FinanceService {
         List<Map<String, Object>> pending = new ArrayList<>();
 
         // Pending Expenses
-        List<String> pendingExpenseStatuses = Arrays.asList("PENDING", "SUBMITTED", "PENDING_MANAGER_APPROVAL", "PENDING_FINANCE_APPROVAL");
+        List<com.example.ems.expense.entity.ExpenseStatus> pendingExpenseStatuses = Arrays.asList(
+                com.example.ems.expense.entity.ExpenseStatus.PENDING,
+                com.example.ems.expense.entity.ExpenseStatus.SUBMITTED,
+                com.example.ems.expense.entity.ExpenseStatus.PENDING_MANAGER_APPROVAL,
+                com.example.ems.expense.entity.ExpenseStatus.PENDING_FINANCE_APPROVAL
+        );
         List<Expense> expenses = expenseRepository.findByStatusIn(pendingExpenseStatuses);
         for (Expense e : expenses) {
             Map<String, Object> map = new LinkedHashMap<>();

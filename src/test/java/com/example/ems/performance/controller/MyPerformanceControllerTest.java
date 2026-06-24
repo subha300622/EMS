@@ -70,6 +70,39 @@ public class MyPerformanceControllerTest {
 
 
     @Test
+    void testGetDashboard() throws Exception {
+        MyPerformanceDashboardResponse mockResp = new MyPerformanceDashboardResponse();
+        mockResp.setSelfReviewDueDate("April 25");
+        mockResp.setCurrentRating(4.6);
+        mockResp.setGoalsMet(8);
+        mockResp.setTotalGoals(10);
+        mockResp.setReviewStatus("Open");
+        mockResp.setMyBand("A+");
+        mockResp.setSelfAssessment(new MyPerformanceDashboardResponse.SelfAssessmentRatings(
+            4.5, 4.8, 4.6, 4.4, 4.7, 4.6
+        ));
+
+        when(performanceService.getDashboard(email)).thenReturn(mockResp);
+
+        mockMvc.perform(get("/api/v1/my-performance/dashboard")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.selfReviewDueDate").value("April 25"))
+                .andExpect(jsonPath("$.data.currentRating").value(4.6))
+                .andExpect(jsonPath("$.data.goalsMet").value(8))
+                .andExpect(jsonPath("$.data.totalGoals").value(10))
+                .andExpect(jsonPath("$.data.reviewStatus").value("Open"))
+                .andExpect(jsonPath("$.data.myBand").value("A+"))
+                .andExpect(jsonPath("$.data.selfAssessment.leadershipOwnership").value(4.5))
+                .andExpect(jsonPath("$.data.selfAssessment.technicalExcellence").value(4.8))
+                .andExpect(jsonPath("$.data.selfAssessment.deliveryManagement").value(4.6))
+                .andExpect(jsonPath("$.data.selfAssessment.communicationInfluence").value(4.4))
+                .andExpect(jsonPath("$.data.selfAssessment.teamMentorship").value(4.7))
+                .andExpect(jsonPath("$.data.selfAssessment.innovationInitiative").value(4.6));
+    }
+
+    @Test
     void testGetReviewCycles() throws Exception {
         when(performanceService.getReviewCycles(email)).thenReturn(new ReviewCyclesResponse());
 
@@ -82,7 +115,7 @@ public class MyPerformanceControllerTest {
     @Test
     void testSubmitSelfAssessment() throws Exception {
         SelfAssessmentRequest req = new SelfAssessmentRequest();
-        req.setSelfRating(5);
+        req.setSelfRating(5.0);
         when(performanceService.submitSelfAssessment(eq(email), eq(1L), any()))
                 .thenReturn(new SelfAssessmentResponse("Success", "SUBMITTED", "now", new ArrayList<>()));
 

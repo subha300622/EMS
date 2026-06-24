@@ -279,7 +279,6 @@ public class HrDashboardController {
 
     @Operation(summary = "Aggregated HR Dashboard Summary (Recommended)")
     @GetMapping("/summary")
-    @Deprecated
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboardSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {

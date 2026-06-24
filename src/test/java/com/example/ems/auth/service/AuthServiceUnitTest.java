@@ -33,8 +33,7 @@ public class AuthServiceUnitTest {
     @Mock
     private RoleRepository roleRepository;
 
-    @Mock
-    private BCryptPasswordEncoder passwordEncoder;
+    private BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @InjectMocks
     private UserService userService;
@@ -48,8 +47,12 @@ public class AuthServiceUnitTest {
     private Role employeeRole;
 
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
         MockitoAnnotations.openMocks(this);
+
+        java.lang.reflect.Field field = UserService.class.getDeclaredField("passwordEncoder");
+        field.setAccessible(true);
+        field.set(userService, passwordEncoder);
 
         superAdminRole = new Role();
         superAdminRole.setId(1L);
@@ -84,7 +87,6 @@ public class AuthServiceUnitTest {
         req.setRequestedRole("EMPLOYEE");
 
         when(userRepository.existsByWorkEmail(testEmail)).thenReturn(false);
-        when(passwordEncoder.encode(any())).thenReturn("hashed_password");
         
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
@@ -107,7 +109,6 @@ public class AuthServiceUnitTest {
         req.setRequestedRole("HR");
 
         when(userRepository.existsByWorkEmail("john.doe@company.com")).thenReturn(false);
-        when(passwordEncoder.encode(any())).thenReturn("hashed_password");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
             u.setId(11L);
@@ -130,7 +131,6 @@ public class AuthServiceUnitTest {
         req.setRole("EMPLOYEE"); // Overridden by hr prefix
 
         when(userRepository.existsByWorkEmail(testEmail)).thenReturn(false);
-        when(passwordEncoder.encode(any())).thenReturn("hashed_password");
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User u = invocation.getArgument(0);
             u.setId(12L);

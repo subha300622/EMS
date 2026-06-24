@@ -46,7 +46,7 @@ public class ApprovalCenterControllerTest {
 
     private static final String TOKEN = "mock-token";
     private static final String AUTH_HEADER = "Bearer " + TOKEN;
-    private static final String EMAIL = "manager@example.com";
+    private static final String EMAIL = "sarah.chen@example.com";
 
     @BeforeEach
     public void setUp() {

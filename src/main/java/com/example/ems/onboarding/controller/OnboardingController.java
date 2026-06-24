@@ -9,6 +9,7 @@ import com.example.ems.onboarding.entity.Onboarding;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.onboarding.dto.*;
 import com.example.ems.onboarding.service.OnboardingService;
+import com.example.ems.onboarding.service.TeamOnboardingService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,15 +23,22 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/onboarding")
 @CrossOrigin("*")
 @Tag(name = "Onboarding Management")
 public class OnboardingController {
 
     @Autowired
     private OnboardingService onboardingService;
+
+    @Autowired
+    private com.example.ems.onboarding.repository.OnboardingEventLogRepository onboardingEventLogRepository;
+
+    @Autowired
+    private TeamOnboardingService teamOnboardingService;
 
     @Autowired
     private UserRepository userRepository;
@@ -61,53 +69,18 @@ public class OnboardingController {
                 || roleService.hasPermission(user.getWorkEmail(), "recruitment.manage");
     }
 
-    private com.example.ems.employee.entity.Employee resolveEmployee(User currentUser) {
+    private Employee resolveEmployee(User currentUser) {
         if (currentUser == null) return null;
         return employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
     }
 
-    // ── 0. SELF-SERVICE ONBOARDING ──────────────────────────────────────────
-    @GetMapping("/onboarding/me")
+    // ── 1. GET ONBOARDING LIST / SCOPES ──────────────────────────────────────
+    @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyOnboardingDetails(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        List<OnboardingTaskResponse> taskResponses = onboardingService.getTasks(onboarding.getId());
-        int totalSteps = taskResponses.size();
-        int completedSteps = (int) taskResponses.stream()
-                .filter(t -> "COMPLETED".equalsIgnoreCase(t.getStatus()))
-                .count();
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("employeeId", employee.getEmployeeId());
-        response.put("fullName", employee.getFullName());
-        response.put("department", employee.getDepartment() != null ? employee.getDepartment() : "Engineering");
-        response.put("joiningDate", employee.getJoiningDate() != null ? employee.getJoiningDate().toString() : "2026-06-10");
-        response.put("onboardingStatus", onboarding.getStatus());
-        response.put("completedSteps", completedSteps);
-        response.put("totalSteps", totalSteps);
-
-        return ResponseEntity.ok(ApiResponse.success("My onboarding details retrieved", response));
-    }
-
-    @PutMapping("/onboarding/me")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateMyOnboardingProfile(
+    public ResponseEntity<ApiResponse<Object>> getOnboardings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, Object> body){
+            @RequestParam(required = false) String scope,
+            @RequestParam(required = false) Long managerId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -116,120 +89,77 @@ public class OnboardingController {
         }
 
         Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+
+        if ("me".equalsIgnoreCase(scope)) {
+            if (employee == null) {
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+            }
+
+            Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+            List<OnboardingTaskResponse> taskResponses = onboardingService.getTasks(onboarding.getId());
+            int totalSteps = taskResponses.size();
+            int completedSteps = (int) taskResponses.stream()
+                    .filter(t -> "COMPLETED".equalsIgnoreCase(t.getStatus()))
+                    .count();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("employeeId", employee.getEmployeeId());
+            response.put("fullName", employee.getFullName());
+            response.put("department", employee.getDepartment() != null ? employee.getDepartment() : "Engineering");
+            response.put("joiningDate", employee.getJoiningDate() != null ? employee.getJoiningDate().toString() : "2026-06-10");
+            response.put("onboardingStatus", onboarding.getStatus());
+            response.put("completedSteps", completedSteps);
+            response.put("totalSteps", totalSteps);
+
+            return ResponseEntity.ok(ApiResponse.success("My onboarding details retrieved", response));
         }
 
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        onboardingService.updateOnboardingProfile(onboarding.getId(), body);
-        return ResponseEntity.ok(ApiResponse.success("Onboarding profile updated successfully"));
-    }
-
-    @PostMapping(value = "/onboarding/me/documents", consumes = "multipart/form-data")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> uploadMyOnboardingDocument(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam("file") MultipartFile file){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if ("team".equalsIgnoreCase(scope) || managerId != null) {
+            Long mgrId = managerId;
+            if (mgrId == null) {
+                mgrId = employee != null ? employee.getId() : 1L;
+            }
+            List<Map<String, Object>> teamList = teamOnboardingService.getTeamOnboardingList(mgrId);
+            return ResponseEntity.ok(ApiResponse.success("Team onboarding list retrieved", teamList));
         }
 
-        if (file.isEmpty()) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Document file is empty", "VAL_001"));
+        // Default: List all or self-list
+        if (checkManagerPermission(currentUser)) {
+            List<OnboardingResponse> list = onboardingService.getOnboardings();
+            return ResponseEntity.ok(ApiResponse.success("Onboarding records retrieved successfully", list));
+        } else {
+            OnboardingResponse selfRecord = onboardingService.getOnboardingByEmployeeEmail(currentUser.getWorkEmail())
+                    .orElse(null);
+            if (selfRecord == null) {
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ErrorResponse.error("No active onboarding record found for your account.", "ONB_002"));
+            }
+            return ResponseEntity.ok(ApiResponse.success("Onboarding record retrieved successfully", List.of(selfRecord)));
         }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        String downloadUrl = "http://localhost:8080/api/documents/download/" + System.currentTimeMillis();
-
-        try {
-            OnboardingDocumentResponse doc = onboardingService.addDocument(
-                    onboarding.getId(), file.getOriginalFilename(), file.getContentType(), downloadUrl);
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Document uploaded successfully", doc));
-        } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "VAL_002"));
-        }
-    }
-
-    @GetMapping("/onboarding/me/documents")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyOnboardingDocuments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        List<OnboardingDocumentResponse> docs = onboardingService.getDocuments(onboarding.getId());
-        return ResponseEntity.ok(ApiResponse.success("My onboarding documents retrieved", docs));
-    }
-
-    @PostMapping("/onboarding/me/submit")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> submitMyOnboarding(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Employee employee = resolveEmployee(currentUser);
-        if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-        }
-
-        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
-        onboardingService.submitOnboarding(onboarding.getId());
-
-        return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Onboarding submitted successfully", Map.of("status", "UNDER_REVIEW")));
-    }
-
-    // ── 1. GET DASHBOARD ────────────────────────────────────────────────────
-    @GetMapping("/onboarding-records/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDashboard(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
-        }
-
-        OnboardingDashboardResponse stats = onboardingService.getDashboardStats();
-        return ResponseEntity.ok(ApiResponse.success("Onboarding dashboard statistics retrieved successfully", stats));
     }
 
     // ── 2. CREATE ONBOARDING ────────────────────────────────────────────────
-    @PostMapping("/onboarding-records")
+    @PostMapping("/create")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> createOnboardingManual(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @Valid @RequestBody TeamOnboardingCreateRequest request) {
+        try {
+            TeamOnboardingCreateResponse resp = teamOnboardingService.createOnboardingManual(request);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Onboarding workflow initiated successfully", resp));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "ONB_001"));
+        }
+    }
+
+    @PostMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> createOnboarding(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody OnboardingRequest request){
+            @Valid @RequestBody OnboardingRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -249,39 +179,70 @@ public class OnboardingController {
         }
     }
 
-    // ── 3. LIST ONBOARDINGS ─────────────────────────────────────────────────
-    @GetMapping("/onboarding-records")
+    // ── 3. UPDATE ONBOARDING PROFILE ────────────────────────────────────────
+    @PutMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> listOnboardings(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<ApiResponse<Object>> updateMyOnboardingProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) String scope,
+            @RequestBody Map<String, Object> body) {
+
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (checkManagerPermission(currentUser)) {
-            List<OnboardingResponse> list = onboardingService.getOnboardings();
-            return ResponseEntity.ok(ApiResponse.success("Onboarding records retrieved successfully", list));
-        } else {
-            // For standard employees, return only their own onboarding record
-            OnboardingResponse selfRecord = onboardingService.getOnboardingByEmployeeEmail(currentUser.getWorkEmail())
-                    .orElse(null);
-            if (selfRecord == null) {
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ErrorResponse.error("No active onboarding record found for your account.", "ONB_002"));
-            }
-            return ResponseEntity
-                    .ok(ApiResponse.success("Onboarding record retrieved successfully", List.of(selfRecord)));
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+        onboardingService.updateOnboardingProfile(onboarding.getId(), body);
+        return ResponseEntity.ok(ApiResponse.success("Onboarding profile updated successfully"));
+    }
+
+    @PutMapping("/{id}")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateOnboardingProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id,
+            @RequestBody Map<String, Object> body) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        OnboardingResponse response = onboardingService.getOnboardingById(id).orElse(null);
+        if (response == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Onboarding record not found with ID: " + id, "ONB_002"));
+        }
+
+        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(response.getEmployeeEmail());
+        if (!isSelf && !checkManagerPermission(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: You cannot update this onboarding profile.", "AUTH_002"));
+        }
+
+        try {
+            OnboardingResponse updated = onboardingService.updateOnboardingProfile(id, body);
+            return ResponseEntity.ok(ApiResponse.success("Onboarding employee profile details updated successfully", updated));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ONB_003"));
         }
     }
 
     // ── 4. GET ONBOARDING BY ID ─────────────────────────────────────────────
-    @GetMapping("/onboarding-records/{id}")
+    @GetMapping("/{id:\\d+}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getOnboarding(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -303,363 +264,173 @@ public class OnboardingController {
         return ResponseEntity.ok(ApiResponse.success("Onboarding record details retrieved", response));
     }
 
-    // ── 5. UPDATE PROFILE ───────────────────────────────────────────────────
-    @PutMapping("/onboarding-records/{id}/profile")
+    // ── 5. BUDDY ASSIGNMENT ─────────────────────────────────────────────────
+    @PostMapping("/{id}/buddy")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateProfile(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+    public ResponseEntity<ApiResponse<Object>> assignBuddy(
             @PathVariable Long id,
-            @RequestBody Map<String, Object> body){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        OnboardingResponse response = onboardingService.getOnboardingById(id).orElse(null);
-        if (response == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Onboarding record not found with ID: " + id, "ONB_002"));
-        }
-
-        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(response.getEmployeeEmail());
-        if (!isSelf && !checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot update this onboarding profile.", "AUTH_002"));
-        }
-
+            @RequestBody Map<String, Long> body) {
         try {
-            OnboardingResponse updated = onboardingService.updateOnboardingProfile(id, body);
-            return ResponseEntity
-                    .ok(ApiResponse.success("Onboarding employee profile details updated successfully", updated));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ONB_003"));
+            Long buddyEmployeeId = body.get("buddyEmployeeId");
+            if (buddyEmployeeId == null) {
+                return (ResponseEntity) ResponseEntity.badRequest()
+                        .body(ErrorResponse.error("buddyEmployeeId field is required", "VAL_001"));
+            }
+            Map<String, String> res = teamOnboardingService.assignBuddy(id, buddyEmployeeId);
+            return ResponseEntity.ok(ApiResponse.success("Buddy assigned successfully", res));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "ONB_002"));
         }
     }
 
-    // ── 6. DOCUMENTS ENDPOINTS ──────────────────────────────────────────────
-    @PostMapping("/onboarding-records/{id}/documents")
+    // ── 6. GET TASKS ────────────────────────────────────────────────────────
+    @GetMapping("/{id}/tasks")
+    public ResponseEntity<ApiResponse<Object>> getTasks(
+            @PathVariable Long id,
+            @RequestParam(required = false) String phase) {
+        if (phase != null && !phase.isBlank()) {
+            List<TeamOnboardingTaskResponse> tasks = teamOnboardingService.getTasksByPhase(id, phase);
+            return ResponseEntity.ok(ApiResponse.success("Tasks retrieved for phase: " + phase, tasks));
+        } else {
+            List<OnboardingTaskResponse> tasks = onboardingService.getTasks(id);
+            return ResponseEntity.ok(ApiResponse.success("Onboarding checklist tasks retrieved", tasks));
+        }
+    }
+
+    // ── 7. DOCUMENTS ENDPOINTS ──────────────────────────────────────────────
+    @GetMapping("/{id}/documents")
+    public ResponseEntity<ApiResponse<Object>> getDocuments(@PathVariable Long id) {
+        try {
+            // Attempt teamOnboardingService getDocuments first (which ensures PAN and AADHAR slots)
+            List<Map<String, Object>> docs = teamOnboardingService.getDocuments(id);
+            return ResponseEntity.ok(ApiResponse.success("Documents checklist retrieved", docs));
+        } catch (Exception e) {
+            List<OnboardingDocumentResponse> docs = onboardingService.getDocuments(id);
+            return ResponseEntity.ok(ApiResponse.success("Onboarding documents list retrieved", docs));
+        }
+    }
+
+    @PostMapping(value = "/{id}/documents", consumes = "multipart/form-data")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> uploadDocument(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "documentType", required = false, defaultValue = "AADHAR") String documentType) {
+        try {
+            if (file.isEmpty()) {
+                return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("File is empty", "VAL_001"));
+            }
+            String downloadUrl = "http://localhost:8080/api/documents/download/" + System.currentTimeMillis();
+            Map<String, Object> resp = teamOnboardingService.addDocument(id, documentType, file.getOriginalFilename(), file.getContentType(), downloadUrl);
+            return ResponseEntity.ok(ApiResponse.success("Document uploaded successfully", resp));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "ONB_005"));
+        }
+    }
+
+    // ── 8. GET PROGRESS METRICS ─────────────────────────────────────────────
+    @GetMapping("/{id}/progress")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getProgress(@PathVariable Long id) {
+        try {
+            TeamOnboardingDetailResponse details = teamOnboardingService.getOnboardingDetails(id);
+            Map<String, Object> progressMap = new HashMap<>();
+            progressMap.put("overall", details.getProgress().getOverall());
+            for (TeamOnboardingDetailResponse.PhaseInfo phase : details.getPhases()) {
+                String nameKey = phase.getName().toLowerCase().replace("_", "");
+                progressMap.put(nameKey, phase.getTotal() > 0 ? (int) Math.round((double) phase.getCompleted() / phase.getTotal() * 100) : 100);
+            }
+            return ResponseEntity.ok(ApiResponse.success("Progress metrics compiled", progressMap));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error(e.getMessage(), "ONB_003"));
+        }
+    }
+
+    // ── 9. PAUSE / RESUME / RETRY CONTROLS ──────────────────────────────────
+    @PostMapping("/{id}/pause")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> pauseOnboarding(@PathVariable Long id) {
+        try {
+            teamOnboardingService.pauseOnboarding(id);
+            return ResponseEntity.ok(ApiResponse.success("Onboarding paused successfully (State set to ON_HOLD)"));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "ONB_006"));
+        }
+    }
+
+    @PostMapping("/{id}/resume")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> resumeOnboarding(@PathVariable Long id) {
+        try {
+            teamOnboardingService.resumeOnboarding(id);
+            return ResponseEntity.ok(ApiResponse.success("Onboarding resumed successfully (State restored to IN_PROGRESS)"));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "ONB_006"));
+        }
+    }
+
+    @PostMapping("/{id}/retry")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> retryOnboarding(@PathVariable Long id) {
+        try {
+            teamOnboardingService.retryOnboarding(id);
+            return ResponseEntity.ok(ApiResponse.success("Onboarding initialization retried successfully"));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "ONB_006"));
+        }
+    }
+
+    // ── 10. SUBMIT ONBOARDING ────────────────────────────────────────────────
+    @PostMapping("/{id}/submit")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> submitOnboarding(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        onboardingService.submitOnboarding(id);
+        return ResponseEntity.ok(ApiResponse.success("Onboarding submitted successfully", Map.of("status", "UNDER_REVIEW")));
+    }
+
+    @PostMapping("/me/submit")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> submitMyOnboarding(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
+        }
+
+        Onboarding onboarding = onboardingService.getOrCreateOnboardingForEmployee(employee);
+        onboardingService.submitOnboarding(onboarding.getId());
+
+        return ResponseEntity.ok(ApiResponse.success("Onboarding submitted successfully", Map.of("status", "UNDER_REVIEW")));
+    }
+
+    // ── 11. EVENT LOG ───────────────────────────────────────────────────────
+    @GetMapping("/{id}/event-log")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getOnboardingEventLog(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestParam("file") MultipartFile file){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        OnboardingResponse response = onboardingService.getOnboardingById(id).orElse(null);
-        if (response == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Onboarding record not found with ID: " + id, "ONB_002"));
-        }
-
-        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(response.getEmployeeEmail());
-        if (!isSelf && !checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot upload files for this onboarding.",
-                            "AUTH_002"));
-        }
-
-        if (file.isEmpty()) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Document file is empty", "VAL_001"));
-        }
-
-        String downloadUrl = "http://localhost:8080/api/documents/download/" + System.currentTimeMillis();
-        OnboardingDocumentResponse doc = onboardingService.addDocument(
-                id, file.getOriginalFilename(), file.getContentType(), downloadUrl);
-        return ResponseEntity
-                .ok(ApiResponse.success("Onboarding document uploaded successfully (Verification Pending)", doc));
-    }
-
-    @GetMapping("/onboarding-records/{id}/documents")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDocuments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        OnboardingResponse response = onboardingService.getOnboardingById(id).orElse(null);
-        if (response == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Onboarding record not found with ID: " + id, "ONB_002"));
-        }
-
-        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(response.getEmployeeEmail());
-        if (!isSelf && !checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view these documents.", "AUTH_002"));
-        }
-
-        List<OnboardingDocumentResponse> docs = onboardingService.getDocuments(id);
-        return ResponseEntity.ok(ApiResponse.success("Onboarding documents list retrieved", docs));
-    }
-
-    // ── 7. TASKS ENDPOINTS ──────────────────────────────────────────────────
-    @GetMapping("/onboarding-records/{id}/tasks")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getTasks(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        OnboardingResponse response = onboardingService.getOnboardingById(id).orElse(null);
-        if (response == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Onboarding record not found with ID: " + id, "ONB_002"));
-        }
-
-        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(response.getEmployeeEmail());
-        if (!isSelf && !checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view tasks.", "AUTH_002"));
-        }
-
-        List<OnboardingTaskResponse> tasks = onboardingService.getTasks(id);
-        return ResponseEntity.ok(ApiResponse.success("Onboarding checklist tasks retrieved", tasks));
-    }
-
-    @PatchMapping("/onboarding-records/tasks/{taskId}/status")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateTaskStatus(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long taskId,
-            @RequestBody Map<String, String> body){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        String status = body.get("status");
-        if (status == null || status.isBlank()) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Status field is required", "VAL_001"));
-        }
-
-        OnboardingTaskResponse updated = onboardingService.updateTaskStatus(taskId, status).orElse(null);
-        if (updated == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Onboarding task not found with ID: " + taskId, "ONB_004"));
-        }
-        return ResponseEntity
-                .ok(ApiResponse.success("Onboarding task status updated to " + status.toUpperCase(), updated));
-    }
-
-    // ── 8. COMPLETE & APPROVE ENDPOINTS ─────────────────────────────────────
-    @PatchMapping("/onboarding-records/{id}/complete")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> completeOnboarding(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        OnboardingResponse response = onboardingService.getOnboardingById(id).orElse(null);
-        if (response == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Onboarding record not found with ID: " + id, "ONB_002"));
-        }
-
-        boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(response.getEmployeeEmail());
-        if (!isSelf && !checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot complete this onboarding.", "AUTH_002"));
-        }
-
-        OnboardingResponse completed = onboardingService.completeOnboarding(id).orElse(null);
-        return ResponseEntity
-                .ok(ApiResponse.success("Employee onboarding marked as completed (Pending HR approval)", completed));
-    }
-
-    @PatchMapping("/onboarding-records/{id}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveOnboarding(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
-        }
-
-        OnboardingResponse approved = onboardingService.approveOnboarding(id).orElse(null);
-        if (approved == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Onboarding record not found with ID: " + id, "ONB_002"));
-        }
-        return ResponseEntity
-                .ok(ApiResponse.success("Onboarding profile successfully approved by HR manager", approved));
-    }
-
-    // ── 9. VERIFICATION ENDPOINT ────────────────────────────────────────────
-    @PatchMapping("/onboarding-records/documents/{documentId}/verification")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> verifyDocument(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long documentId,
-            @RequestBody Map<String, String> body){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
-        }
-
-        String status = body.get("status");
-        String notes = body.get("notes");
-        if (status == null || status.isBlank()) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Status field is required", "VAL_001"));
-        }
-
-        OnboardingDocumentResponse doc = onboardingService.verifyDocument(documentId, status, notes).orElse(null);
-        if (doc == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Document record not found with ID: " + documentId, "ONB_005"));
-        }
-        return ResponseEntity
-                .ok(ApiResponse.success("Document verification status updated to " + status.toUpperCase(), doc));
-    }
-
-    // ── 10. ASSETS & TRAININGS REQUESTS ──────────────────────────────────────
-    @PostMapping("/onboarding-records/assets")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> requestAsset(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody OnboardingAssetRequest request){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
-        }
-
-        try {
-            OnboardingResponse response = onboardingService.requestAsset(request);
-            return ResponseEntity.ok(ApiResponse.success("Asset allocation request submitted successfully", response));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ONB_006"));
-        }
-    }
-
-    @PostMapping("/onboarding-records/trainings")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> assignTraining(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody OnboardingTrainingRequest request){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
-        }
-
-        try {
-            OnboardingResponse response = onboardingService.assignTraining(request);
-            return ResponseEntity
-                    .ok(ApiResponse.success("Training course assigned successfully to employee", response));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ONB_007"));
-        }
-    }
-
-    // ── 11. PROVISION ACCESS ────────────────────────────────────────────────
-    @PostMapping("/onboarding-records/{id}/provision-access")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> provisionAccess(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id,
-            @RequestBody Map<String, Object> body){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
-        }
-
-        try {
-            Map<String, Object> response = onboardingService.provisionAccess(id, body);
-            return ResponseEntity
-                    .ok(ApiResponse.success("Accounts and workspace access provisioned successfully", response));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ONB_002"));
-        }
-    }
-
-    // ── 12. REPORTS ENDPOINT ────────────────────────────────────────────────
-    @GetMapping("/onboarding-records/reports/{reportType}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getReport(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String reportType){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
-        }
-
-        Map<String, Object> data = onboardingService.getReportData(reportType);
-        return ResponseEntity.ok(ApiResponse.success("Onboarding reports analytics data compiled successfully", data));
-    }
-
-    // ── 13. NOTIFICATIONS ENDPOINT ──────────────────────────────────────────
-    @PostMapping("/onboarding-records/notifications")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> triggerNotification(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, Object> body){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!checkManagerPermission(currentUser)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
-        }
-
-        Map<String, Object> response = onboardingService.triggerNotification(body);
-        return ResponseEntity.ok(ApiResponse.success("Onboarding reminder alert triggered", response));
-    }
-
-    @Operation(summary = "Get Onboarding Record Timeline", description = "Retrieves the onboarding lifecycle events and task completions.")
-    @GetMapping("/onboarding-records/{id}/timeline")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getOnboardingTimeline(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) String status) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -675,10 +446,82 @@ public class OnboardingController {
         boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(onboarding.getEmployeeEmail());
         if (!isSelf && !checkManagerPermission(currentUser)) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this onboarding record timeline.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: You cannot view this onboarding record event log.", "AUTH_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Onboarding timeline retrieved successfully",
-                onboardingService.getOnboardingTimeline(id)));
+        List<com.example.ems.onboarding.entity.OnboardingEventLog> logs = onboardingEventLogRepository.findByOnboardingIdOrderByTimestampDesc(id);
+        if (type != null && !type.isBlank()) {
+            logs = logs.stream().filter(l -> type.equalsIgnoreCase(l.getEventType())).toList();
+        }
+        if (status != null && !status.isBlank()) {
+            logs = logs.stream().filter(l -> status.equalsIgnoreCase(l.getStatus())).toList();
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Onboarding event log retrieved successfully", logs));
+    }
+
+    @GetMapping("/event-log")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getGlobalEventLog(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) String status) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkManagerPermission(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires manager privileges.", "AUTH_002"));
+        }
+
+        List<com.example.ems.onboarding.entity.OnboardingEventLog> logs;
+        if (status != null && !status.isBlank()) {
+            logs = onboardingEventLogRepository.findByStatusOrderByTimestampDesc(status.toUpperCase());
+        } else {
+            logs = onboardingEventLogRepository.findAll();
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Global onboarding event log retrieved successfully", logs));
+    }
+
+    @PostMapping("/{id}/event-log/replay-failed")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> replayFailedEvent(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long id,
+            @RequestParam Long eventId) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        // Role validation: HR or FINANCE role required
+        boolean hasAccess = roleService.hasRoleOrGreater(currentUser, "HR") || roleService.hasRoleOrGreater(currentUser, "FINANCE");
+        if (!hasAccess) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires HR or Finance privileges.", "AUTH_002"));
+        }
+
+        try {
+            com.example.ems.onboarding.entity.OnboardingEventLog log = onboardingEventLogRepository.findById(eventId).orElse(null);
+            if (log == null) {
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ErrorResponse.error("Event log not found with ID: " + eventId, "ONB_002"));
+            }
+            if (!log.getOnboardingId().equals(id)) {
+                return (ResponseEntity) ResponseEntity.badRequest()
+                        .body(ErrorResponse.error("Event log does not belong to the specified onboarding session.", "ONB_ERR"));
+            }
+
+            onboardingService.replayFailedEvent(eventId);
+            return ResponseEntity.ok(ApiResponse.success("Event replay triggered successfully"));
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ONB_ERR"));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ErrorResponse.error(e.getMessage(), "ONB_ERR"));
+        }
     }
 }

@@ -187,7 +187,7 @@ public class EmployeeDirectoryController {
                 if (!appraisals.isEmpty()) {
                     rating = appraisals.stream()
                             .filter(a -> a.getFinalRating() != null)
-                            .mapToInt(Appraisal::getFinalRating)
+                            .mapToDouble(Appraisal::getFinalRating)
                             .average()
                             .orElse(4.5);
                 }
@@ -461,7 +461,7 @@ public class EmployeeDirectoryController {
                 if (!appraisals.isEmpty()) {
                     rating = appraisals.stream()
                             .filter(a -> a.getFinalRating() != null)
-                            .mapToInt(Appraisal::getFinalRating)
+                            .mapToDouble(Appraisal::getFinalRating)
                             .average()
                             .orElse(4.5);
                 }

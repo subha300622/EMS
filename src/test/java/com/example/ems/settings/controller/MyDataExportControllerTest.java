@@ -22,8 +22,9 @@ import com.example.ems.performance.entity.Goal;
 import com.example.ems.performance.entity.PerformanceReview;
 import com.example.ems.performance.repository.GoalRepository;
 import com.example.ems.performance.repository.PerformanceReviewRepository;
-import com.example.ems.training.entity.TrainingEnrollment;
-import com.example.ems.training.repository.TrainingEnrollmentRepository;
+import com.example.ems.training.entity.TrainingProgress;
+import com.example.ems.training.repository.TrainingProgressRepository;
+import com.example.ems.training.entity.TrainingStatus;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,7 +58,7 @@ public class MyDataExportControllerTest {
     @Mock private GoalRepository goalRepository;
     @Mock private PerformanceReviewRepository reviewRepository;
     @Mock private MyEmployeeDocumentRepository employeeDocumentRepository;
-    @Mock private TrainingEnrollmentRepository trainingEnrollmentRepository;
+    @Mock private TrainingProgressRepository trainingProgressRepository;
 
     @InjectMocks
     private MyDataExportController myDataExportController;
@@ -238,13 +239,12 @@ public class MyDataExportControllerTest {
     public void testExportTrainingsSuccess() throws Exception {
         setupAuthorized(null);
 
-        TrainingEnrollment enrollment = new TrainingEnrollment();
-        enrollment.setId(1L);
-        enrollment.setStatus("COMPLETED");
-        enrollment.setProgressPercent(100);
-        enrollment.setGrade("A");
+        TrainingProgress progress = new TrainingProgress();
+        progress.setId(1L);
+        progress.setStatus(TrainingStatus.COMPLETED);
+        progress.setProgressPercent(100);
 
-        when(trainingEnrollmentRepository.findByEmployeeId(1L)).thenReturn(List.of(enrollment));
+        when(trainingProgressRepository.findByEmployeeId(1L)).thenReturn(List.of(progress));
 
         mockMvc.perform(get("/api/v1/my-trainings/export")
                 .header("Authorization", "Bearer " + token))

@@ -151,15 +151,6 @@ public class PayrollManagementTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-    @Test
-    public void testGetHistory() throws Exception {
-        when(payrollService.getMonthlyReport()).thenReturn(List.of(Map.of("month", "2026-06")));
-
-        mockMvc.perform(get("/api/v1/payroll/history")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
 
     @Test
     public void testTaxConfiguration() throws Exception {

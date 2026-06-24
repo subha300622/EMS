@@ -52,7 +52,7 @@ public class ManagerDashboardControllerTest {
 
     private static final String TOKEN = "mgr-token";
     private static final String AUTH_HEADER = "Bearer " + TOKEN;
-    private static final String EMAIL = "manager@example.com";
+    private static final String EMAIL = "sarah.chen@example.com";
 
     private User managerUser;
     private Employee managerEmployee;

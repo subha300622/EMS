@@ -11,7 +11,7 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.performance.service.PerformanceService;
 import com.example.ems.schedule.service.MyScheduleService;
 import com.example.ems.security.service.JwtService;
-import com.example.ems.training.service.TrainingService;
+import com.example.ems.training.service.TrainingAssignmentService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,7 +59,7 @@ public class TeamManagementControllerTest {
     private PerformanceService performanceService;
 
     @Mock
-    private TrainingService trainingService;
+    private TrainingAssignmentService trainingService;
 
     @Mock
     private MyAssetService myAssetService;
@@ -69,7 +69,7 @@ public class TeamManagementControllerTest {
 
     private static final String TOKEN = "mock-token";
     private static final String AUTH_HEADER = "Bearer " + TOKEN;
-    private static final String EMAIL = "manager@example.com";
+    private static final String EMAIL = "sarah.chen@example.com";
 
     @BeforeEach
     public void setUp() {
@@ -214,7 +214,7 @@ public class TeamManagementControllerTest {
         report.setEmail("report@example.com");
         when(employeeRepository.findByManagerId(1L)).thenReturn(List.of(report));
 
-        when(trainingService.getMyEnrollments("report@example.com")).thenReturn(Collections.emptyList());
+        when(trainingService.getMyTrainings("report@example.com")).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/api/v1/team/trainings")
                 .header("Authorization", AUTH_HEADER))

@@ -108,7 +108,6 @@ public class ManagerDashboardController {
 
     @Operation(summary = "Get Dashboard Top KPI Cards Summary")
     @GetMapping("/summary")
-    @Deprecated
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<SummaryDto>> getSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {

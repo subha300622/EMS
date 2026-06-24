@@ -24,6 +24,12 @@ public class TrainingCourse {
 
     private Integer durationHours;
 
+    private String difficulty;
+
+    private Boolean isMandatory = false;
+
+    private Long createdBy;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -53,4 +59,13 @@ public class TrainingCourse {
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getDifficulty() { return difficulty; }
+    public void setDifficulty(String difficulty) { this.difficulty = difficulty; }
+
+    public Boolean getIsMandatory() { return isMandatory; }
+    public void setIsMandatory(Boolean isMandatory) { this.isMandatory = isMandatory; }
+
+    public Long getCreatedBy() { return createdBy; }
+    public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
 }

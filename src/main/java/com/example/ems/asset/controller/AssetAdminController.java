@@ -18,9 +18,14 @@ import com.example.ems.asset.dto.AssetTimelineResponse;
 import com.example.ems.asset.entity.MyAssetAssignment;
 import com.example.ems.asset.entity.MyAssetMaintenance;
 import com.example.ems.asset.entity.MyAssetDocument;
+import com.example.ems.asset.entity.MyAssetActivity;
+import com.example.ems.asset.entity.MyAssetIssue;
 import com.example.ems.asset.repository.MyAssetAssignmentRepository;
 import com.example.ems.asset.repository.MyAssetMaintenanceRepository;
 import com.example.ems.asset.repository.MyAssetDocumentRepository;
+import com.example.ems.asset.repository.MyAssetActivityRepository;
+import com.example.ems.asset.repository.MyAssetIssueRepository;
+import com.example.ems.asset.repository.MyAssetReturnRequestRepository;
 import com.example.ems.asset.service.MyAssetService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -77,10 +82,19 @@ public class AssetAdminController {
     private MyAssetDocumentRepository myAssetDocumentRepository;
 
     @Autowired
+    private MyAssetActivityRepository myAssetActivityRepository;
+
+    @Autowired
+    private MyAssetIssueRepository myAssetIssueRepository;
+
+    @Autowired
+    private MyAssetReturnRequestRepository myAssetReturnRequestRepository;
+
+    @Autowired
     private MyAssetService assetService;
 
     @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
@@ -94,7 +108,7 @@ public class AssetAdminController {
         }
 
         List<MyAsset> allAssets = myAssetRepository.findAll();
-        
+
         long totalAssets = 0;
         long assignedAssets = 0;
         long availableAssets = 0;
@@ -110,7 +124,8 @@ public class AssetAdminController {
             totalAssets++;
             if ("ASSIGNED".equalsIgnoreCase(status) || "RETURN_REQUESTED".equalsIgnoreCase(status)) {
                 assignedAssets++;
-            } else if ("UNASSIGNED".equalsIgnoreCase(status) || "RETURNED".equalsIgnoreCase(status) || "AVAILABLE".equalsIgnoreCase(status)) {
+            } else if ("UNASSIGNED".equalsIgnoreCase(status) || "RETURNED".equalsIgnoreCase(status)
+                    || "AVAILABLE".equalsIgnoreCase(status)) {
                 availableAssets++;
             } else if ("UNDER_MAINTENANCE".equalsIgnoreCase(status) || "MAINTENANCE".equalsIgnoreCase(status)) {
                 maintenanceAssets++;
@@ -119,7 +134,8 @@ public class AssetAdminController {
             }
 
             BigDecimal val = asset.getCurrentValue();
-            if (val == null) val = asset.getPurchasePrice();
+            if (val == null)
+                val = asset.getPurchasePrice();
             if (val != null) {
                 totalValue = totalValue.add(val);
             }
@@ -137,7 +153,7 @@ public class AssetAdminController {
     }
 
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAllAssets(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) String status,
@@ -156,21 +172,28 @@ public class AssetAdminController {
                     .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
-        String statusParam = (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status)) ? status.trim().toUpperCase() : null;
-        String categoryParam = (category != null && !category.trim().isEmpty() && !"ALL".equalsIgnoreCase(category)) ? category.trim() : null;
-        String deptParam = (department != null && !department.trim().isEmpty() && !"ALL".equalsIgnoreCase(department)) ? department.trim() : null;
+        String statusParam = (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status))
+                ? status.trim().toUpperCase()
+                : null;
+        String categoryParam = (category != null && !category.trim().isEmpty() && !"ALL".equalsIgnoreCase(category))
+                ? category.trim()
+                : null;
+        String deptParam = (department != null && !department.trim().isEmpty() && !"ALL".equalsIgnoreCase(department))
+                ? department.trim()
+                : null;
         String searchParam = (search != null && !search.trim().isEmpty()) ? search.trim() : null;
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<MyAsset> assetPage = myAssetRepository.findFiltered(statusParam, categoryParam, deptParam, searchParam, pageable);
-        
+        Page<MyAsset> assetPage = myAssetRepository.findFiltered(statusParam, categoryParam, deptParam, searchParam,
+                pageable);
+
         Page<AssetDetailResponse> dtoPage = assetPage.map(AssetDetailResponse::new);
 
         return ResponseEntity.ok(ApiResponse.success("Assets list retrieved successfully", dtoPage));
     }
 
     @GetMapping("/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
@@ -190,15 +213,16 @@ public class AssetAdminController {
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Asset details retrieved successfully", new AssetDetailResponse(asset)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Asset details retrieved successfully", new AssetDetailResponse(asset)));
     }
 
     @PostMapping
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> createAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody AssetDto request){
+            @RequestBody AssetDto request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -225,7 +249,8 @@ public class AssetAdminController {
         asset.setWarrantyStatus(request.getWarrantyStatus() != null ? request.getWarrantyStatus() : "ACTIVE");
         asset.setWarrantyExpiryDate(request.getWarrantyExpiryDate());
         asset.setVendor(request.getVendor());
-        asset.setDepreciationPercentage(request.getDepreciationPercentage() != null ? request.getDepreciationPercentage() : BigDecimal.ZERO);
+        asset.setDepreciationPercentage(
+                request.getDepreciationPercentage() != null ? request.getDepreciationPercentage() : BigDecimal.ZERO);
         asset.setStatus("AVAILABLE");
 
         if (request.getAssignedToEmployeeId() != null) {
@@ -243,7 +268,8 @@ public class AssetAdminController {
         MyAsset saved = myAssetRepository.save(asset);
 
         if (saved.getAssignedTo() != null) {
-            MyAssetAssignment assignment = new MyAssetAssignment(saved, saved.getAssignedTo(), LocalDate.now(), null, "ACTIVE", "Initial Assignment");
+            MyAssetAssignment assignment = new MyAssetAssignment(saved, saved.getAssignedTo(), LocalDate.now(), null,
+                    "ACTIVE", "Initial Assignment");
             myAssetAssignmentRepository.save(assignment);
         }
 
@@ -253,11 +279,11 @@ public class AssetAdminController {
 
     @PutMapping("/{id}")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> updateAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody AssetDto request){
+            @RequestBody AssetDto request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -281,7 +307,8 @@ public class AssetAdminController {
         asset.setBrand(request.getBrand());
         asset.setModel(request.getModel());
         asset.setSerialNumber(request.getSerialNumber());
-        if (request.getPurchaseDate() != null) asset.setPurchaseDate(request.getPurchaseDate());
+        if (request.getPurchaseDate() != null)
+            asset.setPurchaseDate(request.getPurchaseDate());
         asset.setPurchasePrice(request.getPurchasePrice());
         asset.setCurrentValue(request.getCurrentValue());
         asset.setLocation(request.getLocation());
@@ -300,8 +327,10 @@ public class AssetAdminController {
             if (oldEmp == null || !oldEmp.getId().equals(newEmpId)) {
                 Employee emp = employeeRepository.findById(newEmpId).orElse(null);
                 if (emp != null) {
-                    List<MyAssetAssignment> activeAssignments = myAssetAssignmentRepository.findByAssetIdOrderByAssignedDateDesc(id)
-                            .stream().filter(a -> "ACTIVE".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
+                    List<MyAssetAssignment> activeAssignments = myAssetAssignmentRepository
+                            .findByAssetIdOrderByAssignedDateDesc(id)
+                            .stream().filter(a -> "ACTIVE".equalsIgnoreCase(a.getStatus()))
+                            .collect(Collectors.toList());
                     for (MyAssetAssignment active : activeAssignments) {
                         active.setStatus("RETURNED");
                         active.setReturnedDate(LocalDate.now());
@@ -312,13 +341,15 @@ public class AssetAdminController {
                     asset.setAssignedDate(LocalDate.now());
                     asset.setStatus("ASSIGNED");
 
-                    MyAssetAssignment assignment = new MyAssetAssignment(asset, emp, LocalDate.now(), null, "ACTIVE", "Updated Assignment");
+                    MyAssetAssignment assignment = new MyAssetAssignment(asset, emp, LocalDate.now(), null, "ACTIVE",
+                            "Updated Assignment");
                     myAssetAssignmentRepository.save(assignment);
                 }
             }
         } else {
             if (oldEmp != null) {
-                List<MyAssetAssignment> activeAssignments = myAssetAssignmentRepository.findByAssetIdOrderByAssignedDateDesc(id)
+                List<MyAssetAssignment> activeAssignments = myAssetAssignmentRepository
+                        .findByAssetIdOrderByAssignedDateDesc(id)
                         .stream().filter(a -> "ACTIVE".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
                 for (MyAssetAssignment active : activeAssignments) {
                     active.setStatus("RETURNED");
@@ -338,10 +369,10 @@ public class AssetAdminController {
 
     @DeleteMapping("/{id}")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> deleteAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -354,13 +385,19 @@ public class AssetAdminController {
         }
 
         if (myAssetRepository.existsById(id)) {
-            // delete documents and assignments first
+            // delete documents, assignments, maintenance, activities, return requests, and
+            // issues first
             List<MyAssetDocument> docs = myAssetDocumentRepository.findByAssetIdOrderByUploadedAtDesc(id);
             myAssetDocumentRepository.deleteAll(docs);
             List<MyAssetAssignment> assigns = myAssetAssignmentRepository.findByAssetIdOrderByAssignedDateDesc(id);
             myAssetAssignmentRepository.deleteAll(assigns);
             List<MyAssetMaintenance> maint = myAssetMaintenanceRepository.findByAssetIdOrderByStartDateDesc(id);
             myAssetMaintenanceRepository.deleteAll(maint);
+            List<MyAssetActivity> activities = myAssetActivityRepository.findByAssetIdOrderByDateDesc(id);
+            myAssetActivityRepository.deleteAll(activities);
+            myAssetReturnRequestRepository.findByAssetId(id).ifPresent(myAssetReturnRequestRepository::delete);
+            List<MyAssetIssue> issues = myAssetIssueRepository.findByAssetId(id);
+            myAssetIssueRepository.deleteAll(issues);
 
             myAssetRepository.deleteById(id);
             return ResponseEntity.ok(ApiResponse.success("Asset deleted successfully", null));
@@ -371,7 +408,7 @@ public class AssetAdminController {
     }
 
     @GetMapping("/{id}/timeline")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetTimeline(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
@@ -395,7 +432,7 @@ public class AssetAdminController {
     }
 
     @GetMapping("/{assetId}/assignments")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssignmentHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assetId) {
@@ -425,11 +462,11 @@ public class AssetAdminController {
 
     @PostMapping("/{id}/assign")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> assignAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, Object> payload){
+            @RequestBody Map<String, Object> payload) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -449,7 +486,8 @@ public class AssetAdminController {
 
         Object employeeIdObj = payload.get("employeeId");
         if (employeeIdObj == null) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Employee ID is required", "ASS_002"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Employee ID is required", "ASS_002"));
         }
         Long employeeId = Long.valueOf(employeeIdObj.toString());
 
@@ -478,7 +516,8 @@ public class AssetAdminController {
         asset.setUpdatedAt(LocalDateTime.now());
         myAssetRepository.save(asset);
 
-        MyAssetAssignment assignment = new MyAssetAssignment(asset, employee, LocalDate.now(), expectedReturnDate, "ACTIVE", "Assigned via Admin API");
+        MyAssetAssignment assignment = new MyAssetAssignment(asset, employee, LocalDate.now(), expectedReturnDate,
+                "ACTIVE", "Assigned via Admin API");
         myAssetAssignmentRepository.save(assignment);
 
         return ResponseEntity.ok(ApiResponse.success("Asset assigned successfully", new AssetDetailResponse(asset)));
@@ -486,7 +525,7 @@ public class AssetAdminController {
 
     @PostMapping("/{id}/transfer")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> transferAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
@@ -509,7 +548,8 @@ public class AssetAdminController {
 
         Object toEmpIdObj = payload.get("toEmployeeId");
         if (toEmpIdObj == null) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Target employee ID is required", "ASS_002"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Target employee ID is required", "ASS_002"));
         }
         Long toEmployeeId = Long.valueOf(toEmpIdObj.toString());
 
@@ -536,7 +576,8 @@ public class AssetAdminController {
         asset.setUpdatedAt(LocalDateTime.now());
         myAssetRepository.save(asset);
 
-        MyAssetAssignment assignment = new MyAssetAssignment(asset, toEmployee, LocalDate.now(), null, "ACTIVE", remarks);
+        MyAssetAssignment assignment = new MyAssetAssignment(asset, toEmployee, LocalDate.now(), null, "ACTIVE",
+                remarks);
         myAssetAssignmentRepository.save(assignment);
 
         return ResponseEntity.ok(ApiResponse.success("Asset transferred successfully", new AssetDetailResponse(asset)));
@@ -544,10 +585,10 @@ public class AssetAdminController {
 
     @PostMapping("/{id}/return")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> returnAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -589,7 +630,7 @@ public class AssetAdminController {
 
     @PatchMapping("/{id}/status")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> updateAssetStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
@@ -617,7 +658,8 @@ public class AssetAdminController {
         String targetStatus = request.status().toUpperCase();
         if (!targetStatus.equals("AVAILABLE") && !targetStatus.equals("RETIRED") && !targetStatus.equals("DISPOSED")) {
             return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("Invalid status. Supported statuses are AVAILABLE, RETIRED, DISPOSED.", "VAL_002"));
+                    .body(ErrorResponse.error("Invalid status. Supported statuses are AVAILABLE, RETIRED, DISPOSED.",
+                            "VAL_002"));
         }
 
         if ("DISPOSED".equalsIgnoreCase(asset.getStatus())) {
@@ -625,7 +667,8 @@ public class AssetAdminController {
                     .body(ErrorResponse.error("Cannot transition from DISPOSED status.", "ASS_CONFLICT"));
         }
 
-        String remarks = request.remarks() != null ? request.remarks() : "Status updated to " + targetStatus + " via status API";
+        String remarks = request.remarks() != null ? request.remarks()
+                : "Status updated to " + targetStatus + " via status API";
 
         List<MyAssetAssignment> activeAssignments = myAssetAssignmentRepository.findByAssetIdOrderByAssignedDateDesc(id)
                 .stream().filter(a -> "ACTIVE".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
@@ -645,11 +688,12 @@ public class AssetAdminController {
         asset.setUpdatedAt(LocalDateTime.now());
         myAssetRepository.save(asset);
 
-        return ResponseEntity.ok(ApiResponse.success("Asset status updated successfully", new AssetDetailResponse(asset)));
+        return ResponseEntity
+                .ok(ApiResponse.success("Asset status updated successfully", new AssetDetailResponse(asset)));
     }
 
     @GetMapping("/{assetId}/maintenance")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getMaintenanceRecords(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assetId) {
@@ -669,7 +713,7 @@ public class AssetAdminController {
 
     @PostMapping("/{assetId}/maintenance")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> createMaintenanceRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assetId,
@@ -694,7 +738,8 @@ public class AssetAdminController {
         String vendor = (String) payload.get("vendor");
         Object costObj = payload.get("estimatedCost");
         if (issue == null || vendor == null || costObj == null) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("issue, vendor, and estimatedCost are required", "ASS_002"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("issue, vendor, and estimatedCost are required", "ASS_002"));
         }
         BigDecimal estimatedCost = new BigDecimal(costObj.toString());
 
@@ -710,7 +755,7 @@ public class AssetAdminController {
 
     @PatchMapping("/maintenance/{maintenanceId}/complete")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> completeMaintenance(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long maintenanceId,
@@ -752,7 +797,7 @@ public class AssetAdminController {
 
     @PostMapping(value = "/{assetId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> uploadDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assetId,
@@ -780,8 +825,7 @@ public class AssetAdminController {
                     file.getOriginalFilename(),
                     file.getContentType(),
                     file.getBytes(),
-                    documentType
-            );
+                    documentType);
             myAssetDocumentRepository.save(doc);
 
             Map<String, Object> metadata = new LinkedHashMap<>();
@@ -793,12 +837,13 @@ public class AssetAdminController {
 
             return ResponseEntity.ok(ApiResponse.success("Document uploaded successfully", metadata));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Failed to read file contents: " + e.getMessage(), "DOC_002"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Failed to read file contents: " + e.getMessage(), "DOC_002"));
         }
     }
 
     @GetMapping("/{assetId}/documents")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getDocuments(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assetId) {
@@ -827,18 +872,24 @@ public class AssetAdminController {
     }
 
     @GetMapping("/reports/utilization")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getUtilizationReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
-        List<MyAsset> assets = myAssetRepository.findAll().stream().filter(a -> !"DISPOSED".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
+        List<MyAsset> assets = myAssetRepository.findAll().stream()
+                .filter(a -> !"DISPOSED".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
         long total = assets.size();
-        long allocated = assets.stream().filter(a -> "ASSIGNED".equalsIgnoreCase(a.getStatus()) || "RETURN_REQUESTED".equalsIgnoreCase(a.getStatus())).count();
+        long allocated = assets.stream().filter(
+                a -> "ASSIGNED".equalsIgnoreCase(a.getStatus()) || "RETURN_REQUESTED".equalsIgnoreCase(a.getStatus()))
+                .count();
         double rate = total > 0 ? ((double) allocated / total) * 100 : 0.0;
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -850,22 +901,28 @@ public class AssetAdminController {
     }
 
     @GetMapping("/reports/depreciation")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getDepreciationReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
-        List<MyAsset> assets = myAssetRepository.findAll().stream().filter(a -> !"DISPOSED".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
+        List<MyAsset> assets = myAssetRepository.findAll().stream()
+                .filter(a -> !"DISPOSED".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
         BigDecimal totalPurchase = BigDecimal.ZERO;
         BigDecimal totalCurrent = BigDecimal.ZERO;
 
         for (MyAsset asset : assets) {
-            if (asset.getPurchasePrice() != null) totalPurchase = totalPurchase.add(asset.getPurchasePrice());
-            if (asset.getCurrentValue() != null) totalCurrent = totalCurrent.add(asset.getCurrentValue());
+            if (asset.getPurchasePrice() != null)
+                totalPurchase = totalPurchase.add(asset.getPurchasePrice());
+            if (asset.getCurrentValue() != null)
+                totalCurrent = totalCurrent.add(asset.getCurrentValue());
         }
         BigDecimal totalDepreciation = totalPurchase.subtract(totalCurrent);
 
@@ -878,13 +935,16 @@ public class AssetAdminController {
     }
 
     @GetMapping("/reports/maintenance")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getMaintenanceReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
         List<MyAssetMaintenance> records = myAssetMaintenanceRepository.findAll();
@@ -894,7 +954,8 @@ public class AssetAdminController {
         BigDecimal totalCost = BigDecimal.ZERO;
         for (MyAssetMaintenance r : records) {
             BigDecimal cost = r.getActualCost() != null ? r.getActualCost() : r.getEstimatedCost();
-            if (cost != null) totalCost = totalCost.add(cost);
+            if (cost != null)
+                totalCost = totalCost.add(cost);
         }
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -907,22 +968,28 @@ public class AssetAdminController {
     }
 
     @GetMapping("/reports/inventory")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getInventoryReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null)
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "asset.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'asset.manage' permission.", "AUTH_002"));
         }
 
-        List<MyAsset> assets = myAssetRepository.findAll().stream().filter(a -> !"DISPOSED".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
+        List<MyAsset> assets = myAssetRepository.findAll().stream()
+                .filter(a -> !"DISPOSED".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
         long total = assets.size();
 
-        Map<String, Long> byCategory = assets.stream().collect(Collectors.groupingBy(MyAsset::getCategory, Collectors.counting()));
+        Map<String, Long> byCategory = assets.stream()
+                .collect(Collectors.groupingBy(MyAsset::getCategory, Collectors.counting()));
         Map<String, Long> byStatus = assets.stream().collect(Collectors.groupingBy(a -> {
             String internalStatus = a.getStatus();
-            if ("UNASSIGNED".equalsIgnoreCase(internalStatus) || "RETURNED".equalsIgnoreCase(internalStatus) || "AVAILABLE".equalsIgnoreCase(internalStatus)) {
+            if ("UNASSIGNED".equalsIgnoreCase(internalStatus) || "RETURNED".equalsIgnoreCase(internalStatus)
+                    || "AVAILABLE".equalsIgnoreCase(internalStatus)) {
                 return "AVAILABLE";
             }
             return internalStatus;

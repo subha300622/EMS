@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface OnboardingTaskRepository extends JpaRepository<OnboardingTask, Long> {
     List<OnboardingTask> findByOnboardingId(Long onboardingId);
+    List<OnboardingTask> findByOnboardingIdAndPhase(Long onboardingId, String phase);
 }

@@ -1,4 +1,5 @@
 package com.example.ems.settings.controller;
+
 import java.util.List;
 import java.util.Map;
 
@@ -26,8 +27,8 @@ import com.example.ems.performance.entity.Goal;
 import com.example.ems.performance.entity.PerformanceReview;
 import com.example.ems.performance.repository.GoalRepository;
 import com.example.ems.performance.repository.PerformanceReviewRepository;
-import com.example.ems.training.entity.TrainingEnrollment;
-import com.example.ems.training.repository.TrainingEnrollmentRepository;
+import com.example.ems.training.entity.TrainingProgress;
+import com.example.ems.training.repository.TrainingProgressRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -89,7 +90,7 @@ public class MyDataExportController {
     private MyEmployeeDocumentRepository employeeDocumentRepository;
 
     @Autowired
-    private TrainingEnrollmentRepository trainingEnrollmentRepository;
+    private TrainingProgressRepository trainingProgressRepository;
 
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -103,12 +104,14 @@ public class MyDataExportController {
     }
 
     private Employee resolveEmployee(User user) {
-        if (user == null) return null;
+        if (user == null)
+            return null;
         return employeeRepository.findByEmail(user.getWorkEmail()).orElse(null);
     }
 
     private boolean checkPermission(User user, String permission) {
-        if (user == null) return false;
+        if (user == null)
+            return false;
         return roleService.hasPermission(user.getWorkEmail(), permission)
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
@@ -136,7 +139,8 @@ public class MyDataExportController {
         String pdf = "%PDF-1.4\n" +
                 "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n" +
                 "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n" +
-                "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << >> >>\nendobj\n" +
+                "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << >> >>\nendobj\n"
+                +
                 "4 0 obj\n<< /Length " + contentStream.length() + " >>\nstream\n" +
                 contentStream.toString() +
                 "endstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000058 00000 n\n0000000115 00000 n\n0000000212 00000 n\ntrailer\n<< /Size 5 >>\nstartxref\n313\n%%EOF";
@@ -148,10 +152,12 @@ public class MyDataExportController {
     @Operation(summary = "Export Payslips", description = "Exports all available employee payslips packaged into a ZIP archive.")
     @GetMapping("/my-payslips/export")
     public ResponseEntity<?> exportPayslips(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "payslip.self.download")) return forbiddenResponse("payslip.self.download");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "payslip.self.download"))
+            return forbiddenResponse("payslip.self.download");
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
@@ -195,9 +201,10 @@ public class MyDataExportController {
     @Operation(summary = "Export Attendance History", description = "Exports the logged-in employee's complete attendance logs in CSV format.")
     @GetMapping("/my-attendance/export")
     public ResponseEntity<?> exportAttendance(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null)
+            return unauthorizedResponse();
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
@@ -209,11 +216,11 @@ public class MyDataExportController {
             StringBuilder csv = new StringBuilder("ID,Date,Status,Punch In,Punch Out,Notes\n");
             for (Attendance a : list) {
                 csv.append(a.getId()).append(",")
-                   .append(a.getDate()).append(",")
-                   .append(a.getStatus()).append(",")
-                   .append(a.getPunchInTime() != null ? a.getPunchInTime() : "").append(",")
-                   .append(a.getPunchOutTime() != null ? a.getPunchOutTime() : "").append(",")
-                   .append(a.getNotes() != null ? a.getNotes().replace(",", " ") : "").append("\n");
+                        .append(a.getDate()).append(",")
+                        .append(a.getStatus()).append(",")
+                        .append(a.getPunchInTime() != null ? a.getPunchInTime() : "").append(",")
+                        .append(a.getPunchOutTime() != null ? a.getPunchOutTime() : "").append(",")
+                        .append(a.getNotes() != null ? a.getNotes().replace(",", " ") : "").append("\n");
             }
 
             byte[] data = csv.toString().getBytes(StandardCharsets.UTF_8);
@@ -233,9 +240,10 @@ public class MyDataExportController {
     @Operation(summary = "Export Leave History", description = "Exports the logged-in employee's complete leave history in CSV format.")
     @GetMapping("/my-leaves/export")
     public ResponseEntity<?> exportLeaves(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null)
+            return unauthorizedResponse();
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
@@ -244,16 +252,17 @@ public class MyDataExportController {
 
         try {
             List<Leave> leaves = leaveRepository.findByEmployeeId(emp.getId());
-            StringBuilder csv = new StringBuilder("ID,Leave Type,Start Date,End Date,Reason,Status,Approved By,Applied At\n");
+            StringBuilder csv = new StringBuilder(
+                    "ID,Leave Type,Start Date,End Date,Reason,Status,Approved By,Applied At\n");
             for (Leave l : leaves) {
                 csv.append(l.getId()).append(",")
-                   .append(l.getLeaveType() != null ? l.getLeaveType().getName() : "").append(",")
-                   .append(l.getStartDate()).append(",")
-                   .append(l.getEndDate()).append(",")
-                   .append(l.getReason() != null ? l.getReason().replace(",", " ") : "").append(",")
-                   .append(l.getStatus()).append(",")
-                   .append(l.getApprovedBy() != null ? l.getApprovedBy().getFullName() : "").append(",")
-                   .append(l.getAppliedAt()).append("\n");
+                        .append(l.getLeaveType() != null ? l.getLeaveType().getName() : "").append(",")
+                        .append(l.getStartDate()).append(",")
+                        .append(l.getEndDate()).append(",")
+                        .append(l.getReason() != null ? l.getReason().replace(",", " ") : "").append(",")
+                        .append(l.getStatus()).append(",")
+                        .append(l.getApprovedBy() != null ? l.getApprovedBy().getFullName() : "").append(",")
+                        .append(l.getAppliedAt()).append("\n");
             }
 
             byte[] data = csv.toString().getBytes(StandardCharsets.UTF_8);
@@ -273,10 +282,12 @@ public class MyDataExportController {
     @Operation(summary = "Export Expense Claims", description = "Exports the logged-in employee's complete expense reimbursement records in CSV format.")
     @GetMapping("/my-expenses/export")
     public ResponseEntity<?> exportExpenses(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "expense.self.read")) return forbiddenResponse("expense.self.read");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.read"))
+            return forbiddenResponse("expense.self.read");
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
@@ -285,16 +296,17 @@ public class MyDataExportController {
 
         try {
             List<Expense> expenses = expenseRepository.findByEmployeeId(emp.getId());
-            StringBuilder csv = new StringBuilder("Expense Number,Title,Category,Amount,Currency,Expense Date,Status,Reimbursement Status\n");
+            StringBuilder csv = new StringBuilder(
+                    "Expense Number,Title,Category,Amount,Currency,Expense Date,Status,Reimbursement Status\n");
             for (Expense e : expenses) {
                 csv.append(e.getExpenseNumber() != null ? e.getExpenseNumber() : e.getId()).append(",")
-                   .append(e.getTitle() != null ? e.getTitle().replace(",", " ") : "").append(",")
-                   .append(e.getCategory() != null ? e.getCategory().getName() : "").append(",")
-                   .append(e.getAmount()).append(",")
-                   .append(e.getCurrency()).append(",")
-                   .append(e.getExpenseDate()).append(",")
-                   .append(e.getStatus()).append(",")
-                   .append(e.getReimbursementStatus()).append("\n");
+                        .append(e.getTitle() != null ? e.getTitle().replace(",", " ") : "").append(",")
+                        .append(e.getCategory() != null ? e.getCategory().getName() : "").append(",")
+                        .append(e.getAmount()).append(",")
+                        .append(e.getCurrency()).append(",")
+                        .append(e.getExpenseDate()).append(",")
+                        .append(e.getStatus()).append(",")
+                        .append(e.getReimbursementStatus()).append("\n");
             }
 
             byte[] data = csv.toString().getBytes(StandardCharsets.UTF_8);
@@ -314,10 +326,12 @@ public class MyDataExportController {
     @Operation(summary = "Export Performance Summary", description = "Generates and downloads a PDF document summarizing the employee's goals and performance reviews.")
     @GetMapping("/my-performance/export")
     public ResponseEntity<?> exportPerformance(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "performance.self.read")) return forbiddenResponse("performance.self.read");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "performance.self.read"))
+            return forbiddenResponse("performance.self.read");
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
@@ -373,10 +387,12 @@ public class MyDataExportController {
     @Operation(summary = "Export Personal Documents", description = "Exports all uploaded employee documents packaged into a ZIP archive.")
     @GetMapping("/my-documents/export")
     public ResponseEntity<?> exportDocuments(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "document.self.download")) return forbiddenResponse("document.self.download");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "document.self.download"))
+            return forbiddenResponse("document.self.download");
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
@@ -415,14 +431,14 @@ public class MyDataExportController {
                     .body(ErrorResponse.error("Failed to package documents ZIP: " + e.getMessage(), "EXP_500"));
         }
     }
-
     // ── 7. EXPORT TRAININGS (PDF) ────────────────────────────────────────────
     @Operation(summary = "Export Training History", description = "Generates and downloads a PDF document summarizing the employee's training course enrollment history.")
     @GetMapping("/my-trainings/export")
     public ResponseEntity<?> exportTrainings(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
+        if (currentUser == null)
+            return unauthorizedResponse();
 
         Employee emp = resolveEmployee(currentUser);
         if (emp == null) {
@@ -430,26 +446,26 @@ public class MyDataExportController {
         }
 
         try {
-            List<TrainingEnrollment> enrollments = trainingEnrollmentRepository.findByEmployeeId(emp.getId());
+            List<TrainingProgress> progressList = trainingProgressRepository.findByEmployeeId(emp.getId());
 
             List<String> lines = new ArrayList<>();
             lines.add("Employee: " + emp.getFullName() + " (" + emp.getEmployeeId() + ")");
             lines.add("Department: " + emp.getDepartment());
             lines.add("");
             lines.add("--- TRAINING COURSE HISTORY ---");
-            if (enrollments.isEmpty()) {
+            if (progressList.isEmpty()) {
                 lines.add("No training modules found.");
             } else {
-                for (TrainingEnrollment en : enrollments) {
-                    String title = en.getSession() != null && en.getSession().getCourse() != null
-                            ? en.getSession().getCourse().getTitle() : "Unknown Course";
-                    String trainer = en.getSession() != null ? en.getSession().getTrainerName() : "N/A";
-                    String dateStr = en.getSession() != null && en.getSession().getScheduleDate() != null
-                            ? en.getSession().getScheduleDate().toString() : "N/A";
+                for (TrainingProgress tp : progressList) {
+                    String title = tp.getAssignment() != null && tp.getAssignment().getCourse() != null
+                            ? tp.getAssignment().getCourse().getTitle() : "Unknown Course";
+                    String priority = tp.getAssignment() != null ? tp.getAssignment().getPriority() : "MEDIUM";
+                    String dateStr = tp.getAssignment() != null && tp.getAssignment().getDueDate() != null
+                            ? tp.getAssignment().getDueDate().toString() : "N/A";
                     lines.add(String.format("Course: %s", title));
-                    lines.add(String.format("  Trainer: %s | Date: %s", trainer, dateStr));
-                    lines.add(String.format("  Status: %s | Progress: %d%% | Grade: %s",
-                            en.getStatus(), en.getProgressPercent(), en.getGrade() != null ? en.getGrade() : "N/A"));
+                    lines.add(String.format("  Priority: %s | Due Date: %s", priority, dateStr));
+                    lines.add(String.format("  Status: %s | Progress: %d%%",
+                            tp.getStatus(), tp.getProgressPercent()));
                     lines.add("");
                 }
             }
@@ -472,10 +488,12 @@ public class MyDataExportController {
     @Operation(summary = "Initiate Settings Data Export", description = "Triggers a background process to export the employee's personal settings, MFA, and profile preferences.")
     @PostMapping("/my-settings/data/export")
     public ResponseEntity<?> exportData(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.data.export"))
+            return forbiddenResponse("settings.data.export");
 
         try {
             Map<String, Object> response = mySettingsService.exportData(currentUser.getWorkEmail());
@@ -491,10 +509,12 @@ public class MyDataExportController {
     @GetMapping("/my-settings/data/export/{requestId}")
     public ResponseEntity<?> getExportStatus(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("requestId") String requestId){
+            @PathVariable("requestId") String requestId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.data.export"))
+            return forbiddenResponse("settings.data.export");
 
         try {
             Map<String, Object> response = mySettingsService.getExportStatus(currentUser.getWorkEmail(), requestId);
@@ -510,10 +530,12 @@ public class MyDataExportController {
     @GetMapping("/my-settings/data/export/{requestId}/download")
     public ResponseEntity<?> downloadExportedCsv(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable("requestId") String requestId){
+            @PathVariable("requestId") String requestId) {
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return unauthorizedResponse();
-        if (!checkPermission(currentUser, "settings.data.export")) return forbiddenResponse("settings.data.export");
+        if (currentUser == null)
+            return unauthorizedResponse();
+        if (!checkPermission(currentUser, "settings.data.export"))
+            return forbiddenResponse("settings.data.export");
 
         try {
             byte[] csvBytes = mySettingsService.getExportedDataCsv(currentUser.getWorkEmail(), requestId);

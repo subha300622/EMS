@@ -15,6 +15,8 @@ public interface MyScheduleChangeRequestRepository extends JpaRepository<MySched
 
     List<MyScheduleChangeRequest> findByEmployeeEmail(String email);
 
+    List<MyScheduleChangeRequest> findByEmployeeIdIn(List<Long> employeeIds);
+
     @Query("SELECT r FROM MyScheduleChangeRequest r WHERE r.employee.email = :email " +
            "AND (:status IS NULL OR r.status = :status)")
     Page<MyScheduleChangeRequest> findByFilters(@Param("email") String email,

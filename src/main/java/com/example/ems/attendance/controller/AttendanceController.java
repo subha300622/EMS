@@ -4,17 +4,13 @@ import java.util.Map;
 import com.example.ems.attendance.dto.AttendanceStatsResponse;
 
 import com.example.ems.attendance.dto.AttendanceRequest;
-import com.example.ems.attendance.dto.AttendanceRegularizationRequest;
 import com.example.ems.attendance.entity.Attendance;
-import com.example.ems.attendance.entity.AttendanceRegularization;
 import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.employee.entity.Employee;
-import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,9 +39,6 @@ public class AttendanceController {
     private UserRepository userRepository;
 
     @Autowired
-    private EmployeeRepository employeeRepository;
-
-    @Autowired
     private JwtService jwtService;
 
     private User resolveUser(String authHeader) {
@@ -57,11 +50,6 @@ public class AttendanceController {
             }
         }
         return null;
-    }
-
-    private Employee resolveEmployee(User currentUser) {
-        if (currentUser == null) return null;
-        return employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
     }
 
 
@@ -145,7 +133,7 @@ public class AttendanceController {
 
     // ── 8. CORRECT ATTENDANCE (ADMIN / HR) ────────────────────────────────────
     @Operation(summary = "Correct Attendance Record", description = "Admin/HR API to adjust check-in/out times, status, or notes on a specific attendance record.")
-    @PutMapping({"/attendance/{id}/correct", "/attendance/{id}"})
+    @PutMapping("/attendance/{id}/correct")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> correctAttendance(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -372,114 +360,5 @@ public class AttendanceController {
         summary.put("absentDays", 2);
 
         return ResponseEntity.ok(ApiResponse.success("Payroll summary retrieved successfully", summary));
-    }
-
-    // ── Regularization Mappings ─────────────────────────────────────────────
-    @Operation(summary = "Submit Attendance Regularization", description = "Submits a request to correct attendance check-in/out times.")
-    @PostMapping("/attendance/regularization")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> submitRegularization(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid AttendanceRegularizationRequest request){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        Long empId = request.getEmployeeId();
-        if (empId == null) {
-            Employee employee = resolveEmployee(currentUser);
-            if (employee == null) {
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
-            }
-            empId = employee.getId();
-        }
-
-        try {
-            AttendanceRegularization record = attendanceService.submitRegularization(
-                    empId, request.getDate(), request.getProposedPunchInTime(), request.getProposedPunchOutTime(), request.getReason());
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Regularization request submitted successfully", record));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ATT_005"));
-        }
-    }
-
-    @Operation(summary = "Get Attendance Regularizations", description = "Retrieves a list of all attendance regularization requests.")
-    @GetMapping("/attendance/regularization")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<AttendanceRegularization>>> getRegularizations(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(required = false) String status){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.read")
-                && !roleService.hasPermission(currentUser.getWorkEmail(), "attendance.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.read' or 'attendance.manage' permission.", "AUTH_002"));
-        }
-
-        return ResponseEntity.ok(ApiResponse.success("Regularization requests retrieved successfully",
-                attendanceService.getRegularizations(status)));
-    }
-
-    @Operation(summary = "Approve Attendance Regularization", description = "Approves a pending regularization request and updates the attendance record.")
-    @PatchMapping("/attendance/regularization/{id}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveRegularization(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.manage' permission.", "AUTH_002"));
-        }
-
-        try {
-            AttendanceRegularization record = attendanceService.approveRegularization(id);
-            return ResponseEntity.ok(ApiResponse.success("Regularization request approved successfully", record));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ATT_006"));
-        }
-    }
-
-    @Operation(summary = "Reject Attendance Regularization", description = "Rejects a pending regularization request.")
-    @PatchMapping("/attendance/regularization/{id}/reject")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectRegularization(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.manage' permission.", "AUTH_002"));
-        }
-
-        try {
-            AttendanceRegularization record = attendanceService.rejectRegularization(id);
-            return ResponseEntity.ok(ApiResponse.success("Regularization request rejected successfully", record));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ATT_007"));
-        }
     }
 }

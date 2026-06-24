@@ -14,13 +14,16 @@ public class SalaryStructure {
     @Column(nullable = false, unique = true)
     private Long employeeId;
 
-    @Column(nullable = false, columnDefinition = "numeric(38,2) default 0.00")
+    @Column(nullable = false, precision = 38, scale = 2)
+    @org.hibernate.annotations.ColumnDefault("0.00")
     private BigDecimal basicSalary = BigDecimal.ZERO;
 
-    @Column(nullable = false, columnDefinition = "numeric(38,2) default 0.00")
+    @Column(nullable = false, precision = 38, scale = 2)
+    @org.hibernate.annotations.ColumnDefault("0.00")
     private BigDecimal hra = BigDecimal.ZERO;
 
-    @Column(nullable = false, columnDefinition = "numeric(38,2) default 0.00")
+    @Column(nullable = false, precision = 38, scale = 2)
+    @org.hibernate.annotations.ColumnDefault("0.00")
     private BigDecimal allowances = BigDecimal.ZERO;
 
     public SalaryStructure() {}

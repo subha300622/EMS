@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -112,21 +113,24 @@ public class MyEmployeeDirectoryService {
         }
 
         // Teammate 2: Sneha Rao
-        Employee sneha = seedEmployee("sneha@" + domain, "Sneha Rao", "Frontend Developer", "Engineering", team, manager, "REMOTE", "ACTIVE", "AVAILABLE", "WORKING");
+        Employee sneha = seedEmployee("sneha@" + domain, "Sneha Rao", "Frontend Developer", "Engineering", team,
+                manager, "REMOTE", "ACTIVE", "AVAILABLE", "WORKING");
         if (sneha != null && skillRepository.findByEmployee(sneha).isEmpty()) {
             skillRepository.save(new MyEmployeeSkill(null, sneha, "React", "INTERMEDIATE", 2));
             skillRepository.save(new MyEmployeeSkill(null, sneha, "GraphQL", "BEGINNER", 1));
         }
 
         // Teammate 3
-        Employee peer3 = seedEmployee("peer3@" + domain, "Amit Patel", "Frontend Intern", "Engineering", team, manager, "OFFICE", "ACTIVE", "BUSY", "WORKING");
+        Employee peer3 = seedEmployee("peer3@" + domain, "Amit Patel", "Frontend Intern", "Engineering", team, manager,
+                "OFFICE", "ACTIVE", "BUSY", "WORKING");
         if (peer3 != null && skillRepository.findByEmployee(peer3).isEmpty()) {
             skillRepository.save(new MyEmployeeSkill(null, peer3, "React", "BEGINNER", 1));
             skillRepository.save(new MyEmployeeSkill(null, peer3, "TypeScript", "INTERMEDIATE", 1));
         }
 
         // Teammate 4
-        Employee peer4 = seedEmployee("peer4@" + domain, "Neha Sharma", "UI/UX Designer", "Engineering", team, manager, "HYBRID", "ACTIVE", "OFFLINE", "WORKING");
+        Employee peer4 = seedEmployee("peer4@" + domain, "Neha Sharma", "UI/UX Designer", "Engineering", team, manager,
+                "HYBRID", "ACTIVE", "OFFLINE", "WORKING");
         if (peer4 != null && skillRepository.findByEmployee(peer4).isEmpty()) {
             skillRepository.save(new MyEmployeeSkill(null, peer4, "Figma", "ADVANCED", 3));
             skillRepository.save(new MyEmployeeSkill(null, peer4, "React", "BEGINNER", 1));
@@ -166,7 +170,8 @@ public class MyEmployeeDirectoryService {
         }
     }
 
-    private Employee seedEmployee(String email, String fullName, String designation, String department, MyTeam team, Employee manager, String workMode, String status, String availability, String currentStatus) {
+    private Employee seedEmployee(String email, String fullName, String designation, String department, MyTeam team,
+            Employee manager, String workMode, String status, String availability, String currentStatus) {
         User user = userRepository.findByWorkEmail(email).orElse(null);
         if (user == null) {
             user = new User();
@@ -225,20 +230,20 @@ public class MyEmployeeDirectoryService {
             teamSummary = new EmployeeDirectoryDashboardResponse.MyTeamSummary(
                     team.getDepartment(),
                     team.getTeamName(),
-                    totalMembers
-            );
+                    totalMembers);
         } else {
             teamSummary = new EmployeeDirectoryDashboardResponse.MyTeamSummary(
                     current.getDepartment(),
                     "N/A",
-                    1
-            );
+                    1);
         }
 
         List<Employee> all = employeeRepository.findAll();
         long dbTotal = all.size();
         long dbActive = all.stream().filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus())).count();
-        long dbRemote = all.stream().filter(e -> "REMOTE".equalsIgnoreCase(e.getStatus()) || "REMOTE".equalsIgnoreCase(e.getWorkMode())).count();
+        long dbRemote = all.stream()
+                .filter(e -> "REMOTE".equalsIgnoreCase(e.getStatus()) || "REMOTE".equalsIgnoreCase(e.getWorkMode()))
+                .count();
         long dbOnLeave = all.stream().filter(e -> "ON_LEAVE".equalsIgnoreCase(e.getStatus())).count();
 
         long totalEmployees = dbTotal + 244;
@@ -250,12 +255,10 @@ public class MyEmployeeDirectoryService {
                 totalEmployees,
                 activeEmployees,
                 remoteEmployees,
-                onLeaveEmployees
-        );
+                onLeaveEmployees);
 
         String lastUpdatedAt = java.time.format.DateTimeFormatter.ISO_INSTANT.format(
-                LocalDateTime.now().atZone(java.time.ZoneId.systemDefault()).toInstant()
-        );
+                LocalDateTime.now().atZone(java.time.ZoneId.systemDefault()).toInstant());
 
         return new EmployeeDirectoryDashboardResponse(teamSummary, directorySummary, lastUpdatedAt);
     }
@@ -275,15 +278,13 @@ public class MyEmployeeDirectoryService {
             managerDto = new MyTeamResponse.ManagerDto(
                     manager.getId(),
                     manager.getFullName(),
-                    manager.getDesignation()
-            );
+                    manager.getDesignation());
         }
 
         MyTeamResponse.TeamDto teamDto = new MyTeamResponse.TeamDto(
                 team.getId(),
                 team.getTeamName(),
-                managerDto
-        );
+                managerDto);
 
         List<Employee> teamMembers = employeeRepository.findAll().stream()
                 .filter(e -> team.equals(e.getTeam()))
@@ -296,8 +297,7 @@ public class MyEmployeeDirectoryService {
 
             MyTeamResponse.ContactDto contactDto = new MyTeamResponse.ContactDto(
                     e.getEmail(),
-                    e.getPhone()
-            );
+                    e.getPhone());
 
             return new MyTeamResponse.MemberDto(
                     e.getId(),
@@ -309,8 +309,7 @@ public class MyEmployeeDirectoryService {
                     e.getStatus(),
                     e.getWorkMode(),
                     contactDto,
-                    skills
-            );
+                    skills);
         }).collect(Collectors.toList());
 
         return new MyTeamResponse(teamDto, memberDtos, memberDtos.size());
@@ -329,7 +328,8 @@ public class MyEmployeeDirectoryService {
                         || e.getEmail().toLowerCase().contains(q)
                         || (e.getDesignation() != null && e.getDesignation().toLowerCase().contains(q))
                         || (e.getDepartment() != null && e.getDepartment().toLowerCase().contains(q));
-                if (!matchesSearch) return false;
+                if (!matchesSearch)
+                    return false;
             }
             if (department != null && !department.isBlank()) {
                 if (e.getDepartment() == null || !e.getDepartment().equalsIgnoreCase(department.trim())) {
@@ -337,7 +337,8 @@ public class MyEmployeeDirectoryService {
                 }
             }
             if (designation != null && !designation.isBlank()) {
-                if (e.getDesignation() == null || !e.getDesignation().toLowerCase().contains(designation.trim().toLowerCase())) {
+                if (e.getDesignation() == null
+                        || !e.getDesignation().toLowerCase().contains(designation.trim().toLowerCase())) {
                     return false;
                 }
             }
@@ -354,7 +355,8 @@ public class MyEmployeeDirectoryService {
             if (skill != null && !skill.isBlank()) {
                 List<MyEmployeeSkill> skills = skillRepository.findByEmployee(e);
                 boolean hasSkill = skills.stream().anyMatch(s -> s.getName().equalsIgnoreCase(skill.trim()));
-                if (!hasSkill) return false;
+                if (!hasSkill)
+                    return false;
             }
             return true;
         }).collect(Collectors.toList());
@@ -386,7 +388,8 @@ public class MyEmployeeDirectoryService {
         int pageSize = pageable.getPageSize();
         int pageNumber = pageable.getPageNumber();
         int totalPages = (int) Math.ceil((double) totalElements / pageSize);
-        if (totalPages == 0) totalPages = 1;
+        if (totalPages == 0)
+            totalPages = 1;
 
         int start = pageNumber * pageSize;
         List<Employee> sliced;
@@ -410,8 +413,7 @@ public class MyEmployeeDirectoryService {
                     e.getStatus(),
                     e.getWorkMode(),
                     e.getProfileImage(),
-                    skills
-            );
+                    skills);
         }).collect(Collectors.toList());
 
         boolean hasNext = pageNumber < totalPages - 1;
@@ -438,16 +440,18 @@ public class MyEmployeeDirectoryService {
                 pageSize,
                 reportTotalElements,
                 reportTotalPages,
-                reportHasNext
-        );
+                reportHasNext);
 
         return new EmployeeDirectoryListResponse(content, pagination);
     }
 
     private int safeCompare(String s1, String s2) {
-        if (s1 == null && s2 == null) return 0;
-        if (s1 == null) return -1;
-        if (s2 == null) return 1;
+        if (s1 == null && s2 == null)
+            return 0;
+        if (s1 == null)
+            return -1;
+        if (s2 == null)
+            return 1;
         return s1.compareToIgnoreCase(s2);
     }
 
@@ -456,25 +460,29 @@ public class MyEmployeeDirectoryService {
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
         Employee manager = emp.getManager();
+        if (manager == null && emp.getDepartment() != null) {
+            Optional<com.example.ems.employee.entity.Department> deptOpt = departmentRepository
+                    .findByName(emp.getDepartment());
+            if (deptOpt.isPresent() && deptOpt.get().getManagerId() != null) {
+                manager = employeeRepository.findById(deptOpt.get().getManagerId()).orElse(null);
+            }
+        }
         EmployeeProfileResponse.ManagerProfileDto managerDto = null;
         if (manager != null) {
             managerDto = new EmployeeProfileResponse.ManagerProfileDto(
                     manager.getId(),
-                    manager.getFullName()
-            );
+                    manager.getFullName());
         }
 
         EmployeeProfileResponse.ContactProfileDto contactDto = new EmployeeProfileResponse.ContactProfileDto(
                 emp.getEmail(),
-                emp.getPhone()
-        );
+                emp.getPhone());
 
         EmployeeProfileResponse.WorkInformationDto workDto = new EmployeeProfileResponse.WorkInformationDto(
                 emp.getLocation(),
                 emp.getWorkMode(),
                 emp.getJoiningDate() != null ? emp.getJoiningDate().toString() : null,
-                emp.getStatus()
-        );
+                emp.getStatus());
 
         List<String> skills = skillRepository.findByEmployee(emp).stream()
                 .map(MyEmployeeSkill::getName)
@@ -490,15 +498,15 @@ public class MyEmployeeDirectoryService {
                 managerDto,
                 contactDto,
                 workDto,
-                skills
-        );
+                skills);
     }
 
     public EmployeeSearchResponse searchEmployees(String keyword, Integer limit) {
         List<Employee> all = employeeRepository.findAll();
 
         List<Employee> filtered = all.stream().filter(e -> {
-            if (keyword == null || keyword.isBlank()) return true;
+            if (keyword == null || keyword.isBlank())
+                return true;
             String q = keyword.trim().toLowerCase();
             return e.getFullName().toLowerCase().contains(q)
                     || (e.getDesignation() != null && e.getDesignation().toLowerCase().contains(q))
@@ -512,15 +520,14 @@ public class MyEmployeeDirectoryService {
                 .limit(limitVal)
                 .collect(Collectors.toList());
 
-        List<EmployeeSearchResponse.SearchResultDto> results = limited.stream().map(e ->
-                new EmployeeSearchResponse.SearchResultDto(
+        List<EmployeeSearchResponse.SearchResultDto> results = limited.stream()
+                .map(e -> new EmployeeSearchResponse.SearchResultDto(
                         e.getId(),
                         e.getFullName(),
                         e.getDesignation(),
                         e.getDepartment(),
-                        e.getProfileImage()
-                )
-        ).collect(Collectors.toList());
+                        e.getProfileImage()))
+                .collect(Collectors.toList());
 
         return new EmployeeSearchResponse(results, totalResults);
     }
@@ -541,18 +548,23 @@ public class MyEmployeeDirectoryService {
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
         Employee manager = emp.getManager();
+        if (manager == null && emp.getDepartment() != null) {
+            Optional<com.example.ems.employee.entity.Department> deptOpt = departmentRepository
+                    .findByName(emp.getDepartment());
+            if (deptOpt.isPresent() && deptOpt.get().getManagerId() != null) {
+                manager = employeeRepository.findById(deptOpt.get().getManagerId()).orElse(null);
+            }
+        }
         EmployeeHierarchyResponse.EmployeeRefDto managerDto = null;
         if (manager != null) {
             managerDto = new EmployeeHierarchyResponse.EmployeeRefDto(
                     manager.getId(),
-                    manager.getFullName()
-            );
+                    manager.getFullName());
         }
 
         EmployeeHierarchyResponse.EmployeeRefDto employeeDto = new EmployeeHierarchyResponse.EmployeeRefDto(
                 emp.getId(),
-                emp.getFullName()
-        );
+                emp.getFullName());
 
         List<Employee> reportees = employeeRepository.findByManagerId(emp.getId());
         List<EmployeeHierarchyResponse.EmployeeRefDto> reporteeDtos = reportees.stream()
@@ -608,15 +620,13 @@ public class MyEmployeeDirectoryService {
         msg = messageRepository.save(msg);
 
         String sentAtStr = java.time.format.DateTimeFormatter.ISO_INSTANT.format(
-                msg.getSentAt().atZone(java.time.ZoneId.systemDefault()).toInstant()
-        );
+                msg.getSentAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
 
         return new SendMessageResponse(
                 msg.getId(),
                 "SENT",
                 sentAtStr,
-                "Message sent successfully"
-        );
+                "Message sent successfully");
     }
 
     public EmployeeAvailabilityResponse getAvailability(Long employeeId) {
@@ -624,16 +634,14 @@ public class MyEmployeeDirectoryService {
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
         String lastActiveStr = java.time.format.DateTimeFormatter.ISO_INSTANT.format(
-                emp.getLastActiveAt() != null ?
-                emp.getLastActiveAt().atZone(java.time.ZoneId.systemDefault()).toInstant() :
-                LocalDateTime.now().atZone(java.time.ZoneId.systemDefault()).toInstant()
-        );
+                emp.getLastActiveAt() != null
+                        ? emp.getLastActiveAt().atZone(java.time.ZoneId.systemDefault()).toInstant()
+                        : LocalDateTime.now().atZone(java.time.ZoneId.systemDefault()).toInstant());
 
         return new EmployeeAvailabilityResponse(
                 emp.getId(),
                 emp.getAvailability() != null ? emp.getAvailability() : "AVAILABLE",
                 emp.getCurrentStatus() != null ? emp.getCurrentStatus() : "WORKING",
-                lastActiveStr
-        );
+                lastActiveStr);
     }
 }

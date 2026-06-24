@@ -11,14 +11,14 @@ public class AppraisalHistoryResponse {
         private String year;
         @Schema(example = "string")
         private String cycleName;
-        @Schema(example = "1")
-        private Integer rating;
+        @Schema(example = "1.0")
+        private Double rating;
         @Schema(example = "string")
         private String incrementPercentage;
         @Schema(example = "string")
         private String newCtc;
 
-        public HistoryItem(String year, String cycleName, Integer rating, String incrementPercentage, String newCtc) {
+        public HistoryItem(String year, String cycleName, Double rating, String incrementPercentage, String newCtc) {
             this.year = year;
             this.cycleName = cycleName;
             this.rating = rating;
@@ -31,8 +31,8 @@ public class AppraisalHistoryResponse {
         public void setYear(String year) { this.year = year; }
         public String getCycleName() { return cycleName; }
         public void setCycleName(String cycleName) { this.cycleName = cycleName; }
-        public Integer getRating() { return rating; }
-        public void setRating(Integer rating) { this.rating = rating; }
+        public Double getRating() { return rating; }
+        public void setRating(Double rating) { this.rating = rating; }
         public String getIncrementPercentage() { return incrementPercentage; }
         public void setIncrementPercentage(String incrementPercentage) { this.incrementPercentage = incrementPercentage; }
         public String getNewCtc() { return newCtc; }

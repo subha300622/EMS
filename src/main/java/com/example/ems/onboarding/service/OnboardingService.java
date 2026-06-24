@@ -22,6 +22,7 @@ import com.example.ems.onboarding.repository.OnboardingTaskRepository;
 import com.example.ems.onboarding.repository.OnboardingTrainingRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -37,6 +38,12 @@ public class OnboardingService {
 
     @Autowired
     private OnboardingRepository onboardingRepository;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    private com.example.ems.onboarding.repository.OnboardingEventLogRepository onboardingEventLogRepository;
 
     @Autowired
     private OnboardingTaskRepository onboardingTaskRepository;
@@ -481,5 +488,69 @@ public class OnboardingService {
         timeline.sort((a, b) -> ((String) a.get("date")).compareTo((String) b.get("date")));
 
         return timeline;
+    }
+
+    @Transactional
+    public void logEvent(Long onboardingId, String eventType, String eventData, String status, String errorMessage, int retryCount, String failureCategory, boolean replayFlag) {
+        com.example.ems.onboarding.entity.OnboardingEventLog log = new com.example.ems.onboarding.entity.OnboardingEventLog();
+        log.setOnboardingId(onboardingId);
+        log.setEventType(eventType);
+        log.setEventData(eventData);
+        log.setStatus(status);
+        log.setErrorMessage(errorMessage);
+        log.setRetryCount(retryCount);
+        log.setFailureCategory(failureCategory);
+        log.setReplayFlag(replayFlag);
+        log.setTimestamp(java.time.LocalDateTime.now());
+        onboardingEventLogRepository.save(log);
+    }
+
+    @Transactional
+    public void replayFailedEvent(Long eventId) {
+        com.example.ems.onboarding.entity.OnboardingEventLog log = onboardingEventLogRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Event log not found with ID: " + eventId));
+
+        if (!"FAILED".equalsIgnoreCase(log.getStatus())) {
+            throw new IllegalStateException("Only failed events can be replayed.");
+        }
+
+        if (log.getRetryCount() >= 3) {
+            throw new IllegalStateException("Max retry limit (3) exceeded for this event.");
+        }
+
+        log.setRetryCount(log.getRetryCount() + 1);
+        log.setReplayFlag(true);
+
+        String eventData = log.getEventData();
+        Long documentIdTemp = null;
+        String statusTemp = null;
+        if (eventData != null) {
+            String[] parts = eventData.split(",");
+            for (String part : parts) {
+                if (part.trim().startsWith("Document ID:")) {
+                    documentIdTemp = Long.parseLong(part.trim().substring("Document ID:".length()).trim());
+                } else if (part.trim().startsWith("Status:")) {
+                    statusTemp = part.trim().substring("Status:".length()).trim();
+                }
+            }
+        }
+
+        if (documentIdTemp == null || statusTemp == null) {
+            throw new IllegalArgumentException("Invalid event data, cannot replay: " + eventData);
+        }
+
+        final Long documentId = documentIdTemp;
+        final String status = statusTemp;
+
+        OnboardingDocument doc = onboardingDocumentRepository.findById(documentId)
+                .orElseThrow(() -> new IllegalArgumentException("Document not found with ID: " + documentId));
+
+        String notes = doc.getVerificationNotes();
+
+        // Re-publish the DocumentVerifiedEvent to trigger listener replay
+        eventPublisher.publishEvent(new com.example.ems.onboarding.event.DocumentVerifiedEvent(this, documentId, status, notes));
+
+        // Save the updated log
+        onboardingEventLogRepository.save(log);
     }
 }

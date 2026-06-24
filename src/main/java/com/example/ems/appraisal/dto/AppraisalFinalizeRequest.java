@@ -10,9 +10,9 @@ public class AppraisalFinalizeRequest {
     @NotNull(message = "Final rating is required")
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating must be at most 5")
-    @Schema(example = "1")
-    private Integer finalRating;
+    @Schema(example = "1.0")
+    private Double finalRating;
 
-    public Integer getFinalRating() { return finalRating; }
-    public void setFinalRating(Integer finalRating) { this.finalRating = finalRating; }
+    public Double getFinalRating() { return finalRating; }
+    public void setFinalRating(Double finalRating) { this.finalRating = finalRating; }
 }

@@ -8,4 +8,5 @@ import java.util.List;
 @Repository
 public interface MyAssetIssueRepository extends JpaRepository<MyAssetIssue, Long> {
     List<MyAssetIssue> findByEmployeeIdOrderByReportedAtDesc(Long employeeId);
+    List<MyAssetIssue> findByAssetId(Long assetId);
 }

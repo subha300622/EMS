@@ -1,14 +1,10 @@
 package com.example.ems.common.controller;
 
-import java.util.List;
-
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.dto.manager.*;
-import com.example.ems.common.entity.Notification;
-import com.example.ems.common.service.NotificationService;
 import com.example.ems.common.service.ManagerNotificationService;
 import com.example.ems.security.service.JwtService;
 
@@ -25,9 +21,6 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin("*")
 @Tag(name = "Notification Management")
 public class NotificationController {
-
-    @Autowired
-    private NotificationService notificationService;
 
     @Autowired
     private ManagerNotificationService managerNotificationService;
@@ -68,20 +61,6 @@ public class NotificationController {
                 managerNotificationService.getNotificationFeed(currentUser, page, size, type, status)));
     }
 
-    // ── 2. GET UNPAGINATED MY NOTIFICATIONS ───────────────────────────────────
-    @Operation(summary = "Get My Notifications (Unpaginated)")
-    @GetMapping("/my")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<Notification>>> getMyNotifications(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        return ResponseEntity.ok(ApiResponse.success("Notifications retrieved successfully",
-                notificationService.getNotificationsForUser(currentUser.getId())));
-    }
 
     // ── 3. GET UNREAD NOTIFICATIONS COUNT ─────────────────────────────────────
     @Operation(summary = "Get Unread Notifications Count")
