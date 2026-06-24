@@ -76,12 +76,15 @@ public class Expense {
     private String expectedPaymentMonth;
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 50)
     private List<MyExpenseReceipt> receipts = new ArrayList<>();
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 50)
     private List<MyExpenseApprovalStep> approvalFlow = new ArrayList<>();
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @org.hibernate.annotations.BatchSize(size = 50)
     private List<MyExpenseTimelineEvent> timelineEvents = new ArrayList<>();
 
     public Expense() {}
