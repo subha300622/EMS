@@ -25,13 +25,16 @@ public class Announcement {
     @Column(nullable = false)
     private boolean active = true;
 
-    @Column(nullable = false, columnDefinition = "varchar(50) default 'GENERAL'")
+    @Column(nullable = false, length = 50)
+    @org.hibernate.annotations.ColumnDefault("'GENERAL'")
     private String category = "GENERAL";
 
-    @Column(nullable = false, columnDefinition = "integer default 0")
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("0")
     private int likes = 0;
 
-    @Column(nullable = false, columnDefinition = "integer default 0")
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("0")
     private int views = 0;
 
     public Announcement() {}

@@ -21,7 +21,8 @@ public class ExpenseCategory {
 
     private BigDecimal maxLimit;
 
-    @Column(nullable = false, columnDefinition = "boolean default true")
+    @Column(nullable = false)
+    @org.hibernate.annotations.ColumnDefault("true")
     private boolean requiresReceipt = true;
 
     public ExpenseCategory() {}

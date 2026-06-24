@@ -23,10 +23,12 @@ public class Notification {
     @Column(nullable = false)
     private String message;
 
-    @Column(nullable = false, columnDefinition = "varchar(50) default 'SYSTEM'")
+    @Column(nullable = false, length = 50)
+    @org.hibernate.annotations.ColumnDefault("'SYSTEM'")
     private String type = "SYSTEM";
 
-    @Column(nullable = false, columnDefinition = "varchar(50) default 'MEDIUM'")
+    @Column(nullable = false, length = 50)
+    @org.hibernate.annotations.ColumnDefault("'MEDIUM'")
     private String priority = "MEDIUM";
 
     private boolean isRead = false;
