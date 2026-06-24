@@ -22,8 +22,8 @@ public class AppraisalResponse {
     private Long cycleId;
     @Schema(example = "string")
     private String cycleName;
-    @Schema(example = "1")
-    private Integer selfRating;
+    @Schema(example = "1.0")
+    private Double selfRating;
     @Schema(example = "string")
     private String selfReview;
     @Schema(example = "2026-06-19T10:00:00")
@@ -33,13 +33,13 @@ public class AppraisalResponse {
     @Schema(example = "string")
     private String reviewerName;
     @Schema(example = "1")
-    private Integer managerRating;
+    private Double managerRating;
     @Schema(example = "string")
     private String managerReview;
     @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime managerReviewSubmittedAt;
     @Schema(example = "1")
-    private Integer finalRating;
+    private Double finalRating;
     @Schema(example = "ACTIVE")
     private String status;
     @Schema(example = "2026-06-19T10:00:00")
@@ -58,7 +58,7 @@ public class AppraisalResponse {
         this.managerReview = app.getManagerReview();
         this.managerReviewSubmittedAt = app.getManagerReviewSubmittedAt();
         this.finalRating = app.getFinalRating();
-        this.status = app.getStatus();
+        this.status = app.getStatus() != null ? app.getStatus().name() : null;
         this.createdAt = app.getCreatedAt();
         this.updatedAt = app.getUpdatedAt();
 
@@ -105,8 +105,8 @@ public class AppraisalResponse {
     public String getCycleName() { return cycleName; }
     public void setCycleName(String cycleName) { this.cycleName = cycleName; }
 
-    public Integer getSelfRating() { return selfRating; }
-    public void setSelfRating(Integer selfRating) { this.selfRating = selfRating; }
+    public Double getSelfRating() { return selfRating; }
+    public void setSelfRating(Double selfRating) { this.selfRating = selfRating; }
 
     public String getSelfReview() { return selfReview; }
     public void setSelfReview(String selfReview) { this.selfReview = selfReview; }
@@ -120,8 +120,8 @@ public class AppraisalResponse {
     public String getReviewerName() { return reviewerName; }
     public void setReviewerName(String reviewerName) { this.reviewerName = reviewerName; }
 
-    public Integer getManagerRating() { return managerRating; }
-    public void setManagerRating(Integer managerRating) { this.managerRating = managerRating; }
+    public Double getManagerRating() { return managerRating; }
+    public void setManagerRating(Double managerRating) { this.managerRating = managerRating; }
 
     public String getManagerReview() { return managerReview; }
     public void setManagerReview(String managerReview) { this.managerReview = managerReview; }
@@ -129,8 +129,8 @@ public class AppraisalResponse {
     public LocalDateTime getManagerReviewSubmittedAt() { return managerReviewSubmittedAt; }
     public void setManagerReviewSubmittedAt(LocalDateTime managerReviewSubmittedAt) { this.managerReviewSubmittedAt = managerReviewSubmittedAt; }
 
-    public Integer getFinalRating() { return finalRating; }
-    public void setFinalRating(Integer finalRating) { this.finalRating = finalRating; }
+    public Double getFinalRating() { return finalRating; }
+    public void setFinalRating(Double finalRating) { this.finalRating = finalRating; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

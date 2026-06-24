@@ -15,12 +15,12 @@ public class AppraisalSelfReviewRequest {
     @NotNull(message = "Self-rating is required")
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating must be at most 5")
-    @Schema(example = "1")
-    private Integer selfRating;
+    @Schema(example = "1.0")
+    private Double selfRating;
 
     public String getSelfReview() { return selfReview; }
     public void setSelfReview(String selfReview) { this.selfReview = selfReview; }
 
-    public Integer getSelfRating() { return selfRating; }
-    public void setSelfRating(Integer selfRating) { this.selfRating = selfRating; }
+    public Double getSelfRating() { return selfRating; }
+    public void setSelfRating(Double selfRating) { this.selfRating = selfRating; }
 }

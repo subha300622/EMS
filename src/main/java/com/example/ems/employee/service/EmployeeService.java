@@ -7,6 +7,8 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.ApplicationEventPublisher;
+import com.example.ems.employee.event.EmployeeCreatedEvent;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,6 +22,9 @@ public class EmployeeService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private DepartmentRepository departmentRepository;
@@ -67,7 +72,9 @@ public class EmployeeService {
             employee.setManager(manager);
         }
 
-        return employeeRepository.save(employee);
+        Employee saved = employeeRepository.save(employee);
+        eventPublisher.publishEvent(new EmployeeCreatedEvent(this, saved));
+        return saved;
     }
 
     @Transactional

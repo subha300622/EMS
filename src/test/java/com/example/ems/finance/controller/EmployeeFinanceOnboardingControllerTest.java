@@ -4,9 +4,18 @@ import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
+import com.example.ems.onboarding.repository.OnboardingRepository;
+import com.example.ems.onboarding.entity.Onboarding;
+import com.example.ems.employee.entity.Employee;
 import com.example.ems.finance.entity.EmployeeFinanceOnboarding;
 import com.example.ems.finance.service.EmployeeFinanceOnboardingService;
+import com.example.ems.finance.validation.FinanceCommandValidator;
+import com.example.ems.finance.handler.FinanceCommandRouter;
+import com.example.ems.finance.dto.FinanceCommandEnvelope;
+import com.example.ems.onboarding.controller.DashboardController;
+import com.example.ems.onboarding.controller.ApprovalController;
 import com.example.ems.security.service.JwtService;
+import com.example.ems.common.service.IdempotencyService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,6 +49,12 @@ public class EmployeeFinanceOnboardingControllerTest {
     private EmployeeFinanceOnboardingService service;
 
     @Mock
+    private com.example.ems.finance.repository.EmployeeFinanceOnboardingRepository repository;
+
+    @Mock
+    private OnboardingRepository onboardingRepository;
+
+    @Mock
     private UserRepository userRepository;
 
     @Mock
@@ -48,8 +63,26 @@ public class EmployeeFinanceOnboardingControllerTest {
     @Mock
     private JwtService jwtService;
 
+    @Mock
+    private IdempotencyService idempotencyService;
+
+    @Mock
+    private FinanceCommandValidator validator;
+
+    @Mock
+    private FinanceCommandRouter router;
+
     @InjectMocks
     private EmployeeFinanceOnboardingController controller;
+
+    @InjectMocks
+    private FinanceAnalyticsController analyticsController;
+
+    @InjectMocks
+    private DashboardController dashboardController;
+
+    @InjectMocks
+    private ApprovalController approvalController;
 
     private User financeUser;
     private String token = "Bearer mock-token";
@@ -59,7 +92,7 @@ public class EmployeeFinanceOnboardingControllerTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-        mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(controller, analyticsController, dashboardController, approvalController).build();
 
         financeUser = new User();
         financeUser.setWorkEmail(email);
@@ -75,6 +108,17 @@ public class EmployeeFinanceOnboardingControllerTest {
         when(roleService.hasRoleOrGreater(any(User.class), any(String.class))).thenReturn(true);
     }
 
+    private void mockOnboardingResolve(Long coreOnboardingId, Long employeeId) {
+        Employee employee = new Employee();
+        employee.setId(employeeId);
+
+        Onboarding onboarding = new Onboarding();
+        onboarding.setId(coreOnboardingId);
+        onboarding.setEmployee(employee);
+
+        when(onboardingRepository.findById(coreOnboardingId)).thenReturn(Optional.of(onboarding));
+    }
+
     @Test
     public void testGetDashboardSummarySuccess() throws Exception {
         mockAuthSuccess();
@@ -85,7 +129,7 @@ public class EmployeeFinanceOnboardingControllerTest {
             "completed", 120L
         ));
 
-        mockMvc.perform(get("/api/v1/finance/onboarding/dashboard")
+        mockMvc.perform(get("/api/v1/dashboard?role=FINANCE")
                 .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -94,11 +138,11 @@ public class EmployeeFinanceOnboardingControllerTest {
     }
 
     @Test
-    public void testGetListSuccess() throws Exception {
+    public void testGetPendingListSuccess() throws Exception {
         mockAuthSuccess();
-        when(service.list(any(), any(), eq(0), eq(10))).thenReturn(List.of());
+        when(service.getPendingReviews(any(), any())).thenReturn(List.of());
 
-        mockMvc.perform(get("/api/v1/finance/onboarding")
+        mockMvc.perform(get("/api/v1/finance/analytics/pending-reviews")
                 .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -106,29 +150,11 @@ public class EmployeeFinanceOnboardingControllerTest {
     }
 
     @Test
-    public void testVerifyBankSuccess() throws Exception {
-        mockAuthSuccess();
-        EmployeeFinanceOnboarding ob = new EmployeeFinanceOnboarding();
-        ob.setId(1L);
-        ob.setBankVerificationStatus("VERIFIED");
-
-        when(service.verifyBank(eq(1L), eq("VERIFIED"), eq("Approved"), any())).thenReturn(ob);
-
-        mockMvc.perform(post("/api/v1/finance/onboarding/1/verify-bank")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"status\":\"VERIFIED\",\"notes\":\"Approved\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.bankVerificationStatus").value("VERIFIED"));
-    }
-
-    @Test
     public void testCalculateCtcSuccess() throws Exception {
         mockAuthSuccess();
         when(service.calculateCtcBreakup(any())).thenReturn(Map.of("monthlyCtc", 100000, "basicSalary", 50000));
 
-        mockMvc.perform(post("/api/v1/finance/onboarding/calculate-ctc")
+        mockMvc.perform(post("/api/v1/finance/analytics/calculate-ctc")
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"ctc\":1200000}"))
@@ -152,32 +178,15 @@ public class EmployeeFinanceOnboardingControllerTest {
         when(roleService.hasRoleOrGreater(any(User.class), any(String.class))).thenReturn(false);
         when(roleService.hasPermission(any(String.class), any(String.class))).thenReturn(false);
 
-        mockMvc.perform(get("/api/v1/finance/onboarding/dashboard")
+        mockMvc.perform(get("/api/v1/dashboard?role=FINANCE")
                 .header("Authorization", token))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    public void testVerifyFinancialDetailsSuccess() throws Exception {
-        mockAuthSuccess();
-        EmployeeFinanceOnboarding ob = new EmployeeFinanceOnboarding();
-        ob.setId(1L);
-        ob.setStatus("APPROVED");
-
-        when(service.verifyFinancialDetails(eq(1L), eq(true), eq(true), eq(true), eq("All Good"), any())).thenReturn(ob);
-
-        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch("/api/v1/finance/onboarding/1/verify")
-                .header("Authorization", token)
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"bankVerified\":true,\"panVerified\":true,\"uanVerified\":true,\"remarks\":\"All Good\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.status").value("APPROVED"));
-    }
-
-    @Test
     public void testGetBankDetailsSuccess() throws Exception {
         mockAuthSuccess();
+        mockOnboardingResolve(3L, 3L);
         EmployeeFinanceOnboarding ob = new EmployeeFinanceOnboarding();
         ob.setBankName("HDFC Bank");
         ob.setBankAccountNumber("123456");
@@ -186,7 +195,7 @@ public class EmployeeFinanceOnboardingControllerTest {
 
         when(service.getByEmployeeId(3L)).thenReturn(ob);
 
-        mockMvc.perform(get("/api/v1/finance/onboarding/3/bank-details")
+        mockMvc.perform(get("/api/v1/onboarding/3/finance/bank-details")
                 .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -203,7 +212,7 @@ public class EmployeeFinanceOnboardingControllerTest {
 
         when(service.getPendingReviews("IT", "PENDING")).thenReturn(List.of(ob));
 
-        mockMvc.perform(get("/api/v1/finance/onboarding/pending-reviews")
+        mockMvc.perform(get("/api/v1/finance/analytics/pending-reviews")
                 .header("Authorization", token)
                 .param("department", "IT")
                 .param("status", "PENDING"))
@@ -216,6 +225,7 @@ public class EmployeeFinanceOnboardingControllerTest {
     @Test
     public void testAssignSalaryStructureWithTemplate() throws Exception {
         mockAuthSuccess();
+        mockOnboardingResolve(3L, 3L);
         EmployeeFinanceOnboarding ob = new EmployeeFinanceOnboarding();
         ob.setId(1L);
         EmployeeFinanceOnboarding updated = new EmployeeFinanceOnboarding();
@@ -226,12 +236,13 @@ public class EmployeeFinanceOnboardingControllerTest {
         updated.setSalaryStructureAssigned(true);
 
         when(service.getByEmployeeId(3L)).thenReturn(ob);
-        when(service.assignSalaryStructure(eq(1L), eq(BigDecimal.valueOf(50000.00)), eq(BigDecimal.valueOf(25000.00)), eq(BigDecimal.valueOf(10000.00)), any())).thenReturn(updated);
+        when(repository.findByEmployeeId(3L)).thenReturn(Optional.of(ob));
+        when(router.route(eq(3L), any(FinanceCommandEnvelope.class), any(String.class), any())).thenReturn(updated);
 
-        mockMvc.perform(post("/api/v1/finance/onboarding/3/salary-structure")
+        mockMvc.perform(post("/api/v1/onboarding/3/finance/command")
                 .header("Authorization", token)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"salaryStructureId\":1,\"effectiveDate\":\"2026-06-20\"}"))
+                .content("{\"action\":\"ASSIGN_SALARY\",\"version\":1,\"payload\":{\"salaryStructureId\":1,\"effectiveDate\":\"2026-06-20\"}}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.basicSalary").value(50000.00))
@@ -241,6 +252,7 @@ public class EmployeeFinanceOnboardingControllerTest {
     @Test
     public void testGetSalaryPreviewSuccess() throws Exception {
         mockAuthSuccess();
+        mockOnboardingResolve(3L, 3L);
         EmployeeFinanceOnboarding ob = new EmployeeFinanceOnboarding();
         ob.setId(1L);
 
@@ -256,7 +268,7 @@ public class EmployeeFinanceOnboardingControllerTest {
         when(service.getByEmployeeId(3L)).thenReturn(ob);
         when(service.getSalaryPreview(1L)).thenReturn(previewMap);
 
-        mockMvc.perform(get("/api/v1/finance/onboarding/3/salary-preview")
+        mockMvc.perform(get("/api/v1/onboarding/3/finance/salary-preview")
                 .header("Authorization", token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -266,4 +278,3 @@ public class EmployeeFinanceOnboardingControllerTest {
                 .andExpect(jsonPath("$.data.netSalary").value(83200.00));
     }
 }
-

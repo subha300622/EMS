@@ -353,5 +353,39 @@ public class SalaryRevisionControllerTest {
         adminRole.setName("ADMIN");
         adminUser.setRole(adminRole);
     }
+
+    @Test
+    public void testExecutePayrollSuccess() throws Exception {
+        mockAuthSuccess();
+        SalaryRevision rev = new SalaryRevision();
+        rev.setId(10L);
+        rev.setPreviousSalary(BigDecimal.valueOf(1000));
+        rev.setNewSalary(BigDecimal.valueOf(1100));
+
+        when(appraisalService.executePayrollDecoupled(eq(5L), any())).thenReturn(rev);
+
+        mockMvc.perform(post("/api/v1/payroll-revisions/appraisals/5/execute")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(10));
+    }
+
+    @Test
+    public void testRetryPayrollSuccess() throws Exception {
+        mockAuthSuccess();
+        SalaryRevision rev = new SalaryRevision();
+        rev.setId(10L);
+        rev.setPreviousSalary(BigDecimal.valueOf(1000));
+        rev.setNewSalary(BigDecimal.valueOf(1100));
+
+        when(appraisalService.retryPayroll(eq(5L), any())).thenReturn(rev);
+
+        mockMvc.perform(post("/api/v1/payroll-revisions/appraisals/5/retry")
+                .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(10));
+    }
 }
 

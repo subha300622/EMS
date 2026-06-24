@@ -52,6 +52,16 @@ public class MyPerformanceController {
 
 
 
+    @Operation(summary = "Get My Performance Dashboard", description = "Retrieves stats, status, band, goals met, and self assessment ratings.")
+    @GetMapping("/dashboard")
+    public ResponseEntity<ApiResponse<MyPerformanceDashboardResponse>> getDashboard(@RequestHeader("Authorization") String authHeader) {
+        User user = resolveUser(authHeader);
+        if (!checkPermission(user, "performance.self.read")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.success("Access Denied", null));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Performance dashboard retrieved", performanceService.getDashboard(user.getWorkEmail())));
+    }
+
     @Operation(summary = "Get Review Cycles", description = "Retrieves active performance review cycles and employee review statuses.")
     @GetMapping("/reviews")
     public ResponseEntity<ApiResponse<ReviewCyclesResponse>> getReviewCycles(@RequestHeader("Authorization") String authHeader) {

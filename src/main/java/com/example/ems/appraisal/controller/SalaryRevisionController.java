@@ -14,6 +14,7 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -591,6 +592,55 @@ public class SalaryRevisionController {
         } catch (IllegalArgumentException e) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "INC_002"));
+        }
+    }
+
+    @Operation(summary = "Decoupled Payroll Execution from Finance Approved Appraisal")
+    @PostMapping("/payroll-revisions/appraisals/{appraisalId}/execute")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> executePayroll(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long appraisalId,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!isFinanceOrManager(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires Finance or Admin permissions.", "AUTH_002"));
+        }
+
+        try {
+            SalaryRevision rev = appraisalService.executePayrollDecoupled(appraisalId, currentUser.getWorkEmail());
+            return ResponseEntity.ok(ApiResponse.success("Payroll executed successfully", rev));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PAY_001"));
+        }
+    }
+
+    @Operation(summary = "Payroll Execution Safe Retry API")
+    @PostMapping("/payroll-revisions/appraisals/{appraisalId}/retry")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> retryPayroll(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long appraisalId) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!isFinanceOrManager(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires Finance or Admin permissions.", "AUTH_002"));
+        }
+
+        try {
+            SalaryRevision rev = appraisalService.retryPayroll(appraisalId, currentUser.getWorkEmail());
+            return ResponseEntity.ok(ApiResponse.success("Payroll executed/retrieved successfully", rev));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "PAY_002"));
         }
     }
 }

@@ -15,12 +15,12 @@ public class AppraisalManagerReviewRequest {
     @NotNull(message = "Manager rating is required")
     @Min(value = 1, message = "Rating must be at least 1")
     @Max(value = 5, message = "Rating must be at most 5")
-    @Schema(example = "1")
-    private Integer managerRating;
+    @Schema(example = "1.0")
+    private Double managerRating;
 
     public String getManagerReview() { return managerReview; }
     public void setManagerReview(String managerReview) { this.managerReview = managerReview; }
 
-    public Integer getManagerRating() { return managerRating; }
-    public void setManagerRating(Integer managerRating) { this.managerRating = managerRating; }
+    public Double getManagerRating() { return managerRating; }
+    public void setManagerRating(Double managerRating) { this.managerRating = managerRating; }
 }

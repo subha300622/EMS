@@ -1,4 +1,5 @@
 package com.example.ems.employee.controller;
+
 import java.util.List;
 import java.util.Map;
 
@@ -15,7 +16,7 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.performance.service.PerformanceService;
 import com.example.ems.schedule.service.MyScheduleService;
 import com.example.ems.security.service.JwtService;
-import com.example.ems.training.service.TrainingService;
+import com.example.ems.training.service.TrainingAssignmentService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -55,16 +56,16 @@ public class TeamManagementController {
     private PerformanceService performanceService;
 
     @Autowired
-    private TrainingService trainingService;
+    private TrainingAssignmentService trainingService;
 
     @Autowired
     private MyAssetService myAssetService;
 
     @Operation(summary = "Get Team Directory", description = "Retrieves profiles of all direct reports reporting to the authenticated manager.")
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getTeamDirectory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -78,7 +79,8 @@ public class TeamManagementController {
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (manager == null) {
-            return ResponseEntity.ok(ApiResponse.success("Team directory retrieved successfully", Collections.emptyList()));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Team directory retrieved successfully", Collections.emptyList()));
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
@@ -87,10 +89,10 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Member Details", description = "Retrieves detailed profile metadata for a specific direct report.")
     @GetMapping("/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getTeamMemberDetails(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -109,7 +111,8 @@ public class TeamManagementController {
         }
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
-        boolean isDirectReport = manager != null && employee.getManager() != null && employee.getManager().getId().equals(manager.getId());
+        boolean isDirectReport = manager != null && employee.getManager() != null
+                && employee.getManager().getId().equals(manager.getId());
         boolean hasGlobalRead = roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
 
         if (!isDirectReport && !hasGlobalRead) {
@@ -122,9 +125,9 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Attendance", description = "Retrieves today's punch status and shift notes for all team members.")
     @GetMapping("/attendance")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getTeamAttendance(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -138,7 +141,8 @@ public class TeamManagementController {
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (manager == null) {
-            return ResponseEntity.ok(ApiResponse.success("Team attendance retrieved successfully", Collections.emptyList()));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Team attendance retrieved successfully", Collections.emptyList()));
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
@@ -174,9 +178,9 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Schedules", description = "Retrieves shift scheduling and work timings for the team members for today.")
     @GetMapping("/schedules")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getTeamSchedules(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -190,7 +194,8 @@ public class TeamManagementController {
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (manager == null) {
-            return ResponseEntity.ok(ApiResponse.success("Team schedules retrieved successfully", Collections.emptyList()));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Team schedules retrieved successfully", Collections.emptyList()));
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
@@ -214,9 +219,9 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Performance Summary", description = "Retrieves active performance goals and feedback loops for all team members.")
     @GetMapping("/performance")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getTeamPerformance(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -230,7 +235,8 @@ public class TeamManagementController {
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (manager == null) {
-            return ResponseEntity.ok(ApiResponse.success("Team performance retrieved successfully", Collections.emptyList()));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Team performance retrieved successfully", Collections.emptyList()));
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
@@ -256,9 +262,9 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Trainings Status", description = "Retrieves course enrollment and training completion logs for all team members.")
     @GetMapping("/trainings")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getTeamTrainings(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -272,7 +278,8 @@ public class TeamManagementController {
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (manager == null) {
-            return ResponseEntity.ok(ApiResponse.success("Team trainings retrieved successfully", Collections.emptyList()));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Team trainings retrieved successfully", Collections.emptyList()));
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
@@ -284,7 +291,7 @@ public class TeamManagementController {
             map.put("employeeName", emp.getFullName());
             map.put("employeeEmail", emp.getEmail());
             try {
-                map.put("enrollments", trainingService.getMyEnrollments(emp.getEmail()));
+                map.put("enrollments", trainingService.getMyTrainings(emp.getEmail()));
             } catch (Exception e) {
                 map.put("enrollments", Collections.emptyList());
             }
@@ -296,9 +303,9 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Assets Allocation", description = "Retrieves hardware and software assets allocated to the team members.")
     @GetMapping("/assets")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getTeamAssets(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -312,7 +319,8 @@ public class TeamManagementController {
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (manager == null) {
-            return ResponseEntity.ok(ApiResponse.success("Team assets retrieved successfully", Collections.emptyList()));
+            return ResponseEntity
+                    .ok(ApiResponse.success("Team assets retrieved successfully", Collections.emptyList()));
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
@@ -324,7 +332,8 @@ public class TeamManagementController {
             map.put("employeeName", emp.getFullName());
             map.put("employeeEmail", emp.getEmail());
             try {
-                map.put("assets", myAssetService.getAssignedAssets(emp, null, null, null, Pageable.unpaged()).getContent());
+                map.put("assets",
+                        myAssetService.getAssignedAssets(emp, null, null, null, Pageable.unpaged()).getContent());
             } catch (Exception e) {
                 map.put("assets", Collections.emptyList());
             }

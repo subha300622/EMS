@@ -51,6 +51,9 @@ public class EmployeeFinanceOnboarding {
     private LocalDateTime createdAt = LocalDateTime.now();
     private LocalDateTime updatedAt = LocalDateTime.now();
 
+    @Version
+    private Integer optVersion;
+
     public EmployeeFinanceOnboarding() {}
 
     @PreUpdate
@@ -240,5 +243,13 @@ public class EmployeeFinanceOnboarding {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Integer getOptVersion() {
+        return optVersion;
+    }
+
+    public void setOptVersion(Integer optVersion) {
+        this.optVersion = optVersion;
     }
 }

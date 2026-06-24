@@ -2,6 +2,7 @@ package com.example.ems.performance.service;
 
 import com.example.ems.appraisal.entity.Appraisal;
 import com.example.ems.appraisal.entity.AppraisalCycle;
+import com.example.ems.appraisal.entity.AppraisalStatus;
 import com.example.ems.appraisal.entity.Increment;
 import com.example.ems.appraisal.repository.AppraisalCycleRepository;
 import com.example.ems.appraisal.repository.AppraisalRepository;
@@ -77,7 +78,15 @@ public class MyPerformanceService {
                     Appraisal a = new Appraisal();
                     a.setEmployee(employee);
                     a.setCycle(cycle);
-                    a.setStatus("PENDING");
+                    a.setStatus(AppraisalStatus.ELIGIBLE);
+                    a.setMyBand("A+");
+                    a.setSelfReviewDueDate(LocalDate.of(2026, 4, 25));
+                    a.setLeadershipOwnershipRating(4.5);
+                    a.setTechnicalExcellenceRating(4.8);
+                    a.setDeliveryManagementRating(4.6);
+                    a.setCommunicationInfluenceRating(4.4);
+                    a.setTeamMentorshipRating(4.7);
+                    a.setInnovationInitiativeRating(4.6);
                     return appraisalRepository.save(a);
                 });
 
@@ -185,8 +194,29 @@ public class MyPerformanceService {
             res.setActiveGoals(goals.size());
             res.setCompletedGoals((int) completed);
             res.setGoalCompletionPercentage(goals.isEmpty() ? 0.0 : (completed * 100.0 / goals.size()));
-            res.setOverallRating(4.5); // Mocked as per requirement
+            res.setOverallRating(4.6); // Current Rating as requested
             res.setNextReviewDate(activeCycle.getEndDate().toString());
+
+            // Expose specific dashboard fields
+            Appraisal app = appraisalRepository.findByEmployeeEmailAndCycleId(email, activeCycle.getId()).orElse(null);
+            if (app != null) {
+                res.setSelfReviewDueDate(app.getSelfReviewDueDate() != null ? app.getSelfReviewDueDate().format(DateTimeFormatter.ofPattern("MMMM d")) : "April 25");
+                res.setCurrentRating(4.6);
+                res.setGoalsMet((int) completed);
+                res.setTotalGoals(goals.size());
+                res.setReviewStatus(app.getStatus() == AppraisalStatus.ELIGIBLE ? "Open" : app.getStatus().name());
+                res.setMyBand(app.getMyBand() != null ? app.getMyBand() : "A+");
+
+                MyPerformanceDashboardResponse.SelfAssessmentRatings ratings = new MyPerformanceDashboardResponse.SelfAssessmentRatings(
+                    app.getLeadershipOwnershipRating() != null ? app.getLeadershipOwnershipRating() : 4.5,
+                    app.getTechnicalExcellenceRating() != null ? app.getTechnicalExcellenceRating() : 4.8,
+                    app.getDeliveryManagementRating() != null ? app.getDeliveryManagementRating() : 4.6,
+                    app.getCommunicationInfluenceRating() != null ? app.getCommunicationInfluenceRating() : 4.4,
+                    app.getTeamMentorshipRating() != null ? app.getTeamMentorshipRating() : 4.7,
+                    app.getInnovationInitiativeRating() != null ? app.getInnovationInitiativeRating() : 4.6
+                );
+                res.setSelfAssessment(ratings);
+            }
         }
 
         res.setRecentActivities(timelineRepository.findByEmployeeEmailOrderByDateDesc(email).stream()
@@ -270,9 +300,9 @@ public class MyPerformanceService {
             s.setReviewId(a.getId());
             s.setCycleName(a.getCycle().getName());
             s.setPeriod(a.getCycle().getStartDate().getYear() + "");
-            s.setStatus(a.getStatus());
+            s.setStatus(a.getStatus().name());
             s.setDueDate(a.getCycle().getEndDate().toString());
-            s.setCompletionPercentage("SELF_REVIEWED".equals(a.getStatus()) || "MANAGER_REVIEWED".equals(a.getStatus()) || "FINALIZED".equals(a.getStatus()) ? 100 : 50);
+            s.setCompletionPercentage(a.getStatus() != AppraisalStatus.ELIGIBLE ? 100 : 50);
             return s;
         }).collect(Collectors.toList()));
         return res;
@@ -288,7 +318,15 @@ public class MyPerformanceService {
         a.setAchievements(req.getAchievements());
         a.setStrengths(req.getStrengths());
         a.setImprovementAreas(req.getImprovementAreas());
-        a.setStatus("SELF_REVIEWED");
+
+        if (req.getLeadershipOwnershipRating() != null) a.setLeadershipOwnershipRating(req.getLeadershipOwnershipRating());
+        if (req.getTechnicalExcellenceRating() != null) a.setTechnicalExcellenceRating(req.getTechnicalExcellenceRating());
+        if (req.getDeliveryManagementRating() != null) a.setDeliveryManagementRating(req.getDeliveryManagementRating());
+        if (req.getCommunicationInfluenceRating() != null) a.setCommunicationInfluenceRating(req.getCommunicationInfluenceRating());
+        if (req.getTeamMentorshipRating() != null) a.setTeamMentorshipRating(req.getTeamMentorshipRating());
+        if (req.getInnovationInitiativeRating() != null) a.setInnovationInitiativeRating(req.getInnovationInitiativeRating());
+
+        a.setStatus(AppraisalStatus.DRAFT);
         a.setSelfReviewSubmittedAt(LocalDateTime.now());
         appraisalRepository.save(a);
 
@@ -329,7 +367,7 @@ public class MyPerformanceService {
         res.setHistory(increments.stream().map(i -> {
             String year = i.getEffectiveDate().getYear() + "";
             String cycleName = i.getAppraisal() != null ? i.getAppraisal().getCycle().getName() : "Annual Review " + year;
-            Integer rating = i.getAppraisal() != null ? i.getAppraisal().getFinalRating() : 4;
+            Double rating = i.getAppraisal() != null ? i.getAppraisal().getFinalRating() : 4.0;
             return new AppraisalHistoryResponse.HistoryItem(
                     year,
                     cycleName,

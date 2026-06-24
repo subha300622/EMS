@@ -250,11 +250,12 @@ public class DevDataSeeder implements CommandLineRunner {
 
         // 1. Seed Ravi Kumar
         Employee ravi = employeeRepository.findByEmail("ravi@company.com")
+                .or(() -> employeeRepository.findByEmployeeId("EMP90101"))
                 .orElseGet(() -> {
                     Employee e = new Employee();
                     e.setFullName("Ravi Kumar");
                     e.setEmail("ravi@company.com");
-                    e.setEmployeeId("EMP101");
+                    e.setEmployeeId("EMP90101");
                     e.setPhone("1234567890");
                     e.setGender("MALE");
                     e.setDob(LocalDate.of(1990, 1, 1));
@@ -338,11 +339,12 @@ public class DevDataSeeder implements CommandLineRunner {
 
         // 2. Seed Priya Sharma
         Employee priya = employeeRepository.findByEmail("priya@company.com")
+                .or(() -> employeeRepository.findByEmployeeId("EMP90102"))
                 .orElseGet(() -> {
                     Employee e = new Employee();
                     e.setFullName("Priya Sharma");
                     e.setEmail("priya@company.com");
-                    e.setEmployeeId("EMP102");
+                    e.setEmployeeId("EMP90102");
                     e.setPhone("0987654321");
                     e.setGender("FEMALE");
                     e.setDob(LocalDate.of(1992, 5, 10));
@@ -394,11 +396,12 @@ public class DevDataSeeder implements CommandLineRunner {
 
         // 1. Create/Find Robert Chen (employee)
         Employee robert = employeeRepository.findByEmail("robert@company.com")
+                .or(() -> employeeRepository.findByEmployeeId("EMP90015"))
                 .orElseGet(() -> {
                     Employee e = new Employee();
                     e.setFullName("Robert Chen");
                     e.setEmail("robert@company.com");
-                    e.setEmployeeId("EMP015");
+                    e.setEmployeeId("EMP90015");
                     e.setPhone("5550015");
                     e.setGender("MALE");
                     e.setDob(LocalDate.of(1992, 4, 3));

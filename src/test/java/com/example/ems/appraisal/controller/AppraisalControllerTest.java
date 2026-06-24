@@ -253,7 +253,7 @@ public class AppraisalControllerTest {
 
         AppraisalSelfReviewRequest req = new AppraisalSelfReviewRequest();
         req.setSelfReview("Did really well");
-        req.setSelfRating(4);
+        req.setSelfRating(4.0);
 
         AppraisalResponse oldApp = new AppraisalResponse();
         oldApp.setId(10L);
@@ -263,7 +263,7 @@ public class AppraisalControllerTest {
         newApp.setId(10L);
         newApp.setEmployeeId(2L);
         newApp.setStatus("SELF_REVIEWED");
-        newApp.setSelfRating(4);
+        newApp.setSelfRating(4.0);
 
         when(appraisalService.getAppraisalById(10L)).thenReturn(Optional.of(oldApp));
         when(appraisalService.submitSelfReview(eq(10L), any(AppraisalSelfReviewRequest.class))).thenReturn(Optional.of(newApp));
@@ -283,12 +283,12 @@ public class AppraisalControllerTest {
 
         AppraisalManagerReviewRequest req = new AppraisalManagerReviewRequest();
         req.setManagerReview("Excellent work");
-        req.setManagerRating(5);
+        req.setManagerRating(5.0);
 
         AppraisalResponse updated = new AppraisalResponse();
         updated.setId(10L);
         updated.setStatus("MANAGER_REVIEWED");
-        updated.setManagerRating(5);
+        updated.setManagerRating(5.0);
 
         when(appraisalService.submitManagerReview(eq(10L), any(AppraisalManagerReviewRequest.class), eq(hrEmail))).thenReturn(Optional.of(updated));
 
@@ -306,12 +306,12 @@ public class AppraisalControllerTest {
         setupManager();
 
         AppraisalFinalizeRequest req = new AppraisalFinalizeRequest();
-        req.setFinalRating(5);
+        req.setFinalRating(5.0);
 
         AppraisalResponse updated = new AppraisalResponse();
         updated.setId(10L);
         updated.setStatus("FINALIZED");
-        updated.setFinalRating(5);
+        updated.setFinalRating(5.0);
 
         when(appraisalService.finalizeAppraisal(eq(10L), any(AppraisalFinalizeRequest.class))).thenReturn(Optional.of(updated));
 

@@ -746,7 +746,7 @@ public class EmployeeController {
         if (!appraisals.isEmpty()) {
             Appraisal recent = appraisals.get(0);
             rating = recent.getFinalRating() != null ? recent.getFinalRating() : 4.5;
-            appraisalStatus = recent.getStatus() != null ? recent.getStatus() : "COMPLETED";
+            appraisalStatus = recent.getStatus() != null ? recent.getStatus().name() : "COMPLETED";
         } else {
             // Default seed values if list is empty
             if (goals.isEmpty()) {
