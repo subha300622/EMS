@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -65,8 +64,8 @@ public class AppraisalService {
     @Autowired
     private com.example.ems.appraisal.repository.BulkAppraisalActionLogRepository bulkActionLogRepository;
 
-    @PostConstruct
-    public void seedInitialData() {
+    @Transactional
+    public void seedCoreAppraisalData() {
         if (policyRepository.count() == 0) {
             savePolicy(1, 0.0, "Needs improvement - No increment");
             savePolicy(2, 2.0, "Below expectations - 2% baseline increment");

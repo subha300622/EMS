@@ -2,7 +2,6 @@ package com.example.ems.settings.service;
 
 import com.example.ems.settings.entity.SystemSetting;
 import com.example.ems.settings.repository.SystemSettingRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ public class SystemSettingService {
     @org.springframework.beans.factory.annotation.Value("${app.email.sender-address:noreply@company.com}")
     private String defaultSenderAddress;
 
-    @PostConstruct
     public void initDefaultSettings() {
         // Seed default system configurations if they do not exist
         Map<String, String[]> defaults = new HashMap<>();
