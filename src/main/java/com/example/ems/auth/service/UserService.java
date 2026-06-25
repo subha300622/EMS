@@ -30,6 +30,10 @@ public class UserService {
     @Autowired private RoleRepository roleRepository;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
     @Autowired private EmployeeRepository employeeRepository;
+    @Autowired private com.example.ems.employee.repository.DepartmentRepository departmentRepository;
+    @Autowired private com.example.ems.settings.repository.EmployeeSettingRepository employeeSettingRepository;
+    @Autowired private com.example.ems.settings.repository.CompanySettingRepository companySettingRepository;
+    @Autowired private RoleService roleService;
 
     // ──────────────────────────────────────────
     //  LOGIN — compares BCrypt-hashed password
@@ -220,7 +224,9 @@ public class UserService {
             }
             user.setDepartment(request.getDepartment());
             user.setLocation(request.getLocation());
-            return userRepository.save(user);
+            User saved = userRepository.save(user);
+            roleService.evictUserPermissionsCache(userId);
+            return saved;
         });
     }
 
@@ -257,6 +263,7 @@ public class UserService {
         user.setRole(optRole.get());
         user.setRequestedRole(roleName);
         userRepository.save(user);
+        roleService.evictUserPermissionsCache(userId);
         return true;
     }
 
@@ -269,6 +276,7 @@ public class UserService {
         user.setRole(null);
         user.setRequestedRole(null);
         userRepository.save(user);
+        roleService.evictUserPermissionsCache(userId);
         return true;
     }
 
@@ -296,7 +304,9 @@ public class UserService {
         user.setFullName(request.getFullName());
         user.setMobileNumber(request.getMobileNumber());
         user.setLocation(request.getLocation());
-        return userRepository.save(user);
+        User saved = userRepository.save(user);
+        roleService.evictUserPermissionsCache(saved.getUserId());
+        return saved;
     }
 
     public void resetUserPasswordByUserId(String userId, String newPassword) {
@@ -304,5 +314,69 @@ public class UserService {
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
+        roleService.evictUserPermissionsCache(userId);
+    }
+
+    public com.example.ems.auth.dto.BootstrapResponse.UserProfileResponse getUserProfile(User user) {
+        Optional<Employee> optEmp = employeeRepository.findByEmail(user.getWorkEmail());
+        String profileImage = optEmp.map(Employee::getProfileImage).orElse(null);
+        if (profileImage == null || profileImage.isBlank()) {
+            try {
+                profileImage = "https://api.dicebear.com/7.x/initials/svg?seed=" + java.net.URLEncoder.encode(user.getFullName(), java.nio.charset.StandardCharsets.UTF_8.toString());
+            } catch (Exception e) {
+                profileImage = "https://api.dicebear.com/7.x/initials/svg?seed=" + user.getFullName();
+            }
+        }
+
+        boolean mfaRequired = false;
+        try {
+            Optional<com.example.ems.settings.entity.EmployeeSetting> optSettings = employeeSettingRepository.findByUserEmail(user.getWorkEmail());
+            if (optSettings.isPresent()) {
+                mfaRequired = Boolean.TRUE.equals(optSettings.get().getMfaEnabled());
+            }
+        } catch (Exception e) {
+            // Fallback to false
+        }
+
+        return new com.example.ems.auth.dto.BootstrapResponse.UserProfileResponse(
+            user.getId(),
+            user.getUserId(),
+            user.getFullName(),
+            user.getWorkEmail(),
+            user.getRole() != null ? user.getRole().getName() : "EMPLOYEE",
+            profileImage,
+            false, // mustChangePassword
+            mfaRequired,
+            user.getStatus(),
+            java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString()
+        );
+    }
+
+    public com.example.ems.auth.dto.BootstrapResponse.OrgContextResponse getUserContext(User user) {
+        Optional<Employee> optEmp = employeeRepository.findByEmail(user.getWorkEmail());
+        
+        Long companyId = null;
+        try {
+            Optional<com.example.ems.settings.entity.CompanySetting> optCompany = companySettingRepository.findAll().stream().findFirst();
+            if (optCompany.isPresent()) {
+                companyId = optCompany.get().getId();
+            }
+        } catch (Exception e) {
+            // Fallback to null
+        }
+
+        Long departmentId = null;
+        if (optEmp.isPresent() && optEmp.get().getDepartment() != null) {
+            Optional<com.example.ems.employee.entity.Department> optDept = departmentRepository.findByNameIgnoreCase(optEmp.get().getDepartment());
+            if (optDept.isPresent()) {
+                departmentId = optDept.get().getId();
+            }
+        }
+
+        return new com.example.ems.auth.dto.BootstrapResponse.OrgContextResponse(
+            companyId,
+            departmentId,
+            new com.example.ems.auth.dto.LoginResponse.BranchContext(null, false)
+        );
     }
 }

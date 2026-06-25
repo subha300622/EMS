@@ -9,7 +9,9 @@ import java.time.Duration;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
-@Table(name = "attendance")
+@Table(name = "attendance", uniqueConstraints = {
+    @UniqueConstraint(name = "unique_employee_date", columnNames = {"employee_id", "date"})
+})
 public class Attendance {
 
     @Id

@@ -123,6 +123,7 @@ public class MeController {
         }
 
         Employee saved = employeeRepository.save(employee);
+        roleService.evictUserPermissionsCache(currentUser.getUserId());
         return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", saved));
     }
 

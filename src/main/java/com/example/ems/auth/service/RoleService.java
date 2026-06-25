@@ -28,6 +28,53 @@ public class RoleService {
     @Autowired
     private PermissionRepository permissionRepository;
 
+    @Autowired
+    private org.springframework.cache.CacheManager cacheManager;
+
+    @org.springframework.cache.annotation.Cacheable(value = "userPermissions", key = "#userId")
+    public List<String> getPermissionsForUserId(String userId) {
+        if (userId == null) {
+            return java.util.Collections.emptyList();
+        }
+        Optional<User> optUser = userRepository.findByUserId(userId);
+        if (optUser.isEmpty()) {
+            return java.util.Collections.emptyList();
+        }
+        return getEffectivePermissions(optUser.get()).stream()
+                .map(Permission::getName)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    public void evictUserPermissionsCache(String userId) {
+        if (userId != null && cacheManager != null) {
+            try {
+                org.springframework.cache.Cache permCache = cacheManager.getCache("userPermissions");
+                if (permCache != null) {
+                    permCache.evict(userId);
+                }
+            } catch (Exception e) {
+                // Log and ignore to prevent crashes when Redis is down
+            }
+            try {
+                org.springframework.cache.Cache bootCache = cacheManager.getCache("userBootstrap");
+                if (bootCache != null) {
+                    bootCache.evict(userId);
+                }
+            } catch (Exception e) {
+                // Log and ignore
+            }
+        }
+    }
+
+    public void evictRolePermissionsCache(Long roleId) {
+        if (roleId != null) {
+            java.util.List<User> users = userRepository.findByRoleId(roleId);
+            for (User u : users) {
+                evictUserPermissionsCache(u.getUserId());
+            }
+        }
+    }
+
     /**
      * Resolves the effective permissions for a user. If the user's role has no permissions
      * mapped, it falls back to the standard 'EMPLOYEE' permissions.
@@ -110,7 +157,9 @@ public class RoleService {
             }
             role.setName(request.getName());
             role.setDescription(request.getDescription());
-            return roleRepository.save(role);
+            Role saved = roleRepository.save(role);
+            evictRolePermissionsCache(id);
+            return saved;
         });
     }
 
@@ -129,13 +178,16 @@ public class RoleService {
             if (updates.containsKey("description")) {
                 role.setDescription((String) updates.get("description"));
             }
-            return roleRepository.save(role);
+            Role saved = roleRepository.save(role);
+            evictRolePermissionsCache(id);
+            return saved;
         });
     }
 
 
     public boolean deleteRole(Long id) {
         if (roleRepository.existsById(id)) {
+            evictRolePermissionsCache(id);
             roleRepository.deleteById(id);
             return true;
         }
@@ -160,6 +212,7 @@ public class RoleService {
         user.setRole(optRole.get());
         user.setRequestedRole(roleName);
         userRepository.save(user);
+        evictUserPermissionsCache(user.getUserId());
         return true;
     }
 
@@ -180,6 +233,7 @@ public class RoleService {
         user.setRole(optRole.get());
         user.setRequestedRole(optRole.get().getName());
         userRepository.save(user);
+        evictUserPermissionsCache(user.getUserId());
         return true;
     }
 
@@ -199,6 +253,7 @@ public class RoleService {
 
         role.setPermissions(permissionSet);
         roleRepository.save(role);
+        evictRolePermissionsCache(roleId);
         return true;
     }
 
@@ -218,6 +273,7 @@ public class RoleService {
 
         role.setPermissions(permissionSet);
         roleRepository.save(role);
+        evictRolePermissionsCache(roleId);
         return true;
     }
 
@@ -233,6 +289,7 @@ public class RoleService {
         boolean removed = role.getPermissions().remove(permission);
         if (removed) {
             roleRepository.save(role);
+            evictRolePermissionsCache(roleId);
             return true;
         }
         return false;

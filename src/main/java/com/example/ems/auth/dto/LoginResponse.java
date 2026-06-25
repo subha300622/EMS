@@ -144,6 +144,24 @@ public class LoginResponse {
         }
     }
 
+    public static class BranchContext {
+        private Long id;
+        private boolean enabled;
+
+        public BranchContext() {}
+
+        public BranchContext(Long id, boolean enabled) {
+            this.id = id;
+            this.enabled = enabled;
+        }
+
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    }
+
     public static class UserData {
         @Schema(example = "1")
         private Long id;
@@ -155,7 +173,6 @@ public class LoginResponse {
         private String email;
         @Schema(example = "Software Engineer")
         private String role;
-        private List<String> permissions;
         @Schema(example = "ACTIVE")
         private String status;
         @Schema(example = "string")
@@ -163,13 +180,12 @@ public class LoginResponse {
 
         public UserData() {}
 
-        public UserData(Long id, String employeeId, String name, String email, String role, List<String> permissions, String status, String lastLogin) {
+        public UserData(Long id, String employeeId, String name, String email, String role, String status, String lastLogin) {
             this.id = id;
             this.employeeId = employeeId;
             this.name = name;
             this.email = email;
             this.role = role;
-            this.permissions = permissions;
             this.status = status;
             this.lastLogin = lastLogin;
         }
@@ -212,14 +228,6 @@ public class LoginResponse {
 
         public void setRole(String role) {
             this.role = role;
-        }
-
-        public List<String> getPermissions() {
-            return permissions;
-        }
-
-        public void setPermissions(List<String> permissions) {
-            this.permissions = permissions;
         }
 
         public String getStatus() {

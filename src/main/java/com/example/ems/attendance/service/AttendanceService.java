@@ -21,6 +21,8 @@ import java.util.HashMap;
 @Service
 public class AttendanceService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AttendanceService.class);
+
     @Autowired
     private AttendanceRepository attendanceRepository;
 
@@ -203,7 +205,12 @@ public class AttendanceService {
         }
         attendance.setNotes(notes);
 
-        return attendanceRepository.save(attendance);
+        try {
+            return attendanceRepository.save(attendance);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            log.warn("Duplicate check-in attempt detected for employeeId={}", employee.getId());
+            throw new IllegalArgumentException("Already checked in today");
+        }
     }
 
     @Transactional

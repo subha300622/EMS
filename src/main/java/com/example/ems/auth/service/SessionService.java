@@ -97,13 +97,12 @@ public class SessionService {
     }
 
     public SessionMetadata getSessionByRefreshToken(String refreshToken) {
-        String json = redisTemplate.opsForValue().get(getTokenKey(refreshToken));
-        if (json == null) return null;
-
         try {
+            String json = redisTemplate.opsForValue().get(getTokenKey(refreshToken));
+            if (json == null) return null;
             return objectMapper.readValue(json, SessionMetadata.class);
         } catch (Exception e) {
-            log.error("Failed to parse session from Redis", e);
+            log.error("Failed to fetch session from Redis for refresh token", e);
             return null;
         }
     }
@@ -112,8 +111,12 @@ public class SessionService {
         SessionMetadata session = getSessionByRefreshToken(oldRefreshToken);
         if (session == null) return null;
 
-        // Revoke old token key
-        redisTemplate.delete(getTokenKey(oldRefreshToken));
+        try {
+            // Revoke old token key
+            redisTemplate.delete(getTokenKey(oldRefreshToken));
+        } catch (Exception e) {
+            log.error("Failed to delete old refresh token key from Redis during rotation", e);
+        }
 
         // Generate new refresh token
         String newRefreshToken = UUID.randomUUID().toString();
@@ -127,7 +130,7 @@ public class SessionService {
             redisTemplate.opsForValue().set(getUserSessionKey(session.getUserId(), session.getSessionId()), json, REFRESH_TOKEN_VALIDITY);
             log.info("Token rotated for session ID: {}", session.getSessionId());
         } catch (Exception e) {
-            log.error("Failed to rotate refresh token in Redis", e);
+            log.error("Failed to save rotated refresh token in Redis", e);
             return null;
         }
 
@@ -135,70 +138,96 @@ public class SessionService {
     }
 
     public void revokeSession(String refreshToken) {
-        SessionMetadata session = getSessionByRefreshToken(refreshToken);
-        if (session != null) {
-            redisTemplate.delete(getTokenKey(refreshToken));
-            redisTemplate.delete(getUserSessionKey(session.getUserId(), session.getSessionId()));
-            log.info("Session revoked: {}", session.getSessionId());
+        try {
+            SessionMetadata session = getSessionByRefreshToken(refreshToken);
+            if (session != null) {
+                redisTemplate.delete(getTokenKey(refreshToken));
+                redisTemplate.delete(getUserSessionKey(session.getUserId(), session.getSessionId()));
+                log.info("Session revoked: {}", session.getSessionId());
+            }
+        } catch (Exception e) {
+            log.error("Failed to revoke session in Redis", e);
         }
     }
 
     public void revokeSessionById(String userId, String sessionId) {
-        String userKey = getUserSessionKey(userId, sessionId);
-        String json = redisTemplate.opsForValue().get(userKey);
-        if (json != null) {
-            try {
-                SessionMetadata session = objectMapper.readValue(json, SessionMetadata.class);
-                redisTemplate.delete(getTokenKey(session.getRefreshToken()));
-                redisTemplate.delete(userKey);
-                log.info("Session ID {} revoked for User {}", sessionId, userId);
-            } catch (Exception e) {
-                log.error("Failed to revoke session by ID", e);
+        try {
+            String userKey = getUserSessionKey(userId, sessionId);
+            String json = redisTemplate.opsForValue().get(userKey);
+            if (json != null) {
+                try {
+                    SessionMetadata session = objectMapper.readValue(json, SessionMetadata.class);
+                    redisTemplate.delete(getTokenKey(session.getRefreshToken()));
+                    redisTemplate.delete(userKey);
+                    log.info("Session ID {} revoked for User {}", sessionId, userId);
+                } catch (Exception e) {
+                    log.error("Failed to revoke session keys in Redis", e);
+                }
             }
+        } catch (Exception e) {
+            log.error("Failed to get/revoke session in Redis for ID: {}", sessionId, e);
         }
     }
 
     public List<SessionMetadata> getActiveSessions(String userId) {
         List<SessionMetadata> list = new ArrayList<>();
-        Set<String> keys = redisTemplate.keys("session:user:" + userId + ":*");
-        if (keys == null || keys.isEmpty()) return list;
+        try {
+            Set<String> keys = redisTemplate.keys("session:user:" + userId + ":*");
+            if (keys == null || keys.isEmpty()) return list;
 
-        for (String key : keys) {
-            String json = redisTemplate.opsForValue().get(key);
-            if (json != null) {
+            for (String key : keys) {
                 try {
-                    list.add(objectMapper.readValue(json, SessionMetadata.class));
+                    String json = redisTemplate.opsForValue().get(key);
+                    if (json != null) {
+                        list.add(objectMapper.readValue(json, SessionMetadata.class));
+                    }
                 } catch (Exception e) {
-                    log.error("Failed to parse active session key {}", key, e);
+                    log.error("Failed to fetch/parse active session key {}", key, e);
                 }
             }
+        } catch (Exception e) {
+            log.error("Failed to get active sessions from Redis for user: {}", userId, e);
         }
         return list;
     }
 
     public void revokeAllSessions(String userId) {
-        Set<String> keys = redisTemplate.keys("session:user:" + userId + ":*");
-        if (keys == null || keys.isEmpty()) return;
+        try {
+            Set<String> keys = redisTemplate.keys("session:user:" + userId + ":*");
+            if (keys == null || keys.isEmpty()) return;
 
-        for (String key : keys) {
-            String json = redisTemplate.opsForValue().get(key);
-            if (json != null) {
+            for (String key : keys) {
                 try {
-                    SessionMetadata session = objectMapper.readValue(json, SessionMetadata.class);
-                    redisTemplate.delete(getTokenKey(session.getRefreshToken()));
+                    String json = redisTemplate.opsForValue().get(key);
+                    if (json != null) {
+                        SessionMetadata session = objectMapper.readValue(json, SessionMetadata.class);
+                        redisTemplate.delete(getTokenKey(session.getRefreshToken()));
+                    }
                 } catch (Exception e) {
-                    log.error("Failed to revoke refresh token key in revokeAllSessions", e);
+                    log.error("Failed to revoke refresh token key in revokeAllSessions for user {}", userId, e);
+                }
+                try {
+                    redisTemplate.delete(key);
+                } catch (Exception e) {
+                    log.error("Failed to delete user session key {} in revokeAllSessions", key, e);
                 }
             }
-            redisTemplate.delete(key);
+            log.info("All sessions revoked for user: {}", userId);
+        } catch (Exception e) {
+            log.error("Failed to revoke all sessions from Redis for user: {}", userId, e);
         }
-        log.info("All sessions revoked for user: {}", userId);
     }
 
     public boolean isSessionActive(String userId, String sessionId) {
         if (userId == null || sessionId == null) {
             return false;
         }
-        return Boolean.TRUE.equals(redisTemplate.hasKey(getUserSessionKey(userId, sessionId)));
+        try {
+            return Boolean.TRUE.equals(redisTemplate.hasKey(getUserSessionKey(userId, sessionId)));
+        } catch (Exception e) {
+            log.error("Failed to check if session is active in Redis", e);
+            return true; // Fallback to true (allow if Redis is down)
+        }
     }
 }
+

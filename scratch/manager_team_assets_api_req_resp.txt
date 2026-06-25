@@ -1,0 +1,280 @@
+=== 1. GET Dashboard Summary ===
+{
+  "success": true,
+  "message": "Dashboard summary retrieved successfully",
+  "timestamp": "2026-06-24T11:25:03Z",
+  "data": {
+    "teamMembersWithAssets": 2,
+    "totalAssets": 8,
+    "totalAssetValue": 665000.00,
+    "totalAssetValueDisplay": "₹6.7L",
+    "pendingReturns": 0,
+    "pendingRequests": 0
+  }
+}
+
+=== 2. GET Team Assets Inventory ===
+{
+  "success": true,
+  "message": "Team assets retrieved successfully",
+  "timestamp": "2026-06-24T11:25:03Z",
+  "data": {
+    "content": [
+      {
+        "assetAssignmentId": 7,
+        "assetId": 7,
+        "assetCode": "AST-1004",
+        "assetName": "PowerEdge R740",
+        "category": "SERVERS",
+        "serialNumber": "CN-SRV-R740",
+        "value": 350000.00,
+        "status": "ASSIGNED",
+        "employee": {
+          "employeeId": 6,
+          "employeeCode": "EMP006",
+          "employeeName": "Employee User",
+          "designation": "EMPLOYEE"
+        },
+        "assignedDate": "2023-06-24"
+      },
+      {
+        "assetAssignmentId": 6,
+        "assetId": 6,
+        "assetCode": "AST-1003",
+        "assetName": "Jabra Evolve2 65",
+        "category": "ACCESSORIES",
+        "serialNumber": "JABRA-EVO65-882",
+        "value": 18000.00,
+        "status": "ASSIGNED",
+        "employee": {
+          "employeeId": 6,
+          "employeeCode": "EMP006",
+          "employeeName": "Employee User",
+          "designation": "EMPLOYEE"
+        },
+        "assignedDate": "2025-06-24"
+      },
+      {
+        "assetAssignmentId": 5,
+        "assetId": 5,
+        "assetCode": "AST-1002",
+        "assetName": "Logitech MX Master 3S",
+        "category": "ACCESSORIES",
+        "serialNumber": "LOGI-MX3S-991",
+        "value": 12000.00,
+        "status": "ASSIGNED",
+        "employee": {
+          "employeeId": 6,
+          "employeeCode": "EMP006",
+          "employeeName": "Employee User",
+          "designation": "EMPLOYEE"
+        },
+        "assignedDate": "2024-06-24"
+      },
+      {
+        "assetAssignmentId": 4,
+        "assetId": 4,
+        "assetCode": "AST-1001",
+        "assetName": "Dell Latitude 5400",
+        "category": "LAPTOP",
+        "serialNumber": "CN-DL5400-LAT",
+        "value": 10000.00,
+        "status": "ASSIGNED",
+        "employee": {
+          "employeeId": 6,
+          "employeeCode": "EMP006",
+          "employeeName": "Employee User",
+          "designation": "EMPLOYEE"
+        },
+        "assignedDate": "2020-06-24"
+      },
+      {
+        "assetAssignmentId": 3,
+        "assetId": 3,
+        "assetCode": "SN-LG4K-503",
+        "assetName": "LG 4K 27inch",
+        "category": "MONITOR",
+        "serialNumber": "LG-27UL-MON3",
+        "value": 40000.00,
+        "status": "ASSIGNED",
+        "employee": {
+          "employeeId": 6,
+          "employeeCode": "EMP006",
+          "employeeName": "Employee User",
+          "designation": "EMPLOYEE"
+        },
+        "assignedDate": "2026-03-24"
+      }
+    ],
+    "empty": false,
+    "first": true,
+    "last": false,
+    "number": 0,
+    "numberOfElements": 5,
+    "pageable": {
+      "offset": 0,
+      "pageNumber": 0,
+      "pageSize": 5,
+      "paged": true,
+      "sort": {
+        "empty": true,
+        "sorted": false,
+        "unsorted": true
+      },
+      "unpaged": false
+    },
+    "size": 5,
+    "sort": {
+      "empty": true,
+      "sorted": false,
+      "unsorted": true
+    },
+    "totalElements": 11,
+    "totalPages": 3
+  }
+}
+
+=== 3. GET Team Asset Details for Asset ID 1 ===
+{
+  "success": true,
+  "message": "Asset details retrieved successfully",
+  "timestamp": "2026-06-24T11:25:03Z",
+  "data": {
+    "assetId": 1,
+    "assetCode": "SN-DL2024-421",
+    "assetName": "Dell XPS 15",
+    "category": "LAPTOP",
+    "department": "Employee",
+    "serialNumber": "CN-0XX123-DELL1",
+    "status": "ASSIGNED",
+    "value": 115000.00,
+    "condition": "EXCELLENT",
+    "notes": "Healed assignment for seeded asset",
+    "assignedSince": "2025-12-24",
+    "assignedTo": {
+      "employeeId": 6,
+      "employeeCode": "EMP006",
+      "employeeName": "Employee User",
+      "designation": "EMPLOYEE"
+    }
+  }
+}
+
+=== 4. GET Asset Timeline for Asset ID 1 ===
+{
+  "success": true,
+  "message": "Timeline retrieved successfully",
+  "timestamp": "2026-06-24T11:25:03Z",
+  "data": [
+    {
+      "eventType": "ASSIGNED",
+      "date": "2025-12-24",
+      "description": "Initial asset assignment during onboarding."
+    }
+  ]
+}
+
+=== 5. GET Pending Asset Requests ===
+{
+  "success": true,
+  "message": "Pending asset requests retrieved successfully",
+  "timestamp": "2026-06-24T11:25:03Z",
+  "data": {
+    "content": [],
+    "empty": true,
+    "first": true,
+    "last": true,
+    "number": 0,
+    "numberOfElements": 0,
+    "pageable": {
+      "offset": 0,
+      "pageNumber": 0,
+      "pageSize": 5,
+      "paged": true,
+      "sort": {
+        "empty": true,
+        "sorted": false,
+        "unsorted": true
+      },
+      "unpaged": false
+    },
+    "size": 5,
+    "sort": {
+      "empty": true,
+      "sorted": false,
+      "unsorted": true
+    },
+    "totalElements": 0,
+    "totalPages": 0
+  }
+}
+
+=== 6. GET Pending Return Requests ===
+{
+  "success": true,
+  "message": "Pending return requests retrieved successfully",
+  "timestamp": "2026-06-24T11:25:03Z",
+  "data": {
+    "content": [],
+    "empty": true,
+    "first": true,
+    "last": true,
+    "number": 0,
+    "numberOfElements": 0,
+    "pageable": {
+      "offset": 0,
+      "pageNumber": 0,
+      "pageSize": 5,
+      "paged": true,
+      "sort": {
+        "empty": true,
+        "sorted": false,
+        "unsorted": true
+      },
+      "unpaged": false
+    },
+    "size": 5,
+    "sort": {
+      "empty": true,
+      "sorted": false,
+      "unsorted": true
+    },
+    "totalElements": 0,
+    "totalPages": 0
+  }
+}
+
+=== 7. GET Analytics ===
+{
+  "success": true,
+  "message": "Analytics retrieved successfully",
+  "timestamp": "2026-06-24T11:25:03Z",
+  "data": {
+    "assetsByCategory": [
+      {
+        "category": "ACCESSORIES",
+        "count": 5
+      },
+      {
+        "category": "LAPTOP",
+        "count": 3
+      },
+      {
+        "category": "MOBILE",
+        "count": 1
+      },
+      {
+        "category": "MONITOR",
+        "count": 1
+      },
+      {
+        "category": "SERVERS",
+        "count": 1
+      }
+    ],
+    "assignedAssets": 8,
+    "pendingReturns": 0,
+    "totalAssetValue": 665000.00
+  }
+}
+

@@ -25,8 +25,9 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, message, Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(), data);
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> ApiResponse<T> success(String message) {
-        return new ApiResponse<>(true, message, Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(), null);
+        return new ApiResponse<>(true, message, Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(), (T) java.util.Collections.emptyMap());
     }
 
     public boolean isSuccess() {

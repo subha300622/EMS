@@ -163,17 +163,12 @@ public class AuthController {
                 900,
                 604800);
 
-        List<String> permissions = roleService.getEffectivePermissions(user).stream()
-                .map(Permission::getName)
-                .collect(Collectors.toList());
-
         LoginResponse.UserData userData = new LoginResponse.UserData(
                 user.getId(),
                 user.getUserId(),
                 user.getFullName(),
                 user.getWorkEmail(),
                 roleName,
-                permissions,
                 user.getStatus(),
                 Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString());
 
@@ -182,6 +177,23 @@ public class AuthController {
                 Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(), loginData);
 
         return ResponseEntity.ok(responseBody);
+    }
+
+    @Operation(summary = "Get Current User Permissions", description = "Retrieves the list of effective permissions for the logged-in user.")
+    @GetMapping("/permissions")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyPermissions(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        List<String> permissions = roleService.getPermissionsForUserId(user.getUserId());
+
+        return ResponseEntity.ok(ApiResponse.success("Permissions retrieved successfully", permissions));
     }
 
     // ── 2. LOGOUT ────────────────────────────────────────────────────────────

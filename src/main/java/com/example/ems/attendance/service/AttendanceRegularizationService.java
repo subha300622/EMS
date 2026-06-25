@@ -7,6 +7,7 @@ import com.example.ems.attendance.repository.AttendanceRegularizationRepository;
 import com.example.ems.attendance.repository.AttendanceRepository;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.auth.entity.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,36 @@ public class AttendanceRegularizationService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private com.example.ems.auth.service.RoleService roleService;
+
+    public List<AttendanceRegularization> getRegularizationsForUser(User currentUser, String status) {
+        String email = currentUser.getWorkEmail();
+        boolean hasAdminPerm = roleService.hasPermission(email, com.example.ems.auth.service.PermissionRegistry.ATTENDANCE_READ)
+                || roleService.hasPermission(email, com.example.ems.auth.service.PermissionRegistry.ATTENDANCE_MANAGE);
+
+        boolean hasSelfPerm = roleService.hasPermission(email, com.example.ems.auth.service.PermissionRegistry.ATTENDANCE_SELF_READ)
+                || roleService.hasPermission(email, com.example.ems.auth.service.PermissionRegistry.EMPLOYEE_ATTENDANCE_READ);
+
+        if (!hasAdminPerm && !hasSelfPerm) {
+            throw new SecurityException("Access Denied: Requires 'attendance.read', 'attendance.manage', 'attendance.self.read', or 'employee.attendance.read' permission.");
+        }
+
+        if (hasAdminPerm) {
+            if (status == null || status.isBlank()) {
+                return attendanceRegularizationRepository.findAll();
+            }
+            return attendanceRegularizationRepository.findByStatus(status);
+        } else {
+            Employee employee = employeeRepository.findByEmail(email)
+                    .orElseThrow(() -> new SecurityException("Employee profile not found for authenticated user."));
+            if (status == null || status.isBlank()) {
+                return attendanceRegularizationRepository.findByEmployeeId(employee.getId());
+            }
+            return attendanceRegularizationRepository.findByEmployeeIdAndStatus(employee.getId(), status);
+        }
+    }
 
     @Transactional
     public AttendanceRegularization submitRegularization(Long employeeId, LocalDate date, LocalTime proposedPunchIn, LocalTime proposedPunchOut, String reason) {
