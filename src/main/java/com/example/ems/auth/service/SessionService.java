@@ -1,19 +1,17 @@
 package com.example.ems.auth.service;
 
-
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.example.ems.auth.entity.UserSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -23,9 +21,10 @@ public class SessionService {
     private static final Duration REFRESH_TOKEN_VALIDITY = Duration.ofDays(7);
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private DatabaseSessionStore databaseSessionStore;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private RedisSessionCache redisSessionCache;
 
     public static class SessionMetadata {
         private String sessionId;
@@ -35,6 +34,10 @@ public class SessionService {
         private String ipAddress;
         private String refreshToken;
         private String createdAt;
+        private int sessionVersion;
+        private long sessionEpoch;
+        private String status;
+        private boolean current;
 
         public SessionMetadata() {}
 
@@ -46,6 +49,22 @@ public class SessionService {
             this.ipAddress = ipAddress;
             this.refreshToken = refreshToken;
             this.createdAt = LocalDateTime.now().toString();
+            this.sessionVersion = 1;
+            this.sessionEpoch = System.currentTimeMillis();
+            this.status = "ACTIVE";
+        }
+
+        public SessionMetadata(String sessionId, String userId, String email, String userAgent, String ipAddress, String refreshToken, int sessionVersion, long sessionEpoch, String status) {
+            this.sessionId = sessionId;
+            this.userId = userId;
+            this.email = email;
+            this.userAgent = userAgent;
+            this.ipAddress = ipAddress;
+            this.refreshToken = refreshToken;
+            this.createdAt = LocalDateTime.now().toString();
+            this.sessionVersion = sessionVersion;
+            this.sessionEpoch = sessionEpoch;
+            this.status = status;
         }
 
         public String getSessionId() { return sessionId; }
@@ -68,166 +87,217 @@ public class SessionService {
 
         public String getCreatedAt() { return createdAt; }
         public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+        public int getSessionVersion() { return sessionVersion; }
+        public void setSessionVersion(int sessionVersion) { this.sessionVersion = sessionVersion; }
+
+        public long getSessionEpoch() { return sessionEpoch; }
+        public void setSessionEpoch(long sessionEpoch) { this.sessionEpoch = sessionEpoch; }
+
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+
+        public boolean isCurrent() { return current; }
+        public void setCurrent(boolean current) { this.current = current; }
     }
 
-    private String getTokenKey(String token) {
-        return "session:token:" + token;
+    private SessionMetadata convertToMetadata(UserSession userSession) {
+        SessionMetadata metadata = new SessionMetadata();
+        metadata.setSessionId(userSession.getSessionId());
+        metadata.setUserId(userSession.getUserId());
+        metadata.setEmail(userSession.getEmail());
+        metadata.setUserAgent(userSession.getUserAgent());
+        metadata.setIpAddress(userSession.getIpAddress());
+        metadata.setRefreshToken(userSession.getRefreshToken());
+        metadata.setCreatedAt(userSession.getCreatedAt().toString());
+        metadata.setSessionVersion(userSession.getSessionVersion());
+        metadata.setSessionEpoch(userSession.getSessionEpoch());
+        metadata.setStatus(userSession.getStatus());
+        return metadata;
     }
 
-    private String getUserSessionKey(String userId, String sessionId) {
-        return "session:user:" + userId + ":" + sessionId;
-    }
-
+    @Transactional
     public SessionMetadata createSession(String userId, String email, String userAgent, String ipAddress) {
         String sessionId = UUID.randomUUID().toString();
         String refreshToken = UUID.randomUUID().toString();
 
-        SessionMetadata session = new SessionMetadata(sessionId, userId, email, userAgent, ipAddress, refreshToken);
+        UserSession dbSession = new UserSession(
+                sessionId,
+                userId,
+                email,
+                userAgent,
+                ipAddress,
+                refreshToken,
+                LocalDateTime.now(),
+                LocalDateTime.now().plus(REFRESH_TOKEN_VALIDITY),
+                false,
+                1,
+                1L,
+                "ACTIVE"
+        );
 
-        try {
-            String json = objectMapper.writeValueAsString(session);
-            redisTemplate.opsForValue().set(getTokenKey(refreshToken), json, REFRESH_TOKEN_VALIDITY);
-            redisTemplate.opsForValue().set(getUserSessionKey(userId, sessionId), json, REFRESH_TOKEN_VALIDITY);
-            log.info("Session created for user {}: SessionID={}", email, sessionId);
-        } catch (Exception e) {
-            log.error("Failed to save session to Redis", e);
-        }
+        // 1. Authoritative DB Write (transactional — rolls back if save fails)
+        databaseSessionStore.save(dbSession);
+        log.info("Session created in DB for user {}: SessionID={}", email, sessionId);
 
-        return session;
+        // 2. Cache Write-Through (after DB save succeeds)
+        redisSessionCache.save(dbSession);
+
+        return convertToMetadata(dbSession);
     }
 
     public SessionMetadata getSessionByRefreshToken(String refreshToken) {
-        try {
-            String json = redisTemplate.opsForValue().get(getTokenKey(refreshToken));
-            if (json == null) return null;
-            return objectMapper.readValue(json, SessionMetadata.class);
-        } catch (Exception e) {
-            log.error("Failed to fetch session from Redis for refresh token", e);
-            return null;
+        if (refreshToken == null) return null;
+
+        // 1. Try Redis cache first
+        Optional<UserSession> cachedSession = redisSessionCache.findByRefreshToken(refreshToken);
+        if (cachedSession.isPresent()) {
+            return convertToMetadata(cachedSession.get());
         }
+
+        // 2. Query DB on cache miss
+        Optional<UserSession> dbSessionOpt = databaseSessionStore.findByRefreshToken(refreshToken);
+        if (dbSessionOpt.isPresent()) {
+            UserSession dbSession = dbSessionOpt.get();
+            if (!dbSession.isRevoked() && "ACTIVE".equals(dbSession.getStatus()) && LocalDateTime.now().isBefore(dbSession.getExpiryTime())) {
+                // Populate cache
+                redisSessionCache.save(dbSession);
+                return convertToMetadata(dbSession);
+            }
+        }
+        return null;
     }
 
+    @Transactional
     public SessionMetadata rotateRefreshToken(String oldRefreshToken) {
-        SessionMetadata session = getSessionByRefreshToken(oldRefreshToken);
-        if (session == null) return null;
-
-        try {
-            // Revoke old token key
-            redisTemplate.delete(getTokenKey(oldRefreshToken));
-        } catch (Exception e) {
-            log.error("Failed to delete old refresh token key from Redis during rotation", e);
-        }
-
-        // Generate new refresh token
-        String newRefreshToken = UUID.randomUUID().toString();
-        session.setRefreshToken(newRefreshToken);
-
-        try {
-            String json = objectMapper.writeValueAsString(session);
-            // Save new token key
-            redisTemplate.opsForValue().set(getTokenKey(newRefreshToken), json, REFRESH_TOKEN_VALIDITY);
-            // Update user session metadata key
-            redisTemplate.opsForValue().set(getUserSessionKey(session.getUserId(), session.getSessionId()), json, REFRESH_TOKEN_VALIDITY);
-            log.info("Token rotated for session ID: {}", session.getSessionId());
-        } catch (Exception e) {
-            log.error("Failed to save rotated refresh token in Redis", e);
+        Optional<UserSession> dbSessionOpt = databaseSessionStore.findByRefreshToken(oldRefreshToken);
+        if (dbSessionOpt.isEmpty()) {
+            log.warn("rotateRefreshToken: Token not found in DB — may belong to a previous server session or was already consumed");
             return null;
         }
 
-        return session;
+        UserSession dbSession = dbSessionOpt.get();
+
+        if (dbSession.isRevoked() || dbSession.getRevokedAt() != null) {
+            log.warn("rotateRefreshToken: Session {} is already REVOKED (revokedAt={})",
+                    dbSession.getSessionId(), dbSession.getRevokedAt());
+            return null;
+        }
+        if (!"ACTIVE".equals(dbSession.getStatus())) {
+            log.warn("rotateRefreshToken: Session {} has non-ACTIVE status: '{}'",
+                    dbSession.getSessionId(), dbSession.getStatus());
+            return null;
+        }
+        if (LocalDateTime.now().isAfter(dbSession.getExpiryTime())) {
+            log.warn("rotateRefreshToken: Session {} is EXPIRED (expiryTime={})",
+                    dbSession.getSessionId(), dbSession.getExpiryTime());
+            return null;
+        }
+
+        String newRefreshToken = UUID.randomUUID().toString();
+
+        // 1. Update session in DB within this transaction (DB is the authority)
+        dbSession.setRefreshToken(newRefreshToken);
+        dbSession.setSessionVersion(dbSession.getSessionVersion() + 1);
+        dbSession.setSessionEpoch(dbSession.getSessionEpoch() + 1);
+        databaseSessionStore.save(dbSession);
+
+        // 2. Evict old cache entry and write new entry AFTER DB save succeeds
+        redisSessionCache.delete(dbSession.getSessionId());
+        redisSessionCache.save(dbSession);
+
+        log.info("Token rotated for session ID: {}, new version: {}, new epoch: {}",
+                dbSession.getSessionId(), dbSession.getSessionVersion(), dbSession.getSessionEpoch());
+        return convertToMetadata(dbSession);
     }
 
+    @Transactional
     public void revokeSession(String refreshToken) {
-        try {
-            SessionMetadata session = getSessionByRefreshToken(refreshToken);
-            if (session != null) {
-                redisTemplate.delete(getTokenKey(refreshToken));
-                redisTemplate.delete(getUserSessionKey(session.getUserId(), session.getSessionId()));
-                log.info("Session revoked: {}", session.getSessionId());
-            }
-        } catch (Exception e) {
-            log.error("Failed to revoke session in Redis", e);
+        if (refreshToken == null) return;
+
+        Optional<UserSession> dbSessionOpt = databaseSessionStore.findByRefreshToken(refreshToken);
+        if (dbSessionOpt.isPresent()) {
+            UserSession dbSession = dbSessionOpt.get();
+            dbSession.setRevoked(true);
+            dbSession.setStatus("REVOKED");
+            dbSession.setRevokedAt(LocalDateTime.now());
+            dbSession.setRevocationEventId(UUID.randomUUID().toString());
+            // Scramble refresh token so it cannot be matched/found by old value anymore
+            dbSession.setRefreshToken("REVOKED-" + java.util.UUID.randomUUID().toString());
+            databaseSessionStore.save(dbSession);
+            // Evict from Redis cache after DB commit
+            redisSessionCache.delete(dbSession.getSessionId());
+            log.info("Session revoked: {}", dbSession.getSessionId());
+        } else {
+            log.warn("revokeSession: Refresh token not found in DB — session may have already been revoked");
         }
     }
 
+    @Transactional
     public void revokeSessionById(String userId, String sessionId) {
-        try {
-            String userKey = getUserSessionKey(userId, sessionId);
-            String json = redisTemplate.opsForValue().get(userKey);
-            if (json != null) {
-                try {
-                    SessionMetadata session = objectMapper.readValue(json, SessionMetadata.class);
-                    redisTemplate.delete(getTokenKey(session.getRefreshToken()));
-                    redisTemplate.delete(userKey);
-                    log.info("Session ID {} revoked for User {}", sessionId, userId);
-                } catch (Exception e) {
-                    log.error("Failed to revoke session keys in Redis", e);
-                }
-            }
-        } catch (Exception e) {
-            log.error("Failed to get/revoke session in Redis for ID: {}", sessionId, e);
+        if (sessionId == null) return;
+
+        Optional<UserSession> dbSessionOpt = databaseSessionStore.findById(sessionId);
+        if (dbSessionOpt.isPresent()) {
+            UserSession dbSession = dbSessionOpt.get();
+            dbSession.setRevoked(true);
+            dbSession.setStatus("REVOKED");
+            dbSession.setRevokedAt(LocalDateTime.now());
+            dbSession.setRevocationEventId(UUID.randomUUID().toString());
+            // Scramble refresh token so it cannot be matched/found by old value anymore
+            dbSession.setRefreshToken("REVOKED-" + java.util.UUID.randomUUID().toString());
+            databaseSessionStore.save(dbSession);
+            // Evict from Redis cache after DB save
+            redisSessionCache.delete(sessionId);
+            log.info("Session ID {} revoked in DB for User {}", sessionId, userId);
+        } else {
+            log.warn("revokeSessionById: Session ID {} not found in DB for user {}", sessionId, userId);
         }
     }
 
     public List<SessionMetadata> getActiveSessions(String userId) {
         List<SessionMetadata> list = new ArrayList<>();
-        try {
-            Set<String> keys = redisTemplate.keys("session:user:" + userId + ":*");
-            if (keys == null || keys.isEmpty()) return list;
+        if (userId == null) return list;
 
-            for (String key : keys) {
-                try {
-                    String json = redisTemplate.opsForValue().get(key);
-                    if (json != null) {
-                        list.add(objectMapper.readValue(json, SessionMetadata.class));
-                    }
-                } catch (Exception e) {
-                    log.error("Failed to fetch/parse active session key {}", key, e);
-                }
+        List<UserSession> dbSessions = databaseSessionStore.findByUserIdAndIsRevokedFalse(userId);
+        for (UserSession dbSession : dbSessions) {
+            if ("ACTIVE".equals(dbSession.getStatus()) && LocalDateTime.now().isBefore(dbSession.getExpiryTime())) {
+                list.add(convertToMetadata(dbSession));
             }
-        } catch (Exception e) {
-            log.error("Failed to get active sessions from Redis for user: {}", userId, e);
         }
         return list;
     }
 
+    @Transactional
     public void revokeAllSessions(String userId) {
-        try {
-            Set<String> keys = redisTemplate.keys("session:user:" + userId + ":*");
-            if (keys == null || keys.isEmpty()) return;
+        if (userId == null) return;
 
-            for (String key : keys) {
-                try {
-                    String json = redisTemplate.opsForValue().get(key);
-                    if (json != null) {
-                        SessionMetadata session = objectMapper.readValue(json, SessionMetadata.class);
-                        redisTemplate.delete(getTokenKey(session.getRefreshToken()));
-                    }
-                } catch (Exception e) {
-                    log.error("Failed to revoke refresh token key in revokeAllSessions for user {}", userId, e);
-                }
-                try {
-                    redisTemplate.delete(key);
-                } catch (Exception e) {
-                    log.error("Failed to delete user session key {} in revokeAllSessions", key, e);
-                }
-            }
-            log.info("All sessions revoked for user: {}", userId);
-        } catch (Exception e) {
-            log.error("Failed to revoke all sessions from Redis for user: {}", userId, e);
+        List<UserSession> dbSessions = databaseSessionStore.findByUserIdAndIsRevokedFalse(userId);
+        for (UserSession dbSession : dbSessions) {
+            dbSession.setRevoked(true);
+            dbSession.setStatus("REVOKED");
+            dbSession.setRevokedAt(LocalDateTime.now());
+            dbSession.setRevocationEventId(UUID.randomUUID().toString());
+            // Scramble refresh token so it cannot be matched/found by old value anymore
+            dbSession.setRefreshToken("REVOKED-" + java.util.UUID.randomUUID().toString());
+            databaseSessionStore.save(dbSession);
+            // Evict from Redis cache after DB save
+            redisSessionCache.delete(dbSession.getSessionId());
         }
+        log.info("All {} sessions revoked in DB for user: {}", dbSessions.size(), userId);
     }
 
     public boolean isSessionActive(String userId, String sessionId) {
+        // Validation check is now performed exclusively in SessionAuthorityService, 
+        // but delegate to the DatabaseSessionStore directly here for compatibility.
         if (userId == null || sessionId == null) {
             return false;
         }
-        try {
-            return Boolean.TRUE.equals(redisTemplate.hasKey(getUserSessionKey(userId, sessionId)));
-        } catch (Exception e) {
-            log.error("Failed to check if session is active in Redis", e);
-            return true; // Fallback to true (allow if Redis is down)
+        Optional<UserSession> dbSessionOpt = databaseSessionStore.findById(sessionId);
+        if (dbSessionOpt.isPresent()) {
+            UserSession dbSession = dbSessionOpt.get();
+            return !dbSession.isRevoked() && "ACTIVE".equals(dbSession.getStatus()) && LocalDateTime.now().isBefore(dbSession.getExpiryTime());
         }
+        return false;
     }
 }
-

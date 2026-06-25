@@ -19,6 +19,9 @@ public class FlywayConfig {
     @Value("${spring.flyway.clean-disabled:true}")
     private boolean cleanDisabled;
 
+    @Value("${spring.flyway.out-of-order:false}")
+    private boolean outOfOrder;
+
     @Bean(initMethod = "migrate")
     public Flyway flyway(DataSource dataSource) {
         if (!enabled) {
@@ -28,6 +31,7 @@ public class FlywayConfig {
                 .dataSource(dataSource)
                 .baselineOnMigrate(baselineOnMigrate)
                 .cleanDisabled(cleanDisabled)
+                .outOfOrder(outOfOrder)
                 .load();
     }
 }

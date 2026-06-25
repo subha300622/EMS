@@ -3,7 +3,6 @@ package com.example.ems.training.controller;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
-import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;

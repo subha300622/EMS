@@ -170,4 +170,54 @@ public class AuthControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errorCode").value("VAL_003"));
     }
+
+    @Test
+    public void testRefreshSuccess() throws Exception {
+        com.example.ems.auth.dto.RefreshTokenRequest refreshRequest = new com.example.ems.auth.dto.RefreshTokenRequest();
+        refreshRequest.setRefreshToken("valid-refresh-token");
+
+        SessionService.SessionMetadata sessionMetadata = new SessionService.SessionMetadata(
+                "session-id", "EMP001", "test@example.com", "User-Agent", "127.0.0.1", "new-refresh-token"
+        );
+        when(sessionService.rotateRefreshToken("valid-refresh-token")).thenReturn(sessionMetadata);
+
+        User user = new User();
+        user.setId(1L);
+        user.setUserId("EMP001");
+        user.setWorkEmail("test@example.com");
+        Role role = new Role();
+        role.setName("EMPLOYEE");
+        user.setRole(role);
+
+        when(userRepository.findByWorkEmail("test@example.com")).thenReturn(Optional.of(user));
+        when(jwtService.generateAccessToken(any(), any(), any(), any())).thenReturn("new-access-token");
+        when(jwtService.generateAccessToken(any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyLong())).thenReturn("new-access-token");
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("Token refreshed successfully"))
+                .andExpect(jsonPath("$.data.accessToken").value("new-access-token"))
+                .andExpect(jsonPath("$.data.refreshToken").value("new-refresh-token"))
+                .andExpect(jsonPath("$.data.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.data.accessTokenExpiresIn").value(900))
+                .andExpect(jsonPath("$.data.refreshTokenExpiresIn").value(604800));
+    }
+
+    @Test
+    public void testRefreshInvalidToken() throws Exception {
+        com.example.ems.auth.dto.RefreshTokenRequest refreshRequest = new com.example.ems.auth.dto.RefreshTokenRequest();
+        refreshRequest.setRefreshToken("invalid-refresh-token");
+
+        when(sessionService.rotateRefreshToken("invalid-refresh-token")).thenReturn(null);
+
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(refreshRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode").value("AUTH_012"));
+    }
 }

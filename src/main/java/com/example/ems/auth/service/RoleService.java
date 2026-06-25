@@ -31,6 +31,7 @@ public class RoleService {
     @Autowired
     private org.springframework.cache.CacheManager cacheManager;
 
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     @org.springframework.cache.annotation.Cacheable(value = "userPermissions", key = "#userId")
     public List<String> getPermissionsForUserId(String userId) {
         if (userId == null) {
@@ -105,15 +106,15 @@ public class RoleService {
             return false;
         }
         User user = optUser.get();
-        Set<Permission> perms = getEffectivePermissions(user);
+        List<String> permissions = getPermissionsForUserId(user.getUserId());
 
         // SUPER_ADMIN bypass: if user has system.manage, allow everything
-        boolean isSuperAdmin = perms.stream().anyMatch(p -> "system.manage".equalsIgnoreCase(p.getName()));
+        boolean isSuperAdmin = permissions.contains("system.manage");
         if (isSuperAdmin) {
             return true;
         }
 
-        return perms.stream().anyMatch(permission -> permission.getName().equalsIgnoreCase(permissionName));
+        return permissions.stream().anyMatch(perm -> perm.equalsIgnoreCase(permissionName));
     }
 
     /**

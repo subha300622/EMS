@@ -5,11 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.data.redis.RedisConnectionFailureException;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -18,10 +17,10 @@ import static org.mockito.Mockito.*;
 public class SessionServiceDowntimeTest {
 
     @Mock
-    private StringRedisTemplate redisTemplate;
+    private DatabaseSessionStore databaseSessionStore;
 
     @Mock
-    private ValueOperations<String, String> valueOperations;
+    private RedisSessionCache redisSessionCache;
 
     @InjectMocks
     private SessionService sessionService;
@@ -29,26 +28,26 @@ public class SessionServiceDowntimeTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
     public void testGetSessionByRefreshToken_RedisDown() {
-        when(valueOperations.get(any())).thenThrow(new RedisConnectionFailureException("Redis is offline"));
+        when(redisSessionCache.findByRefreshToken(any())).thenReturn(Optional.empty());
+        when(databaseSessionStore.findByRefreshToken(any())).thenReturn(Optional.empty());
 
         assertNull(sessionService.getSessionByRefreshToken("some-token"));
     }
 
     @Test
     public void testRevokeSession_RedisDown() {
-        when(valueOperations.get(any())).thenThrow(new RedisConnectionFailureException("Redis is offline"));
+        when(databaseSessionStore.findByRefreshToken(any())).thenReturn(Optional.empty());
 
         assertDoesNotThrow(() -> sessionService.revokeSession("some-token"));
     }
 
     @Test
     public void testGetActiveSessions_RedisDown() {
-        when(redisTemplate.keys(any())).thenThrow(new RedisConnectionFailureException("Redis is offline"));
+        when(databaseSessionStore.findByUserIdAndIsRevokedFalse(any())).thenReturn(Collections.emptyList());
 
         List<SessionService.SessionMetadata> sessions = sessionService.getActiveSessions("EMP001");
         assertNotNull(sessions);
@@ -57,8 +56,8 @@ public class SessionServiceDowntimeTest {
 
     @Test
     public void testIsSessionActive_RedisDown() {
-        when(redisTemplate.hasKey(any())).thenThrow(new RedisConnectionFailureException("Redis is offline"));
+        when(databaseSessionStore.findById(any())).thenReturn(Optional.empty());
 
-        assertTrue(sessionService.isSessionActive("EMP001", "session-123"));
+        assertFalse(sessionService.isSessionActive("EMP001", "session-123"));
     }
 }

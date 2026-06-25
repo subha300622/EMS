@@ -81,4 +81,14 @@ public class SystemSettingService {
                 .map(SystemSetting::getSettingValue)
                 .orElse(defaultValue);
     }
+
+    @Transactional(readOnly = true)
+    public java.time.LocalTime getOfficeStartTime() {
+        String val = getSettingValue("attendance.office_start_time", "09:30");
+        try {
+            return java.time.LocalTime.parse(val.trim());
+        } catch (Exception e) {
+            return java.time.LocalTime.of(9, 30);
+        }
+    }
 }

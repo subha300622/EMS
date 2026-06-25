@@ -301,9 +301,12 @@ public class UserService {
     public User updateUserProfile(Long id, com.example.ems.auth.dto.ProfileUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        user.setFullName(request.getFullName());
-        user.setMobileNumber(request.getMobileNumber());
-        user.setLocation(request.getLocation());
+        if (request.getPhone() != null) {
+            user.setMobileNumber(request.getPhone());
+        }
+        if (request.getAddress() != null) {
+            user.setLocation(request.getAddress());
+        }
         User saved = userRepository.save(user);
         roleService.evictUserPermissionsCache(saved.getUserId());
         return saved;

@@ -4,10 +4,12 @@ import java.util.List;
 import com.example.ems.attendance.dto.CheckInRequest;
 import com.example.ems.attendance.dto.CheckOutRequest;
 import com.example.ems.attendance.entity.Attendance;
+import com.example.ems.attendance.exception.DuplicateCheckInException;
 import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
+import com.example.ems.common.dto.PaginatedApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
@@ -84,10 +86,12 @@ public class MyAttendanceController {
         }
 
         try {
-            String notes = request != null ? request.getNotes() : null;
-            Attendance record = attendanceService.checkIn(employee, notes);
+            Attendance record = attendanceService.checkIn(employee, request);
             return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Checked in successfully", record));
+        } catch (DuplicateCheckInException e) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ErrorResponse.error(e.getMessage(), "ATT_002"));
         } catch (IllegalArgumentException e) {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ATT_001"));
         }
@@ -136,7 +140,9 @@ public class MyAttendanceController {
     @GetMapping("/attendance/me")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<Attendance>>> getMyAttendanceHistory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size){
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -150,7 +156,21 @@ public class MyAttendanceController {
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Attendance history retrieved successfully", 
-                attendanceService.getAttendanceByEmployeeId(employee.getId())));
+        int zeroBasedPage = Math.max(0, page - 1);
+        int pageSize = Math.max(1, size);
+
+        org.springframework.data.domain.Page<Attendance> attendancePage = 
+                attendanceService.getAttendanceByEmployeeIdPaginated(employee.getId(), zeroBasedPage, pageSize);
+
+        attendanceService.populateRegularizationStatuses(attendancePage.getContent(), employee.getId());
+
+        return ResponseEntity.ok((ApiResponse) PaginatedApiResponse.success(
+                "Attendance history retrieved successfully",
+                attendancePage.getContent(),
+                page,
+                pageSize,
+                attendancePage.getTotalElements(),
+                attendancePage.getTotalPages()
+        ));
     }
 }

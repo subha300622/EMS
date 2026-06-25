@@ -42,6 +42,13 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error("Malformed JSON request body: " + ex.getMessage(), "VAL_003"));
     }
 
+    @ExceptionHandler(com.example.ems.attendance.exception.DuplicateCheckInException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateCheckIn(
+            com.example.ems.attendance.exception.DuplicateCheckInException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error(ex.getMessage(), "ATT_002"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) throws Exception {
         if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {

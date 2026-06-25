@@ -123,9 +123,9 @@ public class AttendanceRegularizationService {
         attendance.setPunchOutTime(approvedPunchOut);
 
         if (approvedPunchIn != null && approvedPunchIn.isAfter(LocalTime.of(9, 30))) {
-            attendance.setStatus("Late");
+            attendance.setStatus("LATE");
         } else {
-            attendance.setStatus("Present");
+            attendance.setStatus("PRESENT");
         }
 
         String notes = "Regularized: " + reg.getReason();

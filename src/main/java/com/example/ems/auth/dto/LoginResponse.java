@@ -1,8 +1,6 @@
 package com.example.ems.auth.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.List;
-
 public class LoginResponse {
     @Schema(example = "true")
     private boolean success;

@@ -187,7 +187,7 @@ public class AppraisalService {
     @CacheEvict(value = "appraisalDashboard", allEntries = true)
     public Optional<AppraisalResponse> submitManagerReview(Long id, AppraisalManagerReviewRequest request,
             String reviewerEmail) {
-        User user = userRepository.findByWorkEmail(reviewerEmail)
+        userRepository.findByWorkEmail(reviewerEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + reviewerEmail));
 
         Employee manager = employeeRepository.findByEmail(reviewerEmail).orElse(null);
@@ -420,7 +420,7 @@ public class AppraisalService {
     @Transactional
     @CacheEvict(value = "appraisalDashboard", allEntries = true)
     public Optional<IncrementResponse> approveIncrement(Long id, String approvedByEmail) {
-        User user = userRepository.findByWorkEmail(approvedByEmail)
+        userRepository.findByWorkEmail(approvedByEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + approvedByEmail));
 
         Employee manager = employeeRepository.findByEmail(approvedByEmail).orElse(null);
@@ -513,7 +513,7 @@ public class AppraisalService {
     @Transactional
     @CacheEvict(value = "appraisalDashboard", allEntries = true)
     public Optional<IncrementResponse> rejectIncrement(Long id, String rejectedByEmail) {
-        User user = userRepository.findByWorkEmail(rejectedByEmail)
+        userRepository.findByWorkEmail(rejectedByEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + rejectedByEmail));
 
         Employee manager = employeeRepository.findByEmail(rejectedByEmail).orElse(null);
@@ -1182,7 +1182,7 @@ public class AppraisalService {
         Appraisal a = appraisalRepository.findById(appraisalId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal not found: " + appraisalId));
 
-        User user = userRepository.findByWorkEmail(financeEmail)
+        userRepository.findByWorkEmail(financeEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + financeEmail));
         Employee financeEmp = employeeRepository.findByEmail(financeEmail).orElse(null);
 
@@ -1230,7 +1230,7 @@ public class AppraisalService {
         Appraisal a = appraisalRepository.findById(appraisalId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal not found: " + appraisalId));
 
-        User user = userRepository.findByWorkEmail(financeEmail)
+        userRepository.findByWorkEmail(financeEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + financeEmail));
         Employee financeEmp = employeeRepository.findByEmail(financeEmail).orElse(null);
 
@@ -1657,8 +1657,9 @@ public class AppraisalService {
     }
 
     public List<Map<String, Object>> getTimeline(Long id) {
-        Appraisal a = appraisalRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
+        if (!appraisalRepository.existsById(id)) {
+            throw new BadRequestException("Appraisal not found: " + id);
+        }
         List<AppraisalTimelineEvent> events = timelineEventRepository.findByAppraisalIdOrderByTimestampAsc(id);
         return events.stream().map(e -> {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -1671,8 +1672,9 @@ public class AppraisalService {
     }
 
     public List<Map<String, Object>> getComments(Long id) {
-        Appraisal a = appraisalRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
+        if (!appraisalRepository.existsById(id)) {
+            throw new BadRequestException("Appraisal not found: " + id);
+        }
         List<AppraisalComment> comments = commentRepository.findByAppraisalIdOrderByCreatedAtAsc(id);
         return comments.stream().map(c -> {
             Map<String, Object> m = new LinkedHashMap<>();

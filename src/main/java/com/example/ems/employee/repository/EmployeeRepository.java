@@ -18,4 +18,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
     java.util.List<Employee> findByDepartment(String department);
 
     java.util.List<Employee> findByManagerId(Long managerId);
+
+    long countByManagerId(Long managerId);
 }

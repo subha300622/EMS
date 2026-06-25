@@ -7,6 +7,12 @@ import com.example.ems.attendance.repository.AttendanceRepository;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 
+import com.example.ems.attendance.dto.CheckInRequest;
+import com.example.ems.attendance.entity.AttendanceStatus;
+import com.example.ems.attendance.entity.AttendanceRegularization;
+import com.example.ems.attendance.repository.AttendanceRegularizationRepository;
+import com.example.ems.attendance.exception.DuplicateCheckInException;
+import com.example.ems.settings.service.SystemSettingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +37,12 @@ public class AttendanceService {
 
     @Autowired
     private AttendanceLogService attendanceLogService;
+
+    @Autowired
+    private SystemSettingService systemSettingService;
+
+    @Autowired
+    private AttendanceRegularizationRepository attendanceRegularizationRepository;
 
     @Transactional
     public Attendance addAttendanceRecord(AttendanceRequest request) {
@@ -179,14 +191,18 @@ public class AttendanceService {
 
     @Transactional
     public Attendance checkIn(Employee employee, String notes) {
+        return checkIn(employee, new CheckInRequest(notes));
+    }
+
+    @Transactional
+    public Attendance checkIn(Employee employee, CheckInRequest request) {
         LocalDate today = LocalDate.now();
 
         // Idempotency validation and log swipe trail
         attendanceLogService.logSwipe(employee, "SWIPE_IN", "OFFICE_GATE");
 
-        Optional<Attendance> existing = attendanceRepository.findByEmployeeIdAndDate(employee.getId(), today);
-        if (existing.isPresent()) {
-            throw new IllegalArgumentException("Already checked in today");
+        if (attendanceRepository.existsByEmployeeIdAndDate(employee.getId(), today)) {
+            throw new DuplicateCheckInException("Already checked in today");
         }
 
         Attendance attendance = new Attendance();
@@ -197,19 +213,51 @@ public class AttendanceService {
         attendance.setPunchInTime(now);
         attendance.setOriginalPunchInTime(now);
 
-        // Mark as Late if punch-in is after 09:30 AM
-        if (now.isAfter(LocalTime.of(9, 30))) {
-            attendance.setStatus("Late");
+        LocalTime officeStartTime = systemSettingService.getOfficeStartTime();
+
+        AttendanceStatus status;
+        String lateBy = "00:00";
+        boolean isLate = false;
+        if (now.isAfter(officeStartTime)) {
+            status = AttendanceStatus.LATE;
+            isLate = true;
+            java.time.Duration duration = java.time.Duration.between(officeStartTime, now);
+            long hours = duration.toHours();
+            long minutes = duration.toMinutesPart();
+            lateBy = String.format("%02d:%02d", hours, minutes);
         } else {
-            attendance.setStatus("Present");
+            status = AttendanceStatus.PRESENT;
         }
+
+        attendance.setStatus(status);
+        attendance.setIsLate(isLate);
+        attendance.setLateBy(lateBy);
+
+        String notes = request != null ? request.getNotes() : null;
         attendance.setNotes(notes);
+
+        String attType = (request != null && request.getAttendanceType() != null)
+                ? request.getAttendanceType().toUpperCase()
+                : (employee.getWorkMode() != null ? employee.getWorkMode().toUpperCase() : "OFFICE");
+        attendance.setAttendanceType(attType);
+
+        boolean gpsEnabled = "true".equalsIgnoreCase(systemSettingService.getSettingValue("attendance.gps_enabled", "false"));
+        String location = request != null ? request.getLocation() : null;
+
+        if (gpsEnabled && (location == null || location.trim().isEmpty())) {
+            location = employee.getLocation();
+            if (location == null || location.trim().isEmpty()) {
+                throw new IllegalArgumentException("Location required for GPS attendance");
+            }
+        }
+        attendance.setLocation(location);
+        attendance.setServerTime(java.time.Instant.now());
 
         try {
             return attendanceRepository.save(attendance);
         } catch (org.springframework.dao.DataIntegrityViolationException e) {
             log.warn("Duplicate check-in attempt detected for employeeId={}", employee.getId());
-            throw new IllegalArgumentException("Already checked in today");
+            throw new DuplicateCheckInException("Already checked in today");
         }
     }
 
@@ -244,5 +292,24 @@ public class AttendanceService {
 
     public List<Attendance> getTodayAllAttendance() {
         return attendanceRepository.findByDate(LocalDate.now());
+    }
+
+    public org.springframework.data.domain.Page<Attendance> getAttendanceByEmployeeIdPaginated(Long employeeId, int page, int size) {
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "date"));
+        return attendanceRepository.findByEmployeeId(employeeId, pageable);
+    }
+
+    public void populateRegularizationStatuses(List<Attendance> attendances, Long employeeId) {
+        if (attendances == null || attendances.isEmpty()) {
+            return;
+        }
+        List<AttendanceRegularization> regs = attendanceRegularizationRepository.findByEmployeeId(employeeId);
+        Map<LocalDate, String> regMap = new HashMap<>();
+        for (AttendanceRegularization reg : regs) {
+            regMap.put(reg.getDate(), reg.getStatus());
+        }
+        for (Attendance a : attendances) {
+            a.setRegularizationStatus(regMap.get(a.getDate()));
+        }
     }
 }

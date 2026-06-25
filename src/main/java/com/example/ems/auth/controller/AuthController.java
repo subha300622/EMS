@@ -15,7 +15,6 @@ import com.example.ems.auth.dto.RegisterRequest;
 import com.example.ems.auth.dto.ResetPasswordRequest;
 import com.example.ems.auth.dto.VerifyOtpRequest;
 import com.example.ems.auth.entity.Invitation;
-import com.example.ems.auth.entity.Permission;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.InvitationRepository;
@@ -86,6 +85,9 @@ public class AuthController {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private com.example.ems.security.context.SecurityContextFacade securityContextFacade;
+
     // Helper: Resolve currently authenticated User via JWT only
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -154,7 +156,7 @@ public class AuthController {
 
         // Generate Tokens linked to this session
         String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName,
-                session.getSessionId());
+                session.getSessionId(), session.getSessionVersion(), session.getSessionEpoch());
 
         LoginResponse.TokenData tokenData = new LoginResponse.TokenData(
                 accessToken,
@@ -225,12 +227,14 @@ public class AuthController {
         String roleName = user.getRole() != null ? user.getRole().getName() : user.getRequestedRole();
 
         String newAccessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName,
-                session.getSessionId());
+                session.getSessionId(), session.getSessionVersion(), session.getSessionEpoch());
 
         return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", Map.of(
                 "accessToken", newAccessToken,
                 "refreshToken", session.getRefreshToken(),
-                "expiresIn", 900)));
+                "tokenType", "Bearer",
+                "accessTokenExpiresIn", 900,
+                "refreshTokenExpiresIn", 604800)));
     }
 
     // ── 4. FORGOT PASSWORD ───────────────────────────────────────────────────
@@ -325,9 +329,7 @@ public class AuthController {
         if (user.getRole() != null) {
             roleMap = Map.of("roleId", user.getRole().getId(), "name", user.getRole().getName());
         }
-        List<String> permissions = roleService.getEffectivePermissions(user).stream()
-                .map(Permission::getName)
-                .collect(Collectors.toList());
+        List<String> permissions = roleService.getPermissionsForUserId(user.getUserId());
 
         Map<String, Object> userData = new java.util.HashMap<>();
         userData.put("id", user.getId());
@@ -394,7 +396,7 @@ public class AuthController {
                     m.put("location", "Bangalore, India");
                     m.put("createdAt", s.getCreatedAt());
                     m.put("lastActiveAt", s.getCreatedAt());
-                    m.put("current", s.getIpAddress().equals(getClientIp(httpRequest)));
+                    m.put("current", s.getSessionId().equals(securityContextFacade.getSessionId()));
                     return m;
                 })
                 .collect(Collectors.toList());
