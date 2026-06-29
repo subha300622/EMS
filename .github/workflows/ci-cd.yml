@@ -51,7 +51,7 @@ jobs:
         run: chmod +x mvnw
 
       - name: Build & Run Tests
-        run: ./mvnw clean verify --batch-mode
+        run: ./mvnw clean verify --batch-mode -Dsurefire.useFile=false
 
       # Optional: Upload test reports if build fails
       - name: Upload Test Reports
