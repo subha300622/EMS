@@ -21,10 +21,14 @@ public class SafeRedisService {
     // Propagating Set
     public void set(String key, String value, Duration timeout) {
         if (redisTemplate != null) {
-            if (timeout != null) {
-                redisTemplate.opsForValue().set(key, value, timeout);
-            } else {
-                redisTemplate.opsForValue().set(key, value);
+            try {
+                if (timeout != null) {
+                    redisTemplate.opsForValue().set(key, value, timeout);
+                } else {
+                    redisTemplate.opsForValue().set(key, value);
+                }
+            } catch (Exception e) {
+                log.warn("Redis set failed for key '{}': {}", key, e.getMessage());
             }
         }
     }
@@ -32,7 +36,11 @@ public class SafeRedisService {
     // Propagating Get
     public String get(String key) {
         if (redisTemplate != null) {
-            return redisTemplate.opsForValue().get(key);
+            try {
+                return redisTemplate.opsForValue().get(key);
+            } catch (Exception e) {
+                log.warn("Redis get failed for key '{}': {}", key, e.getMessage());
+            }
         }
         return null;
     }
@@ -40,14 +48,22 @@ public class SafeRedisService {
     // Propagating Delete
     public void delete(String key) {
         if (redisTemplate != null) {
-            redisTemplate.delete(key);
+            try {
+                redisTemplate.delete(key);
+            } catch (Exception e) {
+                log.warn("Redis delete failed for key '{}': {}", key, e.getMessage());
+            }
         }
     }
 
     // Propagating HasKey
     public Boolean hasKey(String key) {
         if (redisTemplate != null) {
-            return redisTemplate.hasKey(key);
+            try {
+                return redisTemplate.hasKey(key);
+            } catch (Exception e) {
+                log.warn("Redis hasKey failed for key '{}': {}", key, e.getMessage());
+            }
         }
         return false;
     }

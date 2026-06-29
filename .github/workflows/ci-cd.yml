@@ -51,12 +51,8 @@ jobs:
   deploy:
     name: Deploy to Render
     needs: build-and-test
-
     runs-on: ubuntu-latest
-
-    if: |
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/ems-backend')
+    if: github.event_name == 'push'
 
     steps:
       - name: Trigger Render Deployment
