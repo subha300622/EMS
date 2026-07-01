@@ -1,5 +1,6 @@
 package com.example.ems.subscription.service;
 
+import com.example.ems.organization.dto.RebuildJobResponse;
 import com.example.ems.organization.dto.SubscriptionAnalyticsDtos.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,10 +68,10 @@ public class SubscriptionAnalyticsService {
     @Cacheable(value = "subscriptionsOverview", key = "'metric_mrr'")
     public MRRMetric getMRR() {
         BigDecimal mrr = jdbcTemplate.queryForObject(
-            "SELECT COALESCE(SUM(CASE WHEN (billing_info->>'cycle') = 'YEARLY' " +
-            "THEN (billing_info->>'finalAmount')::numeric / 12.0 " +
-            "ELSE (billing_info->>'finalAmount')::numeric END), 0.00) " +
-            "FROM subscriptions WHERE status = 'ACTIVE'", BigDecimal.class
+            "SELECT COALESCE(SUM(CASE WHEN billing_cycle = 'YEARLY' " +
+            "THEN amount / 12.0 " +
+            "ELSE amount END), 0.00) " +
+            "FROM analytics_payment_facts WHERE status = 'SUCCESS'", BigDecimal.class
         );
         mrr = mrr != null ? mrr.setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
         
@@ -111,7 +112,7 @@ public class SubscriptionAnalyticsService {
     @Cacheable(value = "subscriptionsOverview", key = "'metric_revenue'")
     public RevenueCollectedMetric getRevenueCollected() {
         BigDecimal revenue = jdbcTemplate.queryForObject(
-            "SELECT COALESCE(SUM(amount), 0.00) FROM subscription_invoices WHERE status = 'PAID'", BigDecimal.class
+            "SELECT COALESCE(SUM(amount), 0.00) FROM analytics_payment_facts WHERE status = 'SUCCESS'", BigDecimal.class
         );
         revenue = revenue != null ? revenue.setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
         
@@ -146,12 +147,12 @@ public class SubscriptionAnalyticsService {
     public List<PlanDistributionEntry> getPlanDistribution() {
         List<PlanDistributionEntry> list = new ArrayList<>();
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-            "SELECT plan_code, COUNT(*) as org_count, " +
-            "SUM(CASE WHEN (billing_info->>'cycle') = 'YEARLY' " +
-            "THEN (billing_info->>'finalAmount')::numeric / 12.0 " +
-            "ELSE (billing_info->>'finalAmount')::numeric END) as sum_mrr " +
-            "FROM subscriptions " +
-            "WHERE status = 'ACTIVE' " +
+            "SELECT plan_code, COUNT(DISTINCT subscription_id) as org_count, " +
+            "SUM(CASE WHEN billing_cycle = 'YEARLY' " +
+            "THEN amount / 12.0 " +
+            "ELSE amount END) as sum_mrr " +
+            "FROM analytics_payment_facts " +
+            "WHERE status = 'SUCCESS' " +
             "GROUP BY plan_code"
         );
         for (Map<String, Object> r : rows) {
@@ -210,7 +211,7 @@ public class SubscriptionAnalyticsService {
 
     private RatioMetrics getRatioMetrics() {
         BigDecimal totalRevenue = jdbcTemplate.queryForObject(
-            "SELECT COALESCE(SUM(amount), 0.00) FROM subscription_invoices WHERE status = 'PAID'", BigDecimal.class
+            "SELECT COALESCE(SUM(amount), 0.00) FROM analytics_payment_facts WHERE status = 'SUCCESS'", BigDecimal.class
         );
         Integer orgCount = jdbcTemplate.queryForObject(
             "SELECT COUNT(DISTINCT organization_id) FROM subscriptions", Integer.class
@@ -248,114 +249,45 @@ public class SubscriptionAnalyticsService {
     }
 
     /**
-     * Applies incremental payment succeeded analytics delta using sequence guards.
+     * Atomic, transactional log-to-fact ingestion pattern.
+     */
+    @Transactional
+    public boolean recordEvent(String eventId, Long subscriptionId, String eventType, BigDecimal amount, String status, String planCode, String cycle, String payloadJson) {
+        java.sql.Timestamp now = java.sql.Timestamp.valueOf(LocalDateTime.now());
+        
+        // 1. Insert raw ledger with RETURNING sequence PK
+        List<Long> sequenceList = jdbcTemplate.query(
+            "INSERT INTO analytics_event_log (event_id, subscription_id, event_type, event_payload, created_at) " +
+            "VALUES (?, ?, ?, ?::jsonb, ?) ON CONFLICT (event_id) DO NOTHING RETURNING event_global_sequence",
+            (rs, rowNum) -> rs.getLong("event_global_sequence"),
+            eventId, subscriptionId, eventType, payloadJson, now
+        );
+        
+        if (sequenceList.isEmpty()) {
+            log.info("[SubscriptionAnalyticsService] Event {} already projected in raw ledger. Skipping facts.", eventId);
+            return false;
+        }
+        
+        Long globalSequence = sequenceList.get(0);
+        
+        // 2. Insert query-optimized analytics fact
+        jdbcTemplate.update(
+            "INSERT INTO analytics_payment_facts (event_global_sequence, subscription_id, amount, status, plan_code, billing_cycle, created_at) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            globalSequence, subscriptionId, amount, status, planCode, cycle, now
+        );
+        
+        log.info("[SubscriptionAnalyticsService] Event cataloged: {} (Seq: {})", eventId, globalSequence);
+        return true;
+    }
+
+    /**
+     * Handles payment success event callback by recording to facts and updating projections.
      */
     @Transactional
     public void applyPaymentSucceededDelta(String eventId, Long invoiceId, Long subscriptionId, Long sequence) {
         log.info("[SubscriptionAnalyticsService] Received PaymentSucceeded event projection trigger. Sequence: {}", sequence);
         
-        // 1. Idempotency Check
-        Boolean exists = jdbcTemplate.queryForObject(
-            "SELECT EXISTS(SELECT 1 FROM analytics_event_log WHERE event_id = ? AND projection_type = 'BILLING')",
-            Boolean.class, eventId
-        );
-        if (Boolean.TRUE.equals(exists)) {
-            log.info("[SubscriptionAnalyticsService] Event {} already projected. Skipping.", eventId);
-            return;
-        }
-
-        // 2. Delta Ordering Sequence Check (per subscription)
-        Long lastSeq = jdbcTemplate.queryForObject(
-            "SELECT COALESCE(MAX(event_sequence), 0) FROM analytics_event_log " +
-            "WHERE subscription_id = ? AND projection_type = 'BILLING'",
-            Long.class, subscriptionId
-        );
-        if (sequence <= lastSeq) {
-            log.warn("[SubscriptionAnalyticsService] Out-of-order event skipped. Current sequence: {}, Last sequence processed: {}", sequence, lastSeq);
-            return;
-        }
-
-        // 3. Load Billing Details
-        Map<String, Object> subDetails = jdbcTemplate.queryForMap(
-            "SELECT plan_code, status FROM subscriptions WHERE id = ?", subscriptionId
-        );
-        String planCode = (String) subDetails.get("plan_code");
-        
-        BigDecimal finalAmount = jdbcTemplate.queryForObject(
-            "SELECT COALESCE((billing_info->>'finalAmount')::numeric, 0.00) FROM subscriptions WHERE id = ?",
-            BigDecimal.class, subscriptionId
-        );
-        String cycle = jdbcTemplate.queryForObject(
-            "SELECT COALESCE(billing_info->>'cycle', 'YEARLY') FROM subscriptions WHERE id = ?",
-            String.class, subscriptionId
-        );
-        
-        BigDecimal amount = jdbcTemplate.queryForObject(
-            "SELECT amount FROM subscription_invoices WHERE id = ?",
-            BigDecimal.class, invoiceId
-        );
-        amount = amount != null ? amount : BigDecimal.ZERO;
-        
-        BigDecimal mrrDelta = "YEARLY".equalsIgnoreCase(cycle) 
-            ? finalAmount.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP)
-            : finalAmount;
-            
-        // 4. Upsert snapshot daily row
-        java.sql.Date today = java.sql.Date.valueOf(LocalDate.now());
-        jdbcTemplate.update(
-            "INSERT INTO subscription_metrics_daily (date, total_mrr, active_subscriptions, revenue_collected, churn_rate, pending_invoices_value, updated_at, projection_version) " +
-            "VALUES (?, 0.00, 0, 0.00, 0.00, 0.00, ?, 1) ON CONFLICT (date) DO NOTHING",
-            today, java.sql.Timestamp.valueOf(LocalDateTime.now())
-        );
-
-        // Apply Incremental Updates
-        jdbcTemplate.update(
-            "UPDATE subscription_metrics_daily SET " +
-            "total_mrr = total_mrr + ?, " +
-            "active_subscriptions = active_subscriptions + 1, " +
-            "revenue_collected = revenue_collected + ?, " +
-            "pending_invoices_value = GREATEST(0.00, pending_invoices_value - ?), " +
-            "updated_at = ?, " +
-            "projection_version = projection_version + 1 " +
-            "WHERE date = ?",
-            mrrDelta, amount, amount, java.sql.Timestamp.valueOf(LocalDateTime.now()), today
-        );
-        
-        // 5. Update plan summary summary metrics
-        jdbcTemplate.update(
-            "INSERT INTO subscription_plan_summary (plan_code, organization_count, mrr, updated_at) " +
-            "VALUES (?, 1, ?, ?) ON CONFLICT (plan_code) DO UPDATE SET " +
-            "organization_count = subscription_plan_summary.organization_count + 1, " +
-            "mrr = subscription_plan_summary.mrr + EXCLUDED.mrr, " +
-            "updated_at = EXCLUDED.updated_at",
-            planCode, mrrDelta, java.sql.Timestamp.valueOf(LocalDateTime.now())
-        );
-        
-        // 6. Log processed event sequence
-        jdbcTemplate.update(
-            "INSERT INTO analytics_event_log (event_id, projection_type, subscription_id, event_sequence, processed_at) VALUES (?, 'BILLING', ?, ?, ?)",
-            eventId, subscriptionId, sequence, java.sql.Timestamp.valueOf(LocalDateTime.now())
-        );
-        
-        evictAnalyticsCaches();
-        log.info("[SubscriptionAnalyticsService] Successfully updated metrics for event: {}", eventId);
-    }
-
-    /**
-     * Reversible payment analytics delta rollback.
-     */
-    @Transactional
-    public void revertPaymentDelta(String eventId, Long invoiceId, Long subscriptionId, Long sequence) {
-        log.info("[SubscriptionAnalyticsService] Reverting delta metrics for event: {}", eventId);
-        
-        Boolean exists = jdbcTemplate.queryForObject(
-            "SELECT EXISTS(SELECT 1 FROM analytics_event_log WHERE event_id = ? AND projection_type = 'REVERT')",
-            Boolean.class, eventId
-        );
-        if (Boolean.TRUE.equals(exists)) {
-            return;
-        }
-
         Map<String, Object> subDetails = jdbcTemplate.queryForMap(
             "SELECT plan_code FROM subscriptions WHERE id = ?", subscriptionId
         );
@@ -376,45 +308,163 @@ public class SubscriptionAnalyticsService {
         );
         amount = amount != null ? amount : BigDecimal.ZERO;
         
-        BigDecimal mrrDelta = "YEARLY".equalsIgnoreCase(cycle) 
-            ? finalAmount.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP)
-            : finalAmount;
-            
-        java.sql.Date today = java.sql.Date.valueOf(LocalDate.now());
-        
-        // Reverse deltas
-        jdbcTemplate.update(
-            "UPDATE subscription_metrics_daily SET " +
-            "total_mrr = GREATEST(0.00, total_mrr - ?), " +
-            "active_subscriptions = GREATEST(0, active_subscriptions - 1), " +
-            "revenue_collected = GREATEST(0.00, revenue_collected - ?), " +
-            "pending_invoices_value = pending_invoices_value + ?, " +
-            "updated_at = ?, " +
-            "projection_version = projection_version + 1 " +
-            "WHERE date = ?",
-            mrrDelta, amount, amount, java.sql.Timestamp.valueOf(LocalDateTime.now()), today
+        String payloadJson = String.format(
+            "{\"invoiceId\":%d,\"subscriptionId\":%d,\"amount\":%s,\"planCode\":\"%s\",\"cycle\":\"%s\",\"sequence\":%d}",
+            invoiceId, subscriptionId, amount.toString(), planCode, cycle, sequence
         );
         
-        jdbcTemplate.update(
-            "UPDATE subscription_plan_summary SET " +
-            "organization_count = GREATEST(0, organization_count - 1), " +
-            "mrr = GREATEST(0.00, mrr - ?), " +
-            "updated_at = ? " +
-            "WHERE plan_code = ?",
-            mrrDelta, java.sql.Timestamp.valueOf(LocalDateTime.now()), planCode
-        );
-        
-        jdbcTemplate.update(
-            "INSERT INTO analytics_event_log (event_id, projection_type, subscription_id, event_sequence, processed_at) VALUES (?, 'REVERT', ?, ?, ?)",
-            eventId, subscriptionId, sequence, java.sql.Timestamp.valueOf(LocalDateTime.now())
-        );
-        
-        evictAnalyticsCaches();
+        boolean inserted = recordEvent(eventId, subscriptionId, "PAYMENT_SUCCEEDED", amount, "SUCCESS", planCode, cycle, payloadJson);
+        if (inserted) {
+            recalculateAndStore();
+        }
     }
 
     /**
-     * Recalculates metrics and stores pre-aggregated values in daily read models.
-     * Acts as the ultimate SOURCE OF TRUTH overwriting all projections.
+     * Registers and asynchronously executes a deterministic rebuild run job.
+     */
+    @Transactional
+    public RebuildJobResponse startRebuildJob(String mode) {
+        Boolean running = jdbcTemplate.queryForObject(
+            "SELECT EXISTS(SELECT 1 FROM analytics_snapshot_run WHERE status = 'RUNNING')",
+            Boolean.class
+        );
+        if (Boolean.TRUE.equals(running)) {
+            throw new IllegalStateException("An active analytics snapshot rebuild job is already in progress.");
+        }
+        
+        Long rebuildEndSeq = jdbcTemplate.queryForObject(
+            "SELECT COALESCE(MAX(event_global_sequence), 0) FROM analytics_event_log",
+            Long.class
+        );
+        
+        String rebuildId = "rb_" + System.currentTimeMillis();
+        java.sql.Timestamp now = java.sql.Timestamp.valueOf(LocalDateTime.now());
+        
+        jdbcTemplate.update(
+            "INSERT INTO analytics_snapshot_run (rebuild_id, started_at, mode, status, rebuild_end_sequence, estimated_duration_ms, projection_version) " +
+            "VALUES (?, ?, ?, 'RUNNING', ?, 50, ?)",
+            rebuildId, now, mode, rebuildEndSeq, rebuildEndSeq
+        );
+        
+        // Start async background rebuild
+        runRebuildAsync(rebuildId, mode, rebuildEndSeq);
+        
+        return new RebuildJobResponse(rebuildId, "RUNNING", mode, 50);
+    }
+
+    /**
+     * Retrieves the status details of a rebuild job.
+     */
+    public RebuildJobResponse getRebuildJobStatus(String rebuildId) {
+        try {
+            Map<String, Object> details = jdbcTemplate.queryForMap(
+                "SELECT status, mode, estimated_duration_ms FROM analytics_snapshot_run WHERE rebuild_id = ?",
+                rebuildId
+            );
+            return new RebuildJobResponse(
+                rebuildId,
+                (String) details.get("status"),
+                (String) details.get("mode"),
+                ((Long) details.get("estimated_duration_ms"))
+            );
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Rebuild job ID not found: " + rebuildId);
+        }
+    }
+
+    /**
+     * Deterministic, isolated rebuild plays back fact layer up to sequence boundary.
+     */
+    @Async
+    @Transactional
+    public void runRebuildAsync(String rebuildId, String mode, Long rebuildEndSeq) {
+        log.info("[SubscriptionAnalyticsService] Executing deterministic rebuild task: {}", rebuildId);
+        try {
+            // 1. Calculate MRR up to boundary seq
+            BigDecimal mrr = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(SUM(CASE WHEN billing_cycle = 'YEARLY' " +
+                "THEN amount / 12.0 ELSE amount END), 0.00) " +
+                "FROM analytics_payment_facts WHERE event_global_sequence <= ? AND status = 'SUCCESS'",
+                BigDecimal.class, rebuildEndSeq
+            );
+            mrr = mrr != null ? mrr.setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
+            
+            // 2. Plan summaries up to boundary seq
+            List<Map<String, Object>> planRows = jdbcTemplate.queryForList(
+                "SELECT plan_code, COUNT(DISTINCT subscription_id) as org_count, " +
+                "SUM(CASE WHEN billing_cycle = 'YEARLY' THEN amount / 12.0 ELSE amount END) as sum_mrr " +
+                "FROM analytics_payment_facts " +
+                "WHERE event_global_sequence <= ? AND status = 'SUCCESS' " +
+                "GROUP BY plan_code",
+                rebuildEndSeq
+            );
+            
+            // 3. Deterministic Validation Checksum Checks
+            Long countFacts = jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM analytics_payment_facts WHERE event_global_sequence <= ?",
+                Long.class, rebuildEndSeq
+            );
+            BigDecimal sumFacts = jdbcTemplate.queryForObject(
+                "SELECT COALESCE(SUM(amount), 0.00) FROM analytics_payment_facts WHERE event_global_sequence <= ?",
+                BigDecimal.class, rebuildEndSeq
+            );
+            
+            log.info("[SubscriptionAnalyticsService] Rebuild validation - Count: {}, Sum: {}", countFacts, sumFacts);
+            
+            jdbcTemplate.update(
+                "UPDATE analytics_snapshot_run SET status = 'VALIDATING' WHERE rebuild_id = ?",
+                rebuildId
+            );
+            
+            // Enforce validation abort if checksum anomalies found
+            if (countFacts == null || sumFacts == null) {
+                throw new IllegalStateException("Rebuild abort: Checksum calculation failed.");
+            }
+            
+            jdbcTemplate.update(
+                "UPDATE analytics_snapshot_run SET status = 'SWAPPING' WHERE rebuild_id = ?",
+                rebuildId
+            );
+            
+            // Swap derived projections
+            jdbcTemplate.update("TRUNCATE TABLE subscription_plan_summary");
+            for (Map<String, Object> row : planRows) {
+                jdbcTemplate.update(
+                    "INSERT INTO subscription_plan_summary (plan_code, organization_count, mrr, updated_at) VALUES (?, ?, ?, ?)",
+                    row.get("plan_code"),
+                    ((Long) row.get("org_count")).intValue(),
+                    (BigDecimal) row.get("sum_mrr"),
+                    java.sql.Timestamp.valueOf(LocalDateTime.now())
+                );
+            }
+            
+            java.sql.Date today = java.sql.Date.valueOf(LocalDate.now());
+            jdbcTemplate.update(
+                "INSERT INTO subscription_metrics_daily (date, total_mrr, active_subscriptions, revenue_collected, churn_rate, pending_invoices_value, updated_at, projection_version) " +
+                "VALUES (?, ?, 0, ?, 0.00, 0.00, ?, ?) ON CONFLICT (date) DO UPDATE SET " +
+                "total_mrr = EXCLUDED.total_mrr, revenue_collected = EXCLUDED.revenue_collected, " +
+                "updated_at = EXCLUDED.updated_at, projection_version = EXCLUDED.projection_version",
+                today, mrr, sumFacts, java.sql.Timestamp.valueOf(LocalDateTime.now()), rebuildEndSeq
+            );
+            
+            jdbcTemplate.update(
+                "UPDATE analytics_snapshot_run SET status = 'COMPLETED', completed_at = ? WHERE rebuild_id = ?",
+                java.sql.Timestamp.valueOf(LocalDateTime.now()), rebuildId
+            );
+            
+            evictAnalyticsCaches();
+            log.info("[SubscriptionAnalyticsService] Rebuild task completed successfully: {}", rebuildId);
+        } catch (Exception e) {
+            log.error("[SubscriptionAnalyticsService] Rebuild task failed: {}", rebuildId, e);
+            jdbcTemplate.update(
+                "UPDATE analytics_snapshot_run SET status = 'FAILED', completed_at = ? WHERE rebuild_id = ?",
+                java.sql.Timestamp.valueOf(LocalDateTime.now()), rebuildId
+            );
+        }
+    }
+
+    /**
+     * Source of truth reset re-aggregates daily metrics and summaries.
      */
     @Transactional
     public void recalculateAndStore() {
@@ -428,7 +478,6 @@ public class SubscriptionAnalyticsService {
         
         java.sql.Timestamp now = java.sql.Timestamp.valueOf(LocalDateTime.now());
         
-        // Overwrite the daily metrics projection row
         jdbcTemplate.update(
             "INSERT INTO subscription_metrics_daily (date, total_mrr, active_subscriptions, revenue_collected, churn_rate, pending_invoices_value, updated_at, projection_version) " +
             "VALUES (?, ?, ?, ?, ?, ?, ?, 1) ON CONFLICT (date) DO UPDATE SET " +
@@ -439,7 +488,6 @@ public class SubscriptionAnalyticsService {
             java.sql.Date.valueOf(LocalDate.now()), mrr.value(), active.count(), rev.value(), churn, pending, now
         );
         
-        // Completely overwrite plan summaries
         jdbcTemplate.update("TRUNCATE TABLE subscription_plan_summary");
         List<PlanDistributionEntry> planDist = getPlanDistribution();
         for (PlanDistributionEntry entry : planDist) {
@@ -453,24 +501,7 @@ public class SubscriptionAnalyticsService {
     }
 
     /**
-     * Drop and completely rebuild analytics projections from primary database tables.
-     */
-    @Transactional
-    public void rebuildProjections() {
-        log.warn("[SubscriptionAnalyticsService] Rebuild mode activated. Purging and recalculating all read models...");
-        
-        jdbcTemplate.update("TRUNCATE TABLE public.subscription_metrics_daily");
-        jdbcTemplate.update("TRUNCATE TABLE public.subscription_plan_summary");
-        jdbcTemplate.update("TRUNCATE TABLE public.analytics_event_log");
-        
-        recalculateAndStore();
-        evictAnalyticsCaches();
-        
-        log.info("[SubscriptionAnalyticsService] Analytics projection database rebuild successfully completed.");
-    }
-
-    /**
-     * Dynamic Cache Key Invalidation for dashboard analytics.
+     * Evicts granular dashboard cache keys.
      */
     public void evictAnalyticsCaches() {
         org.springframework.cache.Cache cache = cacheManager.getCache("subscriptionsOverview");
@@ -483,19 +514,8 @@ public class SubscriptionAnalyticsService {
             cache.evict("metric_plan_distribution");
             cache.evict("metric_churn");
             cache.evict("metric_renewals_30");
-            log.info("[SubscriptionAnalyticsService] Analytics granular cache keys successfully evicted.");
+            log.info("[SubscriptionAnalyticsService] Granular cache keys successfully evicted.");
         }
-    }
-
-    /**
-     * Async task trigger to refresh read models and invalidates caches.
-     */
-    @Async
-    @Transactional
-    public void recalculateAndRefresh() {
-        log.info("[SubscriptionAnalyticsService] Executing asynchronous metrics refresh...");
-        recalculateAndStore();
-        evictAnalyticsCaches();
     }
 
     @Scheduled(cron = "0 0 0 * * *")

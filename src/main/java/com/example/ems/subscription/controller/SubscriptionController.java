@@ -6,6 +6,7 @@ import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.organization.dto.SubscriptionDtos.*;
+import com.example.ems.organization.dto.RebuildJobResponse;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.subscription.service.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -526,16 +527,34 @@ public class SubscriptionController {
     @Operation(summary = "Rebuild Analytics Projections")
     @PostMapping("/analytics/rebuild")
     public ResponseEntity<?> rebuildAnalytics(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "mode", defaultValue = "FULL") String mode) {
         ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
         if (accessError != null) return accessError;
 
         try {
-            analyticsService.rebuildProjections();
-            return ResponseEntity.ok(ApiResponse.success("Analytics projections successfully rebuilt"));
+            RebuildJobResponse response = analyticsService.startRebuildJob(mode);
+            return ResponseEntity.ok(ApiResponse.success("Analytics rebuild job triggered", response));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ErrorResponse.error("Rebuild failed: " + e.getMessage(), "ANALYTICS_001"));
+                    .body(ErrorResponse.error("Rebuild trigger failed: " + e.getMessage(), "ANALYTICS_001"));
+        }
+    }
+
+    @Operation(summary = "Get Rebuild Job Status")
+    @GetMapping("/analytics/rebuild/{id}")
+    public ResponseEntity<?> getRebuildStatus(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable("id") String id) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        try {
+            RebuildJobResponse response = analyticsService.getRebuildJobStatus(id);
+            return ResponseEntity.ok(ApiResponse.success("Rebuild job status retrieved", response));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Job not found: " + e.getMessage(), "ANALYTICS_002"));
         }
     }
 }
