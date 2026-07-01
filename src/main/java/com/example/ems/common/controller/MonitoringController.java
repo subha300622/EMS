@@ -2,13 +2,10 @@ package com.example.ems.common.controller;
 
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 
-
+import com.example.ems.auth.service.SafeRedisService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.connection.RedisConnection;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -29,11 +26,10 @@ public class MonitoringController {
     private UserRepository userRepository;
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private SafeRedisService safeRedisService;
 
     @GetMapping("/health")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> checkHealth(){
+    public ResponseEntity<ApiResponse<Object>> checkHealth() {
         Map<String, Object> healthInfo = new LinkedHashMap<>();
         boolean isDbUp = false;
         boolean isRedisUp = false;
@@ -46,28 +42,30 @@ public class MonitoringController {
             healthInfo.put("database", "DOWN (" + e.getMessage() + ")");
         }
 
-        try {
-            RedisConnection connection = redisTemplate.getConnectionFactory().getConnection();
-            String pingResult = connection.ping();
-            isRedisUp = "PONG".equalsIgnoreCase(pingResult) || pingResult != null;
-            healthInfo.put("redis", isRedisUp ? "UP" : "DOWN");
-        } catch (Exception e) {
-            healthInfo.put("redis", "DOWN (" + e.getMessage() + ")");
+        isRedisUp = safeRedisService.isRedisAvailable();
+        healthInfo.put("redis", isRedisUp ? "UP" : "DEGRADED");
+
+        if (!isRedisUp) {
+            healthInfo.put("impact", java.util.List.of(
+                    "Caching is disabled",
+                    "Session & OTP verification fallback to database",
+                    "Rate limiting is running in soft/degraded mode"));
         }
 
-        boolean systemUp = isDbUp && isRedisUp;
-        healthInfo.put("status", systemUp ? "UP" : "DEGRADED");
-
-        if (systemUp) {
-            return ResponseEntity.ok(ApiResponse.success("System is healthy", healthInfo));
+        if (isDbUp) {
+            String status = isRedisUp ? "UP" : "DEGRADED";
+            healthInfo.put("status", status);
+            return ResponseEntity
+                    .ok(ApiResponse.success("System is " + (isRedisUp ? "healthy" : "degraded"), healthInfo));
         } else {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(ErrorResponse.error("System is degraded", "SYS_503"));
+            healthInfo.put("status", "DOWN");
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.success("System is down", healthInfo));
         }
     }
 
     @GetMapping("/version")
-    public ResponseEntity<ApiResponse<Object>> getVersion(){
+    public ResponseEntity<ApiResponse<Object>> getVersion() {
         Map<String, String> versionInfo = new LinkedHashMap<>();
         versionInfo.put("appName", "Employee Management System");
         versionInfo.put("version", "1.0.0");
@@ -77,9 +75,9 @@ public class MonitoringController {
     }
 
     @GetMapping("/metrics")
-    public ResponseEntity<ApiResponse<Object>> getMetrics(){
+    public ResponseEntity<ApiResponse<Object>> getMetrics() {
         Map<String, Object> metrics = new LinkedHashMap<>();
-        
+
         Runtime runtime = Runtime.getRuntime();
         long totalMemory = runtime.totalMemory();
         long freeMemory = runtime.freeMemory();
@@ -94,7 +92,7 @@ public class MonitoringController {
         memoryMetrics.put("usedMemoryPercentage", (double) usedMemory / totalMemory * 100);
 
         metrics.put("memory", memoryMetrics);
-        
+
         metrics.put("activeThreads", Thread.activeCount());
         metrics.put("availableProcessors", runtime.availableProcessors());
         metrics.put("timestamp", System.currentTimeMillis());

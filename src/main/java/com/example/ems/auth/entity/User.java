@@ -36,8 +36,17 @@ public class User {
     @JoinColumn(name = "role_id")
     private Role role;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private com.example.ems.organization.entity.Organization organization;
+
     // Optional
     private String location;
+
+    @Column(name = "organization_name")
+    private String organizationName;
+
+    private String branch;
 
     private String status = "ACTIVE";
 
@@ -177,5 +186,29 @@ public class User {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public com.example.ems.organization.entity.Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(com.example.ems.organization.entity.Organization organization) {
+        this.organization = organization;
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 }

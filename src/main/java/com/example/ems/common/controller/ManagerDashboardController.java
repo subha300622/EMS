@@ -7,7 +7,7 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.dto.manager.*;
-import com.example.ems.common.service.ManagerDashboardService;
+import com.example.ems.common.service.ManagerDashboardCacheService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,7 +28,7 @@ import java.util.Set;
 public class ManagerDashboardController {
 
     @Autowired
-    private ManagerDashboardService managerDashboardService;
+    private ManagerDashboardCacheService managerDashboardCacheService;
 
     @Autowired
     private UserRepository userRepository;
@@ -83,7 +83,7 @@ public class ManagerDashboardController {
         }
         Employee emp = resolveEmployee(currentUser);
         return ResponseEntity.ok(ApiResponse.success("Aggregated dashboard summary retrieved", 
-                managerDashboardService.getAggregatedDashboard(emp, widgets)));
+                managerDashboardCacheService.getAggregatedDashboard(emp, widgets)));
     }
 
     @Operation(summary = "Clear Dashboard Cache and Reload Metrics")
@@ -101,9 +101,9 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        managerDashboardService.evictDashboardCache(emp);
+        managerDashboardCacheService.evictDashboardCache(emp);
         return ResponseEntity.ok(ApiResponse.success("Dashboard cache refreshed successfully", 
-                managerDashboardService.getAggregatedDashboard(emp, null)));
+                managerDashboardCacheService.getAggregatedDashboard(emp, null)));
     }
 
     @Operation(summary = "Get Dashboard Top KPI Cards Summary")
@@ -121,7 +121,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Summary retrieved", managerDashboardService.getSummary(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Summary retrieved", managerDashboardCacheService.getSummary(emp)));
     }
 
     @Operation(summary = "Get Team Attendance Trend")
@@ -140,7 +140,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Attendance trend retrieved", managerDashboardService.getAttendanceTrend(emp, period)));
+        return ResponseEntity.ok(ApiResponse.success("Attendance trend retrieved", managerDashboardCacheService.getAttendanceTrend(emp, period)));
     }
 
     @Operation(summary = "Get Team Composition Statistics")
@@ -158,7 +158,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Team composition retrieved", managerDashboardService.getTeamComposition(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Team composition retrieved", managerDashboardCacheService.getTeamComposition(emp)));
     }
 
     @Operation(summary = "Get Paginated Team Members Overview")
@@ -178,7 +178,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Team members retrieved", managerDashboardService.getTeamMembers(emp, page, size)));
+        return ResponseEntity.ok(ApiResponse.success("Team members retrieved", managerDashboardCacheService.getTeamMembers(emp, page, size)));
     }
 
     @Operation(summary = "Get Team Performance Indicators")
@@ -196,7 +196,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Performance metrics retrieved", managerDashboardService.getPerformance(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Performance metrics retrieved", managerDashboardCacheService.getPerformance(emp)));
     }
 
     @Operation(summary = "Get Team Overtime Analytics")
@@ -214,7 +214,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Overtime metrics retrieved", managerDashboardService.getOvertime(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Overtime metrics retrieved", managerDashboardCacheService.getOvertime(emp)));
     }
 
     @Operation(summary = "Get Team Pending Approvals Details")
@@ -232,7 +232,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Pending approvals retrieved", managerDashboardService.getPendingApprovals(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Pending approvals retrieved", managerDashboardCacheService.getPendingApprovals(emp)));
     }
 
     @Operation(summary = "Get Team Approval Summary Counts")
@@ -250,7 +250,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Approval summary counts retrieved", managerDashboardService.getApprovalSummary(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Approval summary counts retrieved", managerDashboardCacheService.getApprovalSummary(emp)));
     }
 
     @Operation(summary = "Get Team Workforce Today Status")
@@ -268,7 +268,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Team today retrieved", managerDashboardService.getTeamToday(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Team today retrieved", managerDashboardCacheService.getTeamToday(emp)));
     }
 
     @Operation(summary = "Get Team Leaves Summary")
@@ -286,7 +286,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Leave summary retrieved", managerDashboardService.getLeaveSummary(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Leave summary retrieved", managerDashboardCacheService.getLeaveSummary(emp)));
     }
 
     @Operation(summary = "Get Team Upcoming Events")
@@ -304,7 +304,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Upcoming events retrieved", managerDashboardService.getUpcomingEvents(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Upcoming events retrieved", managerDashboardCacheService.getUpcomingEvents(emp)));
     }
 
     @Operation(summary = "Get Active Team Alerts")
@@ -322,7 +322,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Alerts retrieved", managerDashboardService.getAlerts(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Alerts retrieved", managerDashboardCacheService.getAlerts(emp)));
     }
 
     @Operation(summary = "Get Actionable Team Insights")
@@ -340,7 +340,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Actionable insights retrieved", managerDashboardService.getInsights(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Actionable insights retrieved", managerDashboardCacheService.getInsights(emp)));
     }
 
     @Operation(summary = "Get Manager Quick Actions Panel Metadata")
@@ -358,7 +358,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Quick actions retrieved", managerDashboardService.getQuickActions(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Quick actions retrieved", managerDashboardCacheService.getQuickActions(emp)));
     }
 
     @Operation(summary = "Get Manager Dashboard Notifications")
@@ -376,7 +376,7 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Notifications retrieved", managerDashboardService.getNotifications(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Notifications retrieved", managerDashboardCacheService.getNotifications(emp)));
     }
 
     @Operation(summary = "Get Team Schedule Snapshot")
@@ -394,6 +394,6 @@ public class ManagerDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires Manager or Admin access.", "AUTH_002"));
         }
         Employee emp = resolveEmployee(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("Schedule snapshot retrieved", managerDashboardService.getScheduleSnapshot(emp)));
+        return ResponseEntity.ok(ApiResponse.success("Schedule snapshot retrieved", managerDashboardCacheService.getScheduleSnapshot(emp)));
     }
 }

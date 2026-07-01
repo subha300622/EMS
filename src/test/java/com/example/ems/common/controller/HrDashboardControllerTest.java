@@ -4,7 +4,7 @@ import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
-import com.example.ems.common.service.HrDashboardService;
+import com.example.ems.common.service.HrDashboardCacheService;
 import com.example.ems.security.service.JwtService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -27,7 +27,7 @@ public class HrDashboardControllerTest {
         private MockMvc mockMvc;
 
         @Mock
-        private HrDashboardService hrDashboardService;
+        private HrDashboardCacheService hrDashboardCacheService;
 
         @Mock
         private UserRepository userRepository;
@@ -70,7 +70,7 @@ public class HrDashboardControllerTest {
                                 "totalEmployees", 1284,
                                 "newHires", 24,
                                 "attritionRate", 1.2);
-                when(hrDashboardService.getDashboardSummary()).thenReturn(mockSummary);
+                when(hrDashboardCacheService.getDashboardSummary()).thenReturn(mockSummary);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard")
                                 .header("Authorization", AUTH_HEADER))
@@ -85,7 +85,7 @@ public class HrDashboardControllerTest {
                                 "totalEmployees", 1284,
                                 "activeEmployees", 1245,
                                 "inactiveEmployees", 39);
-                when(hrDashboardService.getHeadcountStats()).thenReturn(mockHeadcount);
+                when(hrDashboardCacheService.getHeadcountStats()).thenReturn(mockHeadcount);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/headcount")
                                 .header("Authorization", AUTH_HEADER))
@@ -99,7 +99,7 @@ public class HrDashboardControllerTest {
                 Map<String, Object> mockNewHires = Map.of(
                                 "count", 24,
                                 "period", "Last 30 Days");
-                when(hrDashboardService.getNewHiresStats()).thenReturn(mockNewHires);
+                when(hrDashboardCacheService.getNewHiresStats()).thenReturn(mockNewHires);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/new-hires")
                                 .header("Authorization", AUTH_HEADER))
@@ -113,7 +113,7 @@ public class HrDashboardControllerTest {
                 Map<String, Object> mockAttrition = Map.of(
                                 "currentMonth", 1.2,
                                 "lastMonth", 1.4);
-                when(hrDashboardService.getAttritionStats()).thenReturn(mockAttrition);
+                when(hrDashboardCacheService.getAttritionStats()).thenReturn(mockAttrition);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/attrition")
                                 .header("Authorization", AUTH_HEADER))
@@ -127,7 +127,7 @@ public class HrDashboardControllerTest {
                 Map<String, Object> mockOpenPositions = Map.of(
                                 "total", 18,
                                 "highPriority", 5);
-                when(hrDashboardService.getOpenPositionsStats()).thenReturn(mockOpenPositions);
+                when(hrDashboardCacheService.getOpenPositionsStats()).thenReturn(mockOpenPositions);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/open-positions")
                                 .header("Authorization", AUTH_HEADER))
@@ -141,7 +141,7 @@ public class HrDashboardControllerTest {
                 Map<String, Object> mockTrend = Map.of(
                                 "labels", List.of("Oct", "Nov"),
                                 "values", List.of(1200L, 1215L));
-                when(hrDashboardService.getHeadcountTrend("6months")).thenReturn(mockTrend);
+                when(hrDashboardCacheService.getHeadcountTrend("6months")).thenReturn(mockTrend);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/charts/headcount-trend")
                                 .param("period", "6months")
@@ -155,7 +155,7 @@ public class HrDashboardControllerTest {
         public void testGetEmployeeBreakdownSuccess() throws Exception {
                 Map<String, Object> mockBreakdown = Map.of(
                                 "departments", List.of(Map.of("name", "Engineering", "percentage", 35)));
-                when(hrDashboardService.getEmployeeBreakdown()).thenReturn(mockBreakdown);
+                when(hrDashboardCacheService.getEmployeeBreakdown()).thenReturn(mockBreakdown);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/charts/employee-breakdown")
                                 .header("Authorization", AUTH_HEADER))
@@ -167,7 +167,7 @@ public class HrDashboardControllerTest {
         @Test
         public void testGetPendingLeavesSuccess() throws Exception {
                 List<Map<String, Object>> mockLeaves = List.of(Map.of("leaveId", 1L, "employeeName", "Sarah"));
-                when(hrDashboardService.getPendingLeaves()).thenReturn(mockLeaves);
+                when(hrDashboardCacheService.getPendingLeaves()).thenReturn(mockLeaves);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/pending-leaves")
                                 .header("Authorization", AUTH_HEADER))
@@ -179,7 +179,7 @@ public class HrDashboardControllerTest {
         @Test
         public void testGetRecentHiresSuccess() throws Exception {
                 List<Map<String, Object>> mockHires = List.of(Map.of("employeeId", 101L, "employeeName", "Michael"));
-                when(hrDashboardService.getRecentHires()).thenReturn(mockHires);
+                when(hrDashboardCacheService.getRecentHires()).thenReturn(mockHires);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/recent-hires")
                                 .header("Authorization", AUTH_HEADER))
@@ -192,7 +192,7 @@ public class HrDashboardControllerTest {
         public void testGetAttendanceByDeptSuccess() throws Exception {
                 List<Map<String, Object>> mockAttendance = List
                                 .of(Map.of("department", "Engineering", "attendance", 94));
-                when(hrDashboardService.getAttendanceByDepartment()).thenReturn(mockAttendance);
+                when(hrDashboardCacheService.getAttendanceByDepartment()).thenReturn(mockAttendance);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/attendance-by-department")
                                 .header("Authorization", AUTH_HEADER))
@@ -204,7 +204,7 @@ public class HrDashboardControllerTest {
         @Test
         public void testGetRetentionAlertsSuccess() throws Exception {
                 List<Map<String, Object>> mockAlerts = List.of(Map.of("severity", "HIGH", "department", "Sales"));
-                when(hrDashboardService.getRetentionAlerts()).thenReturn(mockAlerts);
+                when(hrDashboardCacheService.getRetentionAlerts()).thenReturn(mockAlerts);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/retention-alerts")
                                 .header("Authorization", AUTH_HEADER))
@@ -217,7 +217,7 @@ public class HrDashboardControllerTest {
         public void testGlobalSearchSuccess() throws Exception {
                 Map<String, Object> mockResults = Map.of(
                                 "employees", List.of(Map.of("fullName", "John Doe")));
-                when(hrDashboardService.globalSearch("john")).thenReturn(mockResults);
+                when(hrDashboardCacheService.globalSearch("john")).thenReturn(mockResults);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/search")
                                 .param("keyword", "john")
@@ -231,7 +231,7 @@ public class HrDashboardControllerTest {
         public void testGetDashboardSummaryAggregationSuccess() throws Exception {
                 Map<String, Object> mockAgg = Map.of(
                                 "stats", Map.of("totalEmployees", 1284));
-                when(hrDashboardService.getDashboardSummaryAggregation()).thenReturn(mockAgg);
+                when(hrDashboardCacheService.getDashboardSummaryAggregation()).thenReturn(mockAgg);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard/summary")
                                 .header("Authorization", AUTH_HEADER))
@@ -253,7 +253,7 @@ public class HrDashboardControllerTest {
                 when(userRepository.findByWorkEmail("sarah.chen@example.com")).thenReturn(Optional.of(manager));
 
                 Map<String, Object> mockSummary = Map.of("totalEmployees", 1284);
-                when(hrDashboardService.getDashboardSummary()).thenReturn(mockSummary);
+                when(hrDashboardCacheService.getDashboardSummary()).thenReturn(mockSummary);
 
                 mockMvc.perform(get("/api/v1/hr/dashboard")
                                 .header("Authorization", "Bearer mgr-token"))

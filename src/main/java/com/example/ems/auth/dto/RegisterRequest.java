@@ -39,6 +39,12 @@ public class RegisterRequest {
     @Schema(example = "Bangalore")
     private String location;
 
+    @Schema(example = "Google")
+    private String organizationName;
+
+    @Schema(example = "Main Branch")
+    private String branch;
+
     @NotBlank(message = "Password is required")
     @Schema(example = "string")
     private String password;
@@ -117,5 +123,21 @@ public class RegisterRequest {
 
     public void setConfirmPassword(String confirmPassword) {
         this.confirmPassword = confirmPassword;
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 }

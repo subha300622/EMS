@@ -1,0 +1,54 @@
+package com.example.ems.organization.event;
+
+import com.example.ems.subscription.service.BillingCommandService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.event.EventListener;
+import org.springframework.stereotype.Component;
+
+/**
+ * Event listener coordinating invoice payment and subscription activation within the parent database transaction context.
+ */
+@Component
+public class CoreBillingStateEventHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(CoreBillingStateEventHandler.class);
+
+    @Autowired
+    private BillingCommandService billingCommandService;
+
+    @Autowired
+    private com.example.ems.subscription.service.SubscriptionAnalyticsService analyticsService;
+
+    /**
+     * Listens for payment succeeded events synchronously. Runs in the same transaction as verifyPayment.
+     */
+    @EventListener
+    public void handlePaymentSucceeded(PaymentSucceededEvent event) {
+        String handlerName = "CoreBillingStateEventHandler";
+        log.info("[CoreBillingStateEventHandler] Core billing state event received: {}", event.eventId());
+
+        // Execute unified core transitions through the single command gate
+        billingCommandService.processPaymentSuccess(
+            event.eventId(),
+            handlerName,
+            event.invoiceId(),
+            event.subscriptionId(),
+            event.gatewayPaymentId()
+        );
+
+        // Async read-model incremental delta refresh
+        try {
+            analyticsService.applyPaymentSucceededDelta(
+                event.eventId(),
+                event.invoiceId(),
+                event.subscriptionId(),
+                event.paymentId()
+            );
+            log.info("[CoreBillingStateEventHandler] Triggered async analytics refresh for event: {}", event.eventId());
+        } catch (Exception e) {
+            log.error("[CoreBillingStateEventHandler] Failed to trigger analytics refresh: {}", e.getMessage(), e);
+        }
+    }
+}

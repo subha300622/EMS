@@ -44,6 +44,9 @@ public class UserController {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private com.example.ems.auth.service.BootstrapService bootstrapService;
+
     // Helper: Resolve currently authenticated User via JWT only
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -565,5 +568,69 @@ public class UserController {
         headers.setContentLength(data.length);
 
         return (ResponseEntity) new ResponseEntity<>(data, headers, HttpStatus.OK);
+    }
+
+    @Operation(summary = "Get Current User Permissions", description = "Retrieves the list of effective permissions for the logged-in user.")
+    @GetMapping("/users/me/permissions")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMePermissions(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        List<String> permissions = roleService.getPermissionsForUserId(user.getUserId());
+        return ResponseEntity.ok(ApiResponse.success("Permissions retrieved successfully", permissions));
+    }
+
+    @Operation(summary = "Get Current User Profile", description = "Retrieves active profile information of the logged-in user.")
+    @GetMapping("/users/me/profile")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyUserProfile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        com.example.ems.auth.dto.BootstrapResponse.UserProfileResponse profile = userService.getUserProfile(user);
+        return ResponseEntity.ok(ApiResponse.success("User profile retrieved successfully", profile));
+    }
+
+    @Operation(summary = "Get Current User Org Context", description = "Retrieves company, branch, and department context of the logged-in user.")
+    @GetMapping("/users/me/context")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyUserContext(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        com.example.ems.auth.dto.BootstrapResponse.OrgContextResponse context = userService.getUserContext(user);
+        return ResponseEntity.ok(ApiResponse.success("User organization context retrieved successfully", context));
+    }
+
+    @Operation(summary = "Get Current User Bootstrap Data", description = "Retrieves aggregated profile, context, and permissions of the logged-in user in a single request.")
+    @GetMapping("/users/me/bootstrap")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyBootstrapData(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        com.example.ems.auth.dto.BootstrapResponse bootstrapData = bootstrapService.getBootstrapData(user);
+        return ResponseEntity.ok(ApiResponse.success("Bootstrap data retrieved successfully", bootstrapData));
     }
 }

@@ -5,6 +5,11 @@ import java.util.List;
 
 public class PermissionRegistry {
 
+        public static final String ATTENDANCE_READ = "attendance.read";
+        public static final String ATTENDANCE_MANAGE = "attendance.manage";
+        public static final String ATTENDANCE_SELF_READ = "attendance.self.read";
+        public static final String EMPLOYEE_ATTENDANCE_READ = "employee.attendance.read";
+
         public static final List<String> COMMON_SETTINGS_PERMS = Arrays.asList(
                         "settings.self.read", "settings.security.read", "settings.security.update",
                         "settings.privacy.read", "settings.privacy.update", "settings.notifications.read",

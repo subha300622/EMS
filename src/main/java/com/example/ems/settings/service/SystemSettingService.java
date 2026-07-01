@@ -2,7 +2,6 @@ package com.example.ems.settings.service;
 
 import com.example.ems.settings.entity.SystemSetting;
 import com.example.ems.settings.repository.SystemSettingRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,7 +23,6 @@ public class SystemSettingService {
     @org.springframework.beans.factory.annotation.Value("${app.email.sender-address:noreply@company.com}")
     private String defaultSenderAddress;
 
-    @PostConstruct
     public void initDefaultSettings() {
         // Seed default system configurations if they do not exist
         Map<String, String[]> defaults = new HashMap<>();
@@ -82,5 +80,15 @@ public class SystemSettingService {
         return systemSettingRepository.findBySettingKey(key)
                 .map(SystemSetting::getSettingValue)
                 .orElse(defaultValue);
+    }
+
+    @Transactional(readOnly = true)
+    public java.time.LocalTime getOfficeStartTime() {
+        String val = getSettingValue("attendance.office_start_time", "09:30");
+        try {
+            return java.time.LocalTime.parse(val.trim());
+        } catch (Exception e) {
+            return java.time.LocalTime.of(9, 30);
+        }
     }
 }

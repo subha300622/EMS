@@ -118,14 +118,14 @@ public class RegularizationControllerTest {
         }
 
         @Test
-        public void testGetRegularizationsSuccess() throws Exception {
+        public void testGetRegularizationsAsAdminSuccess() throws Exception {
                 AttendanceRegularization regularization = new AttendanceRegularization();
                 regularization.setId(100L);
                 regularization.setEmployee(employee);
                 regularization.setStatus("PENDING");
 
-                when(roleService.hasPermission(EMAIL, "attendance.read")).thenReturn(true);
-                when(regularizationService.getRegularizations("PENDING")).thenReturn(List.of(regularization));
+                when(regularizationService.getRegularizationsForUser(any(User.class), eq("PENDING")))
+                                .thenReturn(List.of(regularization));
 
                 mockMvc.perform(get("/api/v1/attendance/regularization")
                                 .header("Authorization", AUTH_HEADER)
@@ -133,6 +133,50 @@ public class RegularizationControllerTest {
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.success").value(true))
                                 .andExpect(jsonPath("$.data[0].status").value("PENDING"));
+        }
+
+        @Test
+        public void testGetRegularizationsAsEmployeeSuccess() throws Exception {
+                AttendanceRegularization regularization = new AttendanceRegularization();
+                regularization.setId(100L);
+                regularization.setEmployee(employee);
+                regularization.setStatus("PENDING");
+
+                when(regularizationService.getRegularizationsForUser(any(User.class), eq("PENDING")))
+                                .thenReturn(List.of(regularization));
+
+                mockMvc.perform(get("/api/v1/attendance/regularization")
+                                .header("Authorization", AUTH_HEADER)
+                                .param("status", "PENDING"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data[0].id").value(100L));
+        }
+
+        @Test
+        public void testGetRegularizationsForbidden() throws Exception {
+                when(regularizationService.getRegularizationsForUser(any(User.class), any()))
+                                .thenThrow(new SecurityException("Access Denied: Requires permissions."));
+
+                mockMvc.perform(get("/api/v1/attendance/regularization")
+                                .header("Authorization", AUTH_HEADER))
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.success").value(false))
+                                .andExpect(jsonPath("$.errorCode").value("AUTH_002"))
+                                .andExpect(jsonPath("$.message").value("Access Denied: Requires permissions."));
+        }
+
+        @Test
+        public void testGetRegularizationsEmployeeMappingNotFound() throws Exception {
+                when(regularizationService.getRegularizationsForUser(any(User.class), any()))
+                                .thenThrow(new SecurityException("Employee profile not found for authenticated user."));
+
+                mockMvc.perform(get("/api/v1/attendance/regularization")
+                                .header("Authorization", AUTH_HEADER))
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.success").value(false))
+                                .andExpect(jsonPath("$.errorCode").value("AUTH_002"))
+                                .andExpect(jsonPath("$.message").value("Employee profile not found for authenticated user."));
         }
 
         @Test

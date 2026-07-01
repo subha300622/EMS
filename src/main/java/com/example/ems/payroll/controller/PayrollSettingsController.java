@@ -15,14 +15,12 @@ import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/v1/payroll-settings")
@@ -47,24 +45,6 @@ public class PayrollSettingsController {
 
     @Autowired
     private JwtService jwtService;
-
-    @PostConstruct
-    public void seedDefaults() {
-        if (payrollSettingRepository.count() == 0) {
-            payrollSettingRepository.save(new PayrollSetting("paycycle_start_day", "1", "Start day of pay cycle"));
-            payrollSettingRepository.save(new PayrollSetting("tax_enabled", "true", "Whether income tax calculation is enabled"));
-        }
-        if (salaryComponentRepository.count() == 0) {
-            salaryComponentRepository.save(new SalaryComponent("Basic Salary", "EARNING", BigDecimal.valueOf(50.0), null, true));
-            salaryComponentRepository.save(new SalaryComponent("HRA", "EARNING", BigDecimal.valueOf(20.0), null, true));
-            salaryComponentRepository.save(new SalaryComponent("Provident Fund", "DEDUCTION", BigDecimal.valueOf(12.0), null, false));
-        }
-        if (taxSlabRepository.count() == 0) {
-            taxSlabRepository.save(new TaxSlab("NEW", BigDecimal.valueOf(0.0), BigDecimal.valueOf(300000.0), BigDecimal.ZERO));
-            taxSlabRepository.save(new TaxSlab("NEW", BigDecimal.valueOf(300000.0), BigDecimal.valueOf(600000.0), BigDecimal.valueOf(5.0)));
-            taxSlabRepository.save(new TaxSlab("NEW", BigDecimal.valueOf(600000.0), null, BigDecimal.valueOf(10.0)));
-        }
-    }
 
     // --- PARAMETERS ---
     @Operation(summary = "Get Payroll Settings Parameters", description = "Retrieves general system configuration parameters for payroll processing (e.g., pay cycle start day, tax calculation enabled).")

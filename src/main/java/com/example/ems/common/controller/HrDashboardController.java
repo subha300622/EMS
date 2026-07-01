@@ -5,7 +5,7 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.common.service.HrDashboardService;
+import com.example.ems.common.service.HrDashboardCacheService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +25,7 @@ import java.util.Map;
 public class HrDashboardController {
 
     @Autowired
-    private HrDashboardService hrDashboardService;
+    private HrDashboardCacheService hrDashboardCacheService;
 
     @Autowired
     private UserRepository userRepository;
@@ -75,7 +75,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity
-                .ok(ApiResponse.success("HR Dashboard summary retrieved", hrDashboardService.getDashboardSummary()));
+                .ok(ApiResponse.success("HR Dashboard summary retrieved", hrDashboardCacheService.getDashboardSummary()));
     }
 
     @Operation(summary = "Get Headcount KPI Card Data")
@@ -93,7 +93,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity
-                .ok(ApiResponse.success("Headcount stats retrieved", hrDashboardService.getHeadcountStats()));
+                .ok(ApiResponse.success("Headcount stats retrieved", hrDashboardCacheService.getHeadcountStats()));
     }
 
     @Operation(summary = "Get New Hires KPI Card Data")
@@ -111,7 +111,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity
-                .ok(ApiResponse.success("New hires stats retrieved", hrDashboardService.getNewHiresStats()));
+                .ok(ApiResponse.success("New hires stats retrieved", hrDashboardCacheService.getNewHiresStats()));
     }
 
     @Operation(summary = "Get Attrition KPI Card Data")
@@ -129,7 +129,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity
-                .ok(ApiResponse.success("Attrition stats retrieved", hrDashboardService.getAttritionStats()));
+                .ok(ApiResponse.success("Attrition stats retrieved", hrDashboardCacheService.getAttritionStats()));
     }
 
     @Operation(summary = "Get Open Positions KPI Card Data")
@@ -147,7 +147,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity
-                .ok(ApiResponse.success("Open positions stats retrieved", hrDashboardService.getOpenPositionsStats()));
+                .ok(ApiResponse.success("Open positions stats retrieved", hrDashboardCacheService.getOpenPositionsStats()));
     }
 
     @Operation(summary = "Get Headcount Trend Chart")
@@ -166,7 +166,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity.ok(
-                ApiResponse.success("Headcount trend chart retrieved", hrDashboardService.getHeadcountTrend(period)));
+                ApiResponse.success("Headcount trend chart retrieved", hrDashboardCacheService.getHeadcountTrend(period)));
     }
 
     @Operation(summary = "Get Employee Department Breakdown Pie Chart")
@@ -184,7 +184,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity.ok(
-                ApiResponse.success("Employee breakdown chart retrieved", hrDashboardService.getEmployeeBreakdown()));
+                ApiResponse.success("Employee breakdown chart retrieved", hrDashboardCacheService.getEmployeeBreakdown()));
     }
 
     @Operation(summary = "Get Leave Approvals Widget Data")
@@ -202,7 +202,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity
-                .ok(ApiResponse.success("Pending leaves retrieved", hrDashboardService.getPendingLeaves()));
+                .ok(ApiResponse.success("Pending leaves retrieved", hrDashboardCacheService.getPendingLeaves()));
     }
 
     @Operation(summary = "Get Recent Hires Widget Data")
@@ -219,7 +219,7 @@ public class HrDashboardController {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
-        return ResponseEntity.ok(ApiResponse.success("Recent hires retrieved", hrDashboardService.getRecentHires()));
+        return ResponseEntity.ok(ApiResponse.success("Recent hires retrieved", hrDashboardCacheService.getRecentHires()));
     }
 
     @Operation(summary = "Get Attendance by Department Widget Data")
@@ -237,7 +237,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Attendance by department retrieved",
-                hrDashboardService.getAttendanceByDepartment()));
+                hrDashboardCacheService.getAttendanceByDepartment()));
     }
 
     @Operation(summary = "Get Retention Alerts Widget Data")
@@ -255,7 +255,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity
-                .ok(ApiResponse.success("Retention alerts retrieved", hrDashboardService.getRetentionAlerts()));
+                .ok(ApiResponse.success("Retention alerts retrieved", hrDashboardCacheService.getRetentionAlerts()));
     }
 
     @Operation(summary = "Global HR Search")
@@ -274,7 +274,7 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity
-                .ok(ApiResponse.success("Search results retrieved", hrDashboardService.globalSearch(keyword)));
+                .ok(ApiResponse.success("Search results retrieved", hrDashboardCacheService.globalSearch(keyword)));
     }
 
     @Operation(summary = "Aggregated HR Dashboard Summary (Recommended)")
@@ -292,6 +292,6 @@ public class HrDashboardController {
                     .body(ErrorResponse.error("Access Denied: Requires HR or Admin access.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("HR Dashboard aggregated summary retrieved",
-                hrDashboardService.getDashboardSummaryAggregation()));
+                hrDashboardCacheService.getDashboardSummaryAggregation()));
     }
 }

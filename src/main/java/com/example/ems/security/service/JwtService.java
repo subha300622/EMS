@@ -33,12 +33,20 @@ public class JwtService {
     }
 
     public String generateAccessToken(String userId, String email, String role, String sessionId) {
+        return generateAccessToken(userId, email, role, sessionId, 1, 1L);
+    }
+
+    public String generateAccessToken(String userId, String email, String role, String sessionId, int sessionVersion, long sessionEpoch) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("role", role);
         if (sessionId != null) {
             claims.put("sessionId", sessionId);
+            claims.put("sessionVersion", sessionVersion);
+            claims.put("sessionEpoch", sessionEpoch);
         }
+
+        claims.put("aud", "ems-backend");
 
         return Jwts.builder()
                 .claims(claims)

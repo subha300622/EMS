@@ -1,6 +1,8 @@
 package com.example.ems.attendance.controller;
 
+import com.example.ems.attendance.dto.CheckInRequest;
 import com.example.ems.attendance.entity.Attendance;
+import com.example.ems.attendance.exception.DuplicateCheckInException;
 import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -23,6 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -85,7 +88,7 @@ public class MyAttendanceControllerTest {
         attendance.setPunchInTime(LocalTime.of(9, 0));
         attendance.setNotes("First punch");
 
-        when(attendanceService.checkIn(any(Employee.class), eq("First punch"))).thenReturn(attendance);
+        when(attendanceService.checkIn(any(Employee.class), any(CheckInRequest.class))).thenReturn(attendance);
 
         mockMvc.perform(post("/api/v1/attendance/me/check-in")
                         .header("Authorization", AUTH_HEADER)
@@ -129,12 +132,49 @@ public class MyAttendanceControllerTest {
         attendance.setDate(LocalDate.now());
         attendance.setStatus("PRESENT");
 
-        when(attendanceService.getAttendanceByEmployeeId(1L)).thenReturn(List.of(attendance));
+        org.springframework.data.domain.Page<Attendance> mockPage = 
+                new org.springframework.data.domain.PageImpl<>(List.of(attendance));
+
+        when(attendanceService.getAttendanceByEmployeeIdPaginated(eq(1L), anyInt(), anyInt())).thenReturn(mockPage);
 
         mockMvc.perform(get("/api/v1/attendance/me")
                         .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].status").value("PRESENT"));
+                .andExpect(jsonPath("$.data[0].status").value("PRESENT"))
+                .andExpect(jsonPath("$.page").value(1))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.totalPages").value(1));
+    }
+
+    @Test
+    public void testCheckInDuplicateConflict() throws Exception {
+        when(attendanceService.checkIn(any(Employee.class), any(CheckInRequest.class)))
+                .thenThrow(new DuplicateCheckInException("Already checked in today"));
+
+        mockMvc.perform(post("/api/v1/attendance/me/check-in")
+                        .header("Authorization", AUTH_HEADER)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"notes\": \"Second punch\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Already checked in today"))
+                .andExpect(jsonPath("$.errorCode").value("ATT_002"));
+    }
+
+    @Test
+    public void testCheckInLocationRequired() throws Exception {
+        when(attendanceService.checkIn(any(Employee.class), any(CheckInRequest.class)))
+                .thenThrow(new IllegalArgumentException("Location required for GPS attendance"));
+
+        mockMvc.perform(post("/api/v1/attendance/me/check-in")
+                        .header("Authorization", AUTH_HEADER)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"notes\": \"Punch missing location\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Location required for GPS attendance"))
+                .andExpect(jsonPath("$.errorCode").value("ATT_001"));
     }
 }

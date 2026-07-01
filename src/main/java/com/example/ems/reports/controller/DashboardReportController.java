@@ -18,10 +18,10 @@ import com.example.ems.leave.repository.LeaveRepository;
 import com.example.ems.payroll.entity.Payroll;
 import com.example.ems.payroll.repository.PayrollRepository;
 import com.example.ems.security.service.JwtService;
+import com.example.ems.auth.service.SafeRedisService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +53,7 @@ public class DashboardReportController {
     private DepartmentRepository departmentRepository;
 
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private SafeRedisService safeRedisService;
 
     @Autowired
     private JwtService jwtService;
@@ -99,7 +99,7 @@ public class DashboardReportController {
                     .body(ErrorResponse.error("Access Denied: Requires admin/HR dashboard privileges.", "AUTH_002"));
         }
 
-        Set<String> keys = redisTemplate.keys("session:user:*");
+        Set<String> keys = safeRedisService.keys("session:user:*");
         long activeSessions = keys != null ? keys.size() : 0;
 
         Map<String, Object> stats = new LinkedHashMap<>();

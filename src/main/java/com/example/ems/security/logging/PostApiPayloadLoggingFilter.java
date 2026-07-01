@@ -28,7 +28,9 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
     private PostApiPayloadLogRepository logRepository;
 
     private static final Object fileLock = new Object();
-    private static final String LOG_FILE_PATH = "/home/subashini/Documents/ems-backend/post_api_payloads.log";
+
+    @org.springframework.beans.factory.annotation.Value("${ems.logging.post-api-path:post_api_payloads.log}")
+    private String logFilePath;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -126,7 +128,11 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
 
     private void writeToFile(LocalDateTime timestamp, String uri, String userEmail, int status, String reqBody, String respBody) {
         synchronized (fileLock) {
-            File logFile = new File(LOG_FILE_PATH);
+            File logFile = new File(logFilePath);
+            File parentDir = logFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                parentDir.mkdirs();
+            }
             try (FileWriter writer = new FileWriter(logFile, true)) {
                 writer.write("======================================================================\n");
                 writer.write("Timestamp:        " + timestamp.toString() + "\n");

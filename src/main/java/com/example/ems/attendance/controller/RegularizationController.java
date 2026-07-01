@@ -105,14 +105,13 @@ public class RegularizationController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "attendance.read")
-                && !roleService.hasPermission(currentUser.getWorkEmail(), "attendance.manage")) {
+        try {
+            List<AttendanceRegularization> list = regularizationService.getRegularizationsForUser(currentUser, status);
+            return ResponseEntity.ok(ApiResponse.success("Regularization requests retrieved successfully", list));
+        } catch (SecurityException e) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'attendance.read' or 'attendance.manage' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error(e.getMessage(), "AUTH_002"));
         }
-
-        return ResponseEntity.ok(ApiResponse.success("Regularization requests retrieved successfully",
-                regularizationService.getRegularizations(status)));
     }
 
     @Operation(summary = "Approve Attendance Regularization", description = "Approves a pending regularization request and updates the attendance record.")

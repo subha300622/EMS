@@ -22,8 +22,12 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
+        java.util.List<ErrorResponse.ErrorDetails.Detail> details = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> new ErrorResponse.ErrorDetails.Detail(error.getField(), error.getRejectedValue()))
+                .collect(Collectors.toList());
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.error("Validation failed: " + errors, "VAL_001"));
+                .body(ErrorResponse.error("Validation failed: " + errors, "VAL_001", details));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -40,6 +44,20 @@ public class GlobalExceptionHandler {
             org.springframework.http.converter.HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.error("Malformed JSON request body: " + ex.getMessage(), "VAL_003"));
+    }
+
+    @ExceptionHandler(com.example.ems.attendance.exception.DuplicateCheckInException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateCheckIn(
+            com.example.ems.attendance.exception.DuplicateCheckInException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error(ex.getMessage(), "ATT_002"));
+    }
+
+    @ExceptionHandler(com.example.ems.common.exception.ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            com.example.ems.common.exception.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.error(ex.getMessage(), "RES_404"));
     }
 
     @ExceptionHandler(Exception.class)

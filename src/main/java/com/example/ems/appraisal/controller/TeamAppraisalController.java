@@ -5,7 +5,6 @@ import com.example.ems.appraisal.entity.AppraisalStatus;
 import com.example.ems.appraisal.service.AppraisalService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
@@ -35,9 +34,6 @@ public class TeamAppraisalController {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private RoleService roleService;
 
     @Autowired
     private JwtService jwtService;
