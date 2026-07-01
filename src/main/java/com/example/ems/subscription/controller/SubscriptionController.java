@@ -39,6 +39,9 @@ public class SubscriptionController {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private com.example.ems.subscription.service.SubscriptionAnalyticsService analyticsService;
+
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -437,5 +440,86 @@ public class SubscriptionController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "SUB_002"));
         }
+    }
+
+    @Operation(summary = "Get Subscription Overview Dashboard")
+    @GetMapping("/overview")
+    public ResponseEntity<?> getOverview(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        return ResponseEntity.ok(ApiResponse.success("Subscription overview dashboard retrieved", analyticsService.getOverview()));
+    }
+
+    @Operation(summary = "Get MRR Analytics")
+    @GetMapping("/metrics/mrr")
+    public ResponseEntity<?> getMRR(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        return ResponseEntity.ok(ApiResponse.success("MRR metric retrieved", analyticsService.getMRR()));
+    }
+
+    @Operation(summary = "Get Active Subscriptions Metric")
+    @GetMapping("/metrics/active")
+    public ResponseEntity<?> getActiveSubscriptions(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        return ResponseEntity.ok(ApiResponse.success("Active subscriptions metric retrieved", analyticsService.getActiveSubscriptions()));
+    }
+
+    @Operation(summary = "Get Revenue Collected Metric")
+    @GetMapping("/metrics/revenue")
+    public ResponseEntity<?> getRevenueCollected(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        return ResponseEntity.ok(ApiResponse.success("Revenue collected metric retrieved", analyticsService.getRevenueCollected()));
+    }
+
+    @Operation(summary = "Get Invoice Health Metrics")
+    @GetMapping("/metrics/invoices")
+    public ResponseEntity<?> getInvoiceHealth(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        return ResponseEntity.ok(ApiResponse.success("Invoice health metric retrieved", analyticsService.getOverdueInvoices()));
+    }
+
+    @Operation(summary = "Get Plan Distribution")
+    @GetMapping("/metrics/plan-distribution")
+    public ResponseEntity<?> getPlanDistribution(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        return ResponseEntity.ok(ApiResponse.success("Plan distribution retrieved", analyticsService.getPlanDistribution()));
+    }
+
+    @Operation(summary = "Get Renewal Forecast")
+    @GetMapping("/metrics/renewals")
+    public ResponseEntity<?> getRenewals(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(value = "days", defaultValue = "30") int days) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        return ResponseEntity.ok(ApiResponse.success("Upcoming renewals forecast retrieved", analyticsService.getUpcomingRenewals(days)));
+    }
+
+    @Operation(summary = "Get Churn & Retention Analytics")
+    @GetMapping("/metrics/churn")
+    public ResponseEntity<?> getChurn(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        return ResponseEntity.ok(ApiResponse.success("Churn metric retrieved", analyticsService.getChurnRate()));
     }
 }

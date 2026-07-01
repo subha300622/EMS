@@ -83,7 +83,8 @@ public class RedisCacheConfig implements CachingConfigurer {
                 new ConcurrentMapCache("userPermissions"),
                 new ConcurrentMapCache("userBootstrap"),
                 new ConcurrentMapCache("roles"),
-                new ConcurrentMapCache("appraisalDashboard")));
+                new ConcurrentMapCache("appraisalDashboard"),
+                new ConcurrentMapCache("subscriptionsOverview")));
         return manager;
     }
 

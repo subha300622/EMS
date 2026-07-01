@@ -236,6 +236,54 @@ public class SaaSOrganizationPaymentFlowIntegrationTest {
         System.out.println("\n[FLOW-STEP-6-VERIFIED-DATA-UPDATES] Final State Verification:");
         System.out.println("Invoice Status: " + updatedInvoice.getStatus());
         System.out.println("Subscription Status: " + updatedSub.getStatus());
+
+        // Step 6: Query Analytics Dashboard & Metrics APIs
+        System.out.println("\n[FLOW-STEP-7-ANALYTICS] Verifying Composed Analytics Dashboard APIs...");
+
+        // 1. GET /overview
+        MvcResult overviewResult = mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/platform-admin/subscriptions/overview")
+                        .header("Authorization", token))
+                .andExpect(status().isOk())
+                .andReturn();
+        String overviewJson = overviewResult.getResponse().getContentAsString();
+        System.out.println("Overview Dashboard Response:");
+        System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapper.readTree(overviewJson)));
+
+        // 2. GET /metrics/mrr
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/platform-admin/subscriptions/metrics/mrr")
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        // 3. GET /metrics/active
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/platform-admin/subscriptions/metrics/active")
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        // 4. GET /metrics/revenue
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/platform-admin/subscriptions/metrics/revenue")
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        // 5. GET /metrics/invoices
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/platform-admin/subscriptions/metrics/invoices")
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        // 6. GET /metrics/plan-distribution
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/platform-admin/subscriptions/metrics/plan-distribution")
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        // 7. GET /metrics/renewals
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/platform-admin/subscriptions/metrics/renewals?days=30")
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+
+        // 8. GET /metrics/churn
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/v1/platform-admin/subscriptions/metrics/churn")
+                        .header("Authorization", token))
+                .andExpect(status().isOk());
+
         System.out.println("================================================================================");
     }
 }

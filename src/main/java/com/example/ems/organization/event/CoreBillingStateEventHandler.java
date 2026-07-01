@@ -18,6 +18,9 @@ public class CoreBillingStateEventHandler {
     @Autowired
     private BillingCommandService billingCommandService;
 
+    @Autowired
+    private com.example.ems.subscription.service.SubscriptionAnalyticsService analyticsService;
+
     /**
      * Listens for payment succeeded events synchronously. Runs in the same transaction as verifyPayment.
      */
@@ -34,5 +37,13 @@ public class CoreBillingStateEventHandler {
             event.subscriptionId(),
             event.gatewayPaymentId()
         );
+
+        // Async read-model recalculation and refresh
+        try {
+            analyticsService.recalculateAndRefresh();
+            log.info("[CoreBillingStateEventHandler] Triggered async analytics refresh for event: {}", event.eventId());
+        } catch (Exception e) {
+            log.error("[CoreBillingStateEventHandler] Failed to trigger analytics refresh: {}", e.getMessage(), e);
+        }
     }
 }
