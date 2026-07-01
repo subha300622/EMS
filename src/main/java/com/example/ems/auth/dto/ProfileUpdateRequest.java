@@ -30,6 +30,12 @@ public class ProfileUpdateRequest {
     @Schema(example = "https://cdn.example.com/avatars/john.jpg", description = "URL of the profile image")
     private String profileImage;
 
+    @Schema(example = "Google", description = "Organization name")
+    private String organizationName;
+
+    @Schema(example = "Main Branch", description = "Branch location")
+    private String branch;
+
     // --- Getters and Setters ---
 
     public String getPhone() {
@@ -64,10 +70,26 @@ public class ProfileUpdateRequest {
         this.profileImage = profileImage;
     }
 
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
     /**
      * Returns true if at least one field was supplied in the request.
      */
     public boolean hasAnyUpdate() {
-        return phone != null || address != null || emergencyContact != null || profileImage != null;
+        return phone != null || address != null || emergencyContact != null || profileImage != null || organizationName != null || branch != null;
     }
 }

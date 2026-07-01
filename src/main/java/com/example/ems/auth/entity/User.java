@@ -43,6 +43,11 @@ public class User {
     // Optional
     private String location;
 
+    @Column(name = "organization_name")
+    private String organizationName;
+
+    private String branch;
+
     private String status = "ACTIVE";
 
     @Column(name = "created_at", updatable = false)
@@ -189,5 +194,21 @@ public class User {
 
     public void setOrganization(com.example.ems.organization.entity.Organization organization) {
         this.organization = organization;
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 }

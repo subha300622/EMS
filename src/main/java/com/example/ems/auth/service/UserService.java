@@ -80,6 +80,8 @@ public class UserService {
         user.setEmployeeId(request.getEmployeeId());
         user.setDepartment(request.getDepartment());
         user.setLocation(request.getLocation());
+        user.setOrganizationName(request.getOrganizationName());
+        user.setBranch(request.getBranch());
         user.setStatus("ACTIVE");          // ← Can login immediately
         user.setRole(employeeRole);        // ← Default EMPLOYEE role
         user.setRequestedRole(employeeRole != null ? "EMPLOYEE" : null);
@@ -307,6 +309,12 @@ public class UserService {
         if (request.getAddress() != null) {
             user.setLocation(request.getAddress());
         }
+        if (request.getOrganizationName() != null) {
+            user.setOrganizationName(request.getOrganizationName());
+        }
+        if (request.getBranch() != null) {
+            user.setBranch(request.getBranch());
+        }
         User saved = userRepository.save(user);
         roleService.evictUserPermissionsCache(saved.getUserId());
         return saved;
@@ -351,7 +359,9 @@ public class UserService {
             false, // mustChangePassword
             mfaRequired,
             user.getStatus(),
-            java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString()
+            java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
+            user.getOrganizationName(),
+            user.getBranch()
         );
     }
 

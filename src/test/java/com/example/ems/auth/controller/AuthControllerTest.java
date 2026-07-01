@@ -139,6 +139,34 @@ public class AuthControllerTest {
     }
 
     @Test
+    public void testRegisterWithOrgAndBranchSuccess() throws Exception {
+        RegisterRequest registerRequest = new RegisterRequest();
+        registerRequest.setFullName("Test User");
+        registerRequest.setWorkEmail("test@example.com");
+        registerRequest.setMobileNumber("1234567890");
+        registerRequest.setDepartment("IT");
+        registerRequest.setRequestedRole("EMPLOYEE");
+        registerRequest.setPassword("password");
+        registerRequest.setConfirmPassword("password");
+        registerRequest.setOrganizationName("Google");
+        registerRequest.setBranch("Main Branch");
+
+        User user = new User();
+        user.setWorkEmail("test@example.com");
+        user.setOrganizationName("Google");
+        user.setBranch("Main Branch");
+
+        when(userService.register(any())).thenReturn("Registration Successful! Your User ID: EMP001 | Role ID: 2");
+        when(userRepository.findByWorkEmail("test@example.com")).thenReturn(Optional.of(user));
+
+        mockMvc.perform(post("/api/v1/auth/register")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(registerRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+
+    @Test
     public void testRegisterPasswordMismatch() throws Exception {
         RegisterRequest registerRequest = new RegisterRequest();
         registerRequest.setFullName("Test User");

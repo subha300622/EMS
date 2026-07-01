@@ -34,7 +34,8 @@ public class BootstrapResponse {
         private boolean mustChangePassword;
         private boolean mfaRequired;
         private String status;
-        private String lastLogin;
+        private String lastLogin;        private String organizationName;
+        private String branch;
 
         public UserProfileResponse() {}
 
@@ -49,6 +50,12 @@ public class BootstrapResponse {
             this.mfaRequired = mfaRequired;
             this.status = status;
             this.lastLogin = lastLogin;
+        }
+
+        public UserProfileResponse(Long id, String employeeId, String name, String email, String role, String profileImage, boolean mustChangePassword, boolean mfaRequired, String status, String lastLogin, String organizationName, String branch) {
+            this(id, employeeId, name, email, role, profileImage, mustChangePassword, mfaRequired, status, lastLogin);
+            this.organizationName = organizationName;
+            this.branch = branch;
         }
 
         public Long getId() { return id; }
@@ -80,6 +87,12 @@ public class BootstrapResponse {
 
         public String getLastLogin() { return lastLogin; }
         public void setLastLogin(String lastLogin) { this.lastLogin = lastLogin; }
+
+        public String getOrganizationName() { return organizationName; }
+        public void setOrganizationName(String organizationName) { this.organizationName = organizationName; }
+
+        public String getBranch() { return branch; }
+        public void setBranch(String branch) { this.branch = branch; }
     }
 
     public static class AuthDataResponse {

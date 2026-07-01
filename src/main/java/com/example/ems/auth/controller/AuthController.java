@@ -338,6 +338,8 @@ public class AuthController {
         userData.put("email", user.getWorkEmail());
         userData.put("role", roleMap);
         userData.put("permissions", permissions);
+        userData.put("organizationName", user.getOrganizationName());
+        userData.put("branch", user.getBranch());
 
         return ResponseEntity.ok(ApiResponse.success("User profile retrieved successfully", userData));
     }
