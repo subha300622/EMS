@@ -38,9 +38,14 @@ public class CoreBillingStateEventHandler {
             event.gatewayPaymentId()
         );
 
-        // Async read-model recalculation and refresh
+        // Async read-model incremental delta refresh
         try {
-            analyticsService.recalculateAndRefresh();
+            analyticsService.applyPaymentSucceededDelta(
+                event.eventId(),
+                event.invoiceId(),
+                event.subscriptionId(),
+                event.paymentId()
+            );
             log.info("[CoreBillingStateEventHandler] Triggered async analytics refresh for event: {}", event.eventId());
         } catch (Exception e) {
             log.error("[CoreBillingStateEventHandler] Failed to trigger analytics refresh: {}", e.getMessage(), e);

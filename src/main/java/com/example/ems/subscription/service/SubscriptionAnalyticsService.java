@@ -4,7 +4,7 @@ import com.example.ems.organization.dto.SubscriptionAnalyticsDtos.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -28,6 +28,9 @@ public class SubscriptionAnalyticsService {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private CacheManager cacheManager;
+
     /**
      * Retrieves cached subscription overview dashboard statistics.
      */
@@ -35,25 +38,18 @@ public class SubscriptionAnalyticsService {
     public SubscriptionOverviewDto getOverview() {
         log.info("[SubscriptionAnalyticsService] Cache miss. Computing dashboard overview from database...");
         
-        // 1. Gather primary metrics
         MRRMetric mrr = getMRR();
         ActiveSubscriptionsMetric activeSub = getActiveSubscriptions();
         RevenueCollectedMetric revenue = getRevenueCollected();
         OverdueInvoicesMetric overdue = getOverdueInvoices();
         
-        // 2. Count total unique subscribers (orgs that have ever subscribed)
         Integer totalSubscribers = jdbcTemplate.queryForObject(
             "SELECT COUNT(DISTINCT organization_id) FROM subscriptions", Integer.class
         );
         totalSubscribers = totalSubscribers != null ? totalSubscribers : 0;
         
-        // 3. Plan distributions
         List<PlanDistributionEntry> planDist = getPlanDistribution();
-        
-        // 4. Forecasted renewals (default to next 30 days)
         List<UpcomingRenewalEntry> renewals = getUpcomingRenewals(30);
-        
-        // 5. Ratio calculations
         RatioMetrics ratios = getRatioMetrics();
         
         return new SubscriptionOverviewDto(
@@ -68,9 +64,6 @@ public class SubscriptionAnalyticsService {
         );
     }
 
-    /**
-     * Compute MRR.
-     */
     @Cacheable(value = "subscriptionsOverview", key = "'metric_mrr'")
     public MRRMetric getMRR() {
         BigDecimal mrr = jdbcTemplate.queryForObject(
@@ -81,8 +74,6 @@ public class SubscriptionAnalyticsService {
         );
         mrr = mrr != null ? mrr.setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
         
-        // Growth trend is hardcoded to 14.2% default if no historical snapshots exist,
-        // otherwise calculated by comparing current to previous day snapshot.
         double trend = 14.2;
         try {
             List<BigDecimal> pastMrr = jdbcTemplate.queryForList(
@@ -101,9 +92,6 @@ public class SubscriptionAnalyticsService {
         return new MRRMetric(mrr, "INR", trend);
     }
 
-    /**
-     * Compute active subscriptions count and delta.
-     */
     @Cacheable(value = "subscriptionsOverview", key = "'metric_active'")
     public ActiveSubscriptionsMetric getActiveSubscriptions() {
         Integer count = jdbcTemplate.queryForObject(
@@ -111,7 +99,6 @@ public class SubscriptionAnalyticsService {
         );
         count = count != null ? count : 0;
         
-        // Delta matches count of subscriptions activated in last 30 days
         Integer delta = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM subscriptions WHERE status = 'ACTIVE' AND created_at >= ?",
             Integer.class, java.sql.Timestamp.valueOf(LocalDateTime.now().minusDays(30))
@@ -121,9 +108,6 @@ public class SubscriptionAnalyticsService {
         return new ActiveSubscriptionsMetric(count, delta);
     }
 
-    /**
-     * Compute total revenue collected.
-     */
     @Cacheable(value = "subscriptionsOverview", key = "'metric_revenue'")
     public RevenueCollectedMetric getRevenueCollected() {
         BigDecimal revenue = jdbcTemplate.queryForObject(
@@ -149,9 +133,6 @@ public class SubscriptionAnalyticsService {
         return new RevenueCollectedMetric(revenue, trend);
     }
 
-    /**
-     * Compute overdue invoices metrics.
-     */
     @Cacheable(value = "subscriptionsOverview", key = "'metric_invoices_overdue'")
     public OverdueInvoicesMetric getOverdueInvoices() {
         BigDecimal overdue = jdbcTemplate.queryForObject(
@@ -161,9 +142,6 @@ public class SubscriptionAnalyticsService {
         return new OverdueInvoicesMetric(overdue);
     }
 
-    /**
-     * Compute active plan distribution summaries.
-     */
     @Cacheable(value = "subscriptionsOverview", key = "'metric_plan_distribution'")
     public List<PlanDistributionEntry> getPlanDistribution() {
         List<PlanDistributionEntry> list = new ArrayList<>();
@@ -190,9 +168,6 @@ public class SubscriptionAnalyticsService {
         return list;
     }
 
-    /**
-     * Predict renewal schedules within requested time horizon.
-     */
     @Cacheable(value = "subscriptionsOverview", key = "'metric_renewals_' + #days")
     public List<UpcomingRenewalEntry> getUpcomingRenewals(int days) {
         List<UpcomingRenewalEntry> list = new ArrayList<>();
@@ -215,9 +190,6 @@ public class SubscriptionAnalyticsService {
         return list;
     }
 
-    /**
-     * Compute churn metrics.
-     */
     @Cacheable(value = "subscriptionsOverview", key = "'metric_churn'")
     public double getChurnRate() {
         Integer active = jdbcTemplate.queryForObject(
@@ -236,11 +208,7 @@ public class SubscriptionAnalyticsService {
             .doubleValue();
     }
 
-    /**
-     * Calculate ratio metrics for the dashboard overview.
-     */
     private RatioMetrics getRatioMetrics() {
-        // Average revenue per org
         BigDecimal totalRevenue = jdbcTemplate.queryForObject(
             "SELECT COALESCE(SUM(amount), 0.00) FROM subscription_invoices WHERE status = 'PAID'", BigDecimal.class
         );
@@ -255,10 +223,8 @@ public class SubscriptionAnalyticsService {
             ? totalRevenue.divide(BigDecimal.valueOf(orgCount), 2, RoundingMode.HALF_UP).doubleValue() 
             : 0.0;
             
-        // Churn rate
         double churn = getChurnRate();
         
-        // Payment success rate
         Integer paidCount = jdbcTemplate.queryForObject(
             "SELECT COUNT(*) FROM subscription_invoices WHERE status = 'PAID'", Integer.class
         );
@@ -273,7 +239,6 @@ public class SubscriptionAnalyticsService {
             ? (paidCount * 100.0) / totalCount 
             : 100.0;
             
-        // Pending invoices value
         BigDecimal pendingVal = jdbcTemplate.queryForObject(
             "SELECT COALESCE(SUM(amount), 0.00) FROM subscription_invoices WHERE status = 'ISSUED'", BigDecimal.class
         );
@@ -283,11 +248,177 @@ public class SubscriptionAnalyticsService {
     }
 
     /**
+     * Applies incremental payment succeeded analytics delta using sequence guards.
+     */
+    @Transactional
+    public void applyPaymentSucceededDelta(String eventId, Long invoiceId, Long subscriptionId, Long sequence) {
+        log.info("[SubscriptionAnalyticsService] Received PaymentSucceeded event projection trigger. Sequence: {}", sequence);
+        
+        // 1. Idempotency Check
+        Boolean exists = jdbcTemplate.queryForObject(
+            "SELECT EXISTS(SELECT 1 FROM analytics_event_log WHERE event_id = ? AND projection_type = 'BILLING')",
+            Boolean.class, eventId
+        );
+        if (Boolean.TRUE.equals(exists)) {
+            log.info("[SubscriptionAnalyticsService] Event {} already projected. Skipping.", eventId);
+            return;
+        }
+
+        // 2. Delta Ordering Sequence Check (per subscription)
+        Long lastSeq = jdbcTemplate.queryForObject(
+            "SELECT COALESCE(MAX(event_sequence), 0) FROM analytics_event_log " +
+            "WHERE subscription_id = ? AND projection_type = 'BILLING'",
+            Long.class, subscriptionId
+        );
+        if (sequence <= lastSeq) {
+            log.warn("[SubscriptionAnalyticsService] Out-of-order event skipped. Current sequence: {}, Last sequence processed: {}", sequence, lastSeq);
+            return;
+        }
+
+        // 3. Load Billing Details
+        Map<String, Object> subDetails = jdbcTemplate.queryForMap(
+            "SELECT plan_code, status FROM subscriptions WHERE id = ?", subscriptionId
+        );
+        String planCode = (String) subDetails.get("plan_code");
+        
+        BigDecimal finalAmount = jdbcTemplate.queryForObject(
+            "SELECT COALESCE((billing_info->>'finalAmount')::numeric, 0.00) FROM subscriptions WHERE id = ?",
+            BigDecimal.class, subscriptionId
+        );
+        String cycle = jdbcTemplate.queryForObject(
+            "SELECT COALESCE(billing_info->>'cycle', 'YEARLY') FROM subscriptions WHERE id = ?",
+            String.class, subscriptionId
+        );
+        
+        BigDecimal amount = jdbcTemplate.queryForObject(
+            "SELECT amount FROM subscription_invoices WHERE id = ?",
+            BigDecimal.class, invoiceId
+        );
+        amount = amount != null ? amount : BigDecimal.ZERO;
+        
+        BigDecimal mrrDelta = "YEARLY".equalsIgnoreCase(cycle) 
+            ? finalAmount.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP)
+            : finalAmount;
+            
+        // 4. Upsert snapshot daily row
+        java.sql.Date today = java.sql.Date.valueOf(LocalDate.now());
+        jdbcTemplate.update(
+            "INSERT INTO subscription_metrics_daily (date, total_mrr, active_subscriptions, revenue_collected, churn_rate, pending_invoices_value, updated_at, projection_version) " +
+            "VALUES (?, 0.00, 0, 0.00, 0.00, 0.00, ?, 1) ON CONFLICT (date) DO NOTHING",
+            today, java.sql.Timestamp.valueOf(LocalDateTime.now())
+        );
+
+        // Apply Incremental Updates
+        jdbcTemplate.update(
+            "UPDATE subscription_metrics_daily SET " +
+            "total_mrr = total_mrr + ?, " +
+            "active_subscriptions = active_subscriptions + 1, " +
+            "revenue_collected = revenue_collected + ?, " +
+            "pending_invoices_value = GREATEST(0.00, pending_invoices_value - ?), " +
+            "updated_at = ?, " +
+            "projection_version = projection_version + 1 " +
+            "WHERE date = ?",
+            mrrDelta, amount, amount, java.sql.Timestamp.valueOf(LocalDateTime.now()), today
+        );
+        
+        // 5. Update plan summary summary metrics
+        jdbcTemplate.update(
+            "INSERT INTO subscription_plan_summary (plan_code, organization_count, mrr, updated_at) " +
+            "VALUES (?, 1, ?, ?) ON CONFLICT (plan_code) DO UPDATE SET " +
+            "organization_count = subscription_plan_summary.organization_count + 1, " +
+            "mrr = subscription_plan_summary.mrr + EXCLUDED.mrr, " +
+            "updated_at = EXCLUDED.updated_at",
+            planCode, mrrDelta, java.sql.Timestamp.valueOf(LocalDateTime.now())
+        );
+        
+        // 6. Log processed event sequence
+        jdbcTemplate.update(
+            "INSERT INTO analytics_event_log (event_id, projection_type, subscription_id, event_sequence, processed_at) VALUES (?, 'BILLING', ?, ?, ?)",
+            eventId, subscriptionId, sequence, java.sql.Timestamp.valueOf(LocalDateTime.now())
+        );
+        
+        evictAnalyticsCaches();
+        log.info("[SubscriptionAnalyticsService] Successfully updated metrics for event: {}", eventId);
+    }
+
+    /**
+     * Reversible payment analytics delta rollback.
+     */
+    @Transactional
+    public void revertPaymentDelta(String eventId, Long invoiceId, Long subscriptionId, Long sequence) {
+        log.info("[SubscriptionAnalyticsService] Reverting delta metrics for event: {}", eventId);
+        
+        Boolean exists = jdbcTemplate.queryForObject(
+            "SELECT EXISTS(SELECT 1 FROM analytics_event_log WHERE event_id = ? AND projection_type = 'REVERT')",
+            Boolean.class, eventId
+        );
+        if (Boolean.TRUE.equals(exists)) {
+            return;
+        }
+
+        Map<String, Object> subDetails = jdbcTemplate.queryForMap(
+            "SELECT plan_code FROM subscriptions WHERE id = ?", subscriptionId
+        );
+        String planCode = (String) subDetails.get("plan_code");
+        
+        BigDecimal finalAmount = jdbcTemplate.queryForObject(
+            "SELECT COALESCE((billing_info->>'finalAmount')::numeric, 0.00) FROM subscriptions WHERE id = ?",
+            BigDecimal.class, subscriptionId
+        );
+        String cycle = jdbcTemplate.queryForObject(
+            "SELECT COALESCE(billing_info->>'cycle', 'YEARLY') FROM subscriptions WHERE id = ?",
+            String.class, subscriptionId
+        );
+        
+        BigDecimal amount = jdbcTemplate.queryForObject(
+            "SELECT amount FROM subscription_invoices WHERE id = ?",
+            BigDecimal.class, invoiceId
+        );
+        amount = amount != null ? amount : BigDecimal.ZERO;
+        
+        BigDecimal mrrDelta = "YEARLY".equalsIgnoreCase(cycle) 
+            ? finalAmount.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP)
+            : finalAmount;
+            
+        java.sql.Date today = java.sql.Date.valueOf(LocalDate.now());
+        
+        // Reverse deltas
+        jdbcTemplate.update(
+            "UPDATE subscription_metrics_daily SET " +
+            "total_mrr = GREATEST(0.00, total_mrr - ?), " +
+            "active_subscriptions = GREATEST(0, active_subscriptions - 1), " +
+            "revenue_collected = GREATEST(0.00, revenue_collected - ?), " +
+            "pending_invoices_value = pending_invoices_value + ?, " +
+            "updated_at = ?, " +
+            "projection_version = projection_version + 1 " +
+            "WHERE date = ?",
+            mrrDelta, amount, amount, java.sql.Timestamp.valueOf(LocalDateTime.now()), today
+        );
+        
+        jdbcTemplate.update(
+            "UPDATE subscription_plan_summary SET " +
+            "organization_count = GREATEST(0, organization_count - 1), " +
+            "mrr = GREATEST(0.00, mrr - ?), " +
+            "updated_at = ? " +
+            "WHERE plan_code = ?",
+            mrrDelta, java.sql.Timestamp.valueOf(LocalDateTime.now()), planCode
+        );
+        
+        jdbcTemplate.update(
+            "INSERT INTO analytics_event_log (event_id, projection_type, subscription_id, event_sequence, processed_at) VALUES (?, 'REVERT', ?, ?, ?)",
+            eventId, subscriptionId, sequence, java.sql.Timestamp.valueOf(LocalDateTime.now())
+        );
+        
+        evictAnalyticsCaches();
+    }
+
+    /**
      * Recalculates metrics and stores pre-aggregated values in daily read models.
+     * Acts as the ultimate SOURCE OF TRUTH overwriting all projections.
      */
     @Transactional
     public void recalculateAndStore() {
-        log.info("[SubscriptionAnalyticsService] Commencing metrics recalculation and read-model storage...");
+        log.info("[SubscriptionAnalyticsService] Commencing nightly full metrics reset (Source of Truth)...");
         
         MRRMetric mrr = getMRR();
         ActiveSubscriptionsMetric active = getActiveSubscriptions();
@@ -297,17 +428,18 @@ public class SubscriptionAnalyticsService {
         
         java.sql.Timestamp now = java.sql.Timestamp.valueOf(LocalDateTime.now());
         
-        // 1. Write daily snapshot
+        // Overwrite the daily metrics projection row
         jdbcTemplate.update(
-            "INSERT INTO subscription_metrics_daily (date, total_mrr, active_subscriptions, revenue_collected, churn_rate, pending_invoices_value, updated_at) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT (date) DO UPDATE SET " +
+            "INSERT INTO subscription_metrics_daily (date, total_mrr, active_subscriptions, revenue_collected, churn_rate, pending_invoices_value, updated_at, projection_version) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, 1) ON CONFLICT (date) DO UPDATE SET " +
             "total_mrr = EXCLUDED.total_mrr, active_subscriptions = EXCLUDED.active_subscriptions, " +
             "revenue_collected = EXCLUDED.revenue_collected, churn_rate = EXCLUDED.churn_rate, " +
-            "pending_invoices_value = EXCLUDED.pending_invoices_value, updated_at = EXCLUDED.updated_at",
+            "pending_invoices_value = EXCLUDED.pending_invoices_value, updated_at = EXCLUDED.updated_at, " +
+            "projection_version = subscription_metrics_daily.projection_version + 1",
             java.sql.Date.valueOf(LocalDate.now()), mrr.value(), active.count(), rev.value(), churn, pending, now
         );
         
-        // 2. Write plan summary distributions
+        // Completely overwrite plan summaries
         jdbcTemplate.update("TRUNCATE TABLE subscription_plan_summary");
         List<PlanDistributionEntry> planDist = getPlanDistribution();
         for (PlanDistributionEntry entry : planDist) {
@@ -321,22 +453,55 @@ public class SubscriptionAnalyticsService {
     }
 
     /**
-     * Async task trigger to rebuild read projections and evict caches without blocking the core billing event handlers.
+     * Drop and completely rebuild analytics projections from primary database tables.
      */
-    @Async
     @Transactional
-    @CacheEvict(value = "subscriptionsOverview", allEntries = true)
-    public void recalculateAndRefresh() {
-        log.info("[SubscriptionAnalyticsService] Executing asynchronous metrics refresh and cache eviction...");
+    public void rebuildProjections() {
+        log.warn("[SubscriptionAnalyticsService] Rebuild mode activated. Purging and recalculating all read models...");
+        
+        jdbcTemplate.update("TRUNCATE TABLE public.subscription_metrics_daily");
+        jdbcTemplate.update("TRUNCATE TABLE public.subscription_plan_summary");
+        jdbcTemplate.update("TRUNCATE TABLE public.analytics_event_log");
+        
         recalculateAndStore();
+        evictAnalyticsCaches();
+        
+        log.info("[SubscriptionAnalyticsService] Analytics projection database rebuild successfully completed.");
     }
 
     /**
-     * Daily snapshot scheduler executed at midnight.
+     * Dynamic Cache Key Invalidation for dashboard analytics.
      */
+    public void evictAnalyticsCaches() {
+        org.springframework.cache.Cache cache = cacheManager.getCache("subscriptionsOverview");
+        if (cache != null) {
+            cache.evict("dashboard_overview");
+            cache.evict("metric_mrr");
+            cache.evict("metric_active");
+            cache.evict("metric_revenue");
+            cache.evict("metric_invoices_overdue");
+            cache.evict("metric_plan_distribution");
+            cache.evict("metric_churn");
+            cache.evict("metric_renewals_30");
+            log.info("[SubscriptionAnalyticsService] Analytics granular cache keys successfully evicted.");
+        }
+    }
+
+    /**
+     * Async task trigger to refresh read models and invalidates caches.
+     */
+    @Async
+    @Transactional
+    public void recalculateAndRefresh() {
+        log.info("[SubscriptionAnalyticsService] Executing asynchronous metrics refresh...");
+        recalculateAndStore();
+        evictAnalyticsCaches();
+    }
+
     @Scheduled(cron = "0 0 0 * * *")
     public void snapshotDailyMetrics() {
         log.info("[SubscriptionAnalyticsService] Triggering scheduled midnight metrics snapshot...");
         recalculateAndStore();
+        evictAnalyticsCaches();
     }
 }

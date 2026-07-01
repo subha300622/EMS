@@ -522,4 +522,20 @@ public class SubscriptionController {
 
         return ResponseEntity.ok(ApiResponse.success("Churn metric retrieved", analyticsService.getChurnRate()));
     }
+
+    @Operation(summary = "Rebuild Analytics Projections")
+    @PostMapping("/analytics/rebuild")
+    public ResponseEntity<?> rebuildAnalytics(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        ResponseEntity<?> accessError = validateAccess(authHeader, "organization.read");
+        if (accessError != null) return accessError;
+
+        try {
+            analyticsService.rebuildProjections();
+            return ResponseEntity.ok(ApiResponse.success("Analytics projections successfully rebuilt"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ErrorResponse.error("Rebuild failed: " + e.getMessage(), "ANALYTICS_001"));
+        }
+    }
 }
