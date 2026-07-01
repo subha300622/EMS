@@ -270,11 +270,11 @@ public class SubscriptionAnalyticsService {
         
         Long globalSequence = sequenceList.get(0);
         
-        // 2. Insert query-optimized analytics fact
+        // 2. Insert query-optimized analytics fact with ON CONFLICT DO NOTHING
         jdbcTemplate.update(
-            "INSERT INTO analytics_payment_facts (event_global_sequence, subscription_id, amount, status, plan_code, billing_cycle, created_at) " +
-            "VALUES (?, ?, ?, ?, ?, ?, ?)",
-            globalSequence, subscriptionId, amount, status, planCode, cycle, now
+            "INSERT INTO analytics_payment_facts (event_global_sequence, subscription_id, amount, status, plan_code, billing_cycle, created_at, event_id) " +
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT (event_id) DO NOTHING",
+            globalSequence, subscriptionId, amount, status, planCode, cycle, now, eventId
         );
         
         log.info("[SubscriptionAnalyticsService] Event cataloged: {} (Seq: {})", eventId, globalSequence);
@@ -377,12 +377,19 @@ public class SubscriptionAnalyticsService {
     public void runRebuildAsync(String rebuildId, String mode, Long rebuildEndSeq) {
         log.info("[SubscriptionAnalyticsService] Executing deterministic rebuild task: {}", rebuildId);
         try {
+            // Read last checkpoint sequence
+            Long startSeq = jdbcTemplate.queryForObject(
+                "SELECT last_completed_sequence FROM analytics_rebuild_checkpoint WHERE checkpoint_key = 'BILLING_TELEMETRY'",
+                Long.class
+            );
+            startSeq = startSeq != null ? startSeq : 0L;
+            
             // 1. Calculate MRR up to boundary seq
             BigDecimal mrr = jdbcTemplate.queryForObject(
                 "SELECT COALESCE(SUM(CASE WHEN billing_cycle = 'YEARLY' " +
                 "THEN amount / 12.0 ELSE amount END), 0.00) " +
-                "FROM analytics_payment_facts WHERE event_global_sequence <= ? AND status = 'SUCCESS'",
-                BigDecimal.class, rebuildEndSeq
+                "FROM analytics_payment_facts WHERE event_global_sequence > ? AND event_global_sequence <= ? AND status = 'SUCCESS'",
+                BigDecimal.class, startSeq, rebuildEndSeq
             );
             mrr = mrr != null ? mrr.setScale(2, RoundingMode.HALF_UP) : BigDecimal.ZERO;
             
@@ -391,22 +398,26 @@ public class SubscriptionAnalyticsService {
                 "SELECT plan_code, COUNT(DISTINCT subscription_id) as org_count, " +
                 "SUM(CASE WHEN billing_cycle = 'YEARLY' THEN amount / 12.0 ELSE amount END) as sum_mrr " +
                 "FROM analytics_payment_facts " +
-                "WHERE event_global_sequence <= ? AND status = 'SUCCESS' " +
+                "WHERE event_global_sequence > ? AND event_global_sequence <= ? AND status = 'SUCCESS' " +
                 "GROUP BY plan_code",
-                rebuildEndSeq
+                startSeq, rebuildEndSeq
             );
             
-            // 3. Deterministic Validation Checksum Checks
+            // 3. Deterministic Validation Checksum Checks (multi-dimensional invariants)
             Long countFacts = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM analytics_payment_facts WHERE event_global_sequence <= ?",
-                Long.class, rebuildEndSeq
+                "SELECT COUNT(*) FROM analytics_payment_facts WHERE event_global_sequence > ? AND event_global_sequence <= ?",
+                Long.class, startSeq, rebuildEndSeq
             );
             BigDecimal sumFacts = jdbcTemplate.queryForObject(
-                "SELECT COALESCE(SUM(amount), 0.00) FROM analytics_payment_facts WHERE event_global_sequence <= ?",
-                BigDecimal.class, rebuildEndSeq
+                "SELECT COALESCE(SUM(amount), 0.00) FROM analytics_payment_facts WHERE event_global_sequence > ? AND event_global_sequence <= ?",
+                BigDecimal.class, startSeq, rebuildEndSeq
+            );
+            Integer distinctSubs = jdbcTemplate.queryForObject(
+                "SELECT COUNT(DISTINCT subscription_id) FROM analytics_payment_facts WHERE event_global_sequence > ? AND event_global_sequence <= ?",
+                Integer.class, startSeq, rebuildEndSeq
             );
             
-            log.info("[SubscriptionAnalyticsService] Rebuild validation - Count: {}, Sum: {}", countFacts, sumFacts);
+            log.info("[SubscriptionAnalyticsService] Rebuild validation - Count: {}, Sum: {}, Distinct Subs: {}", countFacts, sumFacts, distinctSubs);
             
             jdbcTemplate.update(
                 "UPDATE analytics_snapshot_run SET status = 'VALIDATING' WHERE rebuild_id = ?",
@@ -414,7 +425,7 @@ public class SubscriptionAnalyticsService {
             );
             
             // Enforce validation abort if checksum anomalies found
-            if (countFacts == null || sumFacts == null) {
+            if (countFacts == null || sumFacts == null || distinctSubs == null) {
                 throw new IllegalStateException("Rebuild abort: Checksum calculation failed.");
             }
             
@@ -423,7 +434,7 @@ public class SubscriptionAnalyticsService {
                 rebuildId
             );
             
-            // Swap derived projections
+            // Swap derived projections (transactional atomicity cuts)
             jdbcTemplate.update("TRUNCATE TABLE subscription_plan_summary");
             for (Map<String, Object> row : planRows) {
                 jdbcTemplate.update(
@@ -442,6 +453,12 @@ public class SubscriptionAnalyticsService {
                 "total_mrr = EXCLUDED.total_mrr, revenue_collected = EXCLUDED.revenue_collected, " +
                 "updated_at = EXCLUDED.updated_at, projection_version = EXCLUDED.projection_version",
                 today, mrr, sumFacts, java.sql.Timestamp.valueOf(LocalDateTime.now()), rebuildEndSeq
+            );
+            
+            // Update checkpoint sequence only AFTER validations & swaps complete
+            jdbcTemplate.update(
+                "UPDATE analytics_rebuild_checkpoint SET last_completed_sequence = ?, updated_at = ? WHERE checkpoint_key = 'BILLING_TELEMETRY'",
+                rebuildEndSeq, java.sql.Timestamp.valueOf(LocalDateTime.now())
             );
             
             jdbcTemplate.update(
