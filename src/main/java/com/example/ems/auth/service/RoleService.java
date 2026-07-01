@@ -97,6 +97,7 @@ public class RoleService {
      * Checks if a user has a specific permission in the database.
      * SUPER_ADMIN users (those with system.manage) bypass all permission checks.
      */
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
     public boolean hasPermission(String email, String permissionName) {
         if (email == null || email.trim().isEmpty() || permissionName == null || permissionName.trim().isEmpty()) {
             return false;

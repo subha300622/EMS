@@ -35,6 +35,9 @@ public class EmployeeService {
     @Autowired
     private IncrementRepository incrementRepository;
 
+    @Autowired
+    private EmployeeCacheService cacheService;
+
     @Transactional
     public Employee createEmployee(EmployeeRequest request) {
         if (employeeRepository.existsByEmail(request.getEmail())) {
@@ -116,64 +119,72 @@ public class EmployeeService {
                 employee.setManager(null);
             }
 
-            return employeeRepository.save(employee);
+            Employee saved = employeeRepository.save(employee);
+            eventPublisher.publishEvent(new com.example.ems.employee.event.EmployeeUpdatedEvent(this, saved));
+            return saved;
         });
     }
 
     @Transactional
     public boolean deleteEmployee(Long id) {
-        if (employeeRepository.existsById(id)) {
+        Optional<Employee> opt = employeeRepository.findById(id);
+        if (opt.isPresent()) {
+            Employee employee = opt.get();
             employeeRepository.deleteById(id);
+            eventPublisher.publishEvent(new com.example.ems.employee.event.EmployeeDeletedEvent(this, employee));
             return true;
         }
         return false;
     }
 
     public List<Employee> getAllEmployees() {
-        return employeeRepository.findAll();
+        return cacheService.getAllEmployees(() -> employeeRepository.findAll());
     }
 
     public Optional<Employee> getEmployeeById(Long id) {
-        return employeeRepository.findById(id);
+        return cacheService.getEmployeeById(id, () -> employeeRepository.findById(id));
     }
 
     public List<Employee> getEmployeesByDepartment(String department) {
-        return employeeRepository.findByDepartment(department);
+        return cacheService.getEmployeesByDepartment(department, () -> employeeRepository.findByDepartment(department));
     }
 
     public List<Employee> getEmployeesByManager(Long managerId) {
-        return employeeRepository.findByManagerId(managerId);
+        return cacheService.getEmployeesByManager(managerId, () -> employeeRepository.findByManagerId(managerId));
     }
 
     public List<Employee> searchEmployees(String query) {
-        if (query == null || query.trim().isEmpty()) {
-            return getAllEmployees();
-        }
-        String q = query.trim().toLowerCase();
-        return employeeRepository.findAll().stream()
-                .filter(e -> e.getFullName().toLowerCase().contains(q)
-                        || e.getEmail().toLowerCase().contains(q)
-                        || (e.getDepartment() != null && e.getDepartment().toLowerCase().contains(q))
-                        || (e.getLocation() != null && e.getLocation().toLowerCase().contains(q)))
-                .collect(java.util.stream.Collectors.toList());
+        return cacheService.searchEmployees(query, () -> {
+            if (query == null || query.trim().isEmpty()) {
+                return employeeRepository.findAll();
+            }
+            String q = query.trim().toLowerCase();
+            return employeeRepository.findAll().stream()
+                    .filter(e -> e.getFullName().toLowerCase().contains(q)
+                            || e.getEmail().toLowerCase().contains(q)
+                            || (e.getDepartment() != null && e.getDepartment().toLowerCase().contains(q))
+                            || (e.getLocation() != null && e.getLocation().toLowerCase().contains(q)))
+                    .collect(java.util.stream.Collectors.toList());
+        });
     }
 
     @Transactional
     public Optional<Employee> updateEmployeeStatus(Long id, String status) {
         return employeeRepository.findById(id).map(employee -> {
             employee.setStatus(status);
-            return employeeRepository.save(employee);
+            Employee saved = employeeRepository.save(employee);
+            eventPublisher.publishEvent(new com.example.ems.employee.event.EmployeeUpdatedEvent(this, saved));
+            return saved;
         });
     }
 
     public List<java.util.Map<String, Object>> getEmployeeTimeline(Long employeeId) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+        return cacheService.getEmployeeTimeline(employeeId, () -> {
+            Employee employee = employeeRepository.findById(employeeId)
+                    .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
 
-        List<java.util.Map<String, Object>> timeline = new java.util.ArrayList<>();
-
-        // 1. Joined event
-        if (employee.getJoiningDate() != null) {
+            List<java.util.Map<String, Object>> timeline = new java.util.ArrayList<>();
+            if (employee.getJoiningDate() != null) {
             java.util.Map<String, Object> joined = new java.util.LinkedHashMap<>();
             joined.put("date", employee.getJoiningDate().toString());
             joined.put("type", "JOINED");
@@ -222,7 +233,8 @@ public class EmployeeService {
         // Sort chronological
         timeline.sort((a, b) -> ((String) a.get("date")).compareTo((String) b.get("date")));
 
-        return timeline;
+            return timeline;
+        });
     }
 
     @Transactional

@@ -29,6 +29,8 @@
 	</scm>
 	<properties>
 		<java.version>21</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -157,6 +159,22 @@
 			<artifactId>firebase-admin</artifactId>
 			<version>9.4.2</version>
 		</dependency>
+
+		<!-- Spring Cache & Caffeine for L1 caching -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+		<!-- Razorpay SDK -->
+		<dependency>
+			<groupId>com.razorpay</groupId>
+			<artifactId>razorpay-java</artifactId>
+			<version>1.4.8</version>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -277,5 +295,5 @@
 		</plugins>
 	</build>
 
-	<!-- Force classpath rebuild to sync IDE language server -->
+	<!-- Force classpath rebuild to sync IDE language server: trigger 1 -->
 </project>

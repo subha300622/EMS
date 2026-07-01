@@ -118,4 +118,23 @@ public class SystemSettingControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
     }
+
+    @Test
+    public void testGetCacheStatsSuccess() throws Exception {
+        mockPermission("settings.manage", true);
+        
+        com.example.ems.config.BaseCacheService mockCache = org.mockito.Mockito.mock(com.example.ems.config.BaseCacheService.class);
+        when(mockCache.getCacheStats()).thenReturn(Map.of("l2_hits", 42L));
+        
+        java.util.List<com.example.ems.config.BaseCacheService> list = new java.util.ArrayList<>();
+        list.add(mockCache);
+        
+        org.springframework.test.util.ReflectionTestUtils.setField(systemSettingController, "cacheServices", list);
+
+        mockMvc.perform(get("/api/v1/settings/cache-stats")
+                .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").exists());
+    }
 }

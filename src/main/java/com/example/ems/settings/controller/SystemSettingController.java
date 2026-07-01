@@ -37,6 +37,9 @@ public class SystemSettingController {
     @Autowired
     private RoleService roleService;
 
+    @Autowired(required = false)
+    private List<com.example.ems.config.BaseCacheService> cacheServices;
+
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -150,6 +153,31 @@ public class SystemSettingController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody Map<String, String> settingsMap){
         return updateSettingsByCategory(authHeader, settingsMap, "password-policy");
+    }
+
+    @GetMapping("/cache-stats")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCacheStats(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Requires 'settings.manage' permission.", "AUTH_002"));
+        }
+        
+        Map<String, Object> aggregatedStats = new HashMap<>();
+        if (cacheServices != null) {
+            for (com.example.ems.config.BaseCacheService service : cacheServices) {
+                // Handle Spring proxy class names
+                String serviceName = service.getClass().getSimpleName();
+                if (serviceName.contains("$$")) {
+                    serviceName = serviceName.substring(0, serviceName.indexOf("$$"));
+                }
+                aggregatedStats.put(serviceName, service.getCacheStats());
+            }
+        }
+        return ResponseEntity.ok(ApiResponse.success("Cache statistics retrieved successfully", aggregatedStats));
     }
 
     // --- Helper Methods ---

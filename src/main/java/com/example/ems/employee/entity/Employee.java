@@ -66,6 +66,10 @@ public class Employee {
     @JsonIgnoreProperties("manager")
     private MyTeam team;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private com.example.ems.organization.entity.Organization organization;
+
     private String availability = "AVAILABLE";
 
     private String currentStatus = "WORKING";
@@ -148,4 +152,7 @@ public class Employee {
 
     public LocalDateTime getLastActiveAt() { return lastActiveAt; }
     public void setLastActiveAt(LocalDateTime lastActiveAt) { this.lastActiveAt = lastActiveAt; }
+
+    public com.example.ems.organization.entity.Organization getOrganization() { return organization; }
+    public void setOrganization(com.example.ems.organization.entity.Organization organization) { this.organization = organization; }
 }

@@ -82,6 +82,7 @@ public class SecurityConfig {
                     "/api/v1/auth/refresh",
                     "/api/v1/auth/logout",
                     "/api/files/*/download",
+                    "/api/v1/platform-admin/payments/webhook",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",

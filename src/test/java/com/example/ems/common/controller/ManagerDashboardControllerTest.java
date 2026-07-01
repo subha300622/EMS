@@ -6,7 +6,7 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.common.dto.manager.*;
-import com.example.ems.common.service.ManagerDashboardService;
+import com.example.ems.common.service.ManagerDashboardCacheService;
 import com.example.ems.security.service.JwtService;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +36,7 @@ public class ManagerDashboardControllerTest {
     private MockMvc mockMvc;
 
     @Mock
-    private ManagerDashboardService managerDashboardService;
+    private ManagerDashboardCacheService managerDashboardCacheService;
 
     @Mock
     private UserRepository userRepository;
@@ -82,7 +82,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetSummarySuccess() throws Exception {
         SummaryDto summaryDto = new SummaryDto(12L, 91.6, 1L, 42L, 10L, 1L);
-        when(managerDashboardService.getSummary(any(Employee.class))).thenReturn(summaryDto);
+        when(managerDashboardCacheService.getSummary(any(Employee.class))).thenReturn(summaryDto);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/summary")
                 .header("Authorization", AUTH_HEADER))
@@ -95,7 +95,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetAttendanceTrendSuccess() throws Exception {
         List<AttendanceTrendDto> trend = List.of(new AttendanceTrendDto("2026-05-01", 92.0));
-        when(managerDashboardService.getAttendanceTrend(any(Employee.class), any(DashboardPeriod.class))).thenReturn(trend);
+        when(managerDashboardCacheService.getAttendanceTrend(any(Employee.class), any(DashboardPeriod.class))).thenReturn(trend);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/attendance-trend")
                 .param("period", "MONTH")
@@ -108,7 +108,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetTeamCompositionSuccess() throws Exception {
         TeamCompositionDto comp = new TeamCompositionDto(10L, 1L, 1L);
-        when(managerDashboardService.getTeamComposition(any(Employee.class))).thenReturn(comp);
+        when(managerDashboardCacheService.getTeamComposition(any(Employee.class))).thenReturn(comp);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/team-composition")
                 .header("Authorization", AUTH_HEADER))
@@ -121,7 +121,7 @@ public class ManagerDashboardControllerTest {
     public void testGetTeamMembersSuccess() throws Exception {
         List<TeamMemberDto> membersList = List.of(new TeamMemberDto(1L, "Priya Sharma", "Engineer", 98, ShiftType.DAY_SHIFT, AttendanceStatus.PRESENT));
         Page<TeamMemberDto> page = new PageImpl<>(membersList, PageRequest.of(0, 10), 1);
-        when(managerDashboardService.getTeamMembers(any(Employee.class), anyInt(), anyInt())).thenReturn(page);
+        when(managerDashboardCacheService.getTeamMembers(any(Employee.class), anyInt(), anyInt())).thenReturn(page);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/team-members")
                 .param("page", "0")
@@ -135,7 +135,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetPerformanceSuccess() throws Exception {
         PerformanceDto perf = new PerformanceDto(92, 86, 79, 95);
-        when(managerDashboardService.getPerformance(any(Employee.class))).thenReturn(perf);
+        when(managerDashboardCacheService.getPerformance(any(Employee.class))).thenReturn(perf);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/performance")
                 .header("Authorization", AUTH_HEADER))
@@ -147,7 +147,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetOvertimeSuccess() throws Exception {
         List<OvertimeDto> list = List.of(new OvertimeDto(1L, "Priya Sharma", 42.0, 40.0, "EXCEEDED"));
-        when(managerDashboardService.getOvertime(any(Employee.class))).thenReturn(list);
+        when(managerDashboardCacheService.getOvertime(any(Employee.class))).thenReturn(list);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/overtime")
                 .header("Authorization", AUTH_HEADER))
@@ -159,7 +159,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetPendingApprovalsSuccess() throws Exception {
         List<PendingApprovalDto> pending = List.of(new PendingApprovalDto(101L, 2L, "Priya Sharma", "LEAVE", "2026-05-20", ApprovalStatus.PENDING));
-        when(managerDashboardService.getPendingApprovals(any(Employee.class))).thenReturn(pending);
+        when(managerDashboardCacheService.getPendingApprovals(any(Employee.class))).thenReturn(pending);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/pending-approvals")
                 .header("Authorization", AUTH_HEADER))
@@ -171,7 +171,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetApprovalSummarySuccess() throws Exception {
         PendingApprovalCountsDto counts = new PendingApprovalCountsDto(5L, 2L, 1L, 3L, 0L, 11L);
-        when(managerDashboardService.getApprovalSummary(any(Employee.class))).thenReturn(counts);
+        when(managerDashboardCacheService.getApprovalSummary(any(Employee.class))).thenReturn(counts);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/approval-summary")
                 .header("Authorization", AUTH_HEADER))
@@ -183,7 +183,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetTeamTodaySuccess() throws Exception {
         List<TeamTodayDto> today = List.of(new TeamTodayDto(1L, "John", "/api/v1/files/avatars/default.png", AttendanceStatus.PRESENT));
-        when(managerDashboardService.getTeamToday(any(Employee.class))).thenReturn(today);
+        when(managerDashboardCacheService.getTeamToday(any(Employee.class))).thenReturn(today);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/team-today")
                 .header("Authorization", AUTH_HEADER))
@@ -195,7 +195,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetLeaveSummarySuccess() throws Exception {
         List<LeaveSummaryDto> summary = List.of(new LeaveSummaryDto(1L, "Priya Sharma", "Casual Leave", "2026-06-25", "2026-06-27", ApprovalStatus.PENDING));
-        when(managerDashboardService.getLeaveSummary(any(Employee.class))).thenReturn(summary);
+        when(managerDashboardCacheService.getLeaveSummary(any(Employee.class))).thenReturn(summary);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/leave-summary")
                 .header("Authorization", AUTH_HEADER))
@@ -207,7 +207,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetUpcomingEventsSuccess() throws Exception {
         List<UpcomingEventDto> events = List.of(new UpcomingEventDto("Priya Sharma - Birthday", "2026-06-25", "BIRTHDAY", "Celebrating birthday"));
-        when(managerDashboardService.getUpcomingEvents(any(Employee.class))).thenReturn(events);
+        when(managerDashboardCacheService.getUpcomingEvents(any(Employee.class))).thenReturn(events);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/upcoming-events")
                 .header("Authorization", AUTH_HEADER))
@@ -219,7 +219,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetAlertsSuccess() throws Exception {
         List<AlertDto> alerts = List.of(new AlertDto("OVERTIME", "limit exceeded"));
-        when(managerDashboardService.getAlerts(any(Employee.class))).thenReturn(alerts);
+        when(managerDashboardCacheService.getAlerts(any(Employee.class))).thenReturn(alerts);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/alerts")
                 .header("Authorization", AUTH_HEADER))
@@ -231,7 +231,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetInsightsSuccess() throws Exception {
         List<InsightDto> insights = List.of(new InsightDto(InsightSeverity.HIGH, "attendance low"));
-        when(managerDashboardService.getInsights(any(Employee.class))).thenReturn(insights);
+        when(managerDashboardCacheService.getInsights(any(Employee.class))).thenReturn(insights);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/insights")
                 .header("Authorization", AUTH_HEADER))
@@ -243,7 +243,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetQuickActionsSuccess() throws Exception {
         List<QuickActionDto> actions = List.of(new QuickActionDto("APPROVE_LEAVE", "Approve"));
-        when(managerDashboardService.getQuickActions(any(Employee.class))).thenReturn(actions);
+        when(managerDashboardCacheService.getQuickActions(any(Employee.class))).thenReturn(actions);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/actions")
                 .header("Authorization", AUTH_HEADER))
@@ -255,7 +255,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetNotificationsSuccess() throws Exception {
         List<NotificationDto> list = List.of(new NotificationDto(1L, "Pending", "body", "APPROVAL", "HIGH", false, "date"));
-        when(managerDashboardService.getNotifications(any(Employee.class))).thenReturn(list);
+        when(managerDashboardCacheService.getNotifications(any(Employee.class))).thenReturn(list);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/notifications")
                 .header("Authorization", AUTH_HEADER))
@@ -267,7 +267,7 @@ public class ManagerDashboardControllerTest {
     @Test
     public void testGetScheduleSuccess() throws Exception {
         ScheduleSnapshotDto sched = new ScheduleSnapshotDto(12L, 8L, 3L, 1L);
-        when(managerDashboardService.getScheduleSnapshot(any(Employee.class))).thenReturn(sched);
+        when(managerDashboardCacheService.getScheduleSnapshot(any(Employee.class))).thenReturn(sched);
 
         mockMvc.perform(get("/api/v1/manager/dashboard/schedule")
                 .header("Authorization", AUTH_HEADER))
@@ -290,7 +290,7 @@ public class ManagerDashboardControllerTest {
                 Collections.emptyList(),
                 Collections.emptyList()
         );
-        when(managerDashboardService.getAggregatedDashboard(any(Employee.class), any())).thenReturn(resp);
+        when(managerDashboardCacheService.getAggregatedDashboard(any(Employee.class), any())).thenReturn(resp);
 
         mockMvc.perform(get("/api/v1/manager/dashboard")
                 .header("Authorization", AUTH_HEADER))
@@ -313,7 +313,7 @@ public class ManagerDashboardControllerTest {
                 Collections.emptyList(),
                 Collections.emptyList()
         );
-        when(managerDashboardService.getAggregatedDashboard(any(Employee.class), any())).thenReturn(resp);
+        when(managerDashboardCacheService.getAggregatedDashboard(any(Employee.class), any())).thenReturn(resp);
 
         mockMvc.perform(post("/api/v1/manager/dashboard/refresh")
                 .header("Authorization", AUTH_HEADER))
