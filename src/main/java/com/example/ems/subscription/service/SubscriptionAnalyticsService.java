@@ -324,14 +324,6 @@ public class SubscriptionAnalyticsService {
      */
     @Transactional
     public RebuildJobResponse startRebuildJob(String mode) {
-        Boolean running = jdbcTemplate.queryForObject(
-            "SELECT EXISTS(SELECT 1 FROM analytics_snapshot_run WHERE status = 'RUNNING')",
-            Boolean.class
-        );
-        if (Boolean.TRUE.equals(running)) {
-            throw new IllegalStateException("An active analytics snapshot rebuild job is already in progress.");
-        }
-        
         Long rebuildEndSeq = jdbcTemplate.queryForObject(
             "SELECT COALESCE(MAX(event_global_sequence), 0) FROM analytics_event_log",
             Long.class
@@ -340,11 +332,16 @@ public class SubscriptionAnalyticsService {
         String rebuildId = "rb_" + System.currentTimeMillis();
         java.sql.Timestamp now = java.sql.Timestamp.valueOf(LocalDateTime.now());
         
-        jdbcTemplate.update(
-            "INSERT INTO analytics_snapshot_run (rebuild_id, started_at, mode, status, rebuild_end_sequence, estimated_duration_ms, projection_version) " +
-            "VALUES (?, ?, ?, 'RUNNING', ?, 50, ?)",
-            rebuildId, now, mode, rebuildEndSeq, rebuildEndSeq
-        );
+        try {
+            jdbcTemplate.update(
+                "INSERT INTO analytics_snapshot_run (rebuild_id, started_at, mode, status, rebuild_end_sequence, estimated_duration_ms, projection_version) " +
+                "VALUES (?, ?, ?, 'RUNNING', ?, 50, ?)",
+                rebuildId, now, mode, rebuildEndSeq, rebuildEndSeq
+            );
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            log.error("Rebuild concurrency guard block: A rebuild analytics snapshot run is already in progress.");
+            throw new IllegalStateException("An active analytics snapshot rebuild job is already in progress.");
+        }
         
         // Start async background rebuild
         runRebuildAsync(rebuildId, mode, rebuildEndSeq);
