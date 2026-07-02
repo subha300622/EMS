@@ -286,6 +286,10 @@ public class DatabaseSeeder implements ApplicationRunner {
                 }
             }
             role.setPermissions(rolePerms);
+            role.setPlatformTemplate(true);
+            role.setSystemRole("SUPER_ADMIN".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName) || "EMPLOYEE".equalsIgnoreCase(roleName));
+            role.setVersion(1);
+            role.setOrganization(null);
             roleRepository.save(role);
             roleMap.put(roleName, role);
         }

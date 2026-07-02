@@ -3,6 +3,7 @@ package com.example.ems.auth.controller;
 import com.example.ems.auth.dto.AssignRoleRequest;
 import com.example.ems.auth.dto.UpdateStatusRequest;
 import com.example.ems.auth.dto.UserCreateRequest;
+import java.util.Optional;
 import com.example.ems.auth.dto.UserUpdateRequest;
 import com.example.ems.auth.dto.AdminResetPasswordRequest;
 import com.example.ems.auth.entity.User;
@@ -632,5 +633,96 @@ public class UserController {
 
         com.example.ems.auth.dto.BootstrapResponse bootstrapData = bootstrapService.getBootstrapData(user);
         return ResponseEntity.ok(ApiResponse.success("Bootstrap data retrieved successfully", bootstrapData));
+    }
+
+    @Operation(summary = "Get User Effective Permissions", description = "Retrieves the list of resolved permissions for a user.")
+    @GetMapping("/users/{userId}/effective-permissions")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEffectiveUserPermissions(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String userId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!hasPermission(currentUser, "user.read")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires user.read permission", "AUTH_002"));
+        }
+
+        Optional<User> targetUser = userService.getUserByUserId(userId);
+        if (targetUser.isEmpty()) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
+        }
+
+        // Validate organization bounds
+        Long currentOrgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : null;
+        Long targetOrgId = targetUser.get().getOrganization() != null ? targetUser.get().getOrganization().getId() : null;
+        if (!roleService.isSuperAdmin(currentUser.getWorkEmail()) && 
+                (currentOrgId == null || !currentOrgId.equals(targetOrgId))) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: User belongs to another organization", "AUTH_002"));
+        }
+
+        List<String> permissions = roleService.getPermissionsForUserId(targetUser.get().getUserId());
+        return ResponseEntity.ok(ApiResponse.success("User effective permissions retrieved successfully", permissions));
+    }
+
+    @Operation(summary = "Assign Roles to User", description = "Assigns list of role IDs to a user.")
+    @PutMapping("/users/{userId}/roles")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> assignRolesToUser(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String userId,
+            @RequestBody Map<String, List<Long>> request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        if (!hasPermission(currentUser, "user.role.assign")) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires user.role.assign permission", "AUTH_002"));
+        }
+
+        List<Long> roleIds = request.get("roleIds");
+        if (roleIds == null || roleIds.isEmpty()) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Request body must contain 'roleIds' array.", "USR_004"));
+        }
+
+        Optional<User> targetUser = userService.getUserByUserId(userId);
+        if (targetUser.isEmpty()) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("User not found with ID: " + userId, "USR_002"));
+        }
+
+        // Validate organization boundary
+        Long currentOrgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : null;
+        Long targetOrgId = targetUser.get().getOrganization() != null ? targetUser.get().getOrganization().getId() : null;
+        if (!roleService.isSuperAdmin(currentUser.getWorkEmail()) && 
+                (currentOrgId == null || !currentOrgId.equals(targetOrgId))) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: User belongs to another organization", "AUTH_002"));
+        }
+
+        Long roleId = roleIds.get(0);
+        try {
+            boolean success = roleService.assignRoleById(targetUser.get().getId(), roleId);
+            if (success) {
+                return ResponseEntity.ok(ApiResponse.success("User role assigned successfully"));
+            } else {
+                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ErrorResponse.error("Role not found", "ROLE_002"));
+            }
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ROLE_001"));
+        }
     }
 }

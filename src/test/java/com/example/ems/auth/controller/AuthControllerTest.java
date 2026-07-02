@@ -87,7 +87,7 @@ public class AuthControllerTest {
                 "session-id", "EMP001", "test@example.com", "User-Agent", "127.0.0.1", "refresh-token"
         );
         when(sessionService.createSession(any(), any(), any(), any())).thenReturn(sessionMetadata);
-        when(jwtService.generateAccessToken(any(), any(), any(), any())).thenReturn("access-token");
+        when(jwtService.generateAccessToken(any(), any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyLong())).thenReturn("access-token");
         when(roleService.getEffectivePermissions(user)).thenReturn(Collections.emptySet());
 
         mockMvc.perform(post("/api/v1/auth/login")
@@ -218,8 +218,7 @@ public class AuthControllerTest {
         user.setRole(role);
 
         when(userRepository.findByWorkEmail("test@example.com")).thenReturn(Optional.of(user));
-        when(jwtService.generateAccessToken(any(), any(), any(), any())).thenReturn("new-access-token");
-        when(jwtService.generateAccessToken(any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyLong())).thenReturn("new-access-token");
+        when(jwtService.generateAccessToken(any(), any(), any(), any(), any(), org.mockito.ArgumentMatchers.anyInt(), org.mockito.ArgumentMatchers.anyLong())).thenReturn("new-access-token");
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                 .contentType(MediaType.APPLICATION_JSON)

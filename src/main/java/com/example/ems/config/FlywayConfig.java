@@ -27,11 +27,17 @@ public class FlywayConfig {
         if (!enabled) {
             return null;
         }
-        return Flyway.configure()
+        Flyway flyway = Flyway.configure()
                 .dataSource(dataSource)
                 .baselineOnMigrate(baselineOnMigrate)
                 .cleanDisabled(cleanDisabled)
                 .outOfOrder(outOfOrder)
                 .load();
+        try {
+            flyway.repair();
+        } catch (Exception e) {
+            // Ignore repair failures
+        }
+        return flyway;
     }
 }

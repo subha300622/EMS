@@ -14,13 +14,26 @@ public class Role {
     @JsonProperty("roleId")
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     private String description;
 
     @Column(name = "created_at", updatable = false)
     private java.time.Instant createdAt;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private com.example.ems.organization.entity.Organization organization;
+
+    @Column(name = "is_platform_template", nullable = false)
+    private boolean isPlatformTemplate = false;
+
+    @Column(name = "version", nullable = false)
+    private int version = 1;
+
+    @Column(name = "system_role", nullable = false)
+    private boolean systemRole = false;
 
     @PrePersist
     public void prePersist() {
@@ -76,6 +89,38 @@ public class Role {
 
     public void setCreatedAt(java.time.Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public com.example.ems.organization.entity.Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(com.example.ems.organization.entity.Organization organization) {
+        this.organization = organization;
+    }
+
+    public boolean isPlatformTemplate() {
+        return isPlatformTemplate;
+    }
+
+    public void setPlatformTemplate(boolean platformTemplate) {
+        isPlatformTemplate = platformTemplate;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public boolean isSystemRole() {
+        return systemRole;
+    }
+
+    public void setSystemRole(boolean systemRole) {
+        this.systemRole = systemRole;
     }
 
     public Set<Permission> getPermissions() {

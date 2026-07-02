@@ -20,6 +20,9 @@ public class MySupportComment {
 
     private String createdBy;
 
+    @Column(name = "is_internal", nullable = false)
+    private boolean isInternal = false;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public MySupportComment() {}
@@ -29,6 +32,15 @@ public class MySupportComment {
         this.ticket = ticket;
         this.commentText = commentText;
         this.createdBy = createdBy;
+        this.isInternal = false;
+    }
+
+    public MySupportComment(Long id, MySupportTicket ticket, String commentText, String createdBy, boolean isInternal) {
+        this.id = id;
+        this.ticket = ticket;
+        this.commentText = commentText;
+        this.createdBy = createdBy;
+        this.isInternal = isInternal;
     }
 
     public Long getId() { return id; }
@@ -42,6 +54,9 @@ public class MySupportComment {
 
     public String getCreatedBy() { return createdBy; }
     public void setCreatedBy(String createdBy) { this.createdBy = createdBy; }
+
+    public boolean isInternal() { return isInternal; }
+    public void setInternal(boolean internal) { isInternal = internal; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -293,10 +293,6 @@ public class SubscriptionAnalyticsService {
         );
         String planCode = (String) subDetails.get("plan_code");
         
-        BigDecimal finalAmount = jdbcTemplate.queryForObject(
-            "SELECT COALESCE((billing_info->>'finalAmount')::numeric, 0.00) FROM subscriptions WHERE id = ?",
-            BigDecimal.class, subscriptionId
-        );
         String cycle = jdbcTemplate.queryForObject(
             "SELECT COALESCE(billing_info->>'cycle', 'YEARLY') FROM subscriptions WHERE id = ?",
             String.class, subscriptionId

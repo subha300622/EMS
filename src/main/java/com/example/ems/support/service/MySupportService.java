@@ -113,31 +113,32 @@ public class MySupportService {
             MySupportSubCategory payrollQuery = subCats.stream().filter(s -> s.getName().equals("Payroll Query")).findFirst().orElse(null);
             LocalDateTime now = LocalDateTime.now();
 
-            createSeededTicket("SUP-2026-0001", employee, itSupport, hardware, "Laptop display screen flickering", "Screen flickers randomly", "HIGH", "OPEN", now.minusDays(5), null, null, 32, null, null);
-            createSeededTicket("SUP-2026-0002", employee, itSupport, software, "Unable to access GitLab", "Getting 403 forbidden error on repository clone", "MEDIUM", "OPEN", now.minusHours(1), null, null, 48, null, null);
-            createSeededTicket("SUP-2026-0003", employee, hrSupport, leaveIssue, "Correction in sick leave balance", "Balance shows 2 instead of 5 days", "LOW", "OPEN", now.minusHours(2), null, null, 72, null, null);
-            createSeededTicket("SUP-2026-0004", employee, itSupport, software, "Docker service fails on startup", "Docker daemon fails with context deadline exceeded", "HIGH", "IN_PROGRESS", now.minusDays(4), null, null, 32, null, null);
-            createSeededTicket("SUP-2026-0005", employee, hrSupport, payrollQuery, "Tax deduction query on payslip", "Form 16 mapping discrepancy", "MEDIUM", "IN_PROGRESS", now.minusHours(3), null, null, 48, null, null);
-            createSeededTicket("SUP-2026-0006", employee, itSupport, hardware, "External monitor not working", "HDMI port issue", "HIGH", "RESOLVED", now.minusDays(10), now.minusDays(10).plusHours(10), null, 32, 4, "Prompt support");
-            createSeededTicket("SUP-2026-0007", employee, itSupport, software, "IntelliJ license expired", "Need license renewal", "HIGH", "RESOLVED", now.minusDays(9), now.minusDays(9).plusHours(12), null, 32, 5, "Instant fix");
-            createSeededTicket("SUP-2026-0008", employee, hrSupport, leaveIssue, "Maternity leave apply issue", "Getting system validation error", "HIGH", "RESOLVED", now.minusDays(8), now.minusDays(8).plusHours(14), null, 32, 4, "Resolved quickly");
-            createSeededTicket("SUP-2026-0009", employee, hrSupport, payrollQuery, "PF account transfer status", "PF UAN mapping check", "HIGH", "RESOLVED", now.minusDays(7), now.minusDays(7).plusHours(15), null, 32, 4, "Good assistance");
-            createSeededTicket("SUP-2026-0010", employee, itSupport, hardware, "Keyboard replacement request", "Some keys not working", "HIGH", "RESOLVED", now.minusDays(6), now.minusDays(6).plusHours(16), null, 32, 5, "Perfect");
-            createSeededTicket("SUP-2026-0011", employee, itSupport, software, "VPN connection fails", "Unable to log in to corporate network", "HIGH", "RESOLVED", now.minusDays(5), now.minusDays(5).plusHours(18), null, 32, 4, "Fine");
-            createSeededTicket("SUP-2026-0012", employee, hrSupport, leaveIssue, "Loss of pay query", "Incorrect LOP marked for May", "HIGH", "RESOLVED", now.minusDays(4), now.minusDays(4).plusHours(20), null, 32, 5, "Very helpful");
-            createSeededTicket("SUP-2026-0013", employee, hrSupport, payrollQuery, "Reimbursement claims pending", "Internet allowance bill validation", "HIGH", "RESOLVED", now.minusDays(3), now.minusDays(3).plusHours(22), null, 32, 4, "Done");
-            createSeededTicket("SUP-2026-0014", employee, itSupport, hardware, "Mouse pointer jumping", "Bluetooth mouse lags", "HIGH", "CLOSED", now.minusDays(12), now.minusDays(12).plusHours(25), now.minusDays(12).plusHours(27), 32, 5, "Excellent work");
-            createSeededTicket("SUP-2026-0015", employee, hrSupport, payrollQuery, "Incorrect bank details in HRMS", "Need to update bank account", "HIGH", "CLOSED", now.minusDays(11), now.minusDays(11).plusHours(28), now.minusDays(11).plusHours(30), 32, 5, "Resolved, thank you");
+            createSeededTicket("SUP-2026-0001", employee, itSupport, hardware, "Laptop display screen flickering", "Screen flickers randomly", SupportTicketPriority.HIGH, SupportTicketStatus.OPEN, now.minusDays(5), null, null, 32, null, null);
+            createSeededTicket("SUP-2026-0002", employee, itSupport, software, "Unable to access GitLab", "Getting 403 forbidden error on repository clone", SupportTicketPriority.MEDIUM, SupportTicketStatus.OPEN, now.minusHours(1), null, null, 48, null, null);
+            createSeededTicket("SUP-2026-0003", employee, hrSupport, leaveIssue, "Correction in sick leave balance", "Balance shows 2 instead of 5 days", SupportTicketPriority.LOW, SupportTicketStatus.OPEN, now.minusHours(2), null, null, 72, null, null);
+            createSeededTicket("SUP-2026-0004", employee, itSupport, software, "Docker service fails on startup", "Docker daemon fails with context deadline exceeded", SupportTicketPriority.HIGH, SupportTicketStatus.IN_PROGRESS, now.minusDays(4), null, null, 32, null, null);
+            createSeededTicket("SUP-2026-0005", employee, hrSupport, payrollQuery, "Tax deduction query on payslip", "Form 16 mapping discrepancy", SupportTicketPriority.MEDIUM, SupportTicketStatus.IN_PROGRESS, now.minusHours(3), null, null, 48, null, null);
+            createSeededTicket("SUP-2026-0006", employee, itSupport, hardware, "External monitor not working", "HDMI port issue", SupportTicketPriority.HIGH, SupportTicketStatus.RESOLVED, now.minusDays(10), now.minusDays(10).plusHours(10), null, 32, 4, "Prompt support");
+            createSeededTicket("SUP-2026-0007", employee, itSupport, software, "IntelliJ license expired", "Need license renewal", SupportTicketPriority.HIGH, SupportTicketStatus.RESOLVED, now.minusDays(9), now.minusDays(9).plusHours(12), null, 32, 5, "Instant fix");
+            createSeededTicket("SUP-2026-0008", employee, hrSupport, leaveIssue, "Maternity leave apply issue", "Getting system validation error", SupportTicketPriority.HIGH, SupportTicketStatus.RESOLVED, now.minusDays(8), now.minusDays(8).plusHours(14), null, 32, 4, "Resolved quickly");
+            createSeededTicket("SUP-2026-0009", employee, hrSupport, payrollQuery, "PF account transfer status", "PF UAN mapping check", SupportTicketPriority.HIGH, SupportTicketStatus.RESOLVED, now.minusDays(7), now.minusDays(7).plusHours(15), null, 32, 4, "Good assistance");
+            createSeededTicket("SUP-2026-0010", employee, itSupport, hardware, "Keyboard replacement request", "Some keys not working", SupportTicketPriority.HIGH, SupportTicketStatus.RESOLVED, now.minusDays(6), now.minusDays(6).plusHours(16), null, 32, 5, "Perfect");
+            createSeededTicket("SUP-2026-0011", employee, itSupport, software, "VPN connection fails", "Unable to log in to corporate network", SupportTicketPriority.HIGH, SupportTicketStatus.RESOLVED, now.minusDays(5), now.minusDays(5).plusHours(18), null, 32, 4, "Fine");
+            createSeededTicket("SUP-2026-0012", employee, hrSupport, leaveIssue, "Loss of pay query", "Incorrect LOP marked for May", SupportTicketPriority.HIGH, SupportTicketStatus.RESOLVED, now.minusDays(4), now.minusDays(4).plusHours(20), null, 32, 5, "Very helpful");
+            createSeededTicket("SUP-2026-0013", employee, hrSupport, payrollQuery, "Reimbursement claims pending", "Internet allowance bill validation", SupportTicketPriority.HIGH, SupportTicketStatus.RESOLVED, now.minusDays(3), now.minusDays(3).plusHours(22), null, 32, 4, "Done");
+            createSeededTicket("SUP-2026-0014", employee, itSupport, hardware, "Mouse pointer jumping", "Bluetooth mouse lags", SupportTicketPriority.HIGH, SupportTicketStatus.CLOSED, now.minusDays(12), now.minusDays(12).plusHours(25), now.minusDays(12).plusHours(27), 32, 5, "Excellent work");
+            createSeededTicket("SUP-2026-0015", employee, hrSupport, payrollQuery, "Incorrect bank details in HRMS", "Need to update bank account", SupportTicketPriority.HIGH, SupportTicketStatus.CLOSED, now.minusDays(11), now.minusDays(11).plusHours(28), now.minusDays(11).plusHours(30), 32, 5, "Resolved, thank you");
         }
     }
 
     private void createSeededTicket(String number, Employee employee, MySupportCategory cat, MySupportSubCategory subCat,
-                                    String subject, String description, String priority, String status,
+                                    String subject, String description, SupportTicketPriority priority, SupportTicketStatus status,
                                     LocalDateTime createdAt, LocalDateTime resolvedAt, LocalDateTime closedAt,
                                     int slaHours, Integer rating, String feedback) {
         MySupportTicket t = new MySupportTicket();
         t.setTicketNumber(number);
         t.setEmployee(employee);
+        t.setOrganization(employee.getOrganization());
         t.setCategory(cat);
         t.setSubCategory(subCat);
         t.setSubject(subject);
@@ -149,7 +150,7 @@ public class MySupportService {
         t.setResolvedAt(resolvedAt);
         t.setClosedAt(closedAt);
         t.setSlaResolutionTimeHours(slaHours);
-        int responseHours = priority.equals("HIGH") ? 2 : (priority.equals("CRITICAL") ? 1 : (priority.equals("MEDIUM") ? 8 : 24));
+        int responseHours = priority == SupportTicketPriority.HIGH ? 2 : (priority == SupportTicketPriority.CRITICAL ? 1 : (priority == SupportTicketPriority.MEDIUM ? 8 : 24));
         t.setSlaResponseDueAt(createdAt.plusHours(responseHours));
         t.setSlaResolutionDueAt(createdAt.plusHours(slaHours));
         t.setRating(rating);
@@ -159,16 +160,16 @@ public class MySupportService {
         t = ticketRepository.save(t);
 
         MySupportTimelineActivity act = new MySupportTimelineActivity();
-        act.setTicket(t); act.setEvent("TICKET_CREATED"); act.setPerformedBy(employee.getEmail()); act.setTimestamp(createdAt);
+        act.setTicket(t); act.setEvent("TICKET_CREATED"); act.setAction(SupportTimelineAction.CREATE); act.setPerformedBy(employee.getEmail()); act.setTimestamp(createdAt);
         timelineRepository.save(act);
         if (resolvedAt != null) {
             MySupportTimelineActivity actRes = new MySupportTimelineActivity();
-            actRes.setTicket(t); actRes.setEvent("TICKET_RESOLVED"); actRes.setPerformedBy("Agent Smith"); actRes.setTimestamp(resolvedAt);
+            actRes.setTicket(t); actRes.setEvent("TICKET_RESOLVED"); actRes.setAction(SupportTimelineAction.STATUS_CHANGE); actRes.setPerformedBy("Agent Smith"); actRes.setTimestamp(resolvedAt);
             timelineRepository.save(actRes);
         }
         if (closedAt != null) {
             MySupportTimelineActivity actClose = new MySupportTimelineActivity();
-            actClose.setTicket(t); actClose.setEvent("TICKET_CLOSED"); actClose.setPerformedBy(employee.getEmail()); actClose.setTimestamp(closedAt);
+            actClose.setTicket(t); actClose.setEvent("TICKET_CLOSED"); actClose.setAction(SupportTimelineAction.CLOSE); actClose.setPerformedBy(employee.getEmail()); actClose.setTimestamp(closedAt);
             timelineRepository.save(actClose);
         }
     }
@@ -180,14 +181,14 @@ public class MySupportService {
         Employee emp = employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
         List<MySupportTicket> tickets = ticketRepository.findByEmployeeEmail(email);
-        long open = tickets.stream().filter(t -> "OPEN".equals(t.getStatus())).count();
-        long inProgress = tickets.stream().filter(t -> "IN_PROGRESS".equals(t.getStatus())).count();
-        long resolved = tickets.stream().filter(t -> "RESOLVED".equals(t.getStatus())).count();
-        long closed = tickets.stream().filter(t -> "CLOSED".equals(t.getStatus())).count();
+        long open = tickets.stream().filter(t -> SupportTicketStatus.OPEN == t.getStatus()).count();
+        long inProgress = tickets.stream().filter(t -> SupportTicketStatus.IN_PROGRESS == t.getStatus()).count();
+        long resolved = tickets.stream().filter(t -> SupportTicketStatus.RESOLVED == t.getStatus()).count();
+        long closed = tickets.stream().filter(t -> SupportTicketStatus.CLOSED == t.getStatus()).count();
         long total = tickets.size();
 
         List<MySupportTicket> resolvedOrClosed = tickets.stream()
-                .filter(t -> ("RESOLVED".equals(t.getStatus()) || "CLOSED".equals(t.getStatus())) && t.getResolvedAt() != null)
+                .filter(t -> (SupportTicketStatus.RESOLVED == t.getStatus() || SupportTicketStatus.CLOSED == t.getStatus()) && t.getResolvedAt() != null)
                 .collect(Collectors.toList());
         long totalHours = resolvedOrClosed.stream()
                 .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getResolvedAt()).toHours()).sum();
@@ -201,7 +202,7 @@ public class MySupportService {
         List<SupportDashboardResponse.RecentTicketDto> recent = tickets.stream()
                 .sorted(Comparator.comparing(MySupportTicket::getUpdatedAt).reversed()).limit(5)
                 .map(t -> new SupportDashboardResponse.RecentTicketDto(t.getId(), t.getTicketNumber(), t.getSubject(),
-                        t.getStatus(), t.getPriority(), t.getUpdatedAt().format(ISO_FORMATTER)))
+                        t.getStatus().name(), t.getPriority().name(), t.getUpdatedAt().format(ISO_FORMATTER)))
                 .collect(Collectors.toList());
 
         return new SupportDashboardResponse(
@@ -227,21 +228,22 @@ public class MySupportService {
         MySupportTicket ticket = new MySupportTicket();
         ticket.setTicketNumber(ticketNumber);
         ticket.setEmployee(emp);
+        ticket.setOrganization(emp.getOrganization());
         ticket.setCategory(cat);
         ticket.setSubCategory(subCat);
         ticket.setSubject(req.getSubject());
         ticket.setDescription(req.getDescription());
-        ticket.setPriority(req.getPriority() != null ? req.getPriority() : "MEDIUM");
-        ticket.setStatus("OPEN");
+        ticket.setPriority(req.getPriority() != null ? SupportTicketPriority.valueOf(req.getPriority().toUpperCase()) : SupportTicketPriority.MEDIUM);
+        ticket.setStatus(SupportTicketStatus.OPEN);
         ticket.setPreferredContactMethod(req.getPreferredContactMethod() != null ? req.getPreferredContactMethod() : "EMAIL");
         ticket.setCreatedAt(now);
         ticket.setUpdatedAt(now);
         ticket.setAssignedTeam(cat.getName().equals("IT Support") ? "IT Helpdesk" : "HR Operations");
 
         int responseHours = 8, resolutionHours = 48;
-        if ("HIGH".equalsIgnoreCase(ticket.getPriority()))          { responseHours = 2;  resolutionHours = 32; }
-        else if ("CRITICAL".equalsIgnoreCase(ticket.getPriority())) { responseHours = 1;  resolutionHours = 12; }
-        else if ("LOW".equalsIgnoreCase(ticket.getPriority()))      { responseHours = 24; resolutionHours = 72; }
+        if (SupportTicketPriority.HIGH == ticket.getPriority())          { responseHours = 2;  resolutionHours = 32; }
+        else if (SupportTicketPriority.CRITICAL == ticket.getPriority()) { responseHours = 1;  resolutionHours = 12; }
+        else if (SupportTicketPriority.LOW == ticket.getPriority())      { responseHours = 24; resolutionHours = 72; }
         ticket.setSlaResolutionTimeHours(resolutionHours);
         ticket.setSlaResponseDueAt(now.plusHours(responseHours));
         ticket.setSlaResolutionDueAt(now.plusHours(resolutionHours));
@@ -256,21 +258,23 @@ public class MySupportService {
         }
 
         MySupportTimelineActivity activity = new MySupportTimelineActivity();
-        activity.setTicket(ticket); activity.setEvent("TICKET_CREATED"); activity.setPerformedBy(email); activity.setTimestamp(now);
+        activity.setTicket(ticket); activity.setEvent("TICKET_CREATED"); activity.setAction(SupportTimelineAction.CREATE); activity.setPerformedBy(email); activity.setTimestamp(now);
         timelineRepository.save(activity);
 
-        return new CreateTicketResponse(ticket.getId(), ticket.getTicketNumber(), ticket.getStatus(), ticket.getPriority(),
+        return new CreateTicketResponse(ticket.getId(), ticket.getTicketNumber(), ticket.getStatus().name(), ticket.getPriority().name(),
                 ticket.getCreatedAt().format(ISO_FORMATTER), ticket.getSlaResponseDueAt().format(ISO_FORMATTER),
                 ticket.getSlaResolutionDueAt().format(ISO_FORMATTER), "Support ticket created successfully");
     }
 
     @Transactional(readOnly = true)
     public MyTicketsResponse getMyTickets(String email, String status, String priority, Long categoryId, String search, Pageable pageable) {
-        Page<MySupportTicket> page = ticketRepository.findByFilters(email, status, priority, categoryId, search, pageable);
+        SupportTicketStatus statusEnum = (status == null || status.isBlank()) ? null : SupportTicketStatus.valueOf(status.toUpperCase());
+        SupportTicketPriority priorityEnum = (priority == null || priority.isBlank()) ? null : SupportTicketPriority.valueOf(priority.toUpperCase());
+        Page<MySupportTicket> page = ticketRepository.findByFilters(email, statusEnum, priorityEnum, categoryId, search, pageable);
         List<MyTicketsResponse.TicketListItem> items = page.getContent().stream()
                 .map(t -> new MyTicketsResponse.TicketListItem(t.getId(), t.getTicketNumber(), t.getSubject(),
                         t.getCategory() != null ? t.getCategory().getName() : null,
-                        t.getPriority(), t.getStatus(), t.getAssignedTeam(),
+                        t.getPriority().name(), t.getStatus().name(), t.getAssignedTeam(),
                         t.getCreatedAt().format(ISO_FORMATTER), t.getUpdatedAt().format(ISO_FORMATTER)))
                 .collect(Collectors.toList());
         return new MyTicketsResponse(items, new MyTicketsResponse.PaginationDto(
@@ -291,7 +295,7 @@ public class MySupportService {
         String slaStatus = (t.getSlaResolutionDueAt() != null && checkTime.isAfter(t.getSlaResolutionDueAt())) ? "BREACHED" : "WITHIN_SLA";
 
         return new TicketDetailsResponse(t.getId(), t.getTicketNumber(), t.getSubject(), t.getDescription(),
-                t.getCategory() != null ? t.getCategory().getName() : null, t.getPriority(), t.getStatus(),
+                t.getCategory() != null ? t.getCategory().getName() : null, t.getPriority().name(), t.getStatus().name(),
                 new TicketDetailsResponse.CreatedByDto(t.getEmployee().getId(), t.getEmployee().getFullName()),
                 new TicketDetailsResponse.AssignedToDto(t.getAssignedTeam(), t.getAssignedAgent()),
                 attachmentDtos,
@@ -319,7 +323,7 @@ public class MySupportService {
         }
 
         MySupportTimelineActivity act = new MySupportTimelineActivity();
-        act.setTicket(ticket); act.setEvent("COMMENT_ADDED"); act.setPerformedBy(email); act.setTimestamp(now);
+        act.setTicket(ticket); act.setEvent("COMMENT_ADDED"); act.setAction(SupportTimelineAction.COMMENT); act.setPerformedBy(email); act.setTimestamp(now);
         timelineRepository.save(act);
         ticket.setUpdatedAt(now);
         ticketRepository.save(ticket);
@@ -335,9 +339,9 @@ public class MySupportService {
             throw new IllegalArgumentException("Access Denied: You cannot escalate this ticket.");
 
         LocalDateTime now = LocalDateTime.now();
-        String previousPriority = ticket.getPriority();
+        String previousPriority = ticket.getPriority().name();
         ticket.setOldPriority(previousPriority);
-        ticket.setPriority("CRITICAL");
+        ticket.setPriority(SupportTicketPriority.CRITICAL);
         ticket.setEscalationReason(req.getEscalationReason());
         ticket.setUpdatedAt(now);
         ticket.setSlaResponseDueAt(now.plusHours(1));
@@ -346,11 +350,11 @@ public class MySupportService {
         ticketRepository.save(ticket);
 
         MySupportTimelineActivity act = new MySupportTimelineActivity();
-        act.setTicket(ticket); act.setEvent("TICKET_ESCALATED"); act.setPerformedBy(email); act.setTimestamp(now);
+        act.setTicket(ticket); act.setEvent("TICKET_ESCALATED"); act.setAction(SupportTimelineAction.PRIORITY_CHANGE); act.setPerformedBy(email); act.setTimestamp(now);
         timelineRepository.save(act);
 
         return new EscalateTicketResponse(ticket.getId(), ticket.getTicketNumber(), previousPriority,
-                ticket.getPriority(), now.format(ISO_FORMATTER), "Ticket escalated to CRITICAL priority");
+                ticket.getPriority().name(), now.format(ISO_FORMATTER), "Ticket escalated to CRITICAL priority");
     }
 
     @Transactional
@@ -361,7 +365,7 @@ public class MySupportService {
             throw new IllegalArgumentException("Access Denied: You cannot close this ticket.");
 
         LocalDateTime now = LocalDateTime.now();
-        ticket.setStatus("CLOSED");
+        ticket.setStatus(SupportTicketStatus.CLOSED);
         ticket.setClosedAt(now);
         if (ticket.getResolvedAt() == null) ticket.setResolvedAt(now);
         if (req.getRating() != null) ticket.setRating(req.getRating());
@@ -370,10 +374,10 @@ public class MySupportService {
         ticketRepository.save(ticket);
 
         MySupportTimelineActivity act = new MySupportTimelineActivity();
-        act.setTicket(ticket); act.setEvent("TICKET_CLOSED"); act.setPerformedBy(email); act.setTimestamp(now);
+        act.setTicket(ticket); act.setEvent("TICKET_CLOSED"); act.setAction(SupportTimelineAction.CLOSE); act.setPerformedBy(email); act.setTimestamp(now);
         timelineRepository.save(act);
 
-        return new CloseTicketResponse(ticket.getId(), ticket.getTicketNumber(), ticket.getStatus(),
+        return new CloseTicketResponse(ticket.getId(), ticket.getTicketNumber(), ticket.getStatus().name(),
                 ticket.getClosedAt().format(ISO_FORMATTER), ticket.getRating(), ticket.getFeedback(), "Ticket closed successfully");
     }
 
@@ -447,23 +451,23 @@ public class MySupportService {
                 .orElseThrow(() -> new IllegalArgumentException("Ticket not found with ID: " + ticketId));
         if (!ticket.getEmployee().getEmail().equals(email))
             throw new IllegalArgumentException("Access Denied: You do not own this ticket.");
-        if (!"OPEN".equalsIgnoreCase(ticket.getStatus()))
+        if (SupportTicketStatus.OPEN != ticket.getStatus())
             throw new IllegalArgumentException("Only OPEN tickets can be edited (current status: " + ticket.getStatus() + ").");
 
         LocalDateTime now = LocalDateTime.now();
         if (req.getSubject() != null && !req.getSubject().isBlank()) ticket.setSubject(req.getSubject());
         if (req.getDescription() != null && !req.getDescription().isBlank()) ticket.setDescription(req.getDescription());
-        if (req.getPriority() != null && !req.getPriority().isBlank()) ticket.setPriority(req.getPriority().toUpperCase());
+        if (req.getPriority() != null && !req.getPriority().isBlank()) ticket.setPriority(SupportTicketPriority.valueOf(req.getPriority().toUpperCase()));
         if (req.getPreferredContactMethod() != null && !req.getPreferredContactMethod().isBlank()) ticket.setPreferredContactMethod(req.getPreferredContactMethod());
         ticket.setUpdatedAt(now);
         ticketRepository.save(ticket);
 
         MySupportTimelineActivity act = new MySupportTimelineActivity();
-        act.setTicket(ticket); act.setEvent("TICKET_UPDATED"); act.setPerformedBy(email); act.setTimestamp(now);
+        act.setTicket(ticket); act.setEvent("TICKET_UPDATED"); act.setAction(SupportTimelineAction.PRIORITY_CHANGE); act.setPerformedBy(email); act.setTimestamp(now);
         timelineRepository.save(act);
 
         return new UpdateTicketResponse(ticket.getId(), ticket.getTicketNumber(), ticket.getSubject(),
-                ticket.getPriority(), ticket.getStatus(), now.format(ISO_FORMATTER), "Ticket updated successfully");
+                ticket.getPriority().name(), ticket.getStatus().name(), now.format(ISO_FORMATTER), "Ticket updated successfully");
     }
 
     /** PATCH /tickets/{ticketId}/reopen */
@@ -473,29 +477,29 @@ public class MySupportService {
                 .orElseThrow(() -> new IllegalArgumentException("Ticket not found with ID: " + ticketId));
         if (!ticket.getEmployee().getEmail().equals(email))
             throw new IllegalArgumentException("Access Denied: You do not own this ticket.");
-        if (!"CLOSED".equalsIgnoreCase(ticket.getStatus()))
+        if (SupportTicketStatus.CLOSED != ticket.getStatus())
             throw new IllegalArgumentException("Only CLOSED tickets can be reopened (current status: " + ticket.getStatus() + ").");
 
-        String previousStatus = ticket.getStatus();
+        String previousStatus = ticket.getStatus().name();
         LocalDateTime now = LocalDateTime.now();
-        ticket.setStatus("OPEN");
+        ticket.setStatus(SupportTicketStatus.OPEN);
         ticket.setClosedAt(null);
         ticket.setUpdatedAt(now);
         int responseHours = 8, resolutionHours = 48;
-        if ("HIGH".equalsIgnoreCase(ticket.getPriority()))          { responseHours = 2;  resolutionHours = 32; }
-        else if ("CRITICAL".equalsIgnoreCase(ticket.getPriority())) { responseHours = 1;  resolutionHours = 12; }
-        else if ("LOW".equalsIgnoreCase(ticket.getPriority()))      { responseHours = 24; resolutionHours = 72; }
+        if (SupportTicketPriority.HIGH == ticket.getPriority())          { responseHours = 2;  resolutionHours = 32; }
+        else if (SupportTicketPriority.CRITICAL == ticket.getPriority()) { responseHours = 1;  resolutionHours = 12; }
+        else if (SupportTicketPriority.LOW == ticket.getPriority())      { responseHours = 24; resolutionHours = 72; }
         ticket.setSlaResponseDueAt(now.plusHours(responseHours));
         ticket.setSlaResolutionDueAt(now.plusHours(resolutionHours));
         ticket.setSlaResolutionTimeHours(resolutionHours);
         ticketRepository.save(ticket);
 
         MySupportTimelineActivity act = new MySupportTimelineActivity();
-        act.setTicket(ticket); act.setEvent("TICKET_REOPENED"); act.setPerformedBy(email); act.setTimestamp(now);
+        act.setTicket(ticket); act.setEvent("TICKET_REOPENED"); act.setAction(SupportTimelineAction.REOPEN); act.setPerformedBy(email); act.setTimestamp(now);
         timelineRepository.save(act);
 
         return new ReopenTicketResponse(ticket.getId(), ticket.getTicketNumber(), previousStatus,
-                ticket.getStatus(), now.format(ISO_FORMATTER), "Ticket reopened successfully");
+                ticket.getStatus().name(), now.format(ISO_FORMATTER), "Ticket reopened successfully");
     }
 
     /** DELETE /tickets/{ticketId} — only OPEN tickets */
@@ -505,7 +509,7 @@ public class MySupportService {
                 .orElseThrow(() -> new IllegalArgumentException("Ticket not found with ID: " + ticketId));
         if (!ticket.getEmployee().getEmail().equals(email))
             throw new IllegalArgumentException("Access Denied: You do not own this ticket.");
-        if (!"OPEN".equalsIgnoreCase(ticket.getStatus()))
+        if (SupportTicketStatus.OPEN != ticket.getStatus())
             throw new IllegalArgumentException("Only OPEN tickets can be deleted (current status: " + ticket.getStatus() + ").");
 
         timelineRepository.deleteAll(timelineRepository.findByTicketId(ticketId));
@@ -536,7 +540,7 @@ public class MySupportService {
                 sb.append(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\n",
                         t.getTicketNumber(), escape(t.getSubject()),
                         t.getCategory() != null ? t.getCategory().getName() : "",
-                        t.getPriority(), t.getStatus(),
+                        t.getPriority().name(), t.getStatus().name(),
                         t.getCreatedAt().format(ISO_FORMATTER), t.getUpdatedAt().format(ISO_FORMATTER))));
         return sb.toString();
     }
@@ -550,7 +554,7 @@ public class MySupportService {
                 .orElseThrow(() -> new IllegalArgumentException("Ticket not found with ID: " + ticketId));
         if (!ticket.getEmployee().getEmail().equals(email))
             throw new IllegalArgumentException("Access Denied: You do not own this ticket.");
-        if (!"RESOLVED".equalsIgnoreCase(ticket.getStatus()) && !"CLOSED".equalsIgnoreCase(ticket.getStatus()))
+        if (SupportTicketStatus.RESOLVED != ticket.getStatus() && SupportTicketStatus.CLOSED != ticket.getStatus())
             throw new IllegalArgumentException("Feedback can only be submitted on RESOLVED or CLOSED tickets.");
 
         LocalDateTime now = LocalDateTime.now();

@@ -29,17 +29,24 @@ public class JwtService {
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000L;
 
     public String generateAccessToken(String userId, String email, String role) {
-        return generateAccessToken(userId, email, role, null);
+        return generateAccessToken(userId, email, role, null, null, 1, 1L);
     }
 
     public String generateAccessToken(String userId, String email, String role, String sessionId) {
-        return generateAccessToken(userId, email, role, sessionId, 1, 1L);
+        return generateAccessToken(userId, email, role, null, sessionId, 1, 1L);
     }
 
     public String generateAccessToken(String userId, String email, String role, String sessionId, int sessionVersion, long sessionEpoch) {
+        return generateAccessToken(userId, email, role, null, sessionId, sessionVersion, sessionEpoch);
+    }
+
+    public String generateAccessToken(String userId, String email, String role, Long orgId, String sessionId, int sessionVersion, long sessionEpoch) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("role", role);
+        if (orgId != null) {
+            claims.put("orgId", orgId);
+        }
         if (sessionId != null) {
             claims.put("sessionId", sessionId);
             claims.put("sessionVersion", sessionVersion);
@@ -101,5 +108,14 @@ public class JwtService {
 
     public String getUserIdFromToken(String token) {
         return getClaims(token).get("userId", String.class);
+    }
+
+    public Long getOrgIdFromToken(String token) {
+        Object orgId = getClaims(token).get("orgId");
+        if (orgId == null) return null;
+        if (orgId instanceof Number) {
+            return ((Number) orgId).longValue();
+        }
+        return Long.valueOf(orgId.toString());
     }
 }

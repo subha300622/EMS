@@ -43,7 +43,6 @@ public class BillingRetryWorker {
                 rs -> {
                     long id = rs.getLong("id");
                     String eventId = rs.getString("event_id");
-                    String eventType = rs.getString("event_type");
                     String handlerName = rs.getString("handler_name");
                     String payload = rs.getString("payload");
                     int retryCount = rs.getInt("retry_count");

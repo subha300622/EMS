@@ -154,8 +154,10 @@ public class AuthController {
                 httpRequest.getHeader("User-Agent"),
                 getClientIp(httpRequest));
 
+        Long orgId = user.getOrganization() != null ? user.getOrganization().getId() : null;
+
         // Generate Tokens linked to this session
-        String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName,
+        String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName, orgId,
                 session.getSessionId(), session.getSessionVersion(), session.getSessionEpoch());
 
         LoginResponse.TokenData tokenData = new LoginResponse.TokenData(
@@ -225,8 +227,9 @@ public class AuthController {
 
         User user = optUser.get();
         String roleName = user.getRole() != null ? user.getRole().getName() : user.getRequestedRole();
+        Long orgId = user.getOrganization() != null ? user.getOrganization().getId() : null;
 
-        String newAccessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName,
+        String newAccessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName, orgId,
                 session.getSessionId(), session.getSessionVersion(), session.getSessionEpoch());
 
         return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", Map.of(
@@ -331,6 +334,8 @@ public class AuthController {
         }
         List<String> permissions = roleService.getPermissionsForUserId(user.getUserId());
 
+        Long orgId = user.getOrganization() != null ? user.getOrganization().getId() : null;
+
         Map<String, Object> userData = new java.util.HashMap<>();
         userData.put("id", user.getId());
         userData.put("employeeId", user.getUserId());
@@ -338,6 +343,7 @@ public class AuthController {
         userData.put("email", user.getWorkEmail());
         userData.put("role", roleMap);
         userData.put("permissions", permissions);
+        userData.put("organizationId", orgId);
         userData.put("organizationName", user.getOrganizationName());
         userData.put("branch", user.getBranch());
 

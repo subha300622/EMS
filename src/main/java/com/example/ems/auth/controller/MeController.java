@@ -296,7 +296,7 @@ public class MeController {
 
         // 8. Support Data
         long openTicketsCount = supportTicketRepository.findByEmployeeEmail(employee.getEmail()).stream()
-                .filter(t -> "OPEN".equalsIgnoreCase(t.getStatus()) || "IN_PROGRESS".equalsIgnoreCase(t.getStatus()))
+                .filter(t -> t.getStatus() == com.example.ems.support.entity.SupportTicketStatus.OPEN || t.getStatus() == com.example.ems.support.entity.SupportTicketStatus.IN_PROGRESS)
                 .count();
         MyDashboardResponse.SupportData supportData = new MyDashboardResponse.SupportData(openTicketsCount);
 

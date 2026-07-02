@@ -30,4 +30,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     java.util.List<User> searchUsers(@org.springframework.data.repository.query.Param("query") String query);
 
     java.util.List<User> findByRoleId(Long roleId);
+
+    java.util.List<User> findByOrganizationId(Long organizationId);
+
+    long countByOrganizationId(Long organizationId);
 }

@@ -219,7 +219,15 @@ public class SwaggerConfig {
     public GroupedOpenApi allApi() {
         return GroupedOpenApi.builder()
                 .group("All APIs")
-                .pathsToMatch("/api/v1/**")
+                .pathsToMatch("/api/v1/**", "/api/platform/**")
+                .build();
+    }
+
+    @Bean
+    public GroupedOpenApi platformSupportApi() {
+        return GroupedOpenApi.builder()
+                .group("Platform Support")
+                .pathsToMatch("/api/platform/**")
                 .build();
     }
 
