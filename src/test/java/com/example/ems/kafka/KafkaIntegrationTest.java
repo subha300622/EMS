@@ -2,7 +2,7 @@ package com.example.ems.kafka;
 
 import com.example.ems.common.consumer.ProcessedEventRepository;
 import com.example.ems.common.event.*;
-import com.example.ems.common.kafka.KafkaEventPublisher;
+import com.example.ems.common.kafka.EventPublisher;
 import com.example.ems.common.outbox.OutboxEvent;
 import com.example.ems.common.outbox.OutboxEventRepository;
 import com.example.ems.common.outbox.OutboxPublisher;
@@ -58,7 +58,7 @@ class KafkaIntegrationTest {
         private ProcessedEventRepository processedEventRepository;
 
         @Autowired
-        private KafkaEventPublisher kafkaEventPublisher;
+        private EventPublisher eventPublisher;
 
         @Autowired
         private ObjectMapper objectMapper;
@@ -218,7 +218,7 @@ class KafkaIntegrationTest {
 
                 // When - publish the same event ID directly to Kafka (simulating duplicate)
                 String serialized = objectMapper.writeValueAsString(envelope);
-                kafkaEventPublisher.publish(
+                eventPublisher.publish(
                                 EventTypes.NOTIFICATION_CREATED,
                                 "4",
                                 serialized).get(5, TimeUnit.SECONDS);

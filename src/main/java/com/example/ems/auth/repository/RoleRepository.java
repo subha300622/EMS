@@ -6,7 +6,8 @@ import java.util.Optional;
 import java.util.List;
 
 public interface RoleRepository extends JpaRepository<Role, Long> {
-    Optional<Role> findByName(String name);
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Role r WHERE r.name = :name AND (r.isPlatformTemplate = true OR r.organization IS NULL)")
+    Optional<Role> findByName(@org.springframework.data.repository.query.Param("name") String name);
     boolean existsByName(String name);
 
     // Multi-tenant additions

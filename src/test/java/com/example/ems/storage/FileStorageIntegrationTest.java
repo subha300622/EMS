@@ -198,11 +198,13 @@ public class FileStorageIntegrationTest {
     }
 
     private Role getOrCreateRole(String name) {
-        return roleRepository.findByName(name)
+        return roleRepository.findByNameAndIsPlatformTemplateTrue(name)
                 .orElseGet(() -> {
                     Role r = new Role();
                     r.setName(name);
                     r.setDescription(name + " role");
+                    r.setPlatformTemplate(true);
+                    r.setSystemRole(true);
                     return roleRepository.save(r);
                 });
     }

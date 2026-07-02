@@ -1,6 +1,6 @@
 package com.example.ems.common.outbox;
 
-import com.example.ems.common.kafka.KafkaEventPublisher;
+import com.example.ems.common.kafka.EventPublisher;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,12 +21,12 @@ public class OutboxPublisher {
     private static final int BATCH_SIZE = 50;
 
     private final OutboxEventRepository outboxEventRepository;
-    private final KafkaEventPublisher kafkaEventPublisher;
+    private final EventPublisher eventPublisher;
 
     public OutboxPublisher(OutboxEventRepository outboxEventRepository,
-                           KafkaEventPublisher kafkaEventPublisher) {
+            EventPublisher eventPublisher) {
         this.outboxEventRepository = outboxEventRepository;
-        this.kafkaEventPublisher = kafkaEventPublisher;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -53,11 +53,10 @@ public class OutboxPublisher {
                         ? event.getPartitionKey()
                         : event.getAggregateId();
 
-                kafkaEventPublisher.publish(
+                eventPublisher.publish(
                         event.getEventType(),
                         partitionKey,
-                        event.getPayload()
-                ).get(); // Block to ensure delivery before marking published
+                        event.getPayload()).get(); // Block to ensure delivery before marking published
 
                 event.setStatus(OutboxStatus.PUBLISHED);
                 event.setPublishedAt(Instant.now());

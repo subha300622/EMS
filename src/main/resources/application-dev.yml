@@ -1,0 +1,8 @@
+app:
+  kafka:
+    enabled: false
+
+spring:
+  kafka:
+    listener:
+      auto-startup: false

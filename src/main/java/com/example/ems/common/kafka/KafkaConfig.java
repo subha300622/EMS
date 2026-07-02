@@ -8,11 +8,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+
 /**
  * Kafka configuration for topic creation and infrastructure setup.
  * Producer and consumer factories are auto-configured by Spring Boot.
  */
 @Configuration
+@ConditionalOnProperty(name = "app.kafka.enabled", havingValue = "true")
 public class KafkaConfig {
 
     @Value("${kafka.topics.partitions:3}")

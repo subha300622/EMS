@@ -26,7 +26,7 @@ public class Attendance {
     private LocalDate date;
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = AttendanceStatusConverter.class)
     private AttendanceStatus status;
 
     private LocalTime punchInTime;

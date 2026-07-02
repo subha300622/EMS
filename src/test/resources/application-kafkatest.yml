@@ -1,0 +1,71 @@
+spring:
+  application:
+    name: ems-backend-kafkatest
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/employee_db
+    username: ems_user
+    password: 12345
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    defer-datasource-initialization: false
+  sql:
+    init:
+      mode: never
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    clean-disabled: false
+    clean-on-validation-error: true
+    out-of-order: true
+    repair-on-migrate: true
+  data:
+    redis:
+      url: ${REDIS_URL:redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    listener:
+      auto-startup: true
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
+resend:
+  api-key: re_dummy_key_for_test
+  from-email: EMS System <noreply@company.com>
+
+app:
+  seed:
+    domain: company.com
+  email:
+    sender-address: noreply@company.com
+  base-url: http://localhost:3000
+  kafka:
+    enabled: true # Enable Kafka specifically for integration tests
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+
+razorpay:
+  enabled: true
+  mode: TEST
+  key-id: rzp_test_dummy
+  key-secret: test_secret
+  webhook-secret: webhook_secret
+  currency: INR
+
+kafka:
+  topics:
+    partitions: 1
+  outbox:
+    poll-interval-ms: 999999999 # Disable outbox scheduler in tests (we trigger manually)

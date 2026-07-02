@@ -2,18 +2,19 @@ package com.example.ems.common.kafka;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Kafka event publisher responsible for sending serialized event envelopes
- * to Kafka topics. This is the only class that directly interacts with KafkaTemplate.
+ * Production-ready Kafka event publisher. Active when app.kafka.enabled is true.
  */
-@Component
-public class KafkaEventPublisher {
+@Service
+@ConditionalOnProperty(name = "app.kafka.enabled", havingValue = "true")
+public class KafkaEventPublisher implements EventPublisher {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaEventPublisher.class);
 
@@ -23,14 +24,7 @@ public class KafkaEventPublisher {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    /**
-     * Publish a serialized event to the given topic with the specified partition key.
-     *
-     * @param topic        the Kafka topic
-     * @param partitionKey the partition key for ordering
-     * @param payload      the serialized JSON payload
-     * @return a CompletableFuture for async result handling
-     */
+    @Override
     public CompletableFuture<SendResult<String, String>> publish(String topic,
                                                                   String partitionKey,
                                                                   String payload) {

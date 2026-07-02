@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: ems-backend-test
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/employee_db
+    username: ems_user
+    password: 12345
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    defer-datasource-initialization: false
+  sql:
+    init:
+      mode: never
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    clean-disabled: false
+    clean-on-validation-error: true
+    out-of-order: true
+    repair-on-migrate: true
+  data:
+    redis:
+      url: ${REDIS_URL:redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    listener:
+      auto-startup: false
+
+resend:
+  api-key: re_Z856fqce_G3oC29ZQke3kzhdzdgWFB73d
+  from-email: EMS System <noreply@company.com>
+
+app:
+  seed:
+    domain: company.com
+  email:
+    sender-address: noreply@company.com
+  base-url: http://localhost:3000
+  kafka:
+    enabled: false # Disabled in standard tests
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+
+razorpay:
+  enabled: true
+  mode: TEST
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_StUZupmMw4H4yc}
+  key-secret: ${RAZORPAY_KEY_SECRET:uq9yq68G6Dydj3FJXgobDeB0}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:webhook_secret}
+  currency: INR
