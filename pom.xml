@@ -183,6 +183,17 @@
 			<artifactId>razorpay-java</artifactId>
 			<version>1.4.8</version>
 		</dependency>
+
+		<!-- Apache Kafka -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-kafka</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -277,6 +288,8 @@
 						<ignoredUsedUndeclaredDependency>org.apache.poi:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.junit.jupiter:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.apache.tomcat.embed:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.springframework.kafka:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.apache.kafka:*</ignoredUsedUndeclaredDependency>
 					</ignoredUsedUndeclaredDependencies>
 				</configuration>
 			</plugin>

@@ -14,15 +14,11 @@ public class DeadLetterQueueConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(DeadLetterQueueConsumer.class);
 
-    @KafkaListener(
-            topics = {
-                    "ems.notification.created.dlq",
-                    "ems.support.ticket.reply.created.dlq"
-            },
-            groupId = "ems-dlq-consumer"
-    )
+    @KafkaListener(topics = {
+            "ems.notification.created.dlq",
+            "ems.support.ticket.reply.created.dlq"
+    }, groupId = "ems-dlq-consumer")
     public void onDeadLetterMessage(String message) {
         log.error("DLQ event received — requires manual intervention: {}", message);
-        // TODO: Persist to a DLQ audit table, send alerts, increment metrics
     }
 }
