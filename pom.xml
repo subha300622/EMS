@@ -316,5 +316,5 @@
 		</plugins>
 	</build>
 
-	<!-- Force classpath rebuild to sync IDE language server: trigger 1 -->
+	<!-- Force classpath rebuild to sync IDE language server: trigger 2 -->
 </project>

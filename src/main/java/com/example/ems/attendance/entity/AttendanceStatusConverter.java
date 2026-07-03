@@ -2,7 +2,6 @@ package com.example.ems.attendance.entity;
 
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
-import com.example.ems.attendance.entity.AttendanceStatus;
 
 @Converter(autoApply = true)
 public class AttendanceStatusConverter implements AttributeConverter<AttendanceStatus, String> {
