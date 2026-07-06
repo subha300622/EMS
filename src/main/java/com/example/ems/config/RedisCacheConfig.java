@@ -84,7 +84,30 @@ public class RedisCacheConfig implements CachingConfigurer {
                 new ConcurrentMapCache("userBootstrap"),
                 new ConcurrentMapCache("roles"),
                 new ConcurrentMapCache("appraisalDashboard"),
-                new ConcurrentMapCache("subscriptionsOverview")));
+                new ConcurrentMapCache("performanceDashboard"),
+                new ConcurrentMapCache("subscriptionsOverview"),
+                new ConcurrentMapCache("organization-dashboard"),
+                new ConcurrentMapCache("organization-growth"),
+                new ConcurrentMapCache("organization-status"),
+                new ConcurrentMapCache("subscription-distribution"),
+                new ConcurrentMapCache("employee-distribution"),
+                new ConcurrentMapCache("activity-report"),
+                new ConcurrentMapCache("top-organizations"),
+                new ConcurrentMapCache("inactive-organizations"),
+                new ConcurrentMapCache("recently-registered"),
+                new ConcurrentMapCache("expiring-organizations"),
+                new ConcurrentMapCache("subscription-dashboard-summary"),
+                new ConcurrentMapCache("subscription-growth"),
+                new ConcurrentMapCache("subscription-status"),
+                new ConcurrentMapCache("subscription-revenue"),
+                new ConcurrentMapCache("subscription-plan-revenue"),
+                new ConcurrentMapCache("subscription-plan-distribution"),
+                new ConcurrentMapCache("subscription-conversion"),
+                new ConcurrentMapCache("subscription-churn"),
+                new ConcurrentMapCache("revenueDashboardSummary"),
+                new ConcurrentMapCache("revenueTrends"),
+                new ConcurrentMapCache("revenueGrowth"),
+                new ConcurrentMapCache("revenueForecast")));
         return manager;
     }
 

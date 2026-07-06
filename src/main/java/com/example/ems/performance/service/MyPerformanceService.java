@@ -179,6 +179,7 @@ public class MyPerformanceService {
     }
 
     public MyPerformanceDashboardResponse getDashboard(String email) {
+        seedPerformanceData(email);
         Employee employee = employeeRepository.findByEmail(email).orElseThrow();
         MyPerformanceDashboardResponse res = new MyPerformanceDashboardResponse();
         res.setEmployeeName(employee.getFullName());
@@ -228,6 +229,7 @@ public class MyPerformanceService {
     }
 
     public MyGoalListResponse getGoals(String email, Long cycleId, String status, String category, Pageable pageable) {
+        seedPerformanceData(email);
         Page<MyGoal> page = goalRepository.findByFilters(email, cycleId, status, category, pageable);
         List<MyGoalItem> items = page.getContent().stream().map(g -> {
             MyGoalItem item = new MyGoalItem();
@@ -246,6 +248,7 @@ public class MyPerformanceService {
     }
 
     public GoalDetailsResponse getGoalDetails(String email, Long goalId) {
+        seedPerformanceData(email);
         MyGoal g = goalRepository.findByIdAndEmployeeEmail(goalId, email).orElseThrow();
         GoalDetailsResponse res = new GoalDetailsResponse();
         res.setId(g.getId());
@@ -293,6 +296,7 @@ public class MyPerformanceService {
     }
 
     public ReviewCyclesResponse getReviewCycles(String email) {
+        seedPerformanceData(email);
         List<Appraisal> appraisals = appraisalRepository.findByEmployeeEmail(email);
         ReviewCyclesResponse res = new ReviewCyclesResponse();
         res.setCycles(appraisals.stream().map(a -> {
@@ -310,6 +314,7 @@ public class MyPerformanceService {
 
     @Transactional
     public SelfAssessmentResponse submitSelfAssessment(String email, Long reviewId, SelfAssessmentRequest req) {
+        seedPerformanceData(email);
         Appraisal a = appraisalRepository.findById(reviewId).orElseThrow();
         if (!a.getEmployee().getEmail().equals(email)) throw new RuntimeException("Unauthorized");
 
@@ -347,6 +352,7 @@ public class MyPerformanceService {
     }
 
     public FeedbackListResponse getFeedback(String email) {
+        seedPerformanceData(email);
         List<MyPerformanceFeedback> feedbacks = feedbackRepository.findByEmployeeEmail(email);
         FeedbackListResponse res = new FeedbackListResponse();
         res.setFeedback(feedbacks.stream().map(f -> {
@@ -362,6 +368,7 @@ public class MyPerformanceService {
     }
 
     public AppraisalHistoryResponse getHistory(String email) {
+        seedPerformanceData(email);
         List<Increment> increments = incrementRepository.findByEmployeeEmail(email);
         AppraisalHistoryResponse res = new AppraisalHistoryResponse();
         res.setHistory(increments.stream().map(i -> {
@@ -380,6 +387,7 @@ public class MyPerformanceService {
     }
 
     public CompetenciesResponse getCompetencies(String email) {
+        seedPerformanceData(email);
         List<MyCompetency> comps = competencyRepository.findByEmployeeEmail(email);
         CompetenciesResponse res = new CompetenciesResponse();
         res.setCompetencies(comps.stream().map(c -> {
@@ -396,6 +404,7 @@ public class MyPerformanceService {
     }
 
     public PerformanceTimelineResponse getTimeline(String email) {
+        seedPerformanceData(email);
         List<MyPerformanceTimelineEvent> events = timelineRepository.findByEmployeeEmailOrderByDateDesc(email);
         PerformanceTimelineResponse res = new PerformanceTimelineResponse();
         res.setTimeline(events.stream().map(e -> {

@@ -6,3 +6,7 @@ spring:
   kafka:
     listener:
       auto-startup: false
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5432/employee_db}
+    username: ${SPRING_DATASOURCE_USERNAME:ems_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:12345}

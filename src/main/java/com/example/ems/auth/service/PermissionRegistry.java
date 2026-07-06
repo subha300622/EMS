@@ -17,6 +17,18 @@ public class PermissionRegistry {
         public static final String PLATFORM_PERMISSION_OVERRIDE = "platform.permission.override";
         public static final String PLATFORM_DASHBOARD_VIEW = "platform.dashboard.view";
         public static final String PLATFORM_AUDIT_VIEW = "platform.audit.view";
+        public static final String PLATFORM_REPORTS_VIEW = "platform.reports.view";
+        public static final String PLATFORM_DASHBOARD_SUBSCRIPTION_VIEW = "platform.dashboard.subscription.view";
+        public static final String PLATFORM_REPORTS_SUBSCRIPTION_VIEW = "platform.reports.subscription.view";
+        public static final String PLATFORM_REPORTS_SUBSCRIPTION_EXPORT = "platform.reports.subscription.export";
+
+        public static final String PLATFORM_REVENUE_DASHBOARD_VIEW = "platform.revenue.dashboard.view";
+        public static final String PLATFORM_REVENUE_PAYMENTS_VIEW = "platform.revenue.payments.view";
+        public static final String PLATFORM_REVENUE_INVOICES_VIEW = "platform.revenue.invoices.view";
+        public static final String PLATFORM_REVENUE_REFUNDS_VIEW = "platform.revenue.refunds.view";
+        public static final String PLATFORM_REVENUE_PLANS_VIEW = "platform.revenue.plans.view";
+        public static final String PLATFORM_REVENUE_FORECAST_VIEW = "platform.revenue.forecast.view";
+        public static final String PLATFORM_REVENUE_EXPORT = "platform.revenue.export";
 
         public static final List<String> COMMON_SETTINGS_PERMS = Arrays.asList(
                         "settings.self.read", "settings.security.read", "settings.security.update",
@@ -202,7 +214,13 @@ public class PermissionRegistry {
                         "platform.organization.view", "platform.organization.edit",
                         "platform.role.view", "platform.role.override",
                         "platform.permission.override", "platform.dashboard.view",
-                        "platform.audit.view");
+                        "platform.audit.view", "platform.reports.view",
+                        "platform.dashboard.subscription.view", "platform.reports.subscription.view",
+                        "platform.reports.subscription.export",
+                        "platform.revenue.dashboard.view", "platform.revenue.payments.view",
+                        "platform.revenue.invoices.view", "platform.revenue.refunds.view",
+                        "platform.revenue.plans.view", "platform.revenue.forecast.view",
+                        "platform.revenue.export");
 
         public static final List<String> ALL_PERMISSIONS = Arrays.asList(
                         // User Management
@@ -273,5 +291,11 @@ public class PermissionRegistry {
                         "platform.organization.view", "platform.organization.edit",
                         "platform.role.view", "platform.role.override",
                         "platform.permission.override", "platform.dashboard.view",
-                        "platform.audit.view");
+                        "platform.audit.view", "platform.reports.view",
+                        "platform.dashboard.subscription.view", "platform.reports.subscription.view",
+                        "platform.reports.subscription.export",
+                        "platform.revenue.dashboard.view", "platform.revenue.payments.view",
+                        "platform.revenue.invoices.view", "platform.revenue.refunds.view",
+                        "platform.revenue.plans.view", "platform.revenue.forecast.view",
+                        "platform.revenue.export");
 }
