@@ -11,7 +11,6 @@ import com.example.ems.auth.dto.LoginRequest;
 import com.example.ems.auth.dto.LoginResponse;
 import com.example.ems.auth.dto.LogoutRequest;
 import com.example.ems.auth.dto.RefreshTokenRequest;
-import com.example.ems.auth.dto.RegisterRequest;
 import com.example.ems.auth.dto.ResetPasswordRequest;
 import com.example.ems.auth.dto.VerifyOtpRequest;
 import com.example.ems.auth.entity.Invitation;
@@ -107,19 +106,6 @@ public class AuthController {
             ip = request.getRemoteAddr();
         }
         return ip;
-    }
-
-    @Operation(summary = "Register User", description = "Registers a new user in the system and triggers validation/initialization.")
-    @PostMapping("/register")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> register(@RequestBody @Valid RegisterRequest request){
-        String result = userService.register(request);
-        if (result.startsWith("Registration Successful!")) {
-            User user = userRepository.findByWorkEmail(request.getWorkEmail()).orElse(null);
-            return ResponseEntity.ok(ApiResponse.success(result, user));
-        } else {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(result, "AUTH_016"));
-        }
     }
 
     // ── 1. LOGIN ─────────────────────────────────────────────────────────────
