@@ -97,7 +97,6 @@ public class SwaggerConfig {
                         new Tag().name("Employee Self Service - Documents").description("Self-Service personal document safe uploads, downloads."),
                         new Tag().name("Employee Self Service - Performance").description("Self-Service reviews, ratings logs, assessments submissions."),
                         new Tag().name("Employee Self Service - Exit Management").description("Self-Service resignation submissions, final clearance tracking."),
-                        new Tag().name("Employee Self Service - Settings").description("Self-Service user preferences, MFA setup, data export."),
                         new Tag().name("Employee Self Service - Support").description("Self-Service help desk tickets submission, comments, ticketing lifecycle management."),
                         new Tag().name("Employee Self Service - Assets").description("Self-Service assigned assets listing, damage reports, return requests.")
                 ));

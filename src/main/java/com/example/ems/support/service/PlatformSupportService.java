@@ -47,9 +47,6 @@ public class PlatformSupportService {
     private MySupportCategoryRepository categoryRepository;
 
     @Autowired
-    private MySupportSubCategoryRepository subCategoryRepository;
-
-    @Autowired
     private EmployeeRepository employeeRepository;
 
     @Autowired

@@ -3,7 +3,6 @@ package com.example.ems.auth.controller;
 import com.example.ems.auth.dto.AssignRoleRequest;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
-import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
@@ -28,9 +27,6 @@ public class UserRoleController {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
 
     @Autowired
     private RoleService roleService;

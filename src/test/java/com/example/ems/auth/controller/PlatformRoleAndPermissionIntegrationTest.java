@@ -83,7 +83,6 @@ public class PlatformRoleAndPermissionIntegrationTest {
 
     private String platformAdminToken;
     private String orgAdminToken;
-    private String regularUserToken;
 
     @BeforeEach
     public void setUp() {
@@ -214,16 +213,6 @@ public class PlatformRoleAndPermissionIntegrationTest {
         regularUser.setRole(tenantEmployeeRole);
         regularUser.setStatus("ACTIVE");
         regularUser = userRepository.save(regularUser);
-
-        regularUserToken = jwtService.generateAccessToken(
-                regularUser.getUserId(),
-                regularUser.getWorkEmail(),
-                "EMPLOYEE",
-                testOrg.getId(),
-                null,
-                1,
-                1L
-        );
     }
 
     @Test

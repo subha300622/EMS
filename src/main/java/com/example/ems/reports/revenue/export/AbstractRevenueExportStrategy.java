@@ -1,6 +1,7 @@
 package com.example.ems.reports.revenue.export;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -12,7 +13,7 @@ public abstract class AbstractRevenueExportStrategy implements RevenueExportStra
 
     protected String formatBigDecimal(BigDecimal amount) {
         if (amount == null) return "0.00";
-        return amount.setScale(2, BigDecimal.ROUND_HALF_UP).toString();
+        return amount.setScale(2, RoundingMode.HALF_UP).toString();
     }
 
     protected String formatInstant(Instant instant) {

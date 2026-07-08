@@ -5,9 +5,7 @@ import com.example.ems.organization.entity.Payment;
 import com.example.ems.organization.entity.Subscription;
 import com.example.ems.organization.entity.SubscriptionInvoice;
 import com.example.ems.organization.repository.PaymentRepository;
-import com.example.ems.organization.repository.SubscriptionHistoryRepository;
 import com.example.ems.organization.repository.SubscriptionInvoiceRepository;
-import com.example.ems.organization.repository.SubscriptionRepository;
 import com.example.ems.organization.entity.InvoiceStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,12 +39,6 @@ public class PaymentService {
 
         @Autowired
         private SubscriptionInvoiceRepository invoiceRepository;
-
-        @Autowired
-        private SubscriptionRepository subscriptionRepository;
-
-        @Autowired
-        private SubscriptionHistoryRepository historyRepository;
 
         @Autowired
         private RazorpayService razorpayService;

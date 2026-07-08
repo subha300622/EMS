@@ -9,7 +9,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.PermissionRepository;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
 import com.example.ems.organization.entity.Organization;
 import com.example.ems.organization.repository.OrganizationRepository;
 import com.example.ems.security.service.JwtService;
@@ -60,9 +59,6 @@ public class PlatformGovernanceCrossOrgIntegrationTest {
     private UserRoleController userRoleController;
 
     @Autowired
-    private RoleService roleService;
-
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -91,7 +87,6 @@ public class PlatformGovernanceCrossOrgIntegrationTest {
 
     private String platformAdminToken;
     private String orgAdminToken;
-    private String regularUserToken;
 
     @BeforeEach
     public void setUp() {
@@ -151,7 +146,7 @@ public class PlatformGovernanceCrossOrgIntegrationTest {
         roleRepository.save(superAdminTemplate);
 
         // Ensure ADMIN platform template role exists
-        Role adminTemplate = roleRepository.findByName("ADMIN")
+        roleRepository.findByName("ADMIN")
                 .filter(r -> r.getOrganization() == null)
                 .map(r -> {
                     r.setPlatformTemplate(true);
@@ -251,10 +246,6 @@ public class PlatformGovernanceCrossOrgIntegrationTest {
 
         orgAdminToken = "Bearer " + jwtService.generateAccessToken(
                 orgAdmin.getUserId(), orgAdmin.getWorkEmail(), "ADMIN", testOrg.getId(), null, 1, 0
-        );
-
-        regularUserToken = "Bearer " + jwtService.generateAccessToken(
-                regularUser.getUserId(), regularUser.getWorkEmail(), "EMPLOYEE", testOrg.getId(), null, 1, 0
         );
     }
 

@@ -1,7 +1,6 @@
 package com.example.ems.reports.subscription.dto;
 
 import com.example.ems.organization.dto.SubscriptionDtos.*;
-import java.math.BigDecimal;
 
 public class SubscriptionDetailResponse {
     private Long subscriptionId;

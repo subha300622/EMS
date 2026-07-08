@@ -1,1251 +1,305 @@
-=========================================
-1. AUTHENTICATION & LOGIN
-=========================================
-Logging in as Employee (employee@company.com)...
-Employee logged in successfully.
-Logging in as Admin (admin@company.com)...
-Admin logged in successfully.
-Logging in as Super Admin (super_admin@company.com)...
-Super Admin logged in successfully.
+=== Authenticating ===
+Successfully authenticated. Token retrieved.
 
-=========================================
-2. PLATFORM PERMISSION ADMINISTRATION
-=========================================
-Listing system permissions...
+=== 1. POST Create Organization ===
+### METHOD: POST
+### URL: /api/v1/platform-admin/organizations
+### Request Body:
 {
-  "data": [
-    {
-      "permissionId": 1,
-      "name": "user.create",
-      "description": "Permission for user.create"
-    },
-    {
-      "permissionId": 2,
-      "name": "user.read",
-      "description": "Permission for user.read"
-    },
-    {
-      "permissionId": 3,
-      "name": "user.update",
-      "description": "Permission for user.update"
-    },
-    {
-      "permissionId": 4,
-      "name": "user.delete",
-...(truncated list)...
-Creating a system permission: test.custom.perf.permission.10015...
+  "name": "Acme Corp",
+  "email": "admin@acmecorp.com",
+  "phone": "555-0199",
+  "website": "https://acmecorp.com",
+  "subscriptionPlan": "ENTERPRISE",
+  "address": {
+    "street": "123 Acme Way",
+    "city": "Metroville",
+    "state": "State",
+    "country": "Country",
+    "zipCode": "12345"
+  }
+}
+### Response Body:
 {
   "data": {
-    "permissionId": 284,
-    "name": "test.custom.perf.permission.10015",
-    "description": "Custom permission for performance testing"
+    "id": 236,
+    "organizationCode": "ORG-202600236",
+    "name": "Acme Corp",
+    "email": "admin@acmecorp.com",
+    "phone": "555-0199",
+    "website": "https://acmecorp.com",
+    "address": {
+      "street": "123 Acme Way",
+      "city": "Metroville",
+      "state": "State",
+      "country": "Country",
+      "zipCode": "12345"
+    },
+    "subscription": {
+      "plan": "ENTERPRISE",
+      "status": "ACTIVE",
+      "startDate": "2026-07-07",
+      "expiryDate": "2027-07-07"
+    },
+    "employeeCount": 0,
+    "adminCount": 0,
+    "createdAt": "2026-07-07T04:02:25.003225244Z"
   },
   "links": {},
-  "message": "System permission created successfully",
+  "message": "Organization created successfully",
   "metadata": {
-    "executionTimeMs": 47,
+    "executionTimeMs": 487,
     "version": "v1"
   },
-  "requestId": "REQ-A26CC688",
+  "requestId": "REQ-14DC674F",
   "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
+  "timestamp": "2026-07-07T04:02:25Z"
 }
-Created permission ID: 284
-Updating the custom permission...
+--------------------------------------------------
+
+=== 2. GET List Organizations ===
+### METHOD: GET
+### URL: /api/v1/platform-admin/organizations
+### Request Body: None
+### Response Body:
 {
   "data": {
-    "permissionId": 284,
-    "name": "test.custom.perf.permission.10015.updated",
-    "description": "Updated custom permission for performance testing"
+    "content": [
+      {
+        "id": 236,
+        "organizationCode": "ORG-202600236",
+        "name": "Acme Corp",
+        "email": "admin@acmecorp.com",
+        "phone": "555-0199",
+        "subscriptionPlan": "ENTERPRISE",
+        "employeeCount": 0,
+        "status": "ACTIVE",
+        "createdAt": "2026-07-07T04:02:25.003225Z"
+      },
+      {
+        "id": 235,
+        "organizationCode": "ORG-202600235",
+        "name": "Flow Test Enterprise",
+        "email": "admin@flowtest.com",
+        "phone": "9876543210",
+        "subscriptionPlan": "ENTERPRISE",
+        "employeeCount": 0,
+        "status": "PENDING_PAYMENT",
+        "createdAt": "2026-07-07T03:59:13.040907Z"
+      }
+    ],
+    "empty": false,
+    "first": true,
+    "last": false,
+    "number": 0,
+    "numberOfElements": 2,
+    "pageable": {
+      "offset": 0,
+      "pageNumber": 0,
+      "pageSize": 2,
+      "paged": true,
+      "sort": {
+        "empty": false,
+        "sorted": true,
+        "unsorted": false
+      },
+      "unpaged": false
+    },
+    "size": 2,
+    "sort": {
+      "empty": false,
+      "sorted": true,
+      "unsorted": false
+    },
+    "totalElements": 16,
+    "totalPages": 8
   },
   "links": {},
-  "message": "System permission updated successfully",
+  "message": "Organizations retrieved successfully",
   "metadata": {
-    "executionTimeMs": 40,
+    "executionTimeMs": 83,
     "version": "v1"
   },
-  "requestId": "REQ-8730A987",
+  "requestId": "REQ-FED95829",
   "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
+  "timestamp": "2026-07-07T04:02:25Z"
 }
-Deleting the custom permission...
+--------------------------------------------------
+
+=== 3. GET Organization Details ===
+### METHOD: GET
+### URL: /api/v1/platform-admin/organizations/236
+### Request Body: None
+### Response Body:
+{
+  "data": {
+    "id": 236,
+    "organizationCode": "ORG-202600236",
+    "name": "Acme Corp",
+    "email": "admin@acmecorp.com",
+    "phone": "555-0199",
+    "website": "https://acmecorp.com",
+    "address": {
+      "street": "123 Acme Way",
+      "city": "Metroville",
+      "state": "State",
+      "country": "Country",
+      "zipCode": "12345"
+    },
+    "subscription": {
+      "plan": "ENTERPRISE",
+      "status": "ACTIVE",
+      "startDate": "2026-07-07",
+      "expiryDate": "2027-07-07"
+    },
+    "employeeCount": 0,
+    "adminCount": 0,
+    "createdAt": "2026-07-07T04:02:25.003225Z"
+  },
+  "links": {},
+  "message": "Organization details retrieved",
+  "metadata": {
+    "executionTimeMs": 53,
+    "version": "v1"
+  },
+  "requestId": "REQ-69C57F6A",
+  "success": true,
+  "timestamp": "2026-07-07T04:02:25Z"
+}
+--------------------------------------------------
+
+=== 4. PUT Update Organization ===
+### METHOD: PUT
+### URL: /api/v1/platform-admin/organizations/236
+### Request Body:
+{
+  "name": "Acme Corp Updated",
+  "phone": "555-9999",
+  "website": "https://acmecorp-new.com"
+}
+### Response Body:
+{
+  "data": {
+    "id": 236,
+    "organizationCode": "ORG-202600236",
+    "name": "Acme Corp Updated",
+    "email": "admin@acmecorp.com",
+    "phone": "555-9999",
+    "website": "https://acmecorp-new.com",
+    "address": {
+      "street": "123 Acme Way",
+      "city": "Metroville",
+      "state": "State",
+      "country": "Country",
+      "zipCode": "12345"
+    },
+    "subscription": {
+      "plan": "ENTERPRISE",
+      "status": "ACTIVE",
+      "startDate": "2026-07-07",
+      "expiryDate": "2027-07-07"
+    },
+    "employeeCount": 0,
+    "adminCount": 0,
+    "createdAt": "2026-07-07T04:02:25.003225Z"
+  },
+  "links": {},
+  "message": "Organization updated successfully",
+  "metadata": {
+    "executionTimeMs": 70,
+    "version": "v1"
+  },
+  "requestId": "REQ-54A2D8DF",
+  "success": true,
+  "timestamp": "2026-07-07T04:02:25Z"
+}
+--------------------------------------------------
+
+=== 5. PATCH Update Subscription ===
+### METHOD: PATCH
+### URL: /api/v1/platform-admin/organizations/236/subscription
+### Request Body:
+{
+  "plan": "GROWTH",
+  "expiryDate": "2027-12-31"
+}
+### Response Body:
 {
   "data": {},
   "links": {},
-  "message": "System permission deleted successfully",
-  "metadata": {
-    "executionTimeMs": 40,
-    "version": "v1"
-  },
-  "requestId": "REQ-5982C9D8",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
-}
-
-=========================================
-3. PERFORMANCE CYCLES
-=========================================
-Getting Appraisal Cycles...
-{
-  "data": [
-    {
-      "createdAt": "2026-07-02T17:04:51.541203",
-      "endDate": "2026-12-31",
-      "id": 1,
-      "name": "Annual Appraisal Cycle 2026",
-      "startDate": "2026-01-01",
-      "status": "ACTIVE",
-      "updatedAt": "2026-07-02T17:04:51.541209"
-    }
-  ],
-  "links": {},
-  "message": "Appraisal cycles retrieved successfully",
-  "metadata": {
-    "executionTimeMs": 19,
-    "version": "v1"
-  },
-  "requestId": "REQ-C406B365",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
-}
-Creating a Performance Review Cycle: FY 2026-27 Test Cycle 10015...
-{
-  "data": {
-    "achievedGoals": 0,
-    "createdAt": "2026-07-06T09:28:52.675392934",
-    "durationDays": 364,
-    "endDate": "2027-03-31",
-    "finalizedReviews": 0,
-    "goalCompletionRate": 0.0,
-    "id": 4,
-    "inProgressGoals": 0,
-    "missedGoals": 0,
-    "name": "FY 2026-27 Test Cycle 10015",
-    "startDate": "2026-04-01",
-    "status": "ACTIVE",
-    "totalGoals": 0,
-    "totalReviews": 0,
-    "updatedAt": "2026-07-06T09:28:52.675410237"
-  },
-  "links": {},
-  "message": "Performance cycle created successfully",
-  "metadata": {
-    "executionTimeMs": 35,
-    "version": "v1"
-  },
-  "requestId": "REQ-27FC01BC",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
-}
-Created Performance Cycle ID: 4
-Getting Performance Review Cycles...
-{
-  "data": [
-    {
-      "achievedGoals": 0,
-      "createdAt": "2026-07-06T09:24:10.167618",
-      "durationDays": 364,
-      "endDate": "2027-03-31",
-      "finalizedReviews": 1,
-      "goalCompletionRate": 0.0,
-      "id": 1,
-      "inProgressGoals": 1,
-      "missedGoals": 0,
-      "name": "FY 2026-27 Test Cycle 4833 (Updated)",
-      "startDate": "2026-04-01",
-      "status": "ACTIVE",
-      "totalGoals": 1,
-      "totalReviews": 2,
-      "updatedAt": "2026-07-06T09:24:10.296957"
-    },
-    {
-      "achievedGoals": 0,
-      "createdAt": "2026-07-06T09:25:14.829257",
-      "durationDays": 364,
-      "endDate": "2027-03-31",
-      "finalizedReviews": 1,
-      "goalCompletionRate": 0.0,
-      "id": 2,
-      "inProgressGoals": 1,
-      "missedGoals": 0,
-      "name": "FY 2026-27 Test Cycle 31666 (Updated)",
-      "startDate": "2026-04-01",
-      "status": "ACTIVE",
-      "totalGoals": 1,
-      "totalReviews": 2,
-      "updatedAt": "2026-07-06T09:25:14.922528"
-    },
-    {
-      "achievedGoals": 0,
-      "createdAt": "2026-07-06T09:26:52.376628",
-      "durationDays": 364,
-      "endDate": "2027-03-31",
-      "finalizedReviews": 1,
-      "goalCompletionRate": 0.0,
-      "id": 3,
-      "inProgressGoals": 1,
-      "missedGoals": 0,
-      "name": "FY 2026-27 Test Cycle 29377 (Updated)",
-      "startDate": "2026-04-01",
-      "status": "ACTIVE",
-      "totalGoals": 1,
-      "totalReviews": 2,
-      "updatedAt": "2026-07-06T09:26:52.462211"
-    },
-    {
-      "achievedGoals": 0,
-      "createdAt": "2026-07-06T09:28:52.675393",
-      "durationDays": 364,
-      "endDate": "2027-03-31",
-      "finalizedReviews": 0,
-      "goalCompletionRate": 0.0,
-      "id": 4,
-      "inProgressGoals": 0,
-      "missedGoals": 0,
-      "name": "FY 2026-27 Test Cycle 10015",
-      "startDate": "2026-04-01",
-      "status": "ACTIVE",
-      "totalGoals": 0,
-      "totalReviews": 0,
-      "updatedAt": "2026-07-06T09:28:52.67541"
-    }
-  ],
-  "links": {},
-  "message": "Performance cycles retrieved successfully",
-  "metadata": {
-    "executionTimeMs": 48,
-    "version": "v1"
-  },
-  "requestId": "REQ-65606664",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
-}
-Updating Performance Review Cycle...
-{
-  "data": {
-    "achievedGoals": 0,
-    "createdAt": "2026-07-06T09:28:52.675393",
-    "durationDays": 364,
-    "endDate": "2027-03-31",
-    "finalizedReviews": 0,
-    "goalCompletionRate": 0.0,
-    "id": 4,
-    "inProgressGoals": 0,
-    "missedGoals": 0,
-    "name": "FY 2026-27 Test Cycle 10015 (Updated)",
-    "startDate": "2026-04-01",
-    "status": "ACTIVE",
-    "totalGoals": 0,
-    "totalReviews": 0,
-    "updatedAt": "2026-07-06T09:28:52.824320022"
-  },
-  "links": {},
-  "message": "Performance cycle updated successfully",
-  "metadata": {
-    "executionTimeMs": 32,
-    "version": "v1"
-  },
-  "requestId": "REQ-EF02E3FD",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
-}
-
-=========================================
-4. PERFORMANCE GOALS
-=========================================
-Creating Goal...
-{
-  "data": {
-    "createdAt": "2026-07-06T09:28:52.88403266",
-    "cycleId": 4,
-    "cycleName": "FY 2026-27 Test Cycle 10015 (Updated)",
-    "description": "Write scripts to test endpoints",
-    "dueDate": "2026-09-30",
-    "employeeId": 6,
-    "employeeName": "Employee User",
-    "id": 7,
-    "progressPercent": 0,
-    "status": "IN_PROGRESS",
-    "title": "Develop robust API tests",
-    "updatedAt": "2026-07-06T09:28:52.884035085"
-  },
-  "links": {},
-  "message": "Performance goal created successfully",
-  "metadata": {
-    "executionTimeMs": 31,
-    "version": "v1"
-  },
-  "requestId": "REQ-18908D50",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
-}
-Created Goal ID: 7
-Getting Goals...
-{
-  "data": [],
-  "links": {},
-  "message": "Performance goals retrieved successfully",
-  "metadata": {
-    "executionTimeMs": 24,
-    "version": "v1"
-  },
-  "requestId": "REQ-8C38A674",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:52Z"
-}
-Updating Goal Progress...
-{
-  "data": {
-    "createdAt": "2026-07-06T09:28:52.884033",
-    "cycleId": 4,
-    "cycleName": "FY 2026-27 Test Cycle 10015 (Updated)",
-    "description": "Write scripts to test endpoints",
-    "dueDate": "2026-09-30",
-    "employeeId": 6,
-    "employeeName": "Employee User",
-    "id": 7,
-    "progressPercent": 65,
-    "status": "IN_PROGRESS",
-    "title": "Develop robust API tests",
-    "updatedAt": "2026-07-06T09:28:53.011361275"
-  },
-  "links": {},
-  "message": "Goal progress updated to 65%",
-  "metadata": {
-    "executionTimeMs": 29,
-    "version": "v1"
-  },
-  "requestId": "REQ-DAC9945A",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-Creating temp goal for deletion...
-Deleting temp goal ID: 8...
-{
-  "data": {
-    "deletedGoalId": 8
-  },
-  "links": {},
-  "message": "Performance goal deleted successfully",
-  "metadata": {
-    "executionTimeMs": 31,
-    "version": "v1"
-  },
-  "requestId": "REQ-CE31189D",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-
-=========================================
-5. SELF REVIEW & ASSESSMENT SUBMISSION
-=========================================
-Submitting Self Review...
-{
-  "data": {
-    "achievements": "Implemented test scripts for all performance controllers.",
-    "areasForImprovement": "Need to learn database seed structures.",
-    "comments": "Proud of this quarter's output.",
-    "createdAt": "2026-07-06T09:28:53.17961406",
-    "cycleId": 4,
-    "cycleName": "FY 2026-27 Test Cycle 10015 (Updated)",
-    "employeeEmail": "employee@company.com",
-    "employeeId": 6,
-    "employeeName": "Employee User",
-    "id": 7,
-    "rating": 4,
-    "reviewType": "SELF",
-    "reviewerId": null,
-    "reviewerName": null,
-    "status": "SUBMITTED",
-    "updatedAt": "2026-07-06T09:28:53.179616715"
-  },
-  "links": {},
-  "message": "Self-review submitted successfully",
-  "metadata": {
-    "executionTimeMs": 27,
-    "version": "v1"
-  },
-  "requestId": "REQ-FCBDA3A9",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-Created/Initialized Review ID: 7
-Fetching active employee appraisal cycles...
-{
-  "data": {
-    "cycles": [
-      {
-        "completionPercentage": 50,
-        "cycleName": "Annual Appraisal 2026",
-        "dueDate": "2026-12-31",
-        "period": "2026",
-        "reviewId": 287,
-        "status": "ELIGIBLE"
-      }
-    ]
-  },
-  "links": {},
-  "message": "Review cycles retrieved",
-  "metadata": {
-    "executionTimeMs": 300,
-    "version": "v1"
-  },
-  "requestId": "REQ-54F4C26F",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-Appraisal Review ID: 287
-Submitting Self Assessment for Appraisal Review ID: 287...
-{
-  "data": {
-    "message": "Self-assessment submitted successfully",
-    "status": "SUBMITTED",
-    "submittedAt": "2026-07-06T09:28:53.616770236",
-    "summary": [
-      "Rating: 4.5",
-      "Achievements: 2"
-    ]
-  },
-  "links": {},
-  "message": "Self-assessment submitted",
-  "metadata": {
-    "executionTimeMs": 68,
-    "version": "v1"
-  },
-  "requestId": "REQ-1D450ACB",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-
-=========================================
-6. EMPLOYEE SELF SERVICE - PERFORMANCE ENDPOINTS
-=========================================
-GET Get Competencies...
-{
-  "data": {
-    "competencies": [
-      {
-        "currentLevel": 4,
-        "expectedLevel": 5,
-        "gap": 1,
-        "improvementPlan": "Participate in advanced Java Development workshops and take on lead roles in related tasks.",
-        "name": "Java Development",
-        "type": "TECHNICAL"
-      },
-      {
-        "currentLevel": 4,
-        "expectedLevel": 5,
-        "gap": 1,
-        "improvementPlan": "Participate in advanced System Design workshops and take on lead roles in related tasks.",
-        "name": "System Design",
-        "type": "TECHNICAL"
-      },
-      {
-        "currentLevel": 4,
-        "expectedLevel": 5,
-        "gap": 1,
-        "improvementPlan": "Participate in advanced Communication workshops and take on lead roles in related tasks.",
-        "name": "Communication",
-        "type": "BEHAVIORAL"
-      },
-      {
-        "currentLevel": 4,
-        "expectedLevel": 5,
-        "gap": 1,
-        "improvementPlan": "Participate in advanced Teamwork workshops and take on lead roles in related tasks.",
-        "name": "Teamwork",
-        "type": "BEHAVIORAL"
-      }
-    ]
-  },
-  "links": {},
-  "message": "Competencies retrieved",
-  "metadata": {
-    "executionTimeMs": 31,
-    "version": "v1"
-  },
-  "requestId": "REQ-A6D89DF2",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-GET Get My Performance Dashboard...
-{
-  "data": {
-    "activeGoals": 10,
-    "completedGoals": 8,
-    "currentRating": 4.6,
-    "department": "Employee",
-    "designation": "EMPLOYEE",
-    "employeeId": "EMP006",
-    "employeeName": "Employee User",
-    "goalCompletionPercentage": 80.0,
-    "goalsMet": 8,
-    "myBand": "A+",
-    "nextReviewDate": "2026-12-31",
-    "overallRating": 4.6,
-    "recentActivities": [
-      {
-        "event": "SELF_ASSESSMENT_SUBMITTED",
-        "date": "2026-07-06"
-      },
-      {
-        "event": "GOAL_COMPLETED",
-        "date": "2026-04-06"
-      },
-      {
-        "event": "FEEDBACK_RECEIVED",
-        "date": "2026-03-06"
-      },
-      {
-        "event": "MID_YEAR_REVIEW_COMPLETED",
-        "date": "2026-02-06"
-      },
-      {
-        "event": "GOAL_ASSIGNED",
-        "date": "2026-01-06"
-      }
-    ],
-    "reviewStatus": "DRAFT",
-    "selfAssessment": {
-      "leadershipOwnership": 4.0,
-      "technicalExcellence": 4.5,
-      "deliveryManagement": 4.0,
-      "communicationInfluence": 4.0,
-      "teamMentorship": 4.0,
-      "innovationInitiative": 4.5
-    },
-    "selfReviewDueDate": "April 25",
-    "totalGoals": 10
-  },
-  "links": {},
-  "message": "Performance dashboard retrieved",
-  "metadata": {
-    "executionTimeMs": 47,
-    "version": "v1"
-  },
-  "requestId": "REQ-27BF8528",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-GET Get Feedback...
-{
-  "data": {
-    "feedback": [
-      {
-        "comments": "Great performance on recent projects. Demonstrates strong technical skills.",
-        "feedbackType": "MANAGER",
-        "id": 1,
-        "rating": 4,
-        "receivedDate": "2026-07-06"
-      },
-      {
-        "comments": "Great performance on recent projects. Demonstrates strong collaboration skills.",
-        "feedbackType": "PEER",
-        "id": 2,
-        "rating": 5,
-        "receivedDate": "2026-06-26"
-      },
-      {
-        "comments": "Great performance on recent projects. Demonstrates strong technical skills.",
-        "feedbackType": "360",
-        "id": 3,
-        "rating": 4,
-        "receivedDate": "2026-06-16"
-      },
-      {
-        "comments": "Great performance on recent projects. Demonstrates strong collaboration skills.",
-        "feedbackType": "MANAGER",
-        "id": 4,
-        "rating": 5,
-        "receivedDate": "2026-06-06"
-      },
-      {
-        "comments": "Great performance on recent projects. Demonstrates strong technical skills.",
-        "feedbackType": "PEER",
-        "id": 5,
-        "rating": 4,
-        "receivedDate": "2026-05-27"
-      }
-    ]
-  },
-  "links": {},
-  "message": "Feedback retrieved",
-  "metadata": {
-    "executionTimeMs": 32,
-    "version": "v1"
-  },
-  "requestId": "REQ-AA5CC9A5",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-GET Get Appraisal History...
-{
-  "data": {
-    "history": []
-  },
-  "links": {},
-  "message": "History retrieved",
-  "metadata": {
-    "executionTimeMs": 30,
-    "version": "v1"
-  },
-  "requestId": "REQ-0CDC6421",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-GET Get Performance Policies...
-{
-  "data": {
-    "lastUpdated": "2026-01-15",
-    "policyTitle": "Employee Performance Management Policy",
-    "ratingScales": [
-      {
-        "score": 5,
-        "label": "Outstanding",
-        "description": "Significantly exceeds all expectations."
-      },
-      {
-        "score": 4,
-        "label": "Exceeds Expectations",
-        "description": "Consistently exceeds expectations in most areas."
-      },
-      {
-        "score": 3,
-        "label": "Meets Expectations",
-        "description": "Successfully meets all core requirements and expectations."
-      }
-    ],
-    "sections": [
-      {
-        "title": "Objective",
-        "content": "To provide a transparent and objective framework for evaluating and improving employee performance."
-      },
-      {
-        "title": "Review Cycle",
-        "content": "The annual review cycle runs from January to December. Mid-year check-ins are mandatory."
-      },
-      {
-        "title": "Self Assessment",
-        "content": "Employees are required to submit a self-assessment before the manager review phase."
-      }
-    ]
-  },
-  "links": {},
-  "message": "Policies retrieved",
-  "metadata": {
-    "executionTimeMs": 14,
-    "version": "v1"
-  },
-  "requestId": "REQ-CD9E677C",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-GET Get Review Cycles...
-{
-  "data": {
-    "cycles": [
-      {
-        "completionPercentage": 100,
-        "cycleName": "Annual Appraisal 2026",
-        "dueDate": "2026-12-31",
-        "period": "2026",
-        "reviewId": 287,
-        "status": "DRAFT"
-      }
-    ]
-  },
-  "links": {},
-  "message": "Review cycles retrieved",
-  "metadata": {
-    "executionTimeMs": 25,
-    "version": "v1"
-  },
-  "requestId": "REQ-54E078E2",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:53Z"
-}
-GET Get Performance Timeline...
-{
-  "data": {
-    "timeline": [
-      {
-        "date": "2026-07-06 09:28",
-        "description": "Submitted self-assessment for cycle: Annual Appraisal 2026",
-        "event": "SELF_ASSESSMENT_SUBMITTED",
-        "performedBy": "Employee"
-      },
-      {
-        "date": "2026-04-06 09:28",
-        "description": "Recorded goal completed event in performance system.",
-        "event": "GOAL_COMPLETED",
-        "performedBy": "HR Manager"
-      },
-      {
-        "date": "2026-03-06 09:28",
-        "description": "Recorded feedback received event in performance system.",
-        "event": "FEEDBACK_RECEIVED",
-        "performedBy": "HR Manager"
-      },
-      {
-        "date": "2026-02-06 09:28",
-        "description": "Recorded mid year review completed event in performance system.",
-        "event": "MID_YEAR_REVIEW_COMPLETED",
-        "performedBy": "HR Manager"
-      },
-      {
-        "date": "2026-01-06 09:28",
-        "description": "Recorded goal assigned event in performance system.",
-        "event": "GOAL_ASSIGNED",
-        "performedBy": "HR Manager"
-      }
-    ]
-  },
-  "links": {},
-  "message": "Timeline retrieved",
-  "metadata": {
-    "executionTimeMs": 25,
-    "version": "v1"
-  },
-  "requestId": "REQ-E4B703BA",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-
-=========================================
-7. MANAGER PERFORMANCE MANAGEMENT
-=========================================
-GET Get Employee Performance Detail...
-{
-  "data": {
-    "competencies": [
-      {
-        "feedback": "",
-        "managerScore": 0.0,
-        "name": "Technical Skills",
-        "selfScore": 4.0
-      },
-      {
-        "feedback": "",
-        "managerScore": 0.0,
-        "name": "Communication",
-        "selfScore": 4.0
-      },
-      {
-        "feedback": "",
-        "managerScore": 0.0,
-        "name": "Teamwork",
-        "selfScore": 4.0
-      },
-      {
-        "feedback": "",
-        "managerScore": 0.0,
-        "name": "Problem Solving",
-        "selfScore": 4.0
-      },
-      {
-        "feedback": "",
-        "managerScore": 0.0,
-        "name": "Leadership",
-        "selfScore": 3.0
-      }
-    ],
-    "employee": {
-      "department": "Employee",
-      "id": 6,
-      "name": "Employee User",
-      "role": "EMPLOYEE"
-    },
-    "goals": [
-      {
-        "progress": 100,
-        "status": "MET",
-        "title": "Strategic Goal 1"
-      },
-      {
-        "progress": 100,
-        "status": "MET",
-        "title": "Strategic Goal 2"
-      },
-      {
-        "progress": 100,
-        "status": "MET",
-        "title": "Strategic Goal 3"
-      },
-      {
-        "progress": 100,
-        "status": "MET",
-        "title": "Strategic Goal 4"
-      },
-      {
-        "progress": 100,
-        "status": "MET",
-        "title": "Strategic Goal 5"
-      },
-      {
-        "progress": 100,
-        "status": "MET",
-        "title": "Strategic Goal 6"
-      },
-      {
-        "progress": 100,
-        "status": "MET",
-        "title": "Strategic Goal 7"
-      },
-      {
-        "progress": 100,
-        "status": "MET",
-        "title": "Strategic Goal 8"
-      },
-      {
-        "progress": 45,
-        "status": "NOT_MET",
-        "title": "Strategic Goal 9"
-      },
-      {
-        "progress": 45,
-        "status": "NOT_MET",
-        "title": "Strategic Goal 10"
-      }
-    ],
-    "summary": {
-      "finalScore": "Needs Improvement",
-      "goalsMet": 8,
-      "managerRating": 0.0,
-      "selfRating": 4.2
-    }
-  },
-  "links": {},
-  "message": "Review details retrieved successfully",
-  "metadata": {
-    "executionTimeMs": 55,
-    "version": "v1"
-  },
-  "requestId": "REQ-CE2EF79D",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-Retrieving dynamic manager performance review ID from Postgres...
-Manager Performance Review ID: 19
-POST Save Manager Rating...
-{
-  "data": {
-    "finalScore": 4.48,
-    "managerRating": 4.5,
-    "reviewId": 19,
-    "status": "IN_PROGRESS",
-    "updatedAt": "2026-07-06T09:28:54.191891657"
-  },
-  "links": {},
-  "message": "Manager ratings saved successfully",
+  "message": "Subscription updated successfully",
   "metadata": {
     "executionTimeMs": 50,
     "version": "v1"
   },
-  "requestId": "REQ-02161DF0",
+  "requestId": "REQ-A8F84714",
   "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
+  "timestamp": "2026-07-07T04:02:25Z"
 }
-POST Submit Final Review...
-{
-  "data": {
-    "finalScore": 4.48,
-    "reviewId": 19,
-    "status": "COMPLETED",
-    "submittedAt": "2026-07-06T09:28:54.246646217"
-  },
-  "links": {},
-  "message": "Final review submitted successfully",
-  "metadata": {
-    "executionTimeMs": 27,
-    "version": "v1"
-  },
-  "requestId": "REQ-9ED1062C",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-GET Get Team Performance Dashboard...
-{
-  "data": {
-    "avgTeamRating": 4.5,
-    "completed": 1,
-    "pending": 1,
-    "reviews": [
-      {
-        "designation": "EMPLOYEE",
-        "employeeId": 6,
-        "employeeName": "Employee User",
-        "finalScore": "Good",
-        "goalsMet": 8,
-        "managerRating": 4.5,
-        "selfRating": 4.2,
-        "status": "COMPLETED"
-      },
-      {
-        "designation": "Software Engineer",
-        "employeeId": 9,
-        "employeeName": "Robert Chen",
-        "finalScore": "Needs Improvement",
-        "goalsMet": 1,
-        "managerRating": 0.0,
-        "selfRating": 4.2,
-        "status": "NOT_STARTED"
-      }
-    ],
-    "teamBand": "A",
-    "totalReports": 2
-  },
-  "links": {},
-  "message": "Team dashboard retrieved successfully",
-  "metadata": {
-    "executionTimeMs": 37,
-    "version": "v1"
-  },
-  "requestId": "REQ-6361F723",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-GET Team Summary (Top Cards Data)...
-{
-  "data": {
-    "avgTeamRating": 4.5,
-    "pendingReviews": 1,
-    "promotionEligibleCount": 1,
-    "reviewsCompleted": 1,
-    "teamBand": "A"
-  },
-  "links": {},
-  "message": "Team summary retrieved successfully",
-  "metadata": {
-    "executionTimeMs": 23,
-    "version": "v1"
-  },
-  "requestId": "REQ-14A0365D",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
+--------------------------------------------------
 
-=========================================
-8. PERFORMANCE REVIEWS ENDPOINTS
-=========================================
-Creating performance cycle for Manager Review...
+=== 6. PATCH Update Status (Suspend) ===
+### METHOD: PATCH
+### URL: /api/v1/platform-admin/organizations/236/status
+### Request Body:
 {
-  "data": {
-    "achievements": "Assisted with backend testing.",
-    "areasForImprovement": "None",
-    "comments": "Highly reliable.",
-    "createdAt": "2026-07-06T09:28:54.418472455",
-    "cycleId": 4,
-    "cycleName": "FY 2026-27 Test Cycle 10015 (Updated)",
-    "employeeEmail": "robert@company.com",
-    "employeeId": 9,
-    "employeeName": "Robert Chen",
-    "id": 8,
-    "rating": 4,
-    "reviewType": "MANAGER",
-    "reviewerId": 2,
-    "reviewerName": "Admin User",
-    "status": "SUBMITTED",
-    "updatedAt": "2026-07-06T09:28:54.41847493"
-  },
+  "status": "SUSPENDED",
+  "reason": "Policy violation check"
+}
+### Response Body:
+{
+  "data": {},
   "links": {},
-  "message": "Manager review submitted successfully",
+  "message": "Organization status updated successfully",
   "metadata": {
-    "executionTimeMs": 28,
+    "executionTimeMs": 46,
     "version": "v1"
   },
-  "requestId": "REQ-76796890",
+  "requestId": "REQ-3A909A63",
   "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
+  "timestamp": "2026-07-07T04:02:25Z"
 }
-Initialized Manager Review ID: 8
-GET Get Dashboard Stats...
-{
-  "data": {
-    "achievedGoals": 0,
-    "activePips": 3,
-    "averageGoalProgress": 65.0,
-    "averageRating": 4.0,
-    "completedPips": 0,
-    "finalizedReviews": 3,
-    "goalCompletionRate": 0.0,
-    "inProgressGoals": 4,
-    "managerReviews": 4,
-    "missedGoals": 0,
-    "pendingReviews": 5,
-    "selfReviews": 4,
-    "totalActiveCycles": 4,
-    "totalClosedCycles": 0,
-    "totalCycles": 4,
-    "totalGoals": 4,
-    "totalPips": 3,
-    "totalReviews": 8
-  },
-  "links": {},
-  "message": "Performance dashboard statistics retrieved successfully",
-  "metadata": {
-    "executionTimeMs": 59,
-    "version": "v1"
-  },
-  "requestId": "REQ-77FF7325",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-GET Get Feedbacks...
-{
-  "data": [
-    {
-      "achievements": "Implemented test scripts for all performance controllers.",
-      "areasForImprovement": "Need to learn database seed structures.",
-      "comments": "Proud of this quarter's output.",
-      "createdAt": "2026-07-06T09:24:10.657108",
-      "cycleId": 1,
-      "cycleName": "FY 2026-27 Test Cycle 4833 (Updated)",
-      "employeeEmail": "employee@company.com",
-      "employeeId": 6,
-      "employeeName": "Employee User",
-      "id": 1,
-      "rating": 4,
-      "reviewType": "SELF",
-      "reviewerId": null,
-      "reviewerName": null,
-      "status": "SUBMITTED",
-      "updatedAt": "2026-07-06T09:24:10.65711"
-    },
-    {
-      "achievements": "Assisted with backend testing.",
-      "areasForImprovement": "None",
-      "comments": "Highly reliable.",
-      "createdAt": "2026-07-06T09:24:11.428515",
-      "cycleId": 1,
-      "cycleName": "FY 2026-27 Test Cycle 4833 (Updated)",
-      "employeeEmail": "robert@company.com",
-      "employeeId": 9,
-      "employeeName": "Robert Chen",
-      "id": 2,
-      "rating": 4,
-      "reviewType": "MANAGER",
-      "reviewerId": 2,
-      "reviewerName": "Admin User",
-      "status": "FINALIZED",
-      "updatedAt": "2026-07-06T09:24:11.792714"
-    },
-    {
-      "achievements": "Implemented test scripts for all performance controllers.",
-      "areasForImprovement": "Need to learn database seed structures.",
-      "comments": "Proud of this quarter's output.",
-      "createdAt": "2026-07-06T09:25:15.19537",
-      "cycleId": 2,
-      "cycleName": "FY 2026-27 Test Cycle 31666 (Updated)",
-      "employeeEmail": "employee@company.com",
-      "employeeId": 6,
-      "employeeName": "Employee User",
-      "id": 3,
-      "rating": 4,
-      "reviewType": "SELF",
-      "reviewerId": null,
-      "reviewerName": null,
-      "status": "SUBMITTED",
-      "updatedAt": "2026-07-06T09:25:15.195371"
-    },
-    {
-      "achievements": "Assisted with backend testing.",
-      "areasForImprovement": "None",
-      "comments": "Highly reliable.",
-      "createdAt": "2026-07-06T09:25:15.792132",
-      "cycleId": 2,
-      "cycleName": "FY 2026-27 Test Cycle 31666 (Updated)",
-      "employeeEmail": "robert@company.com",
-      "employeeId": 9,
-      "employeeName": "Robert Chen",
-      "id": 4,
-      "rating": 4,
-      "reviewType": "MANAGER",
-      "reviewerId": 2,
-      "reviewerName": "Admin User",
-      "status": "FINALIZED",
-      "updatedAt": "2026-07-06T09:25:16.036813"
-    },
-    {
-      "achievements": "Implemented test scripts for all performance controllers.",
-      "areasForImprovement": "Need to learn database seed structures.",
-      "comments": "Proud of this quarter's output.",
-      "createdAt": "2026-07-06T09:26:52.71003",
-      "cycleId": 3,
-      "cycleName": "FY 2026-27 Test Cycle 29377 (Updated)",
-      "employeeEmail": "employee@company.com",
-      "employeeId": 6,
-      "employeeName": "Employee User",
-      "id": 5,
-      "rating": 4,
-      "reviewType": "SELF",
-      "reviewerId": null,
-      "reviewerName": null,
-      "status": "SUBMITTED",
-      "updatedAt": "2026-07-06T09:26:52.710032"
-    },
-    {
-      "achievements": "Assisted with backend testing.",
-      "areasForImprovement": "None",
-      "comments": "Highly reliable.",
-      "createdAt": "2026-07-06T09:26:53.256819",
-      "cycleId": 3,
-      "cycleName": "FY 2026-27 Test Cycle 29377 (Updated)",
-      "employeeEmail": "robert@company.com",
-      "employeeId": 9,
-      "employeeName": "Robert Chen",
-      "id": 6,
-      "rating": 4,
-      "reviewType": "MANAGER",
-      "reviewerId": 2,
-      "reviewerName": "Admin User",
-      "status": "FINALIZED",
-      "updatedAt": "2026-07-06T09:26:53.492784"
-    },
-    {
-      "achievements": "Implemented test scripts for all performance controllers.",
-      "areasForImprovement": "Need to learn database seed structures.",
-      "comments": "Proud of this quarter's output.",
-      "createdAt": "2026-07-06T09:28:53.179614",
-      "cycleId": 4,
-      "cycleName": "FY 2026-27 Test Cycle 10015 (Updated)",
-      "employeeEmail": "employee@company.com",
-      "employeeId": 6,
-      "employeeName": "Employee User",
-      "id": 7,
-      "rating": 4,
-      "reviewType": "SELF",
-      "reviewerId": null,
-      "reviewerName": null,
-      "status": "SUBMITTED",
-      "updatedAt": "2026-07-06T09:28:53.179617"
-    },
-    {
-      "achievements": "Assisted with backend testing.",
-      "areasForImprovement": "None",
-      "comments": "Highly reliable.",
-      "createdAt": "2026-07-06T09:28:54.418472",
-      "cycleId": 4,
-      "cycleName": "FY 2026-27 Test Cycle 10015 (Updated)",
-      "employeeEmail": "robert@company.com",
-      "employeeId": 9,
-      "employeeName": "Robert Chen",
-      "id": 8,
-      "rating": 4,
-      "reviewType": "MANAGER",
-      "reviewerId": 2,
-      "reviewerName": "Admin User",
-      "status": "SUBMITTED",
-      "updatedAt": "2026-07-06T09:28:54.418475"
-    }
-  ],
-  "links": {},
-  "message": "Performance feedbacks retrieved successfully",
-  "metadata": {
-    "executionTimeMs": 17,
-    "version": "v1"
-  },
-  "requestId": "REQ-2593CEDE",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-POST Send Performance Notification...
-{
-  "data": {
-    "message": "Urgent reminder to complete self-appraisal cycles.",
-    "channel": "EMAIL",
-    "sentAt": "2026-07-06T09:28:54.602998696",
-    "status": "SENT"
-  },
-  "links": {},
-  "message": "Performance notification dispatched successfully",
-  "metadata": {
-    "executionTimeMs": 12,
-    "version": "v1"
-  },
-  "requestId": "REQ-49BC9843",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-POST Create PIP...
-{
-  "data": {
-    "createdAt": "2026-07-06T09:28:54.64869231",
-    "daysRemaining": 92,
-    "durationDays": 92,
-    "employeeDepartment": "Employee",
-    "employeeDesignation": "EMPLOYEE",
-    "employeeEmail": "employee@company.com",
-    "employeeId": 6,
-    "employeeName": "Employee User",
-    "endDate": "2026-10-06",
-    "id": 4,
-    "improvementPlan": "Improve test automation coverage by 15%",
-    "outcome": null,
-    "startDate": "2026-07-06",
-    "status": "ACTIVE",
-    "updatedAt": "2026-07-06T09:28:54.648694093"
-  },
-  "links": {},
-  "message": "Performance Improvement Plan (PIP) created successfully",
-  "metadata": {
-    "executionTimeMs": 22,
-    "version": "v1"
-  },
-  "requestId": "REQ-8723DB2A",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-GET Get Performance Report...
-{
-  "data": {
-    "reportType": "annual",
-    "generatedAt": "2026-07-06T09:28:54.693738476",
-    "totalGoals": 4,
-    "achievedGoals": 0,
-    "goalAchievementRate": 0.0,
-    "totalReviews": 8,
-    "finalizedReviews": 3,
-    "activePips": 4
-  },
-  "links": {},
-  "message": "Performance report generated successfully",
-  "metadata": {
-    "executionTimeMs": 19,
-    "version": "v1"
-  },
-  "requestId": "REQ-348006D3",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
-POST Finalize Review...
-{
-  "data": {
-    "achievements": "Assisted with backend testing.",
-    "areasForImprovement": "None",
-    "comments": "Highly reliable.",
-    "createdAt": "2026-07-06T09:28:54.418472",
-    "cycleId": 4,
-    "cycleName": "FY 2026-27 Test Cycle 10015 (Updated)",
-    "employeeEmail": "robert@company.com",
-    "employeeId": 9,
-    "employeeName": "Robert Chen",
-    "id": 8,
-    "rating": 4,
-    "reviewType": "MANAGER",
-    "reviewerId": 2,
-    "reviewerName": "Admin User",
-    "status": "FINALIZED",
-    "updatedAt": "2026-07-06T09:28:54.739621546"
-  },
-  "links": {},
-  "message": "Performance review finalized successfully",
-  "metadata": {
-    "executionTimeMs": 24,
-    "version": "v1"
-  },
-  "requestId": "REQ-176F7D3C",
-  "success": true,
-  "timestamp": "2026-07-06T03:58:54Z"
-}
+--------------------------------------------------
 
-=== ALL API TESTS EXECUTED SUCCESSFULLY ===
+=== 7. PATCH Update Status (Activate) ===
+### METHOD: PATCH
+### URL: /api/v1/platform-admin/organizations/236/status
+### Request Body:
+{
+  "status": "ACTIVE"
+}
+### Response Body:
+{
+  "data": {},
+  "links": {},
+  "message": "Organization status updated successfully",
+  "metadata": {
+    "executionTimeMs": 46,
+    "version": "v1"
+  },
+  "requestId": "REQ-1A30A289",
+  "success": true,
+  "timestamp": "2026-07-07T04:02:25Z"
+}
+--------------------------------------------------
+
+=== 8. DELETE Organization ===
+### METHOD: DELETE
+### URL: /api/v1/platform-admin/organizations/236
+### Request Body: None
+### Response Body:
+{
+  "data": {},
+  "links": {},
+  "message": "Organization deleted successfully",
+  "metadata": {
+    "executionTimeMs": 38,
+    "version": "v1"
+  },
+  "requestId": "REQ-674608C9",
+  "success": true,
+  "timestamp": "2026-07-07T04:02:26Z"
+}
+--------------------------------------------------
+
+=== All Tests Completed ===
