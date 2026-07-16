@@ -27,7 +27,29 @@ public class EmsBackendApplication {
                     String password = credentials.length > 1 ? credentials[1] : "";
                     
                     String hostAndDb = authAndHost[1];
-                    String jdbcUrl = "jdbc:postgresql://" + hostAndDb;
+                    
+                    String hostAndPort;
+                    String database = "";
+                    int slashIdx = hostAndDb.indexOf('/');
+                    if (slashIdx != -1) {
+                        hostAndPort = hostAndDb.substring(0, slashIdx);
+                        database = hostAndDb.substring(slashIdx);
+                    } else {
+                        hostAndPort = hostAndDb;
+                    }
+                    
+                    String host;
+                    String port = "";
+                    int colonIdx = hostAndPort.indexOf(':');
+                    if (colonIdx != -1) {
+                        host = hostAndPort.substring(0, colonIdx);
+                        port = hostAndPort.substring(colonIdx);
+                    } else {
+                        host = hostAndPort;
+                    }
+                    
+                    String resolvedHost = resolveHostIfNeeded(host);
+                    String jdbcUrl = "jdbc:postgresql://" + resolvedHost + port + database;
                     
                     System.setProperty("spring.datasource.url", jdbcUrl);
                     System.setProperty("spring.datasource.username", username);
@@ -40,5 +62,34 @@ public class EmsBackendApplication {
             }
         }
         SpringApplication.run(EmsBackendApplication.class, args);
+    }
+
+    private static String resolveHostIfNeeded(String host) {
+        if (host == null || host.contains(".")) {
+            return host;
+        }
+        
+        try {
+            java.net.InetAddress.getByName(host);
+            return host;
+        } catch (java.net.UnknownHostException e) {
+            String[] suffixes = {
+                ".oregon-postgres.render.com",
+                ".singapore-postgres.render.com",
+                ".frankfurt-postgres.render.com",
+                ".ohio-postgres.render.com"
+            };
+            for (String suffix : suffixes) {
+                String candidate = host + suffix;
+                try {
+                    java.net.InetAddress.getByName(candidate);
+                    System.out.println("Auto-detected Render PostgreSQL external host: " + candidate);
+                    return candidate;
+                } catch (java.net.UnknownHostException ex) {
+                    // Ignore and try next
+                }
+            }
+        }
+        return host;
     }
 }
