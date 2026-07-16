@@ -48,7 +48,13 @@ public class User {
 
     private String branch;
 
+    @Transient
+    private UserStatus statusEnum = UserStatus.ACTIVE;
+
     private String status = "ACTIVE";
+
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider = AuthProvider.LOCAL;
 
     @Column(name = "created_at", updatable = false)
     private java.time.Instant createdAt;
@@ -90,6 +96,12 @@ public class User {
         this.location = location;
         this.status = status;
         this.password = password;
+        this.provider = AuthProvider.LOCAL;
+        try {
+            this.statusEnum = UserStatus.valueOf(status);
+        } catch (Exception e) {
+            this.statusEnum = UserStatus.ACTIVE;
+        }
     }
 
     public Long getId() {
@@ -178,6 +190,30 @@ public class User {
 
     public void setStatus(String status) {
         this.status = status;
+        try {
+            this.statusEnum = UserStatus.valueOf(status);
+        } catch (Exception e) {
+        }
+    }
+
+    public UserStatus getStatusEnum() {
+        return statusEnum;
+    }
+
+    public void setStatusEnum(UserStatus statusEnum) {
+        this.statusEnum = statusEnum;
+        if (statusEnum != null) {
+            this.status = statusEnum.name();
+        }
+    }
+
+
+    public AuthProvider getProvider() {
+        return provider;
+    }
+
+    public void setProvider(AuthProvider provider) {
+        this.provider = provider;
     }
 
     public String getPassword() {

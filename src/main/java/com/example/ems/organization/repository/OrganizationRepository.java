@@ -25,4 +25,6 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
 
     @Query("SELECT COUNT(d) FROM Department d WHERE d.organization.id = :orgId")
     long countDepartments(@Param("orgId") Long orgId);
+
+    boolean existsByNormalizedName(String normalizedName);
 }

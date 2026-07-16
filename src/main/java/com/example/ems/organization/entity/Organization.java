@@ -13,7 +13,7 @@ public class Organization {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "organization_code", unique = true, nullable = false)
+    @Column(name = "organization_code", unique = true)
     private String organizationCode;
 
     @Column(nullable = false)
@@ -47,7 +47,25 @@ public class Organization {
     @OneToMany(mappedBy = "organization", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<Subscription> subscriptions = new ArrayList<>();
 
-    public Organization() {}
+    private String industry;
+
+    @Column(name = "gst_number")
+    private String gstNumber;
+
+    @Column(name = "reg_number")
+    private String regNumber;
+
+    @Enumerated(EnumType.STRING)
+    private OrganizationStatus status = OrganizationStatus.PENDING_VERIFICATION;
+
+    @Column(name = "normalized_name", unique = true)
+    private String normalizedName;
+
+    @OneToOne(mappedBy = "organization", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    private Tenant tenant;
+
+    public Organization() {
+    }
 
     public Long getId() {
         return id;
@@ -173,10 +191,59 @@ public class Organization {
     }
 
     public Subscription getActiveSubscription() {
-        if (subscriptions == null || subscriptions.isEmpty()) return null;
+        if (subscriptions == null || subscriptions.isEmpty())
+            return null;
         return subscriptions.stream()
                 .filter(s -> s.getStatus() == SubscriptionStatus.ACTIVE)
                 .findFirst()
                 .orElse(subscriptions.get(subscriptions.size() - 1)); // Fallback to latest
+    }
+
+    public String getIndustry() {
+        return industry;
+    }
+
+    public void setIndustry(String industry) {
+        this.industry = industry;
+    }
+
+    public String getGstNumber() {
+        return gstNumber;
+    }
+
+    public void setGstNumber(String gstNumber) {
+        this.gstNumber = gstNumber;
+    }
+
+    public String getRegNumber() {
+        return regNumber;
+    }
+
+    public void setRegNumber(String regNumber) {
+        this.regNumber = regNumber;
+    }
+
+    public OrganizationStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(OrganizationStatus status) {
+        this.status = status;
+    }
+
+    public String getNormalizedName() {
+        return normalizedName;
+    }
+
+    public void setNormalizedName(String normalizedName) {
+        this.normalizedName = normalizedName;
+    }
+
+    public Tenant getTenant() {
+        return tenant;
+    }
+
+    public void setTenant(Tenant tenant) {
+        this.tenant = tenant;
     }
 }

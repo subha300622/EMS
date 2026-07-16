@@ -1,4 +1,5 @@
 package com.example.ems.auth.controller;
+
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -22,13 +23,17 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.OtpService;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.auth.service.SessionService;
-import com.example.ems.auth.service.UserService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.service.EmailService;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
+import com.example.ems.auth.dto.SignupRequest;
+import com.example.ems.auth.service.SignupService;
+import com.example.ems.auth.service.VerificationService;
+import com.example.ems.auth.service.SignupValidationService;
+import com.example.ems.organization.repository.OrganizationRepository;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,6 +55,18 @@ import java.util.stream.Collectors;
 @CrossOrigin("*")
 @Tag(name = "Authentication & Security")
 public class AuthController {
+
+    @Autowired
+    private SignupService signupService;
+
+    @Autowired
+    private VerificationService verificationService;
+
+    @Autowired
+    private SignupValidationService signupValidationService;
+
+    @Autowired
+    private OrganizationRepository organizationRepository;
 
     @Autowired
     private OtpService otpService;
@@ -82,9 +99,6 @@ public class AuthController {
     private BCryptPasswordEncoder passwordEncoder;
 
     @Autowired
-    private UserService userService;
-
-    @Autowired
     private com.example.ems.security.context.SecurityContextFacade securityContextFacade;
 
     // Helper: Resolve currently authenticated User via JWT only
@@ -111,8 +125,9 @@ public class AuthController {
     // ── 1. LOGIN ─────────────────────────────────────────────────────────────
     @Operation(summary = "User Login", description = "Authenticates a user, starts a session in Redis, and returns JWT tokens and user metadata.")
     @PostMapping("/login")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request, HttpServletRequest httpRequest){
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request,
+            HttpServletRequest httpRequest) {
         Optional<User> optUser = userRepository.findByWorkEmail(request.getEmail());
         if (optUser.isEmpty() || !passwordEncoder.matches(request.getPassword(), optUser.get().getPassword())) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -122,11 +137,13 @@ public class AuthController {
         User user = optUser.get();
 
         // ── Block SUSPENDED / INACTIVE accounts ───────────────────────────────
-        // All registered users are ACTIVE by default. Admin can set SUSPENDED to revoke access.
+        // All registered users are ACTIVE by default. Admin can set SUSPENDED to revoke
+        // access.
         if (user.getStatus() != null && !user.getStatus().equalsIgnoreCase("ACTIVE")) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error(
-                            "Your account is " + user.getStatus().toLowerCase() + ". Please contact your administrator.",
+                            "Your account is " + user.getStatus().toLowerCase()
+                                    + ". Please contact your administrator.",
                             "AUTH_018"));
         }
 
@@ -171,7 +188,7 @@ public class AuthController {
 
     @Operation(summary = "Get Current User Permissions", description = "Retrieves the list of effective permissions for the logged-in user.")
     @GetMapping("/permissions")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getMyPermissions(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
@@ -189,7 +206,7 @@ public class AuthController {
     // ── 2. LOGOUT ────────────────────────────────────────────────────────────
     @Operation(summary = "User Logout", description = "Revokes the active refresh token and terminates the user session.")
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Object>> logout(@RequestBody @Valid LogoutRequest request){
+    public ResponseEntity<ApiResponse<Object>> logout(@RequestBody @Valid LogoutRequest request) {
         sessionService.revokeSession(request.getRefreshToken());
         return ResponseEntity.ok(ApiResponse.success("Logged out successfully"));
     }
@@ -197,8 +214,8 @@ public class AuthController {
     // ── 3. REFRESH TOKEN ─────────────────────────────────────────────────────
     @Operation(summary = "Refresh Access Token", description = "Rotates the refresh token and issues a new access token for active sessions.")
     @PostMapping("/refresh")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> refresh(@RequestBody @Valid RefreshTokenRequest request){
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> refresh(@RequestBody @Valid RefreshTokenRequest request) {
         SessionService.SessionMetadata session = sessionService.rotateRefreshToken(request.getRefreshToken());
         if (session == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -230,7 +247,7 @@ public class AuthController {
     @Operation(summary = "Forgot Password", description = "Initiates password reset process and dispatches OTP code to the work email.")
     @PostMapping("/forgot-password")
     public ResponseEntity<ApiResponse<Object>> forgotPassword(
-            @RequestBody @Valid ForgotPasswordRequest request){
+            @RequestBody @Valid ForgotPasswordRequest request) {
         try {
             otpService.forgotPassword(request.getEmail());
         } catch (Exception e) {
@@ -242,13 +259,14 @@ public class AuthController {
     // ── 5. VERIFY OTP ────────────────────────────────────────────────────────
     @Operation(summary = "Verify OTP", description = "Validates the emailed OTP code and returns a password reset token.")
     @PostMapping("/verify-otp")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> verifyOtp(
-            @RequestBody @Valid VerifyOtpRequest request){
+            @RequestBody @Valid VerifyOtpRequest request) {
         Map<String, Object> result = otpService.verifyOtp(request.getEmail(), request.getOtp());
         boolean verified = Boolean.TRUE.equals(result.get("verified"));
         if (!verified) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Invalid or expired OTP", "AUTH_003"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Invalid or expired OTP", "AUTH_003"));
         }
         return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("OTP verified successfully", Map.of(
                 "resetToken", result.get("resetToken"),
@@ -258,10 +276,11 @@ public class AuthController {
     // ── 6. RESET PASSWORD ───────────────────────────────────────────
     @Operation(summary = "Reset Password", description = "Resets the account password using a valid reset token generated by OTP verification.")
     @PostMapping("/reset-password")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> resetPassword(@RequestBody @Valid ResetPasswordRequest request){
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Passwords do not match", "AUTH_004"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Passwords do not match", "AUTH_004"));
         }
         try {
             otpService.resetPassword(request.getResetToken(), request.getNewPassword());
@@ -274,10 +293,10 @@ public class AuthController {
     // ── 7. CHANGE PASSWORD ───────────────────────────────────────────────────
     @Operation(summary = "Change Password", description = "Updates the authenticated user's account password.")
     @PostMapping("/change-password")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> changePassword(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid ChangePasswordRequest request){
+            @RequestBody @Valid ChangePasswordRequest request) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
@@ -286,11 +305,13 @@ public class AuthController {
         }
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Current password does not match", "AUTH_015"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Current password does not match", "AUTH_015"));
         }
 
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Confirm password does not match", "AUTH_004"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Confirm password does not match", "AUTH_004"));
         }
 
         user.setPassword(passwordEncoder.encode(request.getNewPassword()));
@@ -304,9 +325,9 @@ public class AuthController {
     // ── 8. GET CURRENT USER ──────────────────────────────────────────────────
     @Operation(summary = "Get Current User Profile", description = "Retrieves active profile, roles, and permissions of the logged-in user.")
     @GetMapping("/me")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getMe(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
@@ -339,9 +360,9 @@ public class AuthController {
     // ── 8b. VERIFY TOKEN ─────────────────────────────────────────────────────
     @Operation(summary = "Verify Token", description = "Performs validity checks on the user access token.")
     @GetMapping("/verify")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> verifyToken(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
@@ -359,7 +380,7 @@ public class AuthController {
     @Operation(summary = "Resend OTP", description = "Generates and sends a new OTP for the password reset sequence.")
     @PostMapping("/resend-otp")
     public ResponseEntity<ApiResponse<Object>> resendOtp(
-            @RequestBody @Valid ForgotPasswordRequest request){
+            @RequestBody @Valid ForgotPasswordRequest request) {
         Map<String, String> result = otpService.resendOtp(request.getEmail());
         Map<String, Object> data = new HashMap<>();
         data.put("otp", result.get("otp"));
@@ -369,10 +390,10 @@ public class AuthController {
     // ── 10. ACTIVE SESSIONS ──────────────────────────────────────────────────
     @Operation(summary = "Get Active Sessions", description = "Retrieves list of active device/browser login sessions for security audit.")
     @GetMapping("/sessions")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getSessions(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            HttpServletRequest httpRequest){
+            HttpServletRequest httpRequest) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
@@ -401,10 +422,10 @@ public class AuthController {
     // ── 11. REVOKE SESSION ───────────────────────────────────────────────────
     @Operation(summary = "Revoke Session", description = "Revokes a specific active session by ID.")
     @DeleteMapping("/sessions/{sessionId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> revokeSession(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String sessionId){
+            @PathVariable String sessionId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
@@ -419,9 +440,9 @@ public class AuthController {
     // ── 12. LOGOUT FROM ALL DEVICES ──────────────────────────────────────────
     @Operation(summary = "Logout from All Devices", description = "Terminates all active login sessions and tokens for the user.")
     @PostMapping("/logout-all")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> logoutAll(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
@@ -436,10 +457,10 @@ public class AuthController {
     // ── 13. INVITE EMPLOYEE ──────────────────────────────────────────────────
     @Operation(summary = "Invite Employee", description = "Admin API to invite a new employee and dispatch account activation email.")
     @PostMapping("/invite")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> inviteEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid InviteRequest request){
+            @RequestBody @Valid InviteRequest request) {
 
         User inviter = resolveUser(authHeader);
         if (inviter == null) {
@@ -488,8 +509,8 @@ public class AuthController {
     // ── 14. ACCEPT INVITATION ────────────────────────────────────────────────
     @Operation(summary = "Accept Invitation", description = "Accepts the activation link token, sets the password, and creates the user account.")
     @PostMapping("/accept-invitation")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> acceptInvitation(@RequestBody @Valid AcceptInvitationRequest request){
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<Object>> acceptInvitation(@RequestBody @Valid AcceptInvitationRequest request) {
         Optional<Invitation> optInvitation = invitationRepository.findByInvitationToken(request.getInvitationToken());
         if (optInvitation.isEmpty()) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -503,11 +524,13 @@ public class AuthController {
         }
 
         if (invitation.getExpiredAt().isBefore(LocalDateTime.now())) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Invitation token has expired", "AUTH_010"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Invitation token has expired", "AUTH_010"));
         }
 
         if (!request.getPassword().equals(request.getConfirmPassword())) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error("Passwords do not match", "AUTH_004"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Passwords do not match", "AUTH_004"));
         }
 
         String normalizedRole = invitation.getRole().trim().toUpperCase().replace(" ", "_");
@@ -572,5 +595,124 @@ public class AuthController {
         return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Account activated successfully", Map.of(
                 "employeeId", userId,
                 "status", "ACTIVE")));
+    }
+
+    @Operation(summary = "SaaS Sign Up", description = "Atomically registers a new organization, subdomain tenant, subscription, and organization admin user.")
+    @PostMapping("/signup")
+    public ResponseEntity<?> signup(@RequestBody @Valid SignupRequest dto, HttpServletRequest request) {
+        try {
+            SignupService.SignupResult result = signupService.register(
+                    dto,
+                    getClientIp(request),
+                    request.getHeader("User-Agent"));
+
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("organizationId", result.getOrganizationId());
+            responseData.put("userId", result.getUserId());
+            responseData.put("emailVerificationRequired", result.isEmailVerificationRequired());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("code", "SIGNUP_SUCCESS");
+            response.put("message", "Account created successfully.");
+            response.put("data", responseData);
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SIGNUP_VALIDATION_ERR"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(ErrorResponse.error(
+                    "An unexpected error occurred during registration: " + e.getMessage(), "SIGNUP_INTERNAL_ERR"));
+        }
+    }
+
+    @Operation(summary = "Verify Email Token", description = "Verifies email registration token to activate admin account and organization.")
+    @PostMapping("/email/verify")
+    public ResponseEntity<?> verifyEmail(@RequestParam(required = false) String token,
+            @RequestBody(required = false) Map<String, String> body) {
+        String verificationToken = token;
+        if (verificationToken == null || verificationToken.isBlank()) {
+            if (body != null) {
+                verificationToken = body.get("token");
+            }
+        }
+
+        if (verificationToken == null || verificationToken.isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Token parameter is required", "VERIFY_TOKEN_REQUIRED"));
+        }
+
+        try {
+            verificationService.verifyEmailToken(verificationToken);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("code", "EMAIL_VERIFICATION_SUCCESS");
+            response.put("message", "Email verified successfully. Account is now active.");
+
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "VERIFY_TOKEN_ERR"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(
+                    ErrorResponse.error("An unexpected error occurred: " + e.getMessage(), "VERIFY_INTERNAL_ERR"));
+        }
+    }
+
+    @Operation(summary = "Check Organization Name Availability", description = "Checks if an organization name is unique after normalising it.")
+    @PostMapping("/check-organization")
+    public ResponseEntity<?> checkOrganization(@RequestBody Map<String, String> body) {
+        String orgName = body.get("orgName");
+        if (orgName == null || orgName.isBlank()) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error("orgName parameter is required", "CHECK_ORG_REQUIRED"));
+        }
+        String normalized = signupValidationService.normalizeOrgName(orgName);
+        boolean exists = organizationRepository.existsByNormalizedName(normalized);
+        Map<String, Object> data = new HashMap<>();
+        data.put("available", !exists);
+        data.put("normalizedName", normalized);
+
+        String code = !exists ? "ORGANIZATION_AVAILABLE" : "ORGANIZATION_ALREADY_EXISTS";
+        String message = !exists ? "Organization name is available." : "Organization name is already registered.";
+
+        return ResponseEntity.ok(ApiResponse.success(code, message, data));
+    }
+
+    @Operation(summary = "Check email availability with normalization", description = "Checks if an email is already registered after normalising it.")
+    @PostMapping("/check-email")
+    public ResponseEntity<?> checkEmail(@RequestBody Map<String, String> body) {
+        String email = body.get("email");
+        if (email == null || email.isBlank()) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error("email parameter is required", "CHECK_EMAIL_REQUIRED"));
+        }
+        String normalized = signupValidationService.normalizeEmail(email);
+        boolean exists = userRepository.existsByWorkEmail(normalized);
+        Map<String, Object> data = new HashMap<>();
+        data.put("available", !exists);
+        data.put("normalizedEmail", normalized);
+
+        String code = !exists ? "EMAIL_AVAILABLE" : "EMAIL_ALREADY_EXISTS";
+        String message = !exists ? "Email address is available." : "Email address is already registered.";
+
+        return ResponseEntity.ok(ApiResponse.success(code, message, data));
+    }
+
+    @Operation(summary = "Check mobile number availability with normalization", description = "Checks if a phone number is already registered after normalising it.")
+    @PostMapping("/check-phone")
+    public ResponseEntity<?> checkPhone(@RequestBody Map<String, String> body) {
+        String mobileNumber = body.get("mobileNumber");
+        if (mobileNumber == null || mobileNumber.isBlank()) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error("mobileNumber parameter is required", "CHECK_PHONE_REQUIRED"));
+        }
+        String normalized = signupValidationService.normalizePhone(mobileNumber);
+        boolean exists = userRepository.existsByMobileNumber(normalized);
+        Map<String, Object> data = new HashMap<>();
+        data.put("available", !exists);
+        data.put("normalizedPhone", normalized);
+
+        String code = !exists ? "PHONE_AVAILABLE" : "PHONE_ALREADY_EXISTS";
+        String message = !exists ? "Mobile number is available." : "Mobile number is already registered.";
+
+        return ResponseEntity.ok(ApiResponse.success(code, message, data));
     }
 }

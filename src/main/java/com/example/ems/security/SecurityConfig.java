@@ -73,6 +73,9 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(
                     "/api/v1/auth/login",
+                    "/api/v1/auth/signup",
+                    "/api/v1/auth/email/verify",
+                    "/api/v1/auth/check-organization",
                     "/api/v1/auth/forgot-password",
                     "/api/v1/auth/verify-otp",
                     "/api/v1/auth/resend-otp",
@@ -80,6 +83,12 @@ public class SecurityConfig {
                     "/api/v1/auth/accept-invitation",
                     "/api/v1/auth/refresh",
                     "/api/v1/auth/logout",
+                    "/api/v1/auth/check-email",
+                    "/api/v1/auth/check-phone",
+                    "/api/v1/auth/resend-verification",
+                    "/api/v1/auth/verify-email",
+                    "/api/v1/auth/verify-link",
+                    "/api/v1/invitations/**",
                     "/api/files/*/download",
                     "/api/v1/platform-admin/payments/webhook",
                     "/v3/api-docs/**",

@@ -24,6 +24,10 @@ public class EmailService {
     @Value("${resend.from-email}")
     private String fromEmail;
 
+    @Value("${app.base-url:http://localhost:3000}")
+    private String baseUrl;
+
+
     /**
      * Sends a 6-digit OTP email for password reset.
      */
@@ -89,6 +93,40 @@ public class EmailService {
             sendEmail(toEmail, "EMS – You are Invited!", html);
         } catch (Exception e) {
             log.warn("Failed to send Resend API invitation email to {} (keeping invitation active for testing): {}", toEmail, e.getMessage());
+        }
+    }
+
+    /**
+     * Sends verification email to a newly signed up administrator.
+     */
+    public void sendVerificationEmail(String toEmail, String name, String token) {
+        String verificationUrl = baseUrl + "/verify-email?token=" + token;
+        String html = """
+                <div style="font-family: Arial, sans-serif; max-width: 520px; margin: auto;
+                            padding: 32px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff;">
+                    <h2 style="color: #1e293b; margin-bottom: 4px;">✉️ Verify Your Email</h2>
+                    <p style="color: #64748b; margin-top: 0;">Hi %s,</p>
+                    <p style="color: #64748b;">Welcome to EMS. Click the link below to verify your email and activate your account:</p>
+
+                    <div style="text-align: center; margin: 24px 0;">
+                        <a href="%s" style="background: #2563eb; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                            Verify Email
+                        </a>
+                    </div>
+
+                    <p style="color: #64748b; font-size: 14px;">
+                        ⏱️ This verification link is valid for <strong>24 hours</strong>.
+                    </p>
+
+                    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;"/>
+                    <p style="color: #94a3b8; font-size: 12px;">— EMS Onboarding Team</p>
+                </div>
+                """.formatted(name, verificationUrl);
+
+        try {
+            sendEmail(toEmail, "EMS – Verify your email", html);
+        } catch (Exception e) {
+            log.warn("Failed to send Resend API verification email to {} (keeping registration active for testing): {}", toEmail, e.getMessage());
         }
     }
 

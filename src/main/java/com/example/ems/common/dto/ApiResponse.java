@@ -10,6 +10,8 @@ public class ApiResponse<T> {
     @Schema(example = "true")
     private boolean success;
     @Schema(example = "string")
+    private String code;
+    @Schema(example = "string")
     private String message;
     @Schema(example = "string")
     private String timestamp;
@@ -26,7 +28,12 @@ public class ApiResponse<T> {
     }
 
     public ApiResponse(boolean success, String message, String timestamp, T data) {
+        this(success, null, message, timestamp, data);
+    }
+
+    public ApiResponse(boolean success, String code, String message, String timestamp, T data) {
         this.success = success;
+        this.code = code;
         this.message = message;
         this.timestamp = timestamp != null ? timestamp : Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString();
         this.requestId = getCorrelationId();
@@ -76,6 +83,10 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, message, null, data);
     }
 
+    public static <T> ApiResponse<T> success(String code, String message, T data) {
+        return new ApiResponse<>(true, code, message, null, data);
+    }
+
     public static <T> ApiResponse<T> success(String message, T data, Map<String, String> links) {
         return new ApiResponse<>(true, message, data, links);
     }
@@ -91,6 +102,14 @@ public class ApiResponse<T> {
 
     public void setSuccess(boolean success) {
         this.success = success;
+    }
+
+    public String getCode() {
+        return code;
+    }
+
+    public void setCode(String code) {
+        this.code = code;
     }
 
     public String getMessage() {

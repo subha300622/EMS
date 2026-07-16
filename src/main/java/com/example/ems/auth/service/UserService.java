@@ -11,9 +11,6 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -23,28 +20,36 @@ import java.util.Optional;
 @Service
 public class UserService {
 
-    private static final Logger log = LoggerFactory.getLogger(UserService.class);
-
-    @Autowired private UserRepository userRepository;
-    @Autowired private RoleRepository roleRepository;
-    @Autowired private BCryptPasswordEncoder passwordEncoder;
-    @Autowired private EmployeeRepository employeeRepository;
-    @Autowired private com.example.ems.employee.repository.DepartmentRepository departmentRepository;
-    @Autowired private com.example.ems.settings.repository.EmployeeSettingRepository employeeSettingRepository;
-    @Autowired private com.example.ems.settings.repository.CompanySettingRepository companySettingRepository;
-    @Autowired private RoleService roleService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private EmployeeRepository employeeRepository;
+    @Autowired
+    private com.example.ems.employee.repository.DepartmentRepository departmentRepository;
+    @Autowired
+    private com.example.ems.settings.repository.EmployeeSettingRepository employeeSettingRepository;
+    @Autowired
+    private com.example.ems.settings.repository.CompanySettingRepository companySettingRepository;
+    @Autowired
+    private RoleService roleService;
 
     // ──────────────────────────────────────────
-    //  LOGIN — compares BCrypt-hashed password
+    // LOGIN — compares BCrypt-hashed password
     // ──────────────────────────────────────────
 
     public User login(String workEmail, String password) {
         Optional<User> optUser = userRepository.findByWorkEmail(workEmail);
-        if (optUser.isEmpty()) return null;
+        if (optUser.isEmpty())
+            return null;
 
         User user = optUser.get();
         // BCrypt comparison
-        if (!passwordEncoder.matches(password, user.getPassword())) return null;
+        if (!passwordEncoder.matches(password, user.getPassword()))
+            return null;
 
         return user;
     }
@@ -123,18 +128,33 @@ public class UserService {
         emp.setFullName(user.getFullName());
         emp.setEmail(user.getWorkEmail());
         emp.setEmployeeId(userId);
-        if (emp.getPhone() == null) emp.setPhone(user.getMobileNumber() != null && !user.getMobileNumber().isBlank() ? user.getMobileNumber() : "1234567890");
-        if (emp.getGender() == null) emp.setGender("MALE");
-        if (emp.getDob() == null) emp.setDob(LocalDate.of(1990, 1, 1));
-        if (emp.getAddress() == null) emp.setAddress("123 Corporate Way");
-        if (emp.getEmergencyContact() == null) emp.setEmergencyContact("9876543210");
-        if (emp.getDepartment() == null) emp.setDepartment(user.getDepartment() != null && !user.getDepartment().isBlank() ? user.getDepartment() : "Engineering");
-        if (emp.getDesignation() == null) emp.setDesignation(user.getRole() != null ? user.getRole().getName() : "Software Engineer");
-        if (emp.getAnnualSalary() == null) emp.setAnnualSalary(BigDecimal.valueOf(85000));
-        if (emp.getJoiningDate() == null) emp.setJoiningDate(LocalDate.of(2026, 6, 10));
-        if (emp.getLocation() == null) emp.setLocation(user.getLocation() != null && !user.getLocation().isBlank() ? user.getLocation() : "Headquarters");
-        if (emp.getEmploymentType() == null) emp.setEmploymentType("FULL_TIME");
-        if (emp.getStatus() == null || emp.getStatus().isBlank()) emp.setStatus("ACTIVE");
+        if (emp.getPhone() == null)
+            emp.setPhone(user.getMobileNumber() != null && !user.getMobileNumber().isBlank() ? user.getMobileNumber()
+                    : "1234567890");
+        if (emp.getGender() == null)
+            emp.setGender("MALE");
+        if (emp.getDob() == null)
+            emp.setDob(LocalDate.of(1990, 1, 1));
+        if (emp.getAddress() == null)
+            emp.setAddress("123 Corporate Way");
+        if (emp.getEmergencyContact() == null)
+            emp.setEmergencyContact("9876543210");
+        if (emp.getDepartment() == null)
+            emp.setDepartment(user.getDepartment() != null && !user.getDepartment().isBlank() ? user.getDepartment()
+                    : "Engineering");
+        if (emp.getDesignation() == null)
+            emp.setDesignation(user.getRole() != null ? user.getRole().getName() : "Software Engineer");
+        if (emp.getAnnualSalary() == null)
+            emp.setAnnualSalary(BigDecimal.valueOf(85000));
+        if (emp.getJoiningDate() == null)
+            emp.setJoiningDate(LocalDate.of(2026, 6, 10));
+        if (emp.getLocation() == null)
+            emp.setLocation(
+                    user.getLocation() != null && !user.getLocation().isBlank() ? user.getLocation() : "Headquarters");
+        if (emp.getEmploymentType() == null)
+            emp.setEmploymentType("FULL_TIME");
+        if (emp.getStatus() == null || emp.getStatus().isBlank())
+            emp.setStatus("ACTIVE");
         employeeRepository.save(emp);
 
         return user;
@@ -265,7 +285,8 @@ public class UserService {
         String profileImage = optEmp.map(Employee::getProfileImage).orElse(null);
         if (profileImage == null || profileImage.isBlank()) {
             try {
-                profileImage = "https://api.dicebear.com/7.x/initials/svg?seed=" + java.net.URLEncoder.encode(user.getFullName(), java.nio.charset.StandardCharsets.UTF_8.toString());
+                profileImage = "https://api.dicebear.com/7.x/initials/svg?seed=" + java.net.URLEncoder
+                        .encode(user.getFullName(), java.nio.charset.StandardCharsets.UTF_8.toString());
             } catch (Exception e) {
                 profileImage = "https://api.dicebear.com/7.x/initials/svg?seed=" + user.getFullName();
             }
@@ -273,7 +294,8 @@ public class UserService {
 
         boolean mfaRequired = false;
         try {
-            Optional<com.example.ems.settings.entity.EmployeeSetting> optSettings = employeeSettingRepository.findByUserEmail(user.getWorkEmail());
+            Optional<com.example.ems.settings.entity.EmployeeSetting> optSettings = employeeSettingRepository
+                    .findByUserEmail(user.getWorkEmail());
             if (optSettings.isPresent()) {
                 mfaRequired = Boolean.TRUE.equals(optSettings.get().getMfaEnabled());
             }
@@ -282,27 +304,27 @@ public class UserService {
         }
 
         return new com.example.ems.auth.dto.BootstrapResponse.UserProfileResponse(
-            user.getId(),
-            user.getUserId(),
-            user.getFullName(),
-            user.getWorkEmail(),
-            user.getRole() != null ? user.getRole().getName() : "EMPLOYEE",
-            profileImage,
-            false, // mustChangePassword
-            mfaRequired,
-            user.getStatus(),
-            java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
-            user.getOrganizationName(),
-            user.getBranch()
-        );
+                user.getId(),
+                user.getUserId(),
+                user.getFullName(),
+                user.getWorkEmail(),
+                user.getRole() != null ? user.getRole().getName() : "EMPLOYEE",
+                profileImage,
+                false, // mustChangePassword
+                mfaRequired,
+                user.getStatus(),
+                java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
+                user.getOrganizationName(),
+                user.getBranch());
     }
 
     public com.example.ems.auth.dto.BootstrapResponse.OrgContextResponse getUserContext(User user) {
         Optional<Employee> optEmp = employeeRepository.findByEmail(user.getWorkEmail());
-        
+
         Long companyId = null;
         try {
-            Optional<com.example.ems.settings.entity.CompanySetting> optCompany = companySettingRepository.findAll().stream().findFirst();
+            Optional<com.example.ems.settings.entity.CompanySetting> optCompany = companySettingRepository.findAll()
+                    .stream().findFirst();
             if (optCompany.isPresent()) {
                 companyId = optCompany.get().getId();
             }
@@ -312,16 +334,16 @@ public class UserService {
 
         Long departmentId = null;
         if (optEmp.isPresent() && optEmp.get().getDepartment() != null) {
-            Optional<com.example.ems.employee.entity.Department> optDept = departmentRepository.findByNameIgnoreCase(optEmp.get().getDepartment());
+            Optional<com.example.ems.employee.entity.Department> optDept = departmentRepository
+                    .findByNameIgnoreCase(optEmp.get().getDepartment());
             if (optDept.isPresent()) {
                 departmentId = optDept.get().getId();
             }
         }
 
         return new com.example.ems.auth.dto.BootstrapResponse.OrgContextResponse(
-            companyId,
-            departmentId,
-            new com.example.ems.auth.dto.LoginResponse.BranchContext(null, false)
-        );
+                companyId,
+                departmentId,
+                new com.example.ems.auth.dto.LoginResponse.BranchContext(null, false));
     }
 }

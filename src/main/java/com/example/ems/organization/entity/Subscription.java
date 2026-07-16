@@ -65,7 +65,40 @@ public class Subscription {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt = Instant.now();
 
+    private boolean trial = false;
+
+    @Column(name = "trial_end")
+    private LocalDate trialEnd;
+
+    @Column(name = "employee_limit", nullable = false)
+    private int employeeLimit = 25;
+
     public Subscription() {}
+
+    public boolean isTrial() {
+        return trial;
+    }
+
+    public void setTrial(boolean trial) {
+        this.trial = trial;
+    }
+
+    public LocalDate getTrialEnd() {
+        return trialEnd;
+    }
+
+    public void setTrialEnd(LocalDate trialEnd) {
+        this.trialEnd = trialEnd;
+    }
+
+    public int getEmployeeLimit() {
+        return employeeLimit;
+    }
+
+    public void setEmployeeLimit(int employeeLimit) {
+        this.employeeLimit = employeeLimit;
+    }
+
 
     public Long getId() {
         return id;

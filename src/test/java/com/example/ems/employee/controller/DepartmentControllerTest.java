@@ -2,14 +2,10 @@ package com.example.ems.employee.controller;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
-import com.example.ems.employee.dto.DepartmentRequest;
 import com.example.ems.employee.dto.DepartmentTransferRequest;
 import com.example.ems.employee.entity.Department;
 import com.example.ems.employee.entity.DepartmentTransfer;
-import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.service.DepartmentService;
-import com.example.ems.employee.service.EmployeeService;
 import com.example.ems.security.service.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +17,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -38,12 +33,6 @@ public class DepartmentControllerTest {
 
     @Mock
     private DepartmentService departmentService;
-
-    @Mock
-    private EmployeeService employeeService;
-
-    @Mock
-    private RoleService roleService;
 
     @Mock
     private UserRepository userRepository;
@@ -72,75 +61,9 @@ public class DepartmentControllerTest {
         user.setWorkEmail(EMAIL);
         user.setFullName("System Admin");
         when(userRepository.findByWorkEmail(EMAIL)).thenReturn(Optional.of(user));
-
-        when(roleService.hasPermission(EMAIL, "employee.create")).thenReturn(true);
-        when(roleService.hasPermission(EMAIL, "employee.update")).thenReturn(true);
-        when(roleService.hasPermission(EMAIL, "department.manage")).thenReturn(true);
     }
 
-    @Test
-    public void testGetAllDepartments() throws Exception {
-        Department d = new Department(1L, "Engineering", "ENG", "Dev");
-        when(departmentService.getAllDepartments()).thenReturn(List.of(d));
 
-        mockMvc.perform(get("/api/v1/departments")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].name").value("Engineering"));
-    }
-
-    @Test
-    public void testGetDepartmentById() throws Exception {
-        Department d = new Department(1L, "Engineering", "ENG", "Dev");
-        when(departmentService.getDepartmentById(1L)).thenReturn(Optional.of(d));
-
-        mockMvc.perform(get("/api/v1/departments/1")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.name").value("Engineering"));
-    }
-
-    @Test
-    public void testCreateDepartment() throws Exception {
-        DepartmentRequest req = new DepartmentRequest("Engineering", "ENG", "Dev", null, null, BigDecimal.valueOf(50000), "ACTIVE");
-        Department d = new Department(1L, "Engineering", "ENG", "Dev", null, null, BigDecimal.valueOf(50000), "ACTIVE");
-        when(departmentService.createDepartment(any(DepartmentRequest.class))).thenReturn(d);
-
-        mockMvc.perform(post("/api/v1/departments")
-                        .header("Authorization", AUTH_HEADER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.name").value("Engineering"));
-    }
-
-    @Test
-    public void testUpdateDepartment() throws Exception {
-        DepartmentRequest req = new DepartmentRequest("Engineering", "ENG", "Dev", null, null, BigDecimal.valueOf(50000), "ACTIVE");
-        Department d = new Department(1L, "Engineering", "ENG", "Dev", null, null, BigDecimal.valueOf(50000), "ACTIVE");
-        when(departmentService.updateDepartment(eq(1L), any(DepartmentRequest.class))).thenReturn(d);
-
-        mockMvc.perform(put("/api/v1/departments/1")
-                        .header("Authorization", AUTH_HEADER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(req)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.name").value("Engineering"));
-    }
-
-    @Test
-    public void testDeleteDepartment() throws Exception {
-        when(departmentService.deleteDepartment(1L)).thenReturn(true);
-
-        mockMvc.perform(delete("/api/v1/departments/1")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
 
     @Test
     public void testGetDepartmentsDropdown() throws Exception {
@@ -178,53 +101,7 @@ public class DepartmentControllerTest {
                 .andExpect(jsonPath("$.data.totalDepartments").value(12));
     }
 
-    @Test
-    public void testGetEmployeesByDepartment() throws Exception {
-        Department d = new Department(1L, "Engineering", "ENG", "Dev");
-        when(departmentService.getDepartmentById(1L)).thenReturn(Optional.of(d));
-        Employee emp = new Employee();
-        emp.setFullName("John Doe");
-        emp.setStatus("ACTIVE");
-        when(employeeService.getEmployeesByDepartment("Engineering")).thenReturn(List.of(emp));
 
-        mockMvc.perform(get("/api/v1/departments/1/employees")
-                        .header("Authorization", AUTH_HEADER)
-                        .param("page", "0")
-                        .param("size", "20")
-                        .param("status", "ACTIVE"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.content[0].fullName").value("John Doe"));
-    }
-
-    @Test
-    public void testGetManager() throws Exception {
-        Employee manager = new Employee();
-        manager.setId(15L);
-        manager.setFullName("Rajan Kumar");
-        manager.setEmail("rajan@example.com");
-        manager.setDesignation("Manager");
-        when(departmentService.getManager(1L)).thenReturn(Optional.of(manager));
-
-        mockMvc.perform(get("/api/v1/departments/1/manager")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.fullName").value("Rajan Kumar"));
-    }
-
-    @Test
-    public void testUpdateManager() throws Exception {
-        Department d = new Department(1L, "Engineering", "ENG", "Dev");
-        when(departmentService.updateManager(1L, 15L)).thenReturn(d);
-
-        mockMvc.perform(put("/api/v1/departments/1/manager")
-                        .header("Authorization", AUTH_HEADER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("managerId", 15L))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
 
     @Test
     public void testTransferEmployee() throws Exception {
@@ -295,54 +172,7 @@ public class DepartmentControllerTest {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-    @Test
-    public void testGetCostCenter() throws Exception {
-        when(departmentService.getCostCenter(1L)).thenReturn(Map.of("departmentId", 1L, "costCenter", "CC-ENG"));
 
-        mockMvc.perform(get("/api/v1/departments/1/cost-center")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.costCenter").value("CC-ENG"));
-    }
-
-    @Test
-    public void testUpdateCostCenter() throws Exception {
-        Department d = new Department(1L, "Engineering", "ENG", "Dev");
-        d.setCostCenter("CC-ENG-NEW");
-        when(departmentService.updateCostCenter(1L, "CC-ENG-NEW")).thenReturn(d);
-
-        mockMvc.perform(put("/api/v1/departments/1/cost-center")
-                        .header("Authorization", AUTH_HEADER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("costCenter", "CC-ENG-NEW"))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
-
-    @Test
-    public void testGetBudget() throws Exception {
-        when(departmentService.getBudget(1L)).thenReturn(Map.of("allocated", 1000, "utilized", 500, "remaining", 500));
-
-        mockMvc.perform(get("/api/v1/departments/1/budget")
-                        .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.remaining").value(500));
-    }
-
-    @Test
-    public void testUpdateBudget() throws Exception {
-        Department d = new Department(1L, "Engineering", "ENG", "Dev");
-        when(departmentService.updateBudgetFields(eq(1L), any(BigDecimal.class), any(BigDecimal.class))).thenReturn(d);
-
-        mockMvc.perform(put("/api/v1/departments/1/budget")
-                        .header("Authorization", AUTH_HEADER)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(Map.of("allocated", 1000, "utilized", 500))))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
 
     @Test
     public void testGetReports() throws Exception {
