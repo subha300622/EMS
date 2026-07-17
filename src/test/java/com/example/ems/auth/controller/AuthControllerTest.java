@@ -1,6 +1,7 @@
 package com.example.ems.auth.controller;
 
 import com.example.ems.auth.dto.LoginRequest;
+import com.example.ems.auth.dto.ActivateAccountRequest;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.InvitationRepository;
@@ -10,7 +11,7 @@ import com.example.ems.auth.service.OtpService;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.auth.service.SessionService;
 import com.example.ems.auth.service.UserService;
-import com.example.ems.common.service.EmailService;
+import com.example.ems.mail.service.EmailService;
 import com.example.ems.config.GlobalExceptionHandler;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -172,5 +173,22 @@ public class AuthControllerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errorCode").value("AUTH_012"));
+    }
+
+    @Test
+    public void testActivateAccountInvalidToken() throws Exception {
+        ActivateAccountRequest request = new ActivateAccountRequest();
+        request.setToken("invalid-token");
+        request.setPassword("Password123!");
+        request.setConfirmPassword("Password123!");
+
+        when(invitationRepository.findByInvitationToken("invalid-token")).thenReturn(Optional.empty());
+
+        mockMvc.perform(post("/api/v1/auth/activate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.errorCode").value("AUTH_008"));
     }
 }

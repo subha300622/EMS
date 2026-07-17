@@ -5,7 +5,7 @@ import com.example.ems.auth.entity.OtpToken;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.OtpTokenRepository;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.common.service.EmailService;
+import com.example.ems.mail.service.EmailService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;

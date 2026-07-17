@@ -120,10 +120,10 @@ public class EmployeeController {
 
     @Operation(summary = "Create Employee Record", description = "Creates a new employee profile in the system with contact details, department, role, and salary parameters.")
     @PostMapping("/employees")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> createEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid EmployeeRequest request){
+            @RequestBody @Valid EmployeeRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -137,7 +137,7 @@ public class EmployeeController {
         }
 
         try {
-            Employee created = employeeService.createEmployee(request);
+            Employee created = employeeService.createEmployee(request, currentUser.getWorkEmail());
             return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Employee created successfully", created));
         } catch (IllegalArgumentException e) {
@@ -147,7 +147,7 @@ public class EmployeeController {
 
     @Operation(summary = "Get All Employees", description = "Retrieves a paginated, searchable, and filterable list of all employees in the system.")
     @GetMapping("/employees")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Page<EmployeeListItemDto>>> getAllEmployees(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
@@ -163,7 +163,7 @@ public class EmployeeController {
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read") &&
-            !roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read")) {
+                !roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read")) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
@@ -192,12 +192,15 @@ public class EmployeeController {
                                 || (emp.getEmployeeId() != null && emp.getEmployeeId().toLowerCase().contains(s))
                                 || (emp.getDesignation() != null && emp.getDesignation().toLowerCase().contains(s))
                                 || (emp.getDepartment() != null && emp.getDepartment().toLowerCase().contains(s));
-                        if (!matches) return false;
+                        if (!matches)
+                            return false;
                     }
-                    if (department != null && !department.isBlank() && (emp.getDepartment() == null || !emp.getDepartment().equalsIgnoreCase(department.trim()))) {
+                    if (department != null && !department.isBlank() && (emp.getDepartment() == null
+                            || !emp.getDepartment().equalsIgnoreCase(department.trim()))) {
                         return false;
                     }
-                    if (status != null && !status.isBlank() && (emp.getStatus() == null || !emp.getStatus().equalsIgnoreCase(status.trim()))) {
+                    if (status != null && !status.isBlank()
+                            && (emp.getStatus() == null || !emp.getStatus().equalsIgnoreCase(status.trim()))) {
                         return false;
                     }
                     return true;
@@ -216,14 +219,14 @@ public class EmployeeController {
                             emp.getStatus(),
                             emp.getWorkMode(),
                             manager != null ? manager.getId() : null,
-                            manager != null ? manager.getFullName() : "Unassigned"
-                    );
+                            manager != null ? manager.getFullName() : "Unassigned");
                 })
                 .collect(Collectors.toList());
 
         int totalElements = filtered.size();
         int totalPages = (int) Math.ceil((double) totalElements / size);
-        if (totalPages == 0) totalPages = 1;
+        if (totalPages == 0)
+            totalPages = 1;
         int start = page * size;
         List<EmployeeListItemDto> content;
         if (start >= totalElements) {
@@ -241,10 +244,10 @@ public class EmployeeController {
 
     @Operation(summary = "Get Employee by ID", description = "Retrieves details of a specific employee profile by ID.")
     @GetMapping("/employees/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getEmployeeById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -271,8 +274,7 @@ public class EmployeeController {
                             emp.getWorkMode(),
                             emp.getJoiningDate(),
                             emp.getAnnualSalary(),
-                            emp.getStatus()
-                    );
+                            emp.getStatus());
                     return ResponseEntity.ok(ApiResponse.success("Employee details retrieved successfully", dto));
                 })
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -281,11 +283,11 @@ public class EmployeeController {
 
     @Operation(summary = "Update Employee", description = "Updates attributes of an existing employee profile.")
     @PutMapping("/employees/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ErrorResponse> updateEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody @Valid EmployeeRequest request){
+            @RequestBody @Valid EmployeeRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -299,8 +301,9 @@ public class EmployeeController {
         }
 
         try {
-            return (ResponseEntity) employeeService.updateEmployee(id, request)
-                    .<ResponseEntity<?>>map(emp -> ResponseEntity.ok(ApiResponse.success("Employee updated successfully", emp)))
+            return (ResponseEntity) employeeService.updateEmployee(id, request, currentUser.getWorkEmail())
+                    .<ResponseEntity<?>>map(
+                            emp -> ResponseEntity.ok(ApiResponse.success("Employee updated successfully", emp)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002")));
         } catch (IllegalArgumentException e) {
@@ -310,10 +313,10 @@ public class EmployeeController {
 
     @Operation(summary = "Delete Employee", description = "Removes an employee record from the database.")
     @DeleteMapping("/employees/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> deleteEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -337,10 +340,10 @@ public class EmployeeController {
 
     @Operation(summary = "Get Employees by Manager", description = "Retrieves all direct reports under the specified manager's employee ID.")
     @GetMapping("/employees/manager/{managerId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getEmployeesByManager(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable("managerId") Long managerId){
+            @PathVariable("managerId") Long managerId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -357,14 +360,13 @@ public class EmployeeController {
         return ResponseEntity.ok(ApiResponse.success("Employees for manager retrieved successfully", list));
     }
 
-
     // ── 10. Get Salary Details ───────────────────────────────────────────────
     @Operation(summary = "Get Employee Salary Details", description = "Retrieves the salary details, including base and annual compensation, for the specified employee.")
     @GetMapping("/employees/{id}/salary")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getEmployeeSalary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -382,12 +384,14 @@ public class EmployeeController {
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's salary details.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's salary details.",
+                            "AUTH_002"));
         }
 
         java.math.BigDecimal monthly = java.math.BigDecimal.ZERO;
         if (employee.getAnnualSalary() != null) {
-            monthly = employee.getAnnualSalary().divide(java.math.BigDecimal.valueOf(12), 2, java.math.RoundingMode.HALF_UP);
+            monthly = employee.getAnnualSalary().divide(java.math.BigDecimal.valueOf(12), 2,
+                    java.math.RoundingMode.HALF_UP);
         }
 
         Map<String, Object> salaryDetails = new LinkedHashMap<>();
@@ -401,10 +405,10 @@ public class EmployeeController {
     // ── 11. Get Attendance Summary ───────────────────────────────────────────
     @Operation(summary = "Get Employee Attendance Summary", description = "Retrieves a breakdown of present, absent, late, and half-day records for the employee.")
     @GetMapping("/employees/{id}/attendance")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<EmployeeAttendanceSummaryDto>> getEmployeeAttendanceSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -422,14 +426,22 @@ public class EmployeeController {
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's attendance summary.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's attendance summary.",
+                            "AUTH_002"));
         }
 
         List<Attendance> list = attendanceService.getAttendanceByEmployeeId(id);
-        long present = list.stream().filter(a -> "PRESENT".equalsIgnoreCase(a.getStatus()) || "Present".equalsIgnoreCase(a.getStatus())).count();
-        long late = list.stream().filter(a -> "LATE".equalsIgnoreCase(a.getStatus()) || "Late".equalsIgnoreCase(a.getStatus())).count();
-        long absent = list.stream().filter(a -> "ABSENT".equalsIgnoreCase(a.getStatus()) || "Absent".equalsIgnoreCase(a.getStatus())).count();
-        long halfday = list.stream().filter(a -> "HALF_DAY".equalsIgnoreCase(a.getStatus()) || "Half Day".equalsIgnoreCase(a.getStatus())).count();
+        long present = list.stream()
+                .filter(a -> "PRESENT".equalsIgnoreCase(a.getStatus()) || "Present".equalsIgnoreCase(a.getStatus()))
+                .count();
+        long late = list.stream()
+                .filter(a -> "LATE".equalsIgnoreCase(a.getStatus()) || "Late".equalsIgnoreCase(a.getStatus())).count();
+        long absent = list.stream()
+                .filter(a -> "ABSENT".equalsIgnoreCase(a.getStatus()) || "Absent".equalsIgnoreCase(a.getStatus()))
+                .count();
+        long halfday = list.stream()
+                .filter(a -> "HALF_DAY".equalsIgnoreCase(a.getStatus()) || "Half Day".equalsIgnoreCase(a.getStatus()))
+                .count();
 
         double attendancePercentage = 95.0;
         if (!list.isEmpty()) {
@@ -450,8 +462,7 @@ public class EmployeeController {
                 Math.round(attendancePercentage * 10.0) / 10.0,
                 present,
                 absent,
-                late
-        );
+                late);
 
         return ResponseEntity.ok(ApiResponse.success("Attendance summary retrieved successfully", summary));
     }
@@ -459,10 +470,10 @@ public class EmployeeController {
     // ── 12. Get Leave Summary ────────────────────────────────────────────────
     @Operation(summary = "Get Employee Leave Summary", description = "Retrieves current leave balances and allowance for the employee.")
     @GetMapping("/employees/{id}/leave-summary")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<EmployeeLeaveSummaryDto>> getEmployeeLeaveSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -480,7 +491,8 @@ public class EmployeeController {
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's leave summary.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's leave summary.",
+                            "AUTH_002"));
         }
 
         Map<String, Object> balance = leaveService.getLeaveBalance(id);
@@ -510,12 +522,12 @@ public class EmployeeController {
 
         LocalDate today = LocalDate.now();
         List<UpcomingLeaveDto> upcomingLeaves = allLeaves.stream()
-                .filter(l -> "APPROVED".equalsIgnoreCase(l.getStatus()) && l.getStartDate() != null && l.getStartDate().isAfter(today))
+                .filter(l -> "APPROVED".equalsIgnoreCase(l.getStatus()) && l.getStartDate() != null
+                        && l.getStartDate().isAfter(today))
                 .map(l -> new UpcomingLeaveDto(
                         l.getStartDate().toString(),
                         l.getEndDate().toString(),
-                        l.getStatus()
-                ))
+                        l.getStatus()))
                 .collect(Collectors.toList());
 
         // Default seed value if empty
@@ -528,19 +540,18 @@ public class EmployeeController {
                 availableLeaves,
                 usedLeaves,
                 pendingLeaves,
-                upcomingLeaves
-        );
+                upcomingLeaves);
 
         return ResponseEntity.ok(ApiResponse.success("Leave summary retrieved successfully", summary));
     }
 
     @Operation(summary = "Update Employee Status", description = "Changes status indicators (such as ACTIVE, SUSPENDED, TERMINATED) on an employee profile.")
     @PatchMapping("/employees/{id}/status")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ErrorResponse> updateEmployeeStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody @Valid com.example.ems.auth.dto.UpdateStatusRequest request){
+            @RequestBody @Valid com.example.ems.auth.dto.UpdateStatusRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -555,7 +566,8 @@ public class EmployeeController {
 
         try {
             return (ResponseEntity) employeeService.updateEmployeeStatus(id, request.getStatus())
-                    .<ResponseEntity<?>>map(emp -> ResponseEntity.ok(ApiResponse.success("Employee status updated successfully", emp)))
+                    .<ResponseEntity<?>>map(
+                            emp -> ResponseEntity.ok(ApiResponse.success("Employee status updated successfully", emp)))
                     .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                             .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002")));
         } catch (IllegalArgumentException e) {
@@ -563,13 +575,12 @@ public class EmployeeController {
         }
     }
 
-
     @Operation(summary = "Get Employee Payroll History", description = "Retrieves past salary payslips and processed payroll distributions for the employee.")
     @GetMapping("/employees/{id}/payroll")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<List<Payroll>>> getEmployeePayroll(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -587,7 +598,8 @@ public class EmployeeController {
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's payroll details.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's payroll details.",
+                            "AUTH_002"));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Employee payroll list retrieved successfully",
@@ -596,10 +608,10 @@ public class EmployeeController {
 
     @Operation(summary = "Get Employee Timeline", description = "Retrieves the historical timeline/lifecycle events of an employee.")
     @GetMapping("/employees/{id}/timeline")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getEmployeeTimeline(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -623,10 +635,10 @@ public class EmployeeController {
 
     @Operation(summary = "Bulk Import Employees", description = "Imports a list of employee profiles in bulk.")
     @PostMapping("/employees/import")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> importEmployees(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody List<@Valid EmployeeRequest> requests){
+            @RequestBody List<@Valid EmployeeRequest> requests) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -660,10 +672,10 @@ public class EmployeeController {
 
     @Operation(summary = "Get Reporting Chain", description = "Retrieves the upward manager reporting chain hierarchy for the specified employee.")
     @GetMapping("/employees/{id}/reporting-chain")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getReportingChain(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -712,10 +724,10 @@ public class EmployeeController {
 
     @Operation(summary = "Get Employee Performance Summary", description = "Retrieves the rating, appraisal status, completed goals, and pending goals count for the employee.")
     @GetMapping("/employees/{id}/performance")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<EmployeePerformanceSummaryDto>> getEmployeePerformanceSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -733,7 +745,8 @@ public class EmployeeController {
         boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
         if (!hasAccess) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's performance summary.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: You cannot view this employee's performance summary.",
+                            "AUTH_002"));
         }
 
         List<MyGoal> goals = goalRepository.findByEmployeeId(id);
@@ -759,18 +772,17 @@ public class EmployeeController {
                 rating,
                 completed,
                 pending,
-                appraisalStatus
-        );
+                appraisalStatus);
 
         return ResponseEntity.ok(ApiResponse.success("Performance summary retrieved successfully", summary));
     }
 
     @Operation(summary = "Get Employee Skills", description = "Retrieves the skills list for the employee.")
     @GetMapping("/employees/{id}/skills")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<EmployeeSkillsResponse>> getEmployeeSkills(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -785,7 +797,8 @@ public class EmployeeController {
         }
 
         boolean isSelf = currentUser.getWorkEmail().equalsIgnoreCase(employee.getEmail());
-        boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read") || roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read");
+        boolean hasAccess = isSelf || roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")
+                || roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read");
         if (!hasAccess) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot view this employee's skills.", "AUTH_002"));
@@ -802,10 +815,10 @@ public class EmployeeController {
 
     @Operation(summary = "Get Employee Documents", description = "Retrieves the uploaded documents metadata list for the employee.")
     @GetMapping("/employees/{id}/documents")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<List<EmployeeDocumentDto>>> getEmployeeDocuments(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -839,18 +852,17 @@ public class EmployeeController {
                 d.getStatus(),
                 d.getVerificationStatus(),
                 d.getDocumentType() != null ? d.getDocumentType().getName() : null,
-                d.getDocumentType() != null ? d.getDocumentType().getCode() : null
-        )).collect(Collectors.toList());
+                d.getDocumentType() != null ? d.getDocumentType().getCode() : null)).collect(Collectors.toList());
 
         return ResponseEntity.ok(ApiResponse.success("Documents list retrieved successfully", dtos));
     }
 
     @Operation(summary = "Get Employee Assets", description = "Retrieves the assigned assets list for the employee.")
     @GetMapping("/employees/{id}/assets")
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<List<EmployeeAssetDto>>> getEmployeeAssets(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long id){
+            @PathVariable Long id) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -882,8 +894,7 @@ public class EmployeeController {
                 a.getSerialNumber(),
                 a.getStatus(),
                 a.getCondition(),
-                a.getAssignedDate()
-        )).collect(Collectors.toList());
+                a.getAssignedDate())).collect(Collectors.toList());
 
         return ResponseEntity.ok(ApiResponse.success("Assets list retrieved successfully", dtos));
     }

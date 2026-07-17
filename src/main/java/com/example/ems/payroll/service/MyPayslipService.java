@@ -2,7 +2,7 @@ package com.example.ems.payroll.service;
 
 import com.example.ems.appraisal.entity.Increment;
 import com.example.ems.appraisal.repository.IncrementRepository;
-import com.example.ems.common.service.EmailService;
+import com.example.ems.mail.service.EmailService;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.payroll.dto.*;

@@ -76,11 +76,86 @@ public class Employee {
 
     private LocalDateTime lastActiveAt = LocalDateTime.now();
 
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
+    @Column(name = "personal_mobile")
+    private String personalMobile;
+
+    @Column(name = "work_mobile")
+    private String workMobile;
+
+    @Column(name = "current_address")
+    private String currentAddress;
+
+    @Column(name = "permanent_address")
+    private String permanentAddress;
+
+    @Column(name = "same_address")
+    private Boolean sameAddress = false;
+
+    @Column(name = "emergency_contact_name")
+    private String emergencyContactName;
+
+    @Column(name = "emergency_contact_number")
+    private String emergencyContactNumber;
+
+    @Column(name = "marital_status")
+    private String maritalStatus;
+
+    @Column(name = "blood_group")
+    private String bloodGroup;
+
+    @Column(name = "nationality")
+    private String nationality;
+
+    @Column(name = "aadhaar_number")
+    private String aadhaarNumber;
+
+    @Column(name = "pan_number")
+    private String panNumber;
+
+    @Column(name = "uan_number")
+    private String uanNumber;
+
+    @Column(name = "passport_number")
+    private String passportNumber;
+
+    @Column(name = "source_of_hire")
+    private String sourceOfHire;
+
+    @Column(name = "total_experience")
+    private String totalExperience;
+
+    @Column(columnDefinition = "TEXT")
+    private String notes;
+
+    @Column(name = "probation_end_date")
+    private LocalDate probationEndDate;
+
+    @Column(name = "send_invite")
+    private Boolean sendInvite = true;
+
+    @Column(name = "notify_manager")
+    private Boolean notifyManager = true;
+
+    @Column(name = "notify_hr")
+    private Boolean notifyHR = false;
+
+    @Column(name = "reminder_unopened")
+    private Boolean reminderUnopened = true;
+
     @PrePersist
     @PreUpdate
     public void prePersistOrUpdate() {
         if (this.email != null) {
             this.email = this.email.trim().toLowerCase();
+        }
+        if (this.firstName != null && !this.firstName.isBlank()) {
+            this.fullName = this.firstName.trim() + (this.lastName != null && !this.lastName.isBlank() ? " " + this.lastName.trim() : "");
         }
     }
 
@@ -155,4 +230,77 @@ public class Employee {
 
     public com.example.ems.organization.entity.Organization getOrganization() { return organization; }
     public void setOrganization(com.example.ems.organization.entity.Organization organization) { this.organization = organization; }
+
+    // Getters and Setters for new fields
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public String getPersonalMobile() { return personalMobile; }
+    public void setPersonalMobile(String personalMobile) { this.personalMobile = personalMobile; }
+
+    public String getWorkMobile() { return workMobile; }
+    public void setWorkMobile(String workMobile) { this.workMobile = workMobile; }
+
+    public String getCurrentAddress() { return currentAddress; }
+    public void setCurrentAddress(String currentAddress) { this.currentAddress = currentAddress; }
+
+    public String getPermanentAddress() { return permanentAddress; }
+    public void setPermanentAddress(String permanentAddress) { this.permanentAddress = permanentAddress; }
+
+    public Boolean getSameAddress() { return sameAddress; }
+    public void setSameAddress(Boolean sameAddress) { this.sameAddress = sameAddress; }
+
+    public String getEmergencyContactName() { return emergencyContactName; }
+    public void setEmergencyContactName(String emergencyContactName) { this.emergencyContactName = emergencyContactName; }
+
+    public String getEmergencyContactNumber() { return emergencyContactNumber; }
+    public void setEmergencyContactNumber(String emergencyContactNumber) { this.emergencyContactNumber = emergencyContactNumber; }
+
+    public String getMaritalStatus() { return maritalStatus; }
+    public void setMaritalStatus(String maritalStatus) { this.maritalStatus = maritalStatus; }
+
+    public String getBloodGroup() { return bloodGroup; }
+    public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
+
+    public String getNationality() { return nationality; }
+    public void setNationality(String nationality) { this.nationality = nationality; }
+
+    public String getAadhaarNumber() { return aadhaarNumber; }
+    public void setAadhaarNumber(String aadhaarNumber) { this.aadhaarNumber = aadhaarNumber; }
+
+    public String getPanNumber() { return panNumber; }
+    public void setPanNumber(String panNumber) { this.panNumber = panNumber; }
+
+    public String getUanNumber() { return uanNumber; }
+    public void setUanNumber(String uanNumber) { this.uanNumber = uanNumber; }
+
+    public String getPassportNumber() { return passportNumber; }
+    public void setPassportNumber(String passportNumber) { this.passportNumber = passportNumber; }
+
+    public String getSourceOfHire() { return sourceOfHire; }
+    public void setSourceOfHire(String sourceOfHire) { this.sourceOfHire = sourceOfHire; }
+
+    public String getTotalExperience() { return totalExperience; }
+    public void setTotalExperience(String totalExperience) { this.totalExperience = totalExperience; }
+
+    public String getNotes() { return notes; }
+    public void setNotes(String notes) { this.notes = notes; }
+
+    public LocalDate getProbationEndDate() { return probationEndDate; }
+    public void setProbationEndDate(LocalDate probationEndDate) { this.probationEndDate = probationEndDate; }
+
+    public Boolean getSendInvite() { return sendInvite; }
+    public void setSendInvite(Boolean sendInvite) { this.sendInvite = sendInvite; }
+
+    public Boolean getNotifyManager() { return notifyManager; }
+    public void setNotifyManager(Boolean notifyManager) { this.notifyManager = notifyManager; }
+
+    public Boolean getNotifyHR() { return notifyHR; }
+    public void setNotifyHR(Boolean notifyHR) { this.notifyHR = notifyHR; }
+
+    public Boolean getReminderUnopened() { return reminderUnopened; }
+    public void setReminderUnopened(Boolean reminderUnopened) { this.reminderUnopened = reminderUnopened; }
 }

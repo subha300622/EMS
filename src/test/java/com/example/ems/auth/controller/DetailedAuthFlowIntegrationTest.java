@@ -7,7 +7,10 @@ import com.example.ems.auth.entity.UserSession;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.repository.UserSessionRepository;
+import com.example.ems.auth.repository.InvitationRepository;
+import com.example.ems.auth.entity.Invitation;
 import com.example.ems.auth.service.MockEmailService;
+import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.JwtAuthenticationFilter;
 import com.example.ems.security.RateLimitingFilter;
 import com.example.ems.config.GlobalExceptionHandler;
@@ -58,6 +61,12 @@ public class DetailedAuthFlowIntegrationTest {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private InvitationRepository invitationRepository;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
 
     @Autowired
     private RoleRepository roleRepository;
@@ -133,6 +142,9 @@ public class DetailedAuthFlowIntegrationTest {
                     .forEach(s -> userSessionRepository.delete(s));
             userRepository.delete(u);
         }
+        invitationRepository.findByEmail("activateflow@company.com").ifPresent(invitationRepository::delete);
+        employeeRepository.findByEmail("activateflow@company.com").ifPresent(employeeRepository::delete);
+        userRepository.findByWorkEmail("activateflow@company.com").ifPresent(userRepository::delete);
     }
 
     @Test
@@ -265,5 +277,49 @@ public class DetailedAuthFlowIntegrationTest {
         // Verify final session revocation state
         Optional<UserSession> loggedOutSession = userSessionRepository.findByRefreshToken(newRefreshToken);
         assertFalse(loggedOutSession.isPresent());
+    }
+
+    @Test
+    public void testActivateAccountSuccessFlow() throws Exception {
+        // 1. Create a dummy invitation in database
+        String token = java.util.UUID.randomUUID().toString();
+        Invitation invitation = new Invitation();
+        invitation.setName("Activate User");
+        invitation.setEmail("activateflow@company.com");
+        invitation.setRole("EMPLOYEE");
+        invitation.setInvitationToken(token);
+        invitation.setExpiredAt(java.time.LocalDateTime.now().plusHours(24));
+        invitationRepository.save(invitation);
+
+        // 2. Perform /activate call
+        ActivateAccountRequest request = new ActivateAccountRequest();
+        request.setToken(token);
+        request.setPassword("NewSecurePassword@123");
+        request.setConfirmPassword("NewSecurePassword@123");
+
+        mockMvc.perform(post("/api/v1/auth/activate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.employeeId").exists())
+                .andExpect(jsonPath("$.data.status").value("ACTIVE"));
+
+        // 3. Verify user account is created & status is active
+        Optional<User> optUser = userRepository.findByWorkEmail("activateflow@company.com");
+        assertTrue(optUser.isPresent());
+        assertEquals("ACTIVE", optUser.get().getStatus());
+
+        // 4. Try logging in with the new credentials
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("activateflow@company.com");
+        loginRequest.setPassword("NewSecurePassword@123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.user.email").value("activateflow@company.com"));
     }
 }

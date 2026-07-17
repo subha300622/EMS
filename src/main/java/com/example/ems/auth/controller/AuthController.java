@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import com.example.ems.auth.dto.AcceptInvitationRequest;
+import com.example.ems.auth.dto.ActivateAccountRequest;
 import com.example.ems.auth.dto.ChangePasswordRequest;
 import com.example.ems.auth.dto.ForgotPasswordRequest;
 import com.example.ems.auth.dto.InviteRequest;
@@ -25,7 +26,7 @@ import com.example.ems.auth.service.RoleService;
 import com.example.ems.auth.service.SessionService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.common.service.EmailService;
+import com.example.ems.mail.service.EmailService;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -595,6 +596,16 @@ public class AuthController {
         return (ResponseEntity) ResponseEntity.ok(ApiResponse.success("Account activated successfully", Map.of(
                 "employeeId", userId,
                 "status", "ACTIVE")));
+    }
+
+    @Operation(summary = "Activate Account", description = "Validates the emailed activation/invite token, sets the password, and activates the user account.")
+    @PostMapping("/activate")
+    public ResponseEntity<ApiResponse<Object>> activateAccount(@RequestBody @Valid ActivateAccountRequest request) {
+        AcceptInvitationRequest acceptRequest = new AcceptInvitationRequest();
+        acceptRequest.setInvitationToken(request.getToken());
+        acceptRequest.setPassword(request.getPassword());
+        acceptRequest.setConfirmPassword(request.getConfirmPassword());
+        return acceptInvitation(acceptRequest);
     }
 
     @Operation(summary = "SaaS Sign Up", description = "Atomically registers a new organization, subdomain tenant, subscription, and organization admin user.")

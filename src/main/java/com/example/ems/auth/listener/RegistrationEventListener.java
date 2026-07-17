@@ -1,7 +1,7 @@
 package com.example.ems.auth.listener;
 
 import com.example.ems.auth.event.UserRegisteredEvent;
-import com.example.ems.common.service.EmailService;
+import com.example.ems.mail.service.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;

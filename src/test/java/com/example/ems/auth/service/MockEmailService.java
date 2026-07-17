@@ -1,6 +1,6 @@
 package com.example.ems.auth.service;
 
-import com.example.ems.common.service.EmailService;
+import com.example.ems.mail.service.EmailService;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -18,17 +18,41 @@ public class MockEmailService extends EmailService {
     @Override
     public void sendOtpEmail(String toEmail, String otp) {
         sentOtps.put(toEmail, otp);
-        // Bypass Resend API logic to prevent external network calls and failures
     }
 
     @Override
     public void sendInvitationEmail(String toEmail, String name, String role, String token) {
-        // Bypass Resend API
+        // Bypass
+    }
+
+    @Override
+    public void sendInvitationEmail(String toEmail, String name, String role, String token, String hrEmail) {
+        // Bypass
+    }
+
+    @Override
+    public void sendInvitationEmail(
+            String toEmail,
+            String name,
+            String role,
+            String token,
+            String hrEmail,
+            String orgName,
+            String employeeId,
+            String department,
+            String designation,
+            String joiningDate) {
+        // Bypass
     }
 
     @Override
     public void sendEmail(String toEmail, String subject, String html) {
-        // Bypass Resend API
+        // Bypass
+    }
+
+    @Override
+    public void sendEmail(String toEmail, String subject, String html, String ccEmail) {
+        // Bypass
     }
 
     public String getLastSentOtp(String email) {
