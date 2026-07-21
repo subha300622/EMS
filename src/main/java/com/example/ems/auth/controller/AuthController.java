@@ -6,9 +6,9 @@ import java.util.HashMap;
 
 import com.example.ems.auth.dto.AcceptInvitationRequest;
 import com.example.ems.auth.dto.ActivateAccountRequest;
+import com.example.ems.auth.dto.ActivateEmailRequest;
 import com.example.ems.auth.dto.ChangePasswordRequest;
 import com.example.ems.auth.dto.ForgotPasswordRequest;
-import com.example.ems.auth.dto.InviteRequest;
 import com.example.ems.auth.dto.LoginRequest;
 import com.example.ems.auth.dto.LoginResponse;
 import com.example.ems.auth.dto.LogoutRequest;
@@ -455,58 +455,6 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Logged out from all devices successfully"));
     }
 
-    // ── 13. INVITE EMPLOYEE ──────────────────────────────────────────────────
-    @Operation(summary = "Invite Employee", description = "Admin API to invite a new employee and dispatch account activation email.")
-    @PostMapping("/invite")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> inviteEmployee(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid InviteRequest request) {
-
-        User inviter = resolveUser(authHeader);
-        if (inviter == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasRole(inviter, "SUPER_ADMIN") && !roleService.hasRole(inviter, "ADMIN")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Only Super Admin and Admin can invite employees",
-                            "AUTH_002"));
-        }
-
-        Employee employee = employeeRepository.findById(request.getEmployeeId())
-                .orElseThrow(
-                        () -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
-
-        Role role = roleRepository.findById(request.getRoleId())
-                .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + request.getRoleId()));
-
-        if (userRepository.existsByWorkEmail(employee.getEmail())) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("Employee email is already registered", "AUTH_006"));
-        }
-
-        if (invitationRepository.existsByEmail(employee.getEmail())) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("An active invitation already exists for this employee", "AUTH_007"));
-        }
-
-        String token = UUID.randomUUID().toString();
-        Invitation invitation = new Invitation();
-        invitation.setName(employee.getFullName());
-        invitation.setEmail(employee.getEmail());
-        invitation.setRole(role.getName());
-        invitation.setInvitationToken(token);
-        invitation.setExpiredAt(LocalDateTime.now().plusHours(24));
-        invitationRepository.save(invitation);
-
-        emailService.sendInvitationEmail(employee.getEmail(), employee.getFullName(), role.getName(), token);
-
-        return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Invitation sent successfully", Map.of("expiresIn", 86400)));
-    }
-
     // ── 14. ACCEPT INVITATION ────────────────────────────────────────────────
     @Operation(summary = "Accept Invitation", description = "Accepts the activation link token, sets the password, and creates the user account.")
     @PostMapping("/accept-invitation")
@@ -606,6 +554,62 @@ public class AuthController {
         acceptRequest.setPassword(request.getPassword());
         acceptRequest.setConfirmPassword(request.getConfirmPassword());
         return acceptInvitation(acceptRequest);
+    }
+
+    @Operation(summary = "Send Account Activation Email", description = "Generates an activation token and sends the activation email via Gmail SMTP.")
+    @PostMapping("/activate-request")
+    public ResponseEntity<Map<String, Object>> sendActivationEmail(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody @Valid ActivateEmailRequest request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("success", false, "message", "Unauthorized"));
+        }
+
+        User targetUser = userRepository.findByWorkEmail(request.getEmail()).orElse(null);
+        String targetName = null;
+        String targetEmail = null;
+        String targetRole = "EMPLOYEE";
+
+        if (targetUser != null) {
+            targetName = targetUser.getFullName();
+            targetEmail = targetUser.getWorkEmail();
+            targetRole = targetUser.getRole() != null ? targetUser.getRole().getName() : "EMPLOYEE";
+        } else {
+            Employee targetEmployee = employeeRepository.findByEmail(request.getEmail()).orElse(null);
+            if (targetEmployee == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("success", false, "message", "User not found."));
+            }
+            targetName = targetEmployee.getFullName();
+            targetEmail = targetEmployee.getEmail();
+        }
+
+        String token = UUID.randomUUID().toString();
+        Optional<Invitation> optInvitation = invitationRepository.findByEmail(targetEmail);
+        Invitation invitation = optInvitation.orElseGet(Invitation::new);
+        invitation.setName(targetName);
+        invitation.setEmail(targetEmail);
+        invitation.setRole(targetRole);
+        invitation.setInvitationToken(token);
+        invitation.setExpiredAt(LocalDateTime.now().plusHours(24));
+        invitation.setAccepted(false);
+        invitationRepository.save(invitation);
+
+        try {
+            emailService.sendActivationEmailJavaMail(
+                    targetEmail,
+                    targetName,
+                    currentUser.getWorkEmail(),
+                    token
+            );
+            return ResponseEntity.ok(Map.of("success", true, "message", "Activation email sent successfully."));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("success", false, "message", "Unable to send activation email."));
+        }
     }
 
     @Operation(summary = "SaaS Sign Up", description = "Atomically registers a new organization, subdomain tenant, subscription, and organization admin user.")

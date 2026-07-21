@@ -2,6 +2,7 @@ package com.example.ems.auth.controller;
 
 import com.example.ems.auth.dto.LoginRequest;
 import com.example.ems.auth.dto.ActivateAccountRequest;
+import com.example.ems.auth.dto.ActivateEmailRequest;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.InvitationRepository;
@@ -190,5 +191,86 @@ public class AuthControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errorCode").value("AUTH_008"));
-    }
+     }
+
+     @Test
+     public void testSendActivationEmailSuccess() throws Exception {
+         ActivateEmailRequest request = new ActivateEmailRequest();
+         request.setEmail("user@company.com");
+
+         User currentUser = new User();
+         currentUser.setWorkEmail("admin@company.com");
+         currentUser.setFullName("Admin User");
+
+         User targetUser = new User();
+         targetUser.setWorkEmail("user@company.com");
+         targetUser.setFullName("Sarah Connor");
+
+         when(jwtService.validateAccessToken("valid-token")).thenReturn(true);
+         when(jwtService.getEmailFromToken("valid-token")).thenReturn("admin@company.com");
+         when(userRepository.findByWorkEmail("admin@company.com")).thenReturn(Optional.of(currentUser));
+         when(userRepository.findByWorkEmail("user@company.com")).thenReturn(Optional.of(targetUser));
+         when(invitationRepository.findByEmail("user@company.com")).thenReturn(Optional.empty());
+
+         mockMvc.perform(post("/api/v1/auth/activate-request")
+                 .header("Authorization", "Bearer valid-token")
+                 .contentType(MediaType.APPLICATION_JSON)
+                 .content(objectMapper.writeValueAsString(request)))
+                 .andExpect(status().isOk())
+                 .andExpect(jsonPath("$.success").value(true))
+                 .andExpect(jsonPath("$.message").value("Activation email sent successfully."));
+     }
+
+     @Test
+     public void testSendActivationEmailFailure_UserNotFound() throws Exception {
+         ActivateEmailRequest request = new ActivateEmailRequest();
+         request.setEmail("unknown@company.com");
+
+         User currentUser = new User();
+         currentUser.setWorkEmail("admin@company.com");
+
+         when(jwtService.validateAccessToken("valid-token")).thenReturn(true);
+         when(jwtService.getEmailFromToken("valid-token")).thenReturn("admin@company.com");
+         when(userRepository.findByWorkEmail("admin@company.com")).thenReturn(Optional.of(currentUser));
+         when(userRepository.findByWorkEmail("unknown@company.com")).thenReturn(Optional.empty());
+
+         mockMvc.perform(post("/api/v1/auth/activate-request")
+                 .header("Authorization", "Bearer valid-token")
+                 .contentType(MediaType.APPLICATION_JSON)
+                 .content(objectMapper.writeValueAsString(request)))
+                 .andExpect(status().isNotFound())
+                 .andExpect(jsonPath("$.success").value(false))
+                 .andExpect(jsonPath("$.message").value("User not found."));
+     }
+
+     @Test
+     public void testSendActivationEmailFailure_SmtpException() throws Exception {
+         ActivateEmailRequest request = new ActivateEmailRequest();
+         request.setEmail("user@company.com");
+
+         User currentUser = new User();
+         currentUser.setWorkEmail("admin@company.com");
+
+         User targetUser = new User();
+         targetUser.setWorkEmail("user@company.com");
+         targetUser.setFullName("Sarah Connor");
+
+         when(jwtService.validateAccessToken("valid-token")).thenReturn(true);
+         when(jwtService.getEmailFromToken("valid-token")).thenReturn("admin@company.com");
+         when(userRepository.findByWorkEmail("admin@company.com")).thenReturn(Optional.of(currentUser));
+         when(userRepository.findByWorkEmail("user@company.com")).thenReturn(Optional.of(targetUser));
+         when(invitationRepository.findByEmail("user@company.com")).thenReturn(Optional.empty());
+
+         // Mock email sending throwing an exception
+         org.mockito.Mockito.doThrow(new RuntimeException("SMTP failed"))
+                 .when(emailService).sendActivationEmailJavaMail(any(), any(), any(), any());
+
+         mockMvc.perform(post("/api/v1/auth/activate-request")
+                 .header("Authorization", "Bearer valid-token")
+                 .contentType(MediaType.APPLICATION_JSON)
+                 .content(objectMapper.writeValueAsString(request)))
+                 .andExpect(status().isInternalServerError())
+                 .andExpect(jsonPath("$.success").value(false))
+                 .andExpect(jsonPath("$.message").value("Unable to send activation email."));
+     }
 }

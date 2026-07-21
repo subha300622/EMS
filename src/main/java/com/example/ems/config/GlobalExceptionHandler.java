@@ -60,6 +60,13 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(ex.getMessage(), "RES_404"));
     }
 
+    @ExceptionHandler(com.example.ems.common.exception.ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(
+            com.example.ems.common.exception.ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error(ex.getMessage(), "CON_409"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) throws Exception {
         if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {

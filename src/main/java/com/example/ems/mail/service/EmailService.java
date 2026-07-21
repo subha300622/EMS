@@ -1,6 +1,12 @@
 package com.example.ems.mail.service;
 
 import jakarta.mail.internet.MimeMessage;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.Message;
+import jakarta.mail.Authenticator;
+import jakarta.mail.PasswordAuthentication;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +15,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+import java.util.Properties;
+
 @Service
 public class EmailService {
 
@@ -16,6 +24,18 @@ public class EmailService {
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
+
+    @Value("${spring.mail.host:smtp.gmail.com}")
+    private String smtpHost;
+
+    @Value("${spring.mail.port:587}")
+    private String smtpPort;
+
+    @Value("${spring.mail.username:subashinibalu30@gmail.com}")
+    private String smtpUsername;
+
+    @Value("${spring.mail.password:nqokfqkbsychvhfq}")
+    private String smtpPassword;
 
     @Value("${app.email.sender-address:noreply@company.com}")
     private String fromEmail;
@@ -207,6 +227,57 @@ public class EmailService {
         } catch (Exception e) {
             log.error("JavaMailSender error sending to {}: {}", toEmail, e.getMessage());
             throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Sends activation email using Gmail SMTP via JavaMail API.
+     */
+    public void sendActivationEmailJavaMail(String toEmail, String name, String ccEmail, String token) {
+        String from = smtpUsername; // Uses configured username from properties
+        String subject = "Activate Your EMS Account";
+        String activationLink = "https://ems.company.com/activate?token=" + token;
+
+        String body = "Hello " + name + ",\n\n"
+                + "Your EMS account has been created successfully.\n\n"
+                + "Please click the link below to activate your account.\n\n"
+                + activationLink + "\n\n"
+                + "This activation link is valid for 24 hours.\n\n"
+                + "If you did not request this account, please ignore this email.\n\n"
+                + "Regards,\n"
+                + "EMS Team";
+
+        Properties props = new Properties();
+        props.put("mail.smtp.host", smtpHost);
+        props.put("mail.smtp.port", smtpPort);
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.transport.protocol", "smtp");
+
+        final String password = smtpPassword;
+
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(from, password);
+            }
+        });
+
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(from));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            if (ccEmail != null && !ccEmail.isBlank()) {
+                message.setRecipients(Message.RecipientType.CC, InternetAddress.parse(ccEmail));
+            }
+            message.setSubject(subject);
+            message.setText(body);
+
+            Transport.send(message);
+            log.info("Gmail SMTP sent activation email to {} (CC: {}) via JavaMail", toEmail, ccEmail);
+        } catch (Exception e) {
+            log.error("Gmail SMTP failed to send activation email to {}: {}", toEmail, e.getMessage());
+            throw new RuntimeException("Unable to send activation email.", e);
         }
     }
 }
