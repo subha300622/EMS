@@ -36,10 +36,12 @@ public class UserProvisioningService {
         user.setMobileNumber(phone);
         user.setPassword(passwordEncoder.encode(password));
         user.setRole(adminRole);
-        user.setRequestedRole("ADMIN");
+        user.setRoleId(adminRole != null ? adminRole.getId() : null);
+        user.setRequestedRole("SUPER_ADMIN");
         user.setOrganization(organization);
-        user.setOrganizationName(organization.getName());
-        user.setStatus(UserStatus.PENDING_EMAIL_VERIFICATION.name());
+        user.setOrganizationId(organization != null ? organization.getId() : null);
+        user.setOrganizationName(organization != null ? organization.getName() : null);
+        user.setStatus(UserStatus.ACTIVE.name());
         user.setProvider(AuthProvider.LOCAL);
         user.setLocation(address);
 
@@ -61,7 +63,7 @@ public class UserProvisioningService {
         emp.setAddress(address != null ? address : "123 Corporate Way");
         emp.setEmergencyContact("9876543210");
         emp.setDepartment("HR"); // default seeded department
-        emp.setDesignation("ADMIN");
+        emp.setDesignation("SUPER_ADMIN");
         emp.setAnnualSalary(BigDecimal.ZERO);
         emp.setJoiningDate(LocalDate.now());
         emp.setLocation(address);

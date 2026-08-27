@@ -78,6 +78,8 @@ public class Attendance {
                     this.status = AttendanceStatus.LEAVE;
                 } else if ("HALF_DAY".equalsIgnoreCase(status) || "HALF DAY".equalsIgnoreCase(status)) {
                     this.status = AttendanceStatus.HALF_DAY;
+                } else if ("HOLIDAY".equalsIgnoreCase(status)) {
+                    this.status = AttendanceStatus.HOLIDAY;
                 } else {
                     this.status = AttendanceStatus.PRESENT;
                 }

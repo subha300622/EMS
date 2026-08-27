@@ -5,6 +5,7 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
+import com.example.ems.config.BaseCacheService;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.settings.entity.SystemSetting;
 import com.example.ems.settings.service.SystemSettingService;
@@ -38,7 +39,7 @@ public class SystemSettingController {
     private RoleService roleService;
 
     @Autowired(required = false)
-    private List<com.example.ems.config.BaseCacheService> cacheServices;
+    private List<BaseCacheService> cacheServices;
 
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -168,7 +169,7 @@ public class SystemSettingController {
         
         Map<String, Object> aggregatedStats = new HashMap<>();
         if (cacheServices != null) {
-            for (com.example.ems.config.BaseCacheService service : cacheServices) {
+            for (BaseCacheService service : cacheServices) {
                 // Handle Spring proxy class names
                 String serviceName = service.getClass().getSimpleName();
                 if (serviceName.contains("$$")) {

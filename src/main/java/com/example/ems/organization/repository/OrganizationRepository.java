@@ -20,7 +20,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @Query("SELECT COUNT(e) FROM Employee e WHERE e.organization.id = :orgId")
     long countEmployees(@Param("orgId") Long orgId);
 
-    @Query("SELECT COUNT(u) FROM User u WHERE u.organization.id = :orgId AND (u.role.name = 'ADMIN' OR u.role.name = 'SUPER_ADMIN')")
+    @Query("SELECT COUNT(u) FROM User u WHERE u.organization.id = :orgId AND (u.role.name = 'SUPER_ADMIN' OR u.role.name = 'ADMIN' OR u.role.name = 'PLATFORM_ADMIN')")
     long countAdmins(@Param("orgId") Long orgId);
 
     @Query("SELECT COUNT(d) FROM Department d WHERE d.organization.id = :orgId")

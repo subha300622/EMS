@@ -60,6 +60,13 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(ex.getMessage(), "RES_404"));
     }
 
+    @ExceptionHandler(com.example.ems.onboarding.exception.InvalidOnboardingTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidOnboardingTransition(
+            com.example.ems.onboarding.exception.InvalidOnboardingTransitionException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), "ONB_400"));
+    }
+
     @ExceptionHandler(com.example.ems.common.exception.ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflictException(
             com.example.ems.common.exception.ConflictException ex) {
@@ -67,11 +74,24 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(ex.getMessage(), "CON_409"));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), "BAD_REQUEST"));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error(ex.getMessage(), "CONFLICT"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) throws Exception {
         if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
             throw ex;
         }
+        ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.error("An unexpected error occurred: " + ex.getMessage(), "SYS_500"));
     }

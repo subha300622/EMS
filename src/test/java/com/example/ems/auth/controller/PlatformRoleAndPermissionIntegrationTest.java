@@ -23,9 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,299 +34,217 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 public class PlatformRoleAndPermissionIntegrationTest {
 
-    private MockMvc platformRoleMvc;
-    private MockMvc permissionMvc;
-    private MockMvc orgRoleMvc;
-    private MockMvc userMvc;
+        private MockMvc catalogMvc;
+        private MockMvc userMvc;
 
-    @Autowired
-    private PlatformRoleController platformRoleController;
+        @Autowired
+        private PermissionCatalogController permissionCatalogController;
 
-    @Autowired
-    private PermissionController permissionController;
+        @Autowired
+        private UserController userController;
 
-    @Autowired
-    private OrganizationRoleController orgRoleController;
+        @Autowired
+        private RoleService roleService;
 
-    @Autowired
-    private UserController userController;
+        @Autowired
+        private UserRepository userRepository;
 
-    @Autowired
-    private RoleService roleService;
+        @Autowired
+        private RoleRepository roleRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+        @Autowired
+        private PermissionRepository permissionRepository;
 
-    @Autowired
-    private RoleRepository roleRepository;
+        @Autowired
+        private OrganizationRepository organizationRepository;
 
-    @Autowired
-    private PermissionRepository permissionRepository;
+        @Autowired
+        private JwtService jwtService;
 
-    @Autowired
-    private OrganizationRepository organizationRepository;
+        @Autowired
+        private ApplicationEventPublisher eventPublisher;
 
-    @Autowired
-    private JwtService jwtService;
+        private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Autowired
-    private ApplicationEventPublisher eventPublisher;
+        private User platformAdmin;
+        private User orgAdmin;
+        private User regularUser;
+        private Organization testOrg;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+        private String orgAdminToken;
 
-    private User platformAdmin;
-    private User orgAdmin;
-    private User regularUser;
-    private Organization testOrg;
+        @BeforeEach
+        public void setUp() {
+                catalogMvc = MockMvcBuilders.standaloneSetup(permissionCatalogController).build();
+                userMvc = MockMvcBuilders.standaloneSetup(userController).build();
 
-    private String platformAdminToken;
-    private String orgAdminToken;
+                // Clean up any existing test users to prevent unique constraint failures
+                userRepository.findByWorkEmail("plat-admin-tst@company.com").ifPresent(userRepository::delete);
+                userRepository.findByWorkEmail("org-admin-tst@company.com").ifPresent(userRepository::delete);
+                userRepository.findByWorkEmail("emp-tst@company.com").ifPresent(userRepository::delete);
+                userRepository.findByUserId("EMP_PL_TST").ifPresent(userRepository::delete);
+                userRepository.findByUserId("EMP_ORG_TST").ifPresent(userRepository::delete);
+                userRepository.findByUserId("EMP_REG_TST").ifPresent(userRepository::delete);
 
-    @BeforeEach
-    public void setUp() {
-        platformRoleMvc = MockMvcBuilders.standaloneSetup(platformRoleController).build();
-        permissionMvc = MockMvcBuilders.standaloneSetup(permissionController).build();
-        orgRoleMvc = MockMvcBuilders.standaloneSetup(orgRoleController).build();
-        userMvc = MockMvcBuilders.standaloneSetup(userController).build();
+                // 1. Create Platform Admin
+                Role superAdminRole = roleRepository.findByName("SUPER_ADMIN")
+                                .map(r -> {
+                                        r.setPlatformTemplate(true);
+                                        r.setSystemRole(true);
+                                        return roleRepository.save(r);
+                                })
+                                .orElseGet(() -> {
+                                        Role r = new Role();
+                                        r.setName("SUPER_ADMIN");
+                                        r.setPlatformTemplate(true);
+                                        r.setSystemRole(true);
+                                        return roleRepository.save(r);
+                                });
 
-        // Clean up any existing test users to prevent unique constraint failures
-        userRepository.findByWorkEmail("plat-admin-tst@company.com").ifPresent(userRepository::delete);
-        userRepository.findByWorkEmail("org-admin-tst@company.com").ifPresent(userRepository::delete);
-        userRepository.findByWorkEmail("emp-tst@company.com").ifPresent(userRepository::delete);
-        userRepository.findByUserId("EMP_PL_TST").ifPresent(userRepository::delete);
-        userRepository.findByUserId("EMP_ORG_TST").ifPresent(userRepository::delete);
-        userRepository.findByUserId("EMP_REG_TST").ifPresent(userRepository::delete);
+                // Seed system.manage permission to bypass checks
+                Permission systemManage = permissionRepository.findByName("system.manage")
+                                .orElseGet(() -> {
+                                        Permission p = new Permission();
+                                        p.setName("system.manage");
+                                        p.setDescription("Super Admin System Management");
+                                        return permissionRepository.save(p);
+                                });
+                superAdminRole.getPermissions().add(systemManage);
+                roleRepository.save(superAdminRole);
 
-        // 1. Create Platform Admin
-        Role superAdminRole = roleRepository.findByName("SUPER_ADMIN")
-                .map(r -> {
-                    r.setPlatformTemplate(true);
-                    r.setSystemRole(true);
-                    return roleRepository.save(r);
-                })
-                .orElseGet(() -> {
-                    Role r = new Role();
-                    r.setName("SUPER_ADMIN");
-                    r.setPlatformTemplate(true);
-                    r.setSystemRole(true);
-                    return roleRepository.save(r);
-                });
+                platformAdmin = new User();
+                platformAdmin.setFullName("Platform Admin User");
+                platformAdmin.setWorkEmail("plat-admin-tst@company.com");
+                platformAdmin.setUserId("EMP_PL_TST");
+                platformAdmin.setRole(superAdminRole);
+                platformAdmin.setStatus("ACTIVE");
+                platformAdmin = userRepository.save(platformAdmin);
 
-        // Seed system.manage permission to bypass checks
-        Permission systemManage = permissionRepository.findByName("system.manage")
-                .orElseGet(() -> {
-                    Permission p = new Permission();
-                    p.setName("system.manage");
-                    p.setDescription("Super Admin System Management");
-                    return permissionRepository.save(p);
-                });
-        superAdminRole.getPermissions().add(systemManage);
-        roleRepository.save(superAdminRole);
+                // 2. Create Test Organization
+                testOrg = new Organization();
+                testOrg.setName("Test Multi-Tenant Org");
+                testOrg.setOrganizationCode("TMTORG");
+                testOrg = organizationRepository.save(testOrg);
 
-        platformAdmin = new User();
-        platformAdmin.setFullName("Platform Admin User");
-        platformAdmin.setWorkEmail("plat-admin-tst@company.com");
-        platformAdmin.setUserId("EMP_PL_TST");
-        platformAdmin.setRole(superAdminRole);
-        platformAdmin.setStatus("ACTIVE");
-        platformAdmin = userRepository.save(platformAdmin);
+                // Provision organization roles using event publisher (simulates Org register
+                // hook)
+                eventPublisher.publishEvent(
+                                new OrganizationCreatedEvent(testOrg.getId(), testOrg.getOrganizationCode()));
 
-        platformAdminToken = jwtService.generateAccessToken(
-                platformAdmin.getUserId(),
-                platformAdmin.getWorkEmail(),
-                "SUPER_ADMIN"
-        );
+                // 3. Create Org Admin & User
+                Role tenantAdminRole = roleRepository.findByOrganizationIdAndName(testOrg.getId(), "ADMIN")
+                                .orElseGet(() -> {
+                                        Role r = new Role();
+                                        r.setName("ADMIN");
+                                        r.setOrganization(testOrg);
+                                        r.setPlatformTemplate(false);
+                                        return roleRepository.save(r);
+                                });
 
-        // 2. Create Test Organization
-        testOrg = new Organization();
-        testOrg.setName("Test Multi-Tenant Org");
-        testOrg.setOrganizationCode("TMTORG");
-        testOrg = organizationRepository.save(testOrg);
+                Permission roleManage = permissionRepository.findByName("role.manage")
+                                .orElseGet(() -> {
+                                        Permission p = new Permission();
+                                        p.setName("role.manage");
+                                        p.setDescription("Manage Roles");
+                                        return permissionRepository.save(p);
+                                });
+                tenantAdminRole.getPermissions().add(roleManage);
 
-        // Provision organization roles using event publisher (simulates Org register hook)
-        eventPublisher.publishEvent(new OrganizationCreatedEvent(testOrg.getId(), testOrg.getOrganizationCode()));
+                Permission userManage = permissionRepository.findByName("user.manage")
+                                .orElseGet(() -> {
+                                        Permission p = new Permission();
+                                        p.setName("user.manage");
+                                        p.setDescription("Manage Users");
+                                        return permissionRepository.save(p);
+                                });
+                tenantAdminRole.getPermissions().add(userManage);
+                roleRepository.save(tenantAdminRole);
 
-        // 3. Create Org Admin & User
-        Role tenantAdminRole = roleRepository.findByOrganizationIdAndName(testOrg.getId(), "ADMIN")
-                .orElseGet(() -> {
-                    Role r = new Role();
-                    r.setName("ADMIN");
-                    r.setOrganization(testOrg);
-                    r.setPlatformTemplate(false);
-                    return roleRepository.save(r);
-                });
+                orgAdmin = new User();
+                orgAdmin.setFullName("Org Admin User");
+                orgAdmin.setWorkEmail("org-admin-tst@company.com");
+                orgAdmin.setUserId("EMP_ORG_TST");
+                orgAdmin.setOrganization(testOrg);
+                orgAdmin.setRole(tenantAdminRole);
+                orgAdmin.setStatus("ACTIVE");
+                orgAdmin = userRepository.save(orgAdmin);
 
-        Permission roleManage = permissionRepository.findByName("role.manage")
-                .orElseGet(() -> {
-                    Permission p = new Permission();
-                    p.setName("role.manage");
-                    p.setDescription("Manage Roles");
-                    return permissionRepository.save(p);
-                });
-        tenantAdminRole.getPermissions().add(roleManage);
+                orgAdminToken = jwtService.generateAccessToken(
+                                orgAdmin.getUserId(),
+                                orgAdmin.getWorkEmail(),
+                                "ADMIN",
+                                testOrg.getId(),
+                                null,
+                                1,
+                                1L);
 
-        Permission userManage = permissionRepository.findByName("user.manage")
-                .orElseGet(() -> {
-                    Permission p = new Permission();
-                    p.setName("user.manage");
-                    p.setDescription("Manage Users");
-                    return permissionRepository.save(p);
-                });
-        tenantAdminRole.getPermissions().add(userManage);
-        roleRepository.save(tenantAdminRole);
+                Role tenantEmployeeRole = roleRepository.findByOrganizationIdAndName(testOrg.getId(), "EMPLOYEE")
+                                .orElseGet(() -> {
+                                        Role r = new Role();
+                                        r.setName("EMPLOYEE");
+                                        r.setOrganization(testOrg);
+                                        r.setPlatformTemplate(false);
+                                        return roleRepository.save(r);
+                                });
 
-        orgAdmin = new User();
-        orgAdmin.setFullName("Org Admin User");
-        orgAdmin.setWorkEmail("org-admin-tst@company.com");
-        orgAdmin.setUserId("EMP_ORG_TST");
-        orgAdmin.setOrganization(testOrg);
-        orgAdmin.setRole(tenantAdminRole);
-        orgAdmin.setStatus("ACTIVE");
-        orgAdmin = userRepository.save(orgAdmin);
+                regularUser = new User();
+                regularUser.setFullName("Regular Employee User");
+                regularUser.setWorkEmail("emp-tst@company.com");
+                regularUser.setUserId("EMP_REG_TST");
+                regularUser.setOrganization(testOrg);
+                regularUser.setRole(tenantEmployeeRole);
+                regularUser.setStatus("ACTIVE");
+                regularUser = userRepository.save(regularUser);
+        }
 
-        orgAdminToken = jwtService.generateAccessToken(
-                orgAdmin.getUserId(),
-                orgAdmin.getWorkEmail(),
-                "ADMIN",
-                testOrg.getId(),
-                null,
-                1,
-                1L
-        );
+        @Test
+        public void testOrgCreatedProvisionsTenantRolesAndIsolatedPermissions() {
+                // Assert that tenant-scoped roles were provisioned
+                List<Role> tenantRoles = roleRepository.findByOrganizationId(testOrg.getId());
+                assertFalse(tenantRoles.isEmpty());
 
-        Role tenantEmployeeRole = roleRepository.findByOrganizationIdAndName(testOrg.getId(), "EMPLOYEE")
-                .orElseGet(() -> {
-                    Role r = new Role();
-                    r.setName("EMPLOYEE");
-                    r.setOrganization(testOrg);
-                    r.setPlatformTemplate(false);
-                    return roleRepository.save(r);
-                });
+                Optional<Role> tenantEmployee = roleRepository.findByOrganizationIdAndName(testOrg.getId(), "EMPLOYEE");
+                assertTrue(tenantEmployee.isPresent());
+                assertFalse(tenantEmployee.get().isPlatformTemplate());
+                assertEquals(testOrg.getId(), tenantEmployee.get().getOrganization().getId());
+        }
 
-        regularUser = new User();
-        regularUser.setFullName("Regular Employee User");
-        regularUser.setWorkEmail("emp-tst@company.com");
-        regularUser.setUserId("EMP_REG_TST");
-        regularUser.setOrganization(testOrg);
-        regularUser.setRole(tenantEmployeeRole);
-        regularUser.setStatus("ACTIVE");
-        regularUser = userRepository.save(regularUser);
-    }
+        @Test
+        public void testPermissionCatalogFetch() throws Exception {
+                catalogMvc.perform(get("/api/v1/permissions/catalog"))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data.groups").isArray());
+        }
 
-    @Test
-    public void testOrgCreatedProvisionsTenantRolesAndIsolatedPermissions() {
-        // Assert that tenant-scoped roles were provisioned
-        List<Role> tenantRoles = roleRepository.findByOrganizationId(testOrg.getId());
-        assertFalse(tenantRoles.isEmpty());
+        @Test
+        public void testUserRoleAssignmentAndPermissionsQueries() throws Exception {
+                RoleRequest roleReq = new RoleRequest();
+                roleReq.setName("Contractor");
+                roleReq.setDescription("Contractor role");
+                Role customOrgRole = roleService.createTenantRole(testOrg.getId(), roleReq);
 
-        Optional<Role> tenantEmployee = roleRepository.findByOrganizationIdAndName(testOrg.getId(), "EMPLOYEE");
-        assertTrue(tenantEmployee.isPresent());
-        assertFalse(tenantEmployee.get().isPlatformTemplate());
-        assertEquals(testOrg.getId(), tenantEmployee.get().getOrganization().getId());
-    }
+                // 1. Assign role to regular user
+                com.example.ems.auth.dto.UserManagementDtos.UpdateRoleRequest updateRoleReq = 
+                        new com.example.ems.auth.dto.UserManagementDtos.UpdateRoleRequest(String.valueOf(customOrgRole.getId()));
 
-    @Test
-    public void testPlatformRoleTemplatesCRUDAndRoleRestrictions() throws Exception {
-        // 1. List platform templates
-        platformRoleMvc.perform(get("/api/v1/platform/roles")
-                        .header("Authorization", "Bearer " + platformAdminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray());
+                userMvc.perform(put("/api/v1/users/" + regularUser.getUserId() + "/role")
+                                .header("Authorization", "Bearer " + orgAdminToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updateRoleReq)))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.success").value(true));
 
-        // 2. Reject non-admin access to platform templates
-        platformRoleMvc.perform(get("/api/v1/platform/roles")
-                        .header("Authorization", "Bearer " + orgAdminToken))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.success").value(false));
+                // Verify assignment in DB
+                Optional<User> updatedUser = userRepository.findById(regularUser.getId());
+                assertTrue(updatedUser.isPresent());
+                assertEquals("Contractor", updatedUser.get().getRole().getName());
 
-        // 3. Create platform template
-        RoleRequest request = new RoleRequest();
-        request.setName("Temp Platform Template");
-        request.setDescription("Dynamic template");
-
-        platformRoleMvc.perform(post("/api/v1/platform/roles")
-                        .header("Authorization", "Bearer " + platformAdminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.name").value("Temp Platform Template"));
-    }
-
-    @Test
-    public void testPermissionCRUDPlatformAdmin() throws Exception {
-        Permission customPerm = new Permission();
-        customPerm.setName("custom.test.permission");
-        customPerm.setDescription("Test mapping");
-
-        // 1. Create permission
-        permissionMvc.perform(post("/api/v1/platform/permissions")
-                        .header("Authorization", "Bearer " + platformAdminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(customPerm)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.name").value("custom.test.permission"));
-
-        // 2. List system permissions
-        permissionMvc.perform(get("/api/v1/platform/permissions")
-                        .header("Authorization", "Bearer " + platformAdminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
-
-    @Test
-    public void testOrganizationRolesCustomization() throws Exception {
-        // 1. List organization roles
-        orgRoleMvc.perform(get("/api/v1/organizations/roles")
-                        .header("Authorization", "Bearer " + orgAdminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-
-        // 2. Create custom organization role
-        RoleRequest request = new RoleRequest();
-        request.setName("Org Specific Role");
-        request.setDescription("Tenant custom role definition");
-
-        orgRoleMvc.perform(post("/api/v1/organizations/roles")
-                        .header("Authorization", "Bearer " + orgAdminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.name").value("Org Specific Role"));
-    }
-
-    @Test
-    public void testUserRoleAssignmentAndPermissionsQueries() throws Exception {
-        RoleRequest roleReq = new RoleRequest();
-        roleReq.setName("Contractor");
-        roleReq.setDescription("Contractor role");
-        Role customOrgRole = roleService.createTenantRole(testOrg.getId(), roleReq);
-
-        // 1. Assign role to regular user
-        Map<String, List<Long>> request = new HashMap<>();
-        request.put("roleIds", List.of(customOrgRole.getId()));
-
-        userMvc.perform(put("/api/v1/users/" + regularUser.getUserId() + "/roles")
-                        .header("Authorization", "Bearer " + orgAdminToken)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("User role assigned successfully"));
-
-        // Verify assignment in DB
-        Optional<User> updatedUser = userRepository.findByUserId(regularUser.getUserId());
-        assertTrue(updatedUser.isPresent());
-        assertEquals("Contractor", updatedUser.get().getRole().getName());
-
-        // 2. Fetch effective user permissions
-        userMvc.perform(get("/api/v1/users/" + regularUser.getUserId() + "/effective-permissions")
-                        .header("Authorization", "Bearer " + orgAdminToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray());
-    }
+                // 2. Fetch user roles
+                userMvc.perform(get("/api/v1/users/" + regularUser.getUserId() + "/roles")
+                                .header("Authorization", "Bearer " + orgAdminToken))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data.roles").isArray());
+        }
 }

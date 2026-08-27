@@ -1,6 +1,7 @@
 package com.example.ems.support.entity;
 
 import com.example.ems.employee.entity.Employee;
+import com.example.ems.organization.entity.Organization;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -63,7 +64,7 @@ public class MySupportTicket {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "organization_id")
-    private com.example.ems.organization.entity.Organization organization;
+    private Organization organization;
 
     @Column(name = "merged_into_ticket_id")
     private Long mergedIntoTicketId;
@@ -153,8 +154,8 @@ public class MySupportTicket {
     public LocalDateTime getSlaResolutionDueAt() { return slaResolutionDueAt; }
     public void setSlaResolutionDueAt(LocalDateTime slaResolutionDueAt) { this.slaResolutionDueAt = slaResolutionDueAt; }
 
-    public com.example.ems.organization.entity.Organization getOrganization() { return organization; }
-    public void setOrganization(com.example.ems.organization.entity.Organization organization) { this.organization = organization; }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 
     public Long getMergedIntoTicketId() { return mergedIntoTicketId; }
     public void setMergedIntoTicketId(Long mergedIntoTicketId) { this.mergedIntoTicketId = mergedIntoTicketId; }

@@ -36,4 +36,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     java.util.List<User> findByOrganizationId(Long organizationId);
 
     long countByOrganizationId(Long organizationId);
+
+    Optional<User> findByIdAndOrganizationId(Long id, Long organizationId);
+    Optional<User> findByUserIdAndOrganizationId(String userId, Long organizationId);
+    Optional<User> findByWorkEmailAndOrganizationId(String workEmail, Long organizationId);
+    boolean existsByEmployeeIdAndOrganizationId(String employeeId, Long organizationId);
+    boolean existsByWorkEmailAndOrganizationId(String workEmail, Long organizationId);
 }

@@ -28,7 +28,7 @@ spring:
       port: ${REDIS_PORT:6379}
   kafka:
     listener:
-      auto-startup: true
+      auto-startup: false
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer

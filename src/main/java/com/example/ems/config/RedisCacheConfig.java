@@ -107,7 +107,8 @@ public class RedisCacheConfig implements CachingConfigurer {
                 new ConcurrentMapCache("revenueDashboardSummary"),
                 new ConcurrentMapCache("revenueTrends"),
                 new ConcurrentMapCache("revenueGrowth"),
-                new ConcurrentMapCache("revenueForecast")));
+                new ConcurrentMapCache("revenueForecast"),
+                new ConcurrentMapCache("dmsDashboard")));
         return manager;
     }
 

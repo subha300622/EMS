@@ -27,6 +27,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class CategoryWorkflowSimulationTest {
 
@@ -170,10 +172,15 @@ public class CategoryWorkflowSimulationTest {
                 new PlatformCategoryReorderRequest.CategoryOrderDto(5L, 2)
         ));
 
-        when(categoryService.reorderCategories(any())).thenReturn(List.of(
-                new MySupportCategory(1L, "Technical", "tool"),
-                mockCreated
-        ));
+        MySupportCategory cat1 = new MySupportCategory(1L, "Technical", "tool");
+        cat1.setDisplayOrder(1);
+        MySupportCategory cat5 = new MySupportCategory(5L, "Inventory", "inventory");
+        cat5.setDescription("Inventory and stock master issues.");
+        cat5.setColor("#10B981");
+        cat5.setStatus(CategoryStatus.ACTIVE);
+        cat5.setDisplayOrder(2);
+
+        when(categoryService.reorderCategories(any())).thenReturn(List.of(cat1, cat5));
 
         String reorderJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(reorderReq);
         System.out.println("\n[HTTP REQUEST] PATCH /api/platform/support/categories/reorder");
@@ -184,6 +191,11 @@ public class CategoryWorkflowSimulationTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reorderJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].id").value(1))
+                .andExpect(jsonPath("$.data[0].displayOrder").value(1))
+                .andExpect(jsonPath("$.data[1].id").value(5))
+                .andExpect(jsonPath("$.data[1].displayOrder").value(2))
                 .andReturn();
 
         String reorderResponseJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(
@@ -194,7 +206,13 @@ public class CategoryWorkflowSimulationTest {
         System.out.println("--------------------------------------------------------------------------------");
 
         // STEP 6: CHANGE STATUS TO INACTIVE
-        when(categoryService.changeStatus(eq(5L), eq("INACTIVE"), eq(adminEmail))).thenReturn(mockCreated);
+        MySupportCategory mockInactive = new MySupportCategory(5L, "Inventory", "inventory");
+        mockInactive.setDescription(createReq.getDescription());
+        mockInactive.setColor(createReq.getColor());
+        mockInactive.setStatus(CategoryStatus.INACTIVE);
+        mockInactive.setDisplayOrder(5);
+
+        when(categoryService.changeStatus(eq(5L), eq("INACTIVE"), eq(adminEmail))).thenReturn(mockInactive);
 
         System.out.println("\n[HTTP REQUEST] PATCH /api/platform/support/categories/5/status?status=INACTIVE");
         System.out.println("Headers: Authorization = Bearer admin-mock-token");
@@ -202,6 +220,9 @@ public class CategoryWorkflowSimulationTest {
         MvcResult statusResult = mockMvc.perform(patch("/api/platform/support/categories/5/status")
                 .header("Authorization", "Bearer " + token)
                 .param("status", "INACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(5))
+                .andExpect(jsonPath("$.data.status").value("INACTIVE"))
                 .andReturn();
 
         String statusResponseJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(

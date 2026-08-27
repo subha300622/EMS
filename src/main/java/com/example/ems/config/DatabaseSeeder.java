@@ -1,5 +1,7 @@
 package com.example.ems.config;
 
+import com.example.ems.auth.entity.PermissionGroup;
+import com.example.ems.auth.repository.PermissionGroupRepository;
 import com.example.ems.auth.entity.Permission;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
@@ -156,6 +158,9 @@ public class DatabaseSeeder implements ApplicationRunner {
     private Environment environment;
 
     @Autowired
+    private PermissionGroupRepository permissionGroupRepository;
+
+    @Autowired
     private SystemSettingService systemSettingService;
 
     @Autowired
@@ -239,8 +244,8 @@ public class DatabaseSeeder implements ApplicationRunner {
         }
     }
 
-    private void seedCoreAuthData() {
-        System.out.println("DatabaseSeeder: Seeding permissions, roles, and core configuration...");
+    public void seedCoreAuthData() {
+        System.out.println("DatabaseSeeder: Seeding permissions, system permission groups, roles, and core configuration...");
 
         // 1. Seed Permissions from PermissionRegistry
         Map<String, Permission> permissionMap = new HashMap<>();
@@ -255,86 +260,191 @@ public class DatabaseSeeder implements ApplicationRunner {
             permissionMap.put(permName, permission);
         }
 
-        // 2. Seed Roles and map Permissions
-        Map<String, List<String>> rolePermissionsMap = new HashMap<>();
-        rolePermissionsMap.put("SUPER_ADMIN", PermissionRegistry.SUPER_ADMIN_PERMS);
-        rolePermissionsMap.put("ADMIN", PermissionRegistry.ADMIN_PERMS);
-        rolePermissionsMap.put("HR", PermissionRegistry.HR_PERMS);
-        rolePermissionsMap.put("MANAGER", PermissionRegistry.MANAGER_PERMS);
-        rolePermissionsMap.put("FINANCE", PermissionRegistry.FINANCE_PERMS);
-        rolePermissionsMap.put("EMPLOYEE", PermissionRegistry.EMPLOYEE_SELF_PERMS);
+        // 2. Seed System Master Permission Groups
+        Map<String, List<String>> groupDefinitions = new LinkedHashMap<>();
+        groupDefinitions.put("EMPLOYEE_MANAGEMENT", Arrays.asList(
+            "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
+            "employee.directory.read", "employee.directory.manage", "employee.report.read", "employee.profile.read", "employee.profile.update"
+        ));
+        groupDefinitions.put("ATTENDANCE", Arrays.asList(
+            "attendance.read", "attendance.manage", "attendance.team.read", "attendance.self.read",
+            "employee.attendance.read", "employee.attendance.create"
+        ));
+        groupDefinitions.put("LEAVE_MANAGEMENT", Arrays.asList(
+            "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve", "leave.self.read",
+            "employee.leave.create", "employee.leave.read", "employee.leave.cancel"
+        ));
+        groupDefinitions.put("PAYROLL", Arrays.asList(
+            "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
+            "employee.payslip.read", "employee.payslip.download", "payroll-settings.manage", "fnf.manage"
+        ));
+        groupDefinitions.put("RECRUITMENT", Arrays.asList(
+            "recruitment.manage", "employee.training.read", "employee.training.complete"
+        ));
+        groupDefinitions.put("PERFORMANCE", Arrays.asList(
+            "performance.review", "performance.self.read", "performance.self.goal.update", "performance.self.assessment.submit",
+            "performance.self.feedback.read", "performance.self.history.read", "employee.performance.read", "employee.performance.self-review.submit"
+        ));
+        groupDefinitions.put("GOALS", Arrays.asList(
+            "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update", "goal.submit",
+            "goal.approve", "goal.reject", "goal.analytics.read", "employee.goal.read", "employee.goal.update"
+        ));
+        groupDefinitions.put("ASSETS", Arrays.asList(
+            "asset.manage", "asset.self.read", "employee.asset.read", "employee.asset.request"
+        ));
+        groupDefinitions.put("EXPENSES", Arrays.asList(
+            "expense.manage", "expense.self.read", "employee.expense.create", "employee.expense.read", "employee.expense.update"
+        ));
+        groupDefinitions.put("DOCUMENTS", Arrays.asList(
+            "document.self.read", "employee.document.read", "employee.document.upload", "employee.document.delete"
+        ));
+        groupDefinitions.put("ONBOARDING", Arrays.asList(
+            "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", "onboarding.document.read.self",
+            "onboarding.self.submit", "employee.onboarding.read.self", "employee.onboarding.read", "employee.onboarding.update",
+            "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit"
+        ));
+        groupDefinitions.put("SUPPORT", Arrays.asList(
+            "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
+            "support.view", "support.reply", "support.manage", "employee.support-ticket.create", "employee.support-ticket.read", "employee.support-ticket.update"
+        ));
+        groupDefinitions.put("REPORTS", Arrays.asList(
+            "reports.view", "reports.hr", "reports.finance", "reports.manager"
+        ));
+        groupDefinitions.put("TEAM", Arrays.asList(
+            "team.read", "task.assign", "employee.team.hierarchy.read", "employee.schedule.read", "schedule.self.read",
+            "schedule.self.change.create", "schedule.self.availability.update", "schedule.self.notification.read", "schedule.self.timeline.read"
+        ));
+        groupDefinitions.put("SETTINGS", Arrays.asList(
+            "settings.manage", "settings.self.read", "settings.security.read", "settings.security.update", "settings.privacy.read",
+            "settings.privacy.update", "settings.notifications.read", "settings.notifications.update", "settings.appearance.read",
+            "settings.appearance.update", "settings.language.read", "settings.language.update", "settings.devices.read",
+            "settings.devices.remove", "settings.data.export", "settings.support.create", "settings.support.read",
+            "announcement.manage", "employee.announcement.read", "employee.notification.read", "employee.notification.update"
+        ));
+        groupDefinitions.put("AUDIT", Arrays.asList(
+            "audit.read", "audit.export"
+        ));
+        groupDefinitions.put("ORGANIZATION", Arrays.asList(
+            "organization.read", "organization.create", "organization.update", "organization.delete", "organization.subscription", "organization.audit.read", "organization.export"
+        ));
+        groupDefinitions.put("PLATFORM", Arrays.asList(
+            "platform.organization.view", "platform.organization.edit", "platform.role.view", "platform.role.override",
+            "platform.permission.override", "platform.dashboard.view", "platform.audit.view", "platform.reports.view",
+            "platform.dashboard.subscription.view", "platform.reports.subscription.view", "platform.reports.subscription.export",
+            "platform.revenue.dashboard.view", "platform.revenue.payments.view", "platform.revenue.invoices.view",
+            "platform.revenue.refunds.view", "platform.revenue.plans.view", "platform.revenue.forecast.view", "platform.revenue.export",
+            "system.manage", "role.manage", "permission.manage", "user.manage", "user.create", "user.read", "user.update", "user.delete", "user.role.assign"
+        ));
+
+        Map<String, PermissionGroup> groupMap = new HashMap<>();
+        for (Map.Entry<String, List<String>> entry : groupDefinitions.entrySet()) {
+            String code = entry.getKey();
+            List<String> permCodes = entry.getValue();
+            Set<Permission> groupPerms = new HashSet<>();
+            for (String pCode : permCodes) {
+                if (permissionMap.containsKey(pCode)) {
+                    groupPerms.add(permissionMap.get(pCode));
+                }
+            }
+
+            PermissionGroup group = permissionGroupRepository.findByCode(code)
+                    .orElseGet(() -> {
+                        PermissionGroup g = new PermissionGroup();
+                        g.setCode(code);
+                        g.setName(code.replace('_', ' '));
+                        g.setDescription("Permission group for " + code.replace('_', ' '));
+                        return g;
+                    });
+            group.setPermissions(groupPerms);
+            group = permissionGroupRepository.save(group);
+            groupMap.put(code, group);
+        }
+
+        // 3. Seed Platform Template Roles and map Permission Groups
+        Map<String, List<String>> roleGroupsMap = new HashMap<>();
+        roleGroupsMap.put("PLATFORM_ADMIN", Arrays.asList("PLATFORM", "ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS", "EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
+        roleGroupsMap.put("SUPER_ADMIN", Arrays.asList("ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS", "EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
+        roleGroupsMap.put("ADMIN", Arrays.asList("EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "REPORTS", "TEAM", "SETTINGS", "AUDIT"));
+        roleGroupsMap.put("HR", Arrays.asList("EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "RECRUITMENT", "PERFORMANCE", "GOALS", "DOCUMENTS", "ONBOARDING", "SUPPORT", "REPORTS", "TEAM"));
+        roleGroupsMap.put("MANAGER", Arrays.asList("ATTENDANCE", "LEAVE_MANAGEMENT", "PERFORMANCE", "GOALS", "SUPPORT", "REPORTS", "TEAM"));
+        roleGroupsMap.put("FINANCE", Arrays.asList("PAYROLL", "EXPENSES", "REPORTS", "AUDIT"));
+        roleGroupsMap.put("EMPLOYEE", Arrays.asList("ATTENDANCE", "LEAVE_MANAGEMENT", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
 
         Map<String, Role> roleMap = new HashMap<>();
-        for (Map.Entry<String, List<String>> entry : rolePermissionsMap.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : roleGroupsMap.entrySet()) {
             String roleName = entry.getKey();
-            List<String> perms = new ArrayList<>(entry.getValue());
-            perms.addAll(PermissionRegistry.COMMON_SETTINGS_PERMS);
+            List<String> groupCodes = entry.getValue();
 
             Role role = roleRepository.findByName(roleName)
                     .orElseGet(() -> {
                         Role r = new Role();
                         r.setName(roleName);
-                        r.setDescription("Role for " + roleName);
+                        r.setDescription("Role template for " + roleName);
                         return roleRepository.save(r);
                     });
 
-            // Set permissions
-            Set<Permission> rolePerms = new HashSet<>();
-            for (String pName : perms) {
-                if (permissionMap.containsKey(pName)) {
-                    rolePerms.add(permissionMap.get(pName));
+            Set<PermissionGroup> selGroups = new HashSet<>();
+            Set<Permission> effectivePerms = new HashSet<>();
+            for (String gCode : groupCodes) {
+                PermissionGroup pg = groupMap.get(gCode);
+                if (pg != null) {
+                    selGroups.add(pg);
+                    effectivePerms.addAll(pg.getPermissions());
                 }
             }
-            role.setPermissions(rolePerms);
+
+            role.setPermissionGroups(selGroups);
+            role.setPermissions(effectivePerms);
             role.setPlatformTemplate(true);
-            role.setSystemRole("SUPER_ADMIN".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName) || "EMPLOYEE".equalsIgnoreCase(roleName));
+            role.setSystemRole("PLATFORM_ADMIN".equalsIgnoreCase(roleName) || "SUPER_ADMIN".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName) || "EMPLOYEE".equalsIgnoreCase(roleName));
             role.setVersion(1);
             role.setOrganization(null);
             roleRepository.save(role);
             roleMap.put(roleName, role);
         }
 
-        // 3. Seed SUPER_ADMIN default user
-        Role superAdminRole = roleMap.get("SUPER_ADMIN");
-        if (superAdminRole != null) {
-            String roleCleanName = "super_admin";
-            String email = roleCleanName + "@" + seedDomain;
-            String password = roleCleanName + "@" + superAdminRole.getId();
-            String displayName = "Super Admin";
+        // 3. Seed PLATFORM_ADMIN default user
+        Role platformAdminRole = roleMap.get("PLATFORM_ADMIN");
+        if (platformAdminRole != null) {
+            String email = "platform_admin@" + seedDomain;
+            String legacyEmail = "super_admin@" + seedDomain;
+            String password = "platform_admin@" + platformAdminRole.getId();
+            String displayName = "Platform Admin";
 
-            User superAdminUser;
-            if (userRepository.findByWorkEmail(email).isEmpty()) {
-                superAdminUser = new User();
-                superAdminUser.setFullName(displayName);
-                superAdminUser.setWorkEmail(email);
-                superAdminUser.setMobileNumber("1234567890");
-                superAdminUser.setDepartment("IT");
-                superAdminUser.setRequestedRole("SUPER_ADMIN");
-                superAdminUser.setRole(superAdminRole);
-                superAdminUser.setPassword(passwordEncoder.encode(password));
-                superAdminUser.setLocation("Headquarters");
-                userRepository.save(superAdminUser);
+            User platformAdminUser;
+            Optional<User> existingUserOpt = userRepository.findByWorkEmail(email).or(() -> userRepository.findByWorkEmail(legacyEmail));
+            if (existingUserOpt.isEmpty()) {
+                platformAdminUser = new User();
+                platformAdminUser.setFullName(displayName);
+                platformAdminUser.setWorkEmail(email);
+                platformAdminUser.setMobileNumber("1234567890");
+                platformAdminUser.setDepartment("IT");
+                platformAdminUser.setRequestedRole("PLATFORM_ADMIN");
+                platformAdminUser.setRole(platformAdminRole);
+                platformAdminUser.setPassword(passwordEncoder.encode(password));
+                platformAdminUser.setLocation("Headquarters");
+                platformAdminUser = userRepository.save(platformAdminUser);
 
-                String userId = "EMP" + String.format("%03d", superAdminUser.getId());
-                superAdminUser.setUserId(userId);
-                userRepository.save(superAdminUser);
+                String userId = "EMP" + String.format("%03d", platformAdminUser.getId());
+                platformAdminUser.setUserId(userId);
+                platformAdminUser = userRepository.save(platformAdminUser);
                 System.out.println("DatabaseSeeder: " + displayName + " User seeded: " + email + " with ID: " + userId);
             } else {
-                superAdminUser = userRepository.findByWorkEmail(email).get();
-                superAdminUser.setRole(superAdminRole);
-                superAdminUser.setPassword(passwordEncoder.encode(password));
-                userRepository.save(superAdminUser);
+                platformAdminUser = existingUserOpt.get();
+                platformAdminUser.setRole(platformAdminRole);
+                platformAdminUser.setPassword(passwordEncoder.encode(password));
+                userRepository.save(platformAdminUser);
             }
 
             // Ensure Super Admin has fully-populated Employee record
-            Employee emp = employeeRepository.findByEmail(superAdminUser.getWorkEmail())
+            Employee emp = employeeRepository.findByEmail(platformAdminUser.getWorkEmail())
                     .orElseGet(Employee::new);
 
-            emp.setFullName(superAdminUser.getFullName());
-            emp.setEmail(superAdminUser.getWorkEmail());
-            emp.setEmployeeId(superAdminUser.getUserId());
+            emp.setFullName(platformAdminUser.getFullName());
+            emp.setEmail(platformAdminUser.getWorkEmail());
+            emp.setEmployeeId(platformAdminUser.getUserId());
             if (emp.getPhone() == null)
-                emp.setPhone(superAdminUser.getMobileNumber() != null ? superAdminUser.getMobileNumber() : "1234567890");
+                emp.setPhone(platformAdminUser.getMobileNumber() != null ? platformAdminUser.getMobileNumber() : "1234567890");
             if (emp.getGender() == null)
                 emp.setGender("MALE");
             if (emp.getDob() == null)
@@ -344,15 +454,15 @@ public class DatabaseSeeder implements ApplicationRunner {
             if (emp.getEmergencyContact() == null)
                 emp.setEmergencyContact("9876543210");
             if (emp.getDepartment() == null)
-                emp.setDepartment(superAdminUser.getDepartment() != null ? superAdminUser.getDepartment() : "IT");
+                emp.setDepartment(platformAdminUser.getDepartment() != null ? platformAdminUser.getDepartment() : "IT");
             if (emp.getDesignation() == null)
-                emp.setDesignation("SUPER_ADMIN");
+                emp.setDesignation("PLATFORM_ADMIN");
             if (emp.getAnnualSalary() == null)
                 emp.setAnnualSalary(BigDecimal.valueOf(150000));
             if (emp.getJoiningDate() == null)
                 emp.setJoiningDate(LocalDate.of(2026, 6, 10));
             if (emp.getLocation() == null)
-                emp.setLocation(superAdminUser.getLocation() != null ? superAdminUser.getLocation() : "Headquarters");
+                emp.setLocation(platformAdminUser.getLocation() != null ? platformAdminUser.getLocation() : "Headquarters");
             if (emp.getEmploymentType() == null)
                 emp.setEmploymentType("FULL_TIME");
             if (emp.getStatus() == null || emp.getStatus().isBlank())

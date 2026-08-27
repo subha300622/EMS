@@ -466,7 +466,7 @@ public class MySupportService {
         act.setTicket(ticket); act.setEvent("TICKET_UPDATED"); act.setAction(SupportTimelineAction.PRIORITY_CHANGE); act.setPerformedBy(email); act.setTimestamp(now);
         timelineRepository.save(act);
 
-        return new UpdateTicketResponse(ticket.getId(), ticket.getTicketNumber(), ticket.getSubject(),
+        return new UpdateTicketResponse(ticket.getId(), ticket.getTicketNumber(), ticket.getSubject(), ticket.getDescription(),
                 ticket.getPriority().name(), ticket.getStatus().name(), now.format(ISO_FORMATTER), "Ticket updated successfully");
     }
 

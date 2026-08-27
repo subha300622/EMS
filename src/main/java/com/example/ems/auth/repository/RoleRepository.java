@@ -18,4 +18,6 @@ public interface RoleRepository extends JpaRepository<Role, Long> {
     
     // Helper to find a template by name (since templates have organizationId IS NULL)
     Optional<Role> findByNameAndIsPlatformTemplateTrue(String name);
+    @org.springframework.data.jpa.repository.Query("SELECT r FROM Role r WHERE r.id = :id AND (r.organization.id = :organizationId OR (r.organization IS NULL AND r.isPlatformTemplate = true))")
+    Optional<Role> findByIdAndOrganizationId(@org.springframework.data.repository.query.Param("id") Long id, @org.springframework.data.repository.query.Param("organizationId") Long organizationId);
 }

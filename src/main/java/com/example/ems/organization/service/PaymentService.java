@@ -6,6 +6,7 @@ import com.example.ems.organization.entity.Subscription;
 import com.example.ems.organization.entity.SubscriptionInvoice;
 import com.example.ems.organization.repository.PaymentRepository;
 import com.example.ems.organization.repository.SubscriptionInvoiceRepository;
+import com.example.ems.organization.config.RazorpayProperties;
 import com.example.ems.organization.entity.InvoiceStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,7 @@ public class PaymentService {
         private RazorpayService razorpayService;
 
         @Autowired
-        private com.example.ems.organization.config.RazorpayProperties razorpayProperties;
+        private RazorpayProperties razorpayProperties;
 
         public PaymentOrderResponse createPaymentOrder(CreateOrderRequest request, String performedBy) {
                 SubscriptionInvoice invoice = invoiceRepository.findById(request.invoiceId())

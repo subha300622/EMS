@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -31,7 +32,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -278,7 +280,18 @@ public class PlatformAdminOrganizationController {
         if (accessError != null) return accessError;
 
         Page<Employee> emps = organizationService.getEmployees(id, PageRequest.of(page, size));
-        return ResponseEntity.ok(ApiResponse.success("Organization employees retrieved", emps));
+        Page<Map<String, Object>> empDtos = emps.map(e -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", e.getId());
+            map.put("employeeId", e.getEmployeeId());
+            map.put("fullName", e.getFullName());
+            map.put("email", e.getEmail());
+            map.put("department", e.getDepartment());
+            map.put("designation", e.getDesignation());
+            map.put("status", e.getStatus());
+            return map;
+        });
+        return ResponseEntity.ok(ApiResponse.success("Organization employees retrieved", empDtos));
     }
 
     @Operation(summary = "Get Organization Admins")
@@ -291,7 +304,17 @@ public class PlatformAdminOrganizationController {
         if (accessError != null) return accessError;
 
         List<User> admins = organizationService.getAdmins(id);
-        return ResponseEntity.ok(ApiResponse.success("Organization admins retrieved", admins));
+        List<Map<String, Object>> adminDtos = admins.stream().map(u -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", u.getId());
+            map.put("userId", u.getUserId());
+            map.put("fullName", u.getFullName());
+            map.put("workEmail", u.getWorkEmail());
+            map.put("role", u.getRole() != null ? u.getRole().getName() : u.getRequestedRole());
+            map.put("status", u.getStatus());
+            return map;
+        }).collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("Organization admins retrieved", adminDtos));
     }
 
     @Operation(summary = "Get Organization Audit Logs")
@@ -306,7 +329,22 @@ public class PlatformAdminOrganizationController {
         if (accessError != null) return accessError;
 
         Page<OrganizationAuditLog> logs = organizationService.getAuditLogs(id, PageRequest.of(page, size));
-        return ResponseEntity.ok(ApiResponse.success("Organization audit logs retrieved", logs));
+        List<Map<String, Object>> content = new ArrayList<>();
+        for (OrganizationAuditLog entry : logs.getContent()) {
+            Map<String, Object> item = new LinkedHashMap<>();
+            item.put("id", entry.getId());
+            item.put("action", entry.getAction());
+            item.put("entity", entry.getEntity());
+            item.put("entityId", entry.getEntityId());
+            item.put("performedBy", entry.getPerformedBy());
+            item.put("performedAt", entry.getPerformedAt());
+            item.put("oldValues", entry.getOldValues());
+            item.put("newValues", entry.getNewValues());
+            content.add(item);
+        }
+        Page<Map<String, Object>> logDtos = new PageImpl<>(
+                content, PageRequest.of(page, size), logs.getTotalElements());
+        return ResponseEntity.ok(ApiResponse.success("Organization audit logs retrieved", logDtos));
     }
 
     @Operation(summary = "Export Organizations")
@@ -385,11 +423,46 @@ public class PlatformAdminOrganizationController {
                 )
         );
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("organizations", orgs);
-        response.put("employees", emps);
-        response.put("departments", depts);
-        response.put("users", users);
+        Map<String, Object> response = new LinkedHashMap<>();
+        response.put("organizations", orgs.stream().map(o -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", o.getId());
+            map.put("organizationCode", o.getOrganizationCode());
+            map.put("name", o.getName());
+            map.put("email", o.getEmail());
+            map.put("status", o.getStatus());
+            return map;
+        }).toList());
+
+        response.put("employees", emps.stream().map(e -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", e.getId());
+            map.put("employeeId", e.getEmployeeId());
+            map.put("fullName", e.getFullName());
+            map.put("email", e.getEmail());
+            map.put("department", e.getDepartment());
+            map.put("designation", e.getDesignation());
+            return map;
+        }).toList());
+
+        response.put("departments", depts.stream().map(d -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", d.getId());
+            map.put("code", d.getCode());
+            map.put("name", d.getName());
+            map.put("status", d.getStatus());
+            return map;
+        }).toList());
+
+        response.put("users", users.stream().map(u -> {
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("id", u.getId());
+            map.put("userId", u.getUserId());
+            map.put("fullName", u.getFullName());
+            map.put("workEmail", u.getWorkEmail());
+            map.put("role", u.getRole() != null ? u.getRole().getName() : u.getRequestedRole());
+            return map;
+        }).toList());
 
         return ResponseEntity.ok(ApiResponse.success("Search results retrieved", response));
     }

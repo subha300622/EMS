@@ -11,7 +11,10 @@ import java.util.Optional;
 import java.util.List;
 
 public interface SupportSlaRepository extends JpaRepository<SupportSla, Long> {
-    Optional<SupportSla> findByPriority(SupportTicketPriority priority);
+    Optional<SupportSla> findFirstByPriorityAndDeletedFalseOrderByCreatedAtDesc(SupportTicketPriority priority);
+    default Optional<SupportSla> findByPriority(SupportTicketPriority priority) {
+        return findFirstByPriorityAndDeletedFalseOrderByCreatedAtDesc(priority);
+    }
     Optional<SupportSla> findByNameIgnoreCase(String name);
     Optional<SupportSla> findByIsDefaultTrue();
     List<SupportSla> findAllByIsDefaultTrue();

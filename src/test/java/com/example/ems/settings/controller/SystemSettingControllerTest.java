@@ -3,9 +3,13 @@ package com.example.ems.settings.controller;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
+import com.example.ems.config.BaseCacheService;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.settings.entity.SystemSetting;
 import com.example.ems.settings.service.SystemSettingService;
+import org.mockito.Mockito;
+import org.springframework.test.util.ReflectionTestUtils;
+import java.util.ArrayList;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -123,13 +127,13 @@ public class SystemSettingControllerTest {
     public void testGetCacheStatsSuccess() throws Exception {
         mockPermission("settings.manage", true);
         
-        com.example.ems.config.BaseCacheService mockCache = org.mockito.Mockito.mock(com.example.ems.config.BaseCacheService.class);
+        BaseCacheService mockCache = Mockito.mock(BaseCacheService.class);
         when(mockCache.getCacheStats()).thenReturn(Map.of("l2_hits", 42L));
         
-        java.util.List<com.example.ems.config.BaseCacheService> list = new java.util.ArrayList<>();
+        List<BaseCacheService> list = new ArrayList<>();
         list.add(mockCache);
         
-        org.springframework.test.util.ReflectionTestUtils.setField(systemSettingController, "cacheServices", list);
+        ReflectionTestUtils.setField(systemSettingController, "cacheServices", list);
 
         mockMvc.perform(get("/api/v1/settings/cache-stats")
                 .header("Authorization", AUTH_HEADER))

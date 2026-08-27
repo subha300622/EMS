@@ -25,6 +25,9 @@ public class OnboardingTemplateService {
     private OnboardingTemplateRepository templateRepository;
 
     @Autowired
+    private com.example.ems.onboarding.repository.OnboardingRepository onboardingRepository;
+
+    @Autowired
     private DepartmentRepository departmentRepository;
 
     @Autowired
@@ -289,7 +292,10 @@ public class OnboardingTemplateService {
         java.util.Map<String, Object> result = new java.util.HashMap<>();
         result.put("id", templateId);
 
-        if (template.getUsageCount() == 0) {
+        boolean isInUse = template.getUsageCount() > 0
+                || onboardingRepository.existsByAssignedTemplateId(templateId);
+
+        if (!isInUse) {
             templateRepository.delete(template);
             result.put("status", "deleted");
         } else {

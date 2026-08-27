@@ -8,6 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.ems.subscription.exception.IdempotentConflictException;
+import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Map;
 
@@ -30,7 +32,7 @@ public class EventDeduplicationService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean claimEvent(String eventId, String handlerName, String requestHash) {
         String eventKey = eventId + ":" + handlerName;
-        java.sql.Timestamp now = java.sql.Timestamp.from(Instant.now());
+        Timestamp now = Timestamp.from(Instant.now());
         try {
             jdbcTemplate.update(
                 "INSERT INTO idempotency_keys (idempotency_key, status, created_at, updated_at, request_hash) VALUES (?, 'PROCESSING', ?, ?, ?)",
@@ -62,7 +64,7 @@ public class EventDeduplicationService {
                 String dbHash = (String) keyDetails.get("request_hash");
                 
                 if (requestHash != null && dbHash != null && !requestHash.equals(dbHash)) {
-                    throw new com.example.ems.subscription.exception.IdempotentConflictException(
+                    throw new IdempotentConflictException(
                         "Idempotency request hash mismatch for key: " + eventKey
                     );
                 }
@@ -72,16 +74,16 @@ public class EventDeduplicationService {
                     return false;
                 } else if ("PROCESSING".equals(status)) {
                     log.warn("[EventDeduplicationService] Event {} currently PROCESSING by another thread.", eventKey);
-                    throw new com.example.ems.subscription.exception.IdempotentConflictException(
+                    throw new IdempotentConflictException(
                         "Concurrent processing conflict for event: " + eventKey
                     );
                 } else if ("FAILED_PERMANENT".equals(status)) {
                     log.error("[EventDeduplicationService] Event {} has failed permanently. Blocking execution.", eventKey);
-                    throw new com.example.ems.subscription.exception.IdempotentConflictException(
+                    throw new IdempotentConflictException(
                         "Execution blocked: Event has failed permanently: " + eventKey
                     );
                 }
-            } catch (com.example.ems.subscription.exception.IdempotentConflictException ice) {
+            } catch (IdempotentConflictException ice) {
                 throw ice;
             } catch (Exception ex) {
                 log.error("[EventDeduplicationService] Error resolving claim collision for key " + eventKey, ex);
@@ -97,7 +99,7 @@ public class EventDeduplicationService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void completeKey(String eventId, String handlerName) {
         String eventKey = eventId + ":" + handlerName;
-        java.sql.Timestamp now = java.sql.Timestamp.from(Instant.now());
+        Timestamp now = Timestamp.from(Instant.now());
         jdbcTemplate.update(
             "UPDATE idempotency_keys SET status = 'COMPLETED', updated_at = ? WHERE idempotency_key = ?",
             now, eventKey
@@ -111,7 +113,7 @@ public class EventDeduplicationService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void failKeyWithStatus(String eventId, String handlerName, String failureStatus) {
         String eventKey = eventId + ":" + handlerName;
-        java.sql.Timestamp now = java.sql.Timestamp.from(Instant.now());
+        Timestamp now = Timestamp.from(Instant.now());
         jdbcTemplate.update(
             "UPDATE idempotency_keys SET status = ?, updated_at = ? WHERE idempotency_key = ?",
             failureStatus, now, eventKey

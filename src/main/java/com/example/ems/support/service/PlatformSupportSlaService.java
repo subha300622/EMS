@@ -261,8 +261,7 @@ public class PlatformSupportSlaService {
     @Transactional(readOnly = true)
     public SupportSla getByPriority(String priorityStr) {
         SupportTicketPriority priority = parsePriority(priorityStr);
-        return slaRepository.findByPriority(priority)
-                .filter(s -> !s.isDeleted())
+        return slaRepository.findFirstByPriorityAndDeletedFalseOrderByCreatedAtDesc(priority)
                 .orElseThrow(() -> new IllegalArgumentException("No SLA configured for priority: " + priority));
     }
 

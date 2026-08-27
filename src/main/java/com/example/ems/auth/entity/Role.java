@@ -22,6 +22,12 @@ public class Role {
     @Column(name = "created_at", updatable = false)
     private java.time.Instant createdAt;
 
+    @Column(name = "updated_at")
+    private java.time.Instant updatedAt;
+
+    @Column(name = "status", nullable = false)
+    private String status = "ACTIVE";
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
     private com.example.ems.organization.entity.Organization organization;
@@ -40,9 +46,36 @@ public class Role {
         if (this.createdAt == null) {
             this.createdAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         }
+        if (this.updatedAt == null) {
+            this.updatedAt = this.createdAt;
+        }
+        if (this.status == null || this.status.isBlank()) {
+            this.status = "ACTIVE";
+        }
     }
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+    }
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "role_permission_groups",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "group_id")
+    )
+    private Set<PermissionGroup> permissionGroups = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "role_direct_permissions",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private Set<Permission> directPermissions = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "role_permissions",
         joinColumns = @JoinColumn(name = "role_id"),
@@ -123,11 +156,43 @@ public class Role {
         this.systemRole = systemRole;
     }
 
+    public Set<PermissionGroup> getPermissionGroups() {
+        return permissionGroups;
+    }
+
+    public void setPermissionGroups(Set<PermissionGroup> permissionGroups) {
+        this.permissionGroups = permissionGroups;
+    }
+
+    public Set<Permission> getDirectPermissions() {
+        return directPermissions;
+    }
+
+    public void setDirectPermissions(Set<Permission> directPermissions) {
+        this.directPermissions = directPermissions;
+    }
+
     public Set<Permission> getPermissions() {
         return permissions;
     }
 
     public void setPermissions(Set<Permission> permissions) {
         this.permissions = permissions;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public java.time.Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

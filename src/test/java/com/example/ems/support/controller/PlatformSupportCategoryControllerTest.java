@@ -20,7 +20,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -202,13 +201,40 @@ public class PlatformSupportCategoryControllerTest {
                                 new PlatformCategoryReorderRequest.CategoryOrderDto(1L, 2),
                                 new PlatformCategoryReorderRequest.CategoryOrderDto(2L, 1)));
 
-                when(categoryService.reorderCategories(any())).thenReturn(Collections.emptyList());
+                MySupportCategory cat1 = new MySupportCategory(1L, "Technical", "tool");
+                cat1.setDisplayOrder(2);
+                MySupportCategory cat2 = new MySupportCategory(2L, "Billing", "credit-card");
+                cat2.setDisplayOrder(1);
+
+                when(categoryService.reorderCategories(any())).thenReturn(List.of(cat1, cat2));
 
                 mockMvc.perform(patch("/api/platform/support/categories/reorder")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(reorder))
                                 .header("Authorization", "Bearer " + token))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.success").value(true));
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data[0].id").value(1))
+                                .andExpect(jsonPath("$.data[0].displayOrder").value(2))
+                                .andExpect(jsonPath("$.data[1].id").value(2))
+                                .andExpect(jsonPath("$.data[1].displayOrder").value(1));
+        }
+
+        @Test
+        public void testChangeStatusSuccess() throws Exception {
+                setupMockPermissions(true);
+
+                MySupportCategory cat = new MySupportCategory(1L, "Technical", "tool");
+                cat.setStatus(CategoryStatus.INACTIVE);
+
+                when(categoryService.changeStatus(eq(1L), eq("INACTIVE"), eq(adminEmail))).thenReturn(cat);
+
+                mockMvc.perform(patch("/api/platform/support/categories/1/status")
+                                .param("status", "INACTIVE")
+                                .header("Authorization", "Bearer " + token))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data.id").value(1))
+                                .andExpect(jsonPath("$.data.status").value("INACTIVE"));
         }
 }

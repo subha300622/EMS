@@ -17,6 +17,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * Uses Spring Embedded Kafka so no external broker is needed.
  */
+
 @SpringBootTest
 @EmbeddedKafka(partitions = 1, topics = {
                 EventTypes.NOTIFICATION_CREATED,
@@ -43,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.*;
 })
 @DirtiesContext
 @ActiveProfiles("kafkatest")
+@TestPropertySource(properties = "spring.kafka.listener.auto-startup=true")
 class KafkaIntegrationTest {
 
         @Autowired

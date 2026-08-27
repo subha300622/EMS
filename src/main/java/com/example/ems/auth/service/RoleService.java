@@ -37,6 +37,9 @@ public class RoleService {
     private OrganizationRepository organizationRepository;
 
     @Autowired
+    private com.example.ems.auth.repository.PermissionGroupRepository permissionGroupRepository;
+
+    @Autowired
     private CacheManager cacheManager;
 
     @Transactional(readOnly = true)
@@ -114,6 +117,35 @@ public class RoleService {
             return false;
         }
         User user = optUser.get();
+
+        // SUPER_ADMIN role check: Organization Super Admin has top-level tenant privileges
+        if (user.getRole() != null) {
+            String roleName = user.getRole().getName();
+            if ("SUPER_ADMIN".equalsIgnoreCase(roleName)) {
+                return true;
+            }
+            if ("PLATFORM_ADMIN".equalsIgnoreCase(roleName)) {
+                // PLATFORM_ADMIN has platform-wide visibility but cannot manage internal tenant data
+                if (permissionName.startsWith("employee.") || permissionName.startsWith("department.") ||
+                    permissionName.startsWith("team.") || permissionName.startsWith("payroll.") ||
+                    permissionName.startsWith("attendance.manage") || permissionName.startsWith("leave.manage")) {
+                    return false;
+                }
+                return true;
+            }
+        }
+        if ("SUPER_ADMIN".equalsIgnoreCase(user.getRequestedRole())) {
+            return true;
+        }
+        if ("PLATFORM_ADMIN".equalsIgnoreCase(user.getRequestedRole())) {
+            if (permissionName.startsWith("employee.") || permissionName.startsWith("department.") ||
+                permissionName.startsWith("team.") || permissionName.startsWith("payroll.") ||
+                permissionName.startsWith("attendance.manage") || permissionName.startsWith("leave.manage")) {
+                return false;
+            }
+            return true;
+        }
+
         List<String> permissions = getPermissionsForUserId(user.getUserId());
 
         // SUPER_ADMIN bypass: if user has system.manage, allow everything
@@ -148,6 +180,52 @@ public class RoleService {
         return roleRepository.findByIsPlatformTemplateTrue();
     }
 
+    private void processAndCalculateEffectivePermissions(Role role, RoleRequest request) {
+        if (request == null) return;
+
+        Set<com.example.ems.auth.entity.PermissionGroup> permissionGroups = new HashSet<>();
+        Set<Permission> directPermissions = new HashSet<>();
+        Set<Permission> effectivePermissions = new HashSet<>();
+
+        // 1. Process Permission Groups if provided
+        if (request.getPermissionGroupIds() != null && !request.getPermissionGroupIds().isEmpty()) {
+            List<com.example.ems.auth.entity.PermissionGroup> groups = permissionGroupRepository.findByIdIn(request.getPermissionGroupIds());
+            for (com.example.ems.auth.entity.PermissionGroup group : groups) {
+                permissionGroups.add(group);
+                if (group.getPermissions() != null) {
+                    effectivePermissions.addAll(group.getPermissions());
+                }
+            }
+        }
+
+        // 2. Process Direct Individual Permissions if provided
+        if (request.getPermissionIds() != null && !request.getPermissionIds().isEmpty()) {
+            for (Long pId : request.getPermissionIds()) {
+                Permission p = permissionRepository.findById(pId)
+                        .orElseThrow(() -> new IllegalArgumentException("Permission with ID '" + pId + "' does not exist"));
+                directPermissions.add(p);
+                effectivePermissions.add(p);
+            }
+        }
+        if (request.getPermissionNames() != null && !request.getPermissionNames().isEmpty()) {
+            for (String pName : request.getPermissionNames()) {
+                Permission p = permissionRepository.findByName(pName.trim())
+                        .orElseThrow(() -> new IllegalArgumentException("Permission with name '" + pName + "' does not exist"));
+                directPermissions.add(p);
+                effectivePermissions.add(p);
+            }
+        }
+
+        // Preserve existing permissions if no new permission fields were specified in request
+        if ((request.getPermissionGroupIds() != null && !request.getPermissionGroupIds().isEmpty()) ||
+            (request.getPermissionIds() != null && !request.getPermissionIds().isEmpty()) ||
+            (request.getPermissionNames() != null && !request.getPermissionNames().isEmpty())) {
+            role.setPermissionGroups(permissionGroups);
+            role.setDirectPermissions(directPermissions);
+            role.setPermissions(effectivePermissions);
+        }
+    }
+
     @Transactional
     public Role createPlatformTemplate(RoleRequest request) {
         if (roleRepository.existsByOrganizationIdAndName(null, request.getName())) {
@@ -160,6 +238,7 @@ public class RoleService {
         template.setOrganization(null);
         template.setSystemRole(false);
         template.setVersion(1);
+        processAndCalculateEffectivePermissions(template, request);
         return roleRepository.save(template);
     }
 
@@ -180,6 +259,7 @@ public class RoleService {
 
         template.setName(request.getName().trim());
         template.setDescription(request.getDescription());
+        processAndCalculateEffectivePermissions(template, request);
         Role saved = roleRepository.save(template);
         evictRolePermissionsCache(id);
         return saved;
@@ -222,6 +302,7 @@ public class RoleService {
         role.setPlatformTemplate(false);
         role.setSystemRole(false);
         role.setVersion(1);
+        processAndCalculateEffectivePermissions(role, request);
         return roleRepository.save(role);
     }
 
@@ -242,6 +323,7 @@ public class RoleService {
 
         role.setName(request.getName().trim());
         role.setDescription(request.getDescription());
+        processAndCalculateEffectivePermissions(role, request);
         Role saved = roleRepository.save(role);
         evictRolePermissionsCache(id);
         return saved;
@@ -442,13 +524,14 @@ public class RoleService {
         if (user == null || user.getRole() == null || targetRoleName == null) {
             return false;
         }
-        // Super admin has maximum clearance
-        if ("SUPER_ADMIN".equalsIgnoreCase(user.getRole().getName())) {
+        // Platform admin has maximum clearance
+        if ("PLATFORM_ADMIN".equalsIgnoreCase(user.getRole().getName())) {
             return true;
         }
-        // Hierarchy resolution: SUPER_ADMIN > ADMIN > HR/MANAGER > FINANCE > EMPLOYEE
+        // Hierarchy resolution: PLATFORM_ADMIN > SUPER_ADMIN (Org Admin) > ADMIN > HR/MANAGER > FINANCE > EMPLOYEE
         Map<String, Integer> hierarchy = new HashMap<>();
-        hierarchy.put("SUPER_ADMIN", 100);
+        hierarchy.put("PLATFORM_ADMIN", 100);
+        hierarchy.put("SUPER_ADMIN", 80);
         hierarchy.put("ADMIN", 80);
         hierarchy.put("HR", 60);
         hierarchy.put("MANAGER", 60);
@@ -564,5 +647,49 @@ public class RoleService {
         return getRoleStats(organizationId).stream()
                 .filter(RoleStatsResponse::isCustomized)
                 .collect(Collectors.toList());
+    }
+
+    public com.example.ems.auth.dto.RoleResponse mapRoleToResponse(Role role) {
+        if (role == null) return null;
+
+        List<com.example.ems.auth.dto.PermissionGroupDto> groupDtos = new ArrayList<>();
+        if (role.getPermissionGroups() != null) {
+            for (com.example.ems.auth.entity.PermissionGroup pg : role.getPermissionGroups()) {
+                List<com.example.ems.auth.dto.PermissionResponse> groupPermDtos = new ArrayList<>();
+                if (pg.getPermissions() != null) {
+                    for (Permission p : pg.getPermissions()) {
+                        groupPermDtos.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+                    }
+                }
+                groupDtos.add(new com.example.ems.auth.dto.PermissionGroupDto(pg.getId(), pg.getCode(), pg.getName(), pg.getDescription(), groupPermDtos));
+            }
+        }
+
+        List<com.example.ems.auth.dto.PermissionResponse> directPermDtos = new ArrayList<>();
+        if (role.getDirectPermissions() != null) {
+            for (Permission p : role.getDirectPermissions()) {
+                directPermDtos.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+            }
+        }
+
+        List<com.example.ems.auth.dto.PermissionResponse> effectivePermDtos = new ArrayList<>();
+        if (role.getPermissions() != null) {
+            for (Permission p : role.getPermissions()) {
+                effectivePermDtos.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+            }
+        }
+
+        String createdAtStr = role.getCreatedAt() != null ? role.getCreatedAt().toString() : null;
+
+        return new com.example.ems.auth.dto.RoleResponse(
+            role.getId(),
+            role.getName(),
+            role.getDescription(),
+            effectivePermDtos.size(),
+            createdAtStr,
+            groupDtos,
+            directPermDtos,
+            effectivePermDtos
+        );
     }
 }

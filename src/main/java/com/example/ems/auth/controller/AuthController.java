@@ -14,6 +14,9 @@ import com.example.ems.auth.dto.LoginResponse;
 import com.example.ems.auth.dto.LogoutRequest;
 import com.example.ems.auth.dto.RefreshTokenRequest;
 import com.example.ems.auth.dto.ResetPasswordRequest;
+import com.example.ems.auth.dto.SignupRequest;
+import com.example.ems.auth.dto.SignupResponse;
+import com.example.ems.auth.dto.SignupApiResponse;
 import com.example.ems.auth.dto.VerifyOtpRequest;
 import com.example.ems.auth.entity.Invitation;
 import com.example.ems.auth.entity.Role;
@@ -30,7 +33,6 @@ import com.example.ems.mail.service.EmailService;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
-import com.example.ems.auth.dto.SignupRequest;
 import com.example.ems.auth.service.SignupService;
 import com.example.ems.auth.service.VerificationService;
 import com.example.ems.auth.service.SignupValidationService;
@@ -126,10 +128,12 @@ public class AuthController {
     // ── 1. LOGIN ─────────────────────────────────────────────────────────────
     @Operation(summary = "User Login", description = "Authenticates a user, starts a session in Redis, and returns JWT tokens and user metadata.")
     @PostMapping("/login")
+    @org.springframework.transaction.annotation.Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<LoginResponse> login(@RequestBody @Valid LoginRequest request,
             HttpServletRequest httpRequest) {
-        Optional<User> optUser = userRepository.findByWorkEmail(request.getEmail());
+        String email = request.getEmail() != null ? request.getEmail().trim() : null;
+        Optional<User> optUser = userRepository.findByWorkEmail(email);
         if (optUser.isEmpty() || !passwordEncoder.matches(request.getPassword(), optUser.get().getPassword())) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Invalid credentials", "AUTH_001"));
@@ -151,6 +155,11 @@ public class AuthController {
         // Role name for the token — defaults to EMPLOYEE if not yet upgraded
         String roleName = user.getRole() != null ? user.getRole().getName() : "EMPLOYEE";
 
+        if (user.getUserId() == null || user.getUserId().isBlank()) {
+            user.setUserId("EMP" + String.format("%03d", user.getId()));
+            userRepository.save(user);
+        }
+
         // Create session in Redis first so we can bind sessionId to the access token
         SessionService.SessionMetadata session = sessionService.createSession(
                 user.getUserId(),
@@ -158,7 +167,10 @@ public class AuthController {
                 httpRequest.getHeader("User-Agent"),
                 getClientIp(httpRequest));
 
-        Long orgId = user.getOrganization() != null ? user.getOrganization().getId() : null;
+        Long orgId = user.getOrganizationId() != null ? user.getOrganizationId()
+                : (user.getOrganization() != null ? user.getOrganization().getId() : null);
+        String orgName = user.getOrganizationName() != null ? user.getOrganizationName()
+                : (user.getOrganization() != null ? user.getOrganization().getName() : null);
 
         // Generate Tokens linked to this session
         String accessToken = jwtService.generateAccessToken(user.getUserId(), user.getWorkEmail(), roleName, orgId,
@@ -178,7 +190,9 @@ public class AuthController {
                 user.getWorkEmail(),
                 roleName,
                 user.getStatus(),
-                Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString());
+                Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
+                orgId,
+                orgName);
 
         LoginResponse.LoginData loginData = new LoginResponse.LoginData(tokenData, userData);
         LoginResponse responseBody = new LoginResponse(true, "Login successful",
@@ -603,8 +617,7 @@ public class AuthController {
                     targetEmail,
                     targetName,
                     currentUser.getWorkEmail(),
-                    token
-            );
+                    token);
             return ResponseEntity.ok(Map.of("success", true, "message", "Activation email sent successfully."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -613,30 +626,36 @@ public class AuthController {
     }
 
     @Operation(summary = "SaaS Sign Up", description = "Atomically registers a new organization, subdomain tenant, subscription, and organization admin user.")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Account created successfully", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = SignupApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation Error", content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody @Valid SignupRequest dto, HttpServletRequest request) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public ResponseEntity<ApiResponse<SignupResponse>> signup(@RequestBody @Valid SignupRequest dto,
+            HttpServletRequest request) {
         try {
             SignupService.SignupResult result = signupService.register(
                     dto,
                     getClientIp(request),
                     request.getHeader("User-Agent"));
 
-            Map<String, Object> responseData = new HashMap<>();
-            responseData.put("organizationId", result.getOrganizationId());
-            responseData.put("userId", result.getUserId());
-            responseData.put("emailVerificationRequired", result.isEmailVerificationRequired());
+            SignupResponse responseData = new SignupResponse(
+                    result.getOrganizationId(),
+                    result.getUserId(),
+                    result.isEmailVerificationRequired());
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("code", "SIGNUP_SUCCESS");
-            response.put("message", "Account created successfully.");
-            response.put("data", responseData);
-
-            return ResponseEntity.ok(response);
+            return ResponseEntity
+                    .ok(ApiResponse.success("SIGNUP_SUCCESS", "Account created successfully.", responseData));
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "SIGNUP_VALIDATION_ERR"));
+            System.err.println("=== SIGNUP EXCEPTION: IllegalArgumentException ===");
+            e.printStackTrace();
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "SIGNUP_VALIDATION_ERR"));
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body(ErrorResponse.error(
+            System.err.println("=== SIGNUP EXCEPTION: Exception ===");
+            e.printStackTrace();
+            return (ResponseEntity) ResponseEntity.internalServerError().body(ErrorResponse.error(
                     "An unexpected error occurred during registration: " + e.getMessage(), "SIGNUP_INTERNAL_ERR"));
         }
     }
@@ -679,7 +698,8 @@ public class AuthController {
     public ResponseEntity<?> checkOrganization(@RequestBody Map<String, String> body) {
         String orgName = body.get("orgName");
         if (orgName == null || orgName.isBlank()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("orgName parameter is required", "CHECK_ORG_REQUIRED"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("orgName parameter is required", "CHECK_ORG_REQUIRED"));
         }
         String normalized = signupValidationService.normalizeOrgName(orgName);
         boolean exists = organizationRepository.existsByNormalizedName(normalized);
@@ -698,7 +718,8 @@ public class AuthController {
     public ResponseEntity<?> checkEmail(@RequestBody Map<String, String> body) {
         String email = body.get("email");
         if (email == null || email.isBlank()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("email parameter is required", "CHECK_EMAIL_REQUIRED"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("email parameter is required", "CHECK_EMAIL_REQUIRED"));
         }
         String normalized = signupValidationService.normalizeEmail(email);
         boolean exists = userRepository.existsByWorkEmail(normalized);
@@ -717,7 +738,8 @@ public class AuthController {
     public ResponseEntity<?> checkPhone(@RequestBody Map<String, String> body) {
         String mobileNumber = body.get("mobileNumber");
         if (mobileNumber == null || mobileNumber.isBlank()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("mobileNumber parameter is required", "CHECK_PHONE_REQUIRED"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("mobileNumber parameter is required", "CHECK_PHONE_REQUIRED"));
         }
         String normalized = signupValidationService.normalizePhone(mobileNumber);
         boolean exists = userRepository.existsByMobileNumber(normalized);

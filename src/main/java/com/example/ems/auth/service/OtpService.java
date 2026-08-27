@@ -19,6 +19,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -288,8 +289,9 @@ public class OtpService {
         }
 
         // We have either redisToken or dbOtp (or both). Unify variables.
-        String currentOtpHash = redisToken != null ? redisToken.getOtpHash() : dbOtp.getOtpHash();
-        int currentAttemptCount = redisToken != null ? redisToken.getAttemptCount() : dbOtp.getAttemptCount();
+        // At this point, the early return above guarantees at least one is non-null.
+        String currentOtpHash = redisToken != null ? redisToken.getOtpHash() : Objects.requireNonNull(dbOtp).getOtpHash();
+        int currentAttemptCount = redisToken != null ? redisToken.getAttemptCount() : Objects.requireNonNull(dbOtp).getAttemptCount();
 
         // Check attempts
         if (currentAttemptCount >= MAX_OTP_ATTEMPTS) {

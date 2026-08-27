@@ -4346,7 +4346,9 @@ CREATE TABLE public.roles (
     id bigint NOT NULL,
     created_at timestamp(6) with time zone,
     description character varying(255),
-    name character varying(255) NOT NULL
+    name character varying(255) NOT NULL,
+    status character varying(255) DEFAULT 'ACTIVE'::character varying NOT NULL,
+    updated_at timestamp(6) with time zone
 );
 
 

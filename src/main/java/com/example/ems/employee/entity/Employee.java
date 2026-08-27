@@ -68,6 +68,7 @@ public class Employee {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private com.example.ems.organization.entity.Organization organization;
 
     private String availability = "AVAILABLE";

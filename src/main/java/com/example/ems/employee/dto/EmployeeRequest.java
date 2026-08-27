@@ -29,11 +29,22 @@ public class EmployeeRequest {
     @Schema(example = "password123")
     private String confirmPassword;
 
-    @Schema(example = "[\"ROLE_EMPLOYEE\"]")
-    private List<String> roleIds;
+    @Schema(example = "[\"8\"]")
+    private List<Object> roleIds;
 
     @Schema(example = "[]")
     private List<Object> roleAssignments;
+
+    private Long departmentId;
+    private Long designationId;
+    private Long teamId;
+    private Long teamLeadId;
+    private Long locationId;
+
+    private PersonalDetailsDto personalDetails;
+    private ContactDetailsDto contactDetails;
+    private EmergencyContactDto emergencyContact;
+    private BankDetailsDto bankDetails;
 
     @Schema(example = "1")
     private String reportingManager;
@@ -50,6 +61,9 @@ public class EmployeeRequest {
     @Schema(example = "2026-06-19")
     private LocalDate dateOfJoining;
 
+    @Schema(example = "2026-06-19")
+    private LocalDate joiningDate;
+
     @Schema(example = "Bangalore")
     private String location;
 
@@ -58,6 +72,9 @@ public class EmployeeRequest {
 
     @Schema(example = "Active")
     private String employeeStatus;
+
+    @Schema(example = "Active")
+    private String employmentStatus;
 
     @Schema(example = "Referral")
     private String sourceOfHire;
@@ -136,7 +153,6 @@ public class EmployeeRequest {
     private String phone;
     private String address;
     private String status;
-    private LocalDate joiningDate;
     private Long managerId;
 
     // Getters and Setters
@@ -163,11 +179,38 @@ public class EmployeeRequest {
     public String getConfirmPassword() { return confirmPassword; }
     public void setConfirmPassword(String confirmPassword) { this.confirmPassword = confirmPassword; }
 
-    public List<String> getRoleIds() { return roleIds; }
-    public void setRoleIds(List<String> roleIds) { this.roleIds = roleIds; }
+    public List<Object> getRoleIds() { return roleIds; }
+    public void setRoleIds(List<Object> roleIds) { this.roleIds = roleIds; }
 
     public List<Object> getRoleAssignments() { return roleAssignments; }
     public void setRoleAssignments(List<Object> roleAssignments) { this.roleAssignments = roleAssignments; }
+
+    public Long getDepartmentId() { return departmentId; }
+    public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
+
+    public Long getDesignationId() { return designationId; }
+    public void setDesignationId(Long designationId) { this.designationId = designationId; }
+
+    public Long getTeamId() { return teamId; }
+    public void setTeamId(Long teamId) { this.teamId = teamId; }
+
+    public Long getTeamLeadId() { return teamLeadId; }
+    public void setTeamLeadId(Long teamLeadId) { this.teamLeadId = teamLeadId; }
+
+    public Long getLocationId() { return locationId; }
+    public void setLocationId(Long locationId) { this.locationId = locationId; }
+
+    public PersonalDetailsDto getPersonalDetails() { return personalDetails; }
+    public void setPersonalDetails(PersonalDetailsDto personalDetails) { this.personalDetails = personalDetails; }
+
+    public ContactDetailsDto getContactDetails() { return contactDetails; }
+    public void setContactDetails(ContactDetailsDto contactDetails) { this.contactDetails = contactDetails; }
+
+    public EmergencyContactDto getEmergencyContact() { return emergencyContact; }
+    public void setEmergencyContact(EmergencyContactDto emergencyContact) { this.emergencyContact = emergencyContact; }
+
+    public BankDetailsDto getBankDetails() { return bankDetails; }
+    public void setBankDetails(BankDetailsDto bankDetails) { this.bankDetails = bankDetails; }
 
     public String getReportingManager() { return reportingManager; }
     public void setReportingManager(String reportingManager) { this.reportingManager = reportingManager; }
@@ -193,6 +236,9 @@ public class EmployeeRequest {
     public String getEmployeeStatus() { return employeeStatus; }
     public void setEmployeeStatus(String employeeStatus) { this.employeeStatus = employeeStatus; }
 
+    public String getEmploymentStatus() { return employmentStatus != null ? employmentStatus : employeeStatus; }
+    public void setEmploymentStatus(String employmentStatus) { this.employmentStatus = employmentStatus; }
+
     public String getSourceOfHire() { return sourceOfHire; }
     public void setSourceOfHire(String sourceOfHire) { this.sourceOfHire = sourceOfHire; }
 
@@ -205,13 +251,28 @@ public class EmployeeRequest {
     public String getGender() { return gender; }
     public void setGender(String gender) { this.gender = gender; }
 
-    public String getMaritalStatus() { return maritalStatus; }
+    public String getMaritalStatus() {
+        if (personalDetails != null && personalDetails.getMaritalStatus() != null) {
+            return personalDetails.getMaritalStatus();
+        }
+        return maritalStatus;
+    }
     public void setMaritalStatus(String maritalStatus) { this.maritalStatus = maritalStatus; }
 
-    public String getBloodGroup() { return bloodGroup; }
+    public String getBloodGroup() {
+        if (personalDetails != null && personalDetails.getBloodGroup() != null) {
+            return personalDetails.getBloodGroup();
+        }
+        return bloodGroup;
+    }
     public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
 
-    public String getNationality() { return nationality; }
+    public String getNationality() {
+        if (personalDetails != null && personalDetails.getNationality() != null) {
+            return personalDetails.getNationality();
+        }
+        return nationality;
+    }
     public void setNationality(String nationality) { this.nationality = nationality; }
 
     public String getAadhaarNumber() { return aadhaarNumber; }
@@ -226,13 +287,28 @@ public class EmployeeRequest {
     public String getPassportNumber() { return passportNumber; }
     public void setPassportNumber(String passportNumber) { this.passportNumber = passportNumber; }
 
-    public String getPersonalMobile() { return personalMobile; }
+    public String getPersonalMobile() {
+        if (contactDetails != null && contactDetails.getPersonalMobile() != null) {
+            return contactDetails.getPersonalMobile();
+        }
+        return personalMobile;
+    }
     public void setPersonalMobile(String personalMobile) { this.personalMobile = personalMobile; }
 
-    public String getWorkMobile() { return workMobile; }
+    public String getWorkMobile() {
+        if (contactDetails != null && contactDetails.getWorkMobile() != null) {
+            return contactDetails.getWorkMobile();
+        }
+        return workMobile;
+    }
     public void setWorkMobile(String workMobile) { this.workMobile = workMobile; }
 
-    public String getCurrentAddress() { return currentAddress; }
+    public String getCurrentAddress() {
+        if (contactDetails != null && contactDetails.getAddress() != null) {
+            return contactDetails.getAddress();
+        }
+        return currentAddress;
+    }
     public void setCurrentAddress(String currentAddress) { this.currentAddress = currentAddress; }
 
     public String getPermanentAddress() { return permanentAddress; }
@@ -241,10 +317,20 @@ public class EmployeeRequest {
     public Boolean getSameAddress() { return sameAddress; }
     public void setSameAddress(Boolean sameAddress) { this.sameAddress = sameAddress; }
 
-    public String getEmergencyContactName() { return emergencyContactName; }
+    public String getEmergencyContactName() {
+        if (emergencyContact != null && emergencyContact.getName() != null) {
+            return emergencyContact.getName();
+        }
+        return emergencyContactName;
+    }
     public void setEmergencyContactName(String emergencyContactName) { this.emergencyContactName = emergencyContactName; }
 
-    public String getEmergencyContactNumber() { return emergencyContactNumber; }
+    public String getEmergencyContactNumber() {
+        if (emergencyContact != null && emergencyContact.getPhone() != null) {
+            return emergencyContact.getPhone();
+        }
+        return emergencyContactNumber;
+    }
     public void setEmergencyContactNumber(String emergencyContactNumber) { this.emergencyContactNumber = emergencyContactNumber; }
 
     public LocalDate getProbationEndDate() { return probationEndDate; }
@@ -278,6 +364,12 @@ public class EmployeeRequest {
     public void setFullName(String fullName) { this.fullName = fullName; }
 
     public String getPhone() {
+        if (contactDetails != null && contactDetails.getWorkMobile() != null) {
+            return contactDetails.getWorkMobile();
+        }
+        if (contactDetails != null && contactDetails.getPersonalMobile() != null) {
+            return contactDetails.getPersonalMobile();
+        }
         if (phone == null || phone.isBlank() || "string".equalsIgnoreCase(phone)) {
             return personalMobile;
         }
@@ -286,6 +378,9 @@ public class EmployeeRequest {
     public void setPhone(String phone) { this.phone = phone; }
 
     public String getAddress() {
+        if (contactDetails != null && contactDetails.getAddress() != null) {
+            return contactDetails.getAddress();
+        }
         if (address == null || address.isBlank() || "string".equalsIgnoreCase(address)) {
             return currentAddress;
         }
@@ -294,6 +389,9 @@ public class EmployeeRequest {
     public void setAddress(String address) { this.address = address; }
 
     public String getStatus() {
+        if (employmentStatus != null && !employmentStatus.isBlank()) {
+            return employmentStatus;
+        }
         if (status == null || status.isBlank() || "string".equalsIgnoreCase(status)) {
             return employeeStatus;
         }
@@ -302,13 +400,107 @@ public class EmployeeRequest {
     public void setStatus(String status) { this.status = status; }
 
     public LocalDate getJoiningDate() {
-        if (dateOfJoining != null) {
-            return dateOfJoining;
+        if (joiningDate != null) {
+            return joiningDate;
         }
-        return joiningDate;
+        return dateOfJoining;
     }
     public void setJoiningDate(LocalDate joiningDate) { this.joiningDate = joiningDate; }
 
     public Long getManagerId() { return managerId; }
     public void setManagerId(Long managerId) { this.managerId = managerId; }
+
+    // Nested DTO classes
+    public static class PersonalDetailsDto {
+        private String nationality;
+        private String maritalStatus;
+        private String bloodGroup;
+
+        public String getNationality() { return nationality; }
+        public void setNationality(String nationality) { this.nationality = nationality; }
+
+        public String getMaritalStatus() { return maritalStatus; }
+        public void setMaritalStatus(String maritalStatus) { this.maritalStatus = maritalStatus; }
+
+        public String getBloodGroup() { return bloodGroup; }
+        public void setBloodGroup(String bloodGroup) { this.bloodGroup = bloodGroup; }
+    }
+
+    public static class ContactDetailsDto {
+        private String personalEmail;
+        private String workMobile;
+        private String personalMobile;
+        private String address;
+        private String city;
+        private String state;
+        private String country;
+        private String postalCode;
+
+        public String getPersonalEmail() { return personalEmail; }
+        public void setPersonalEmail(String personalEmail) { this.personalEmail = personalEmail; }
+
+        public String getWorkMobile() { return workMobile; }
+        public void setWorkMobile(String workMobile) { this.workMobile = workMobile; }
+
+        public String getPersonalMobile() { return personalMobile; }
+        public void setPersonalMobile(String personalMobile) { this.personalMobile = personalMobile; }
+
+        public String getAddress() { return address; }
+        public void setAddress(String address) { this.address = address; }
+
+        public String getCity() { return city; }
+        public void setCity(String city) { this.city = city; }
+
+        public String getState() { return state; }
+        public void setState(String state) { this.state = state; }
+
+        public String getCountry() { return country; }
+        public void setCountry(String country) { this.country = country; }
+
+        public String getPostalCode() { return postalCode; }
+        public void setPostalCode(String postalCode) { this.postalCode = postalCode; }
+    }
+
+    public static class EmergencyContactDto {
+        private String name;
+        private String relationship;
+        private String countryCode;
+        private String phone;
+
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+
+        public String getRelationship() { return relationship; }
+        public void setRelationship(String relationship) { this.relationship = relationship; }
+
+        public String getCountryCode() { return countryCode; }
+        public void setCountryCode(String countryCode) { this.countryCode = countryCode; }
+
+        public String getPhone() { return phone; }
+        public void setPhone(String phone) { this.phone = phone; }
+    }
+
+    public static class BankDetailsDto {
+        private String accountHolderName;
+        private String accountNumber;
+        private String bankName;
+        private String branchName;
+        private String ifscCode;
+
+        public String getAccountHolderName() { return accountHolderName; }
+        public void setAccountHolderName(String accountHolderName) { this.accountHolderName = accountHolderName; }
+
+        public String getAccountNumber() { return accountNumber; }
+        public void setAccountNumber(String accountNumber) { this.accountNumber = accountNumber; }
+
+        public String getBankName() { return bankName; }
+        public void setBankName(String bankName) { this.bankName = bankName; }
+
+        public String getBranchName() { return branchName; }
+        public void setBranchName(String branchName) { this.branchName = branchName; }
+
+        public String getIfscCode() { return ifscCode; }
+        public void setIfscCode(String ifscCode) { this.ifscCode = ifscCode; }
+    }
+
 }

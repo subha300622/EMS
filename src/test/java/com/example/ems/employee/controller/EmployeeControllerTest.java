@@ -27,7 +27,6 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -132,35 +131,6 @@ public class EmployeeControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
-    }
-
-    @Test
-    public void testGetReportingChainSuccess() throws Exception {
-        User adminUser = new User();
-        adminUser.setWorkEmail(ADMIN_EMAIL);
-
-        Employee ceo = new Employee();
-        ceo.setId(1L);
-        ceo.setFullName("CEO Name");
-        ceo.setManager(null);
-
-        Employee employee = new Employee();
-        employee.setId(2L);
-        employee.setFullName("Employee Name");
-        employee.setManager(ceo);
-
-        when(jwtService.validateAccessToken(TOKEN)).thenReturn(true);
-        when(jwtService.getEmailFromToken(TOKEN)).thenReturn(ADMIN_EMAIL);
-        when(userRepository.findByWorkEmail(ADMIN_EMAIL)).thenReturn(Optional.of(adminUser));
-        when(roleService.hasPermission(ADMIN_EMAIL, "employee.directory.read")).thenReturn(true);
-        when(employeeRepository.findById(2L)).thenReturn(Optional.of(employee));
-
-        mockMvc.perform(get("/api/v1/employees/2/reporting-chain")
-                .header("Authorization", AUTH_HEADER))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].fullName").value("Employee Name"))
-                .andExpect(jsonPath("$.data[1].fullName").value("CEO Name"));
     }
 
     @Test

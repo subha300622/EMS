@@ -48,9 +48,16 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:3000",
+                "http://127.0.0.1:3000",
+                "http://192.168.1.35:3000",
+                "http://255.255.255.0:3000"));
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-DEV-TOKEN"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-DEV-TOKEN", "X-Organization-Id",
+                "X-Tenant-Id", "organization-id"));
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
@@ -58,46 +65,48 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                   AuthenticationManager authenticationManager,
-                                                   AuthenticationEntryPoint entryPoint,
-                                                   Environment environment,
-                                                   CorsConfigurationSource corsConfigurationSource) throws Exception {
+            AuthenticationManager authenticationManager,
+            AuthenticationEntryPoint entryPoint,
+            Environment environment,
+            CorsConfigurationSource corsConfigurationSource,
+            com.example.ems.security.service.JwtService jwtService,
+            com.example.ems.auth.repository.UserRepository userRepository) throws Exception {
         JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(
-                authenticationManager, entryPoint, environment
-        );
+                authenticationManager, entryPoint, environment, jwtService, userRepository);
 
         http
-            .csrf(AbstractHttpConfigurer::disable)
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/api/v1/auth/login",
-                    "/api/v1/auth/signup",
-                    "/api/v1/auth/email/verify",
-                    "/api/v1/auth/check-organization",
-                    "/api/v1/auth/forgot-password",
-                    "/api/v1/auth/verify-otp",
-                    "/api/v1/auth/resend-otp",
-                    "/api/v1/auth/reset-password",
-                    "/api/v1/auth/accept-invitation",
-                    "/api/v1/auth/refresh",
-                    "/api/v1/auth/logout",
-                    "/api/v1/auth/check-email",
-                    "/api/v1/auth/check-phone",
-                    "/api/files/*/download",
-                    "/api/v1/platform-admin/payments/webhook",
-                    "/v3/api-docs/**",
-                    "/swagger-ui/**",
-                    "/swagger-ui.html",
-                    "/swagger-resources/**",
-                    "/webjars/**",
-                    "/actuator/**"
-                ).permitAll()
-                .anyRequest().authenticated()
-            )
-            .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/v1/auth/login",
+                                "/api/v1/auth/signup",
+                                "/api/v1/auth/email/verify",
+                                "/api/v1/auth/check-organization",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/verify-otp",
+                                "/api/v1/auth/resend-otp",
+                                "/api/v1/auth/reset-password",
+                                "/api/v1/auth/accept-invitation",
+                                "/api/v1/auth/activate",
+                                "/api/v1/auth/refresh",
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/check-email",
+                                "/api/v1/auth/check-phone",
+                                "/api/files/*/download",
+                                "/api/v1/platform-admin/payments/webhook",
+                                "/api/v1/permissions/catalog",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/webjars/**",
+                                "/actuator/**")
+                        .permitAll()
+                        .anyRequest().authenticated())
+                .exceptionHandling(ex -> ex.authenticationEntryPoint(entryPoint))
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -106,8 +115,11 @@ public class SecurityConfig {
     public FilterRegistrationBean<JwtAuthenticationFilter> jwtFilterRegistrationBean(
             AuthenticationManager authenticationManager,
             AuthenticationEntryPoint entryPoint,
-            Environment environment) {
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(authenticationManager, entryPoint, environment);
+            Environment environment,
+            com.example.ems.security.service.JwtService jwtService,
+            com.example.ems.auth.repository.UserRepository userRepository) {
+        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(authenticationManager, entryPoint, environment,
+                jwtService, userRepository);
         FilterRegistrationBean<JwtAuthenticationFilter> registrationBean = new FilterRegistrationBean<>(filter);
         registrationBean.setEnabled(false); // Prevents Spring Boot from registering it in global servlet filter chain
         return registrationBean;

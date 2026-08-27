@@ -175,10 +175,18 @@ public class LoginResponse {
         private String status;
         @Schema(example = "string")
         private String lastLogin;
+        @Schema(example = "1")
+        private Long organizationId;
+        @Schema(example = "Acme Corp")
+        private String organizationName;
 
         public UserData() {}
 
         public UserData(Long id, String employeeId, String name, String email, String role, String status, String lastLogin) {
+            this(id, employeeId, name, email, role, status, lastLogin, null, null);
+        }
+
+        public UserData(Long id, String employeeId, String name, String email, String role, String status, String lastLogin, Long organizationId, String organizationName) {
             this.id = id;
             this.employeeId = employeeId;
             this.name = name;
@@ -186,6 +194,8 @@ public class LoginResponse {
             this.role = role;
             this.status = status;
             this.lastLogin = lastLogin;
+            this.organizationId = organizationId;
+            this.organizationName = organizationName;
         }
 
         public Long getId() {
@@ -242,6 +252,22 @@ public class LoginResponse {
 
         public void setLastLogin(String lastLogin) {
             this.lastLogin = lastLogin;
+        }
+
+        public Long getOrganizationId() {
+            return organizationId;
+        }
+
+        public void setOrganizationId(Long organizationId) {
+            this.organizationId = organizationId;
+        }
+
+        public String getOrganizationName() {
+            return organizationName;
+        }
+
+        public void setOrganizationName(String organizationName) {
+            this.organizationName = organizationName;
         }
     }
 }

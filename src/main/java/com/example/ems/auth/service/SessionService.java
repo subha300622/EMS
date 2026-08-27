@@ -116,7 +116,7 @@ public class SessionService {
         return metadata;
     }
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public SessionMetadata createSession(String userId, String email, String userAgent, String ipAddress) {
         String sessionId = UUID.randomUUID().toString();
         String refreshToken = UUID.randomUUID().toString();
@@ -168,7 +168,7 @@ public class SessionService {
         return null;
     }
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public SessionMetadata rotateRefreshToken(String oldRefreshToken) {
         Optional<UserSession> dbSessionOpt = databaseSessionStore.findByRefreshToken(oldRefreshToken);
         if (dbSessionOpt.isEmpty()) {
@@ -211,7 +211,7 @@ public class SessionService {
         return convertToMetadata(dbSession);
     }
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void revokeSession(String refreshToken) {
         if (refreshToken == null) return;
 
@@ -233,7 +233,7 @@ public class SessionService {
         }
     }
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void revokeSessionById(String userId, String sessionId) {
         if (sessionId == null) return;
 
@@ -268,7 +268,7 @@ public class SessionService {
         return list;
     }
 
-    @Transactional
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     public void revokeAllSessions(String userId) {
         if (userId == null) return;
 

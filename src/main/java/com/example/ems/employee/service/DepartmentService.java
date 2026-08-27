@@ -15,6 +15,7 @@ import com.example.ems.employee.dto.DepartmentUpdateRequest;
 import com.example.ems.employee.entity.DepartmentAuditLog;
 import com.example.ems.employee.repository.DepartmentAuditLogRepository;
 import com.example.ems.auth.entity.User;
+import com.example.ems.security.context.TenantContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -42,19 +43,38 @@ public class DepartmentService {
     @Autowired
     private DepartmentAuditLogRepository departmentAuditLogRepository;
 
+    @Autowired
+    private com.example.ems.organization.repository.OrganizationRepository organizationRepository;
+
     @Transactional
-    public Department createDepartment(DepartmentCreateRequest request) {
-        if (departmentRepository.existsByName(request.getName())) {
-            throw new IllegalArgumentException("Department name already exists");
+    public Department createDepartment(DepartmentCreateRequest request, User currentUser) {
+        Long orgId = TenantContext.getOrganizationId();
+        if (orgId == null && currentUser != null && currentUser.getOrganization() != null) {
+            orgId = currentUser.getOrganization().getId();
         }
-        if (departmentRepository.existsByCode(request.getCode())) {
-            throw new IllegalArgumentException("Department code already exists");
+        com.example.ems.organization.entity.Organization userOrg = null;
+        if (orgId != null) {
+            userOrg = organizationRepository.findById(orgId).orElse(null);
+            if (departmentRepository.existsByNameAndOrganizationId(request.getName(), orgId)) {
+                throw new IllegalArgumentException("Department name already exists in your organization");
+            }
+            if (departmentRepository.existsByCodeAndOrganizationId(request.getCode(), orgId)) {
+                throw new IllegalArgumentException("Department code already exists in your organization");
+            }
+        } else {
+            if (departmentRepository.existsByName(request.getName())) {
+                throw new IllegalArgumentException("Department name already exists");
+            }
+            if (departmentRepository.existsByCode(request.getCode())) {
+                throw new IllegalArgumentException("Department code already exists");
+            }
         }
 
         Department d = new Department();
         d.setName(request.getName());
         d.setCode(request.getCode().trim().toUpperCase());
         d.setDescription(request.getDescription());
+        d.setOrganization(userOrg);
 
         // Resolve Parent Department
         if (request.getParentDepartment() != null && !request.getParentDepartment().isBlank() && !"None".equalsIgnoreCase(request.getParentDepartment())) {
@@ -146,14 +166,25 @@ public class DepartmentService {
 
     @Transactional
     public DepartmentResponseDto updateDepartment(Long id, DepartmentUpdateRequest request, User currentUser) {
-        Department d = departmentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + id));
+        Long orgId = TenantContext.getOrganizationId();
+        Department d;
+        if (orgId != null) {
+            d = departmentRepository.findByIdAndOrganizationId(id, orgId)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found in your organization with ID: " + id));
+        } else {
+            d = departmentRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + id));
+        }
+
+        Long auditUserId = currentUser != null ? currentUser.getId() : null;
+        String auditUserName = currentUser != null ? currentUser.getFullName() : "SYSTEM";
+        String auditUserRole = (currentUser != null && currentUser.getRole() != null) ? currentUser.getRole().getName() : "SYSTEM";
 
         // 1. Audit Name
         if (request.getName() != null && !request.getName().equals(d.getName())) {
             departmentAuditLogRepository.save(new DepartmentAuditLog(
                     id, "name", d.getName(), request.getName(),
-                    currentUser.getId(), currentUser.getFullName(), currentUser.getRole().getName(),
+                    auditUserId, auditUserName, auditUserRole,
                     "Updated department name"
             ));
             d.setName(request.getName());
@@ -163,7 +194,7 @@ public class DepartmentService {
         if (request.getCode() != null && !request.getCode().equalsIgnoreCase(d.getCode())) {
             departmentAuditLogRepository.save(new DepartmentAuditLog(
                     id, "code", d.getCode(), request.getCode(),
-                    currentUser.getId(), currentUser.getFullName(), currentUser.getRole().getName(),
+                    auditUserId, auditUserName, auditUserRole,
                     "Updated department code"
             ));
             d.setCode(request.getCode().trim().toUpperCase());
@@ -173,7 +204,7 @@ public class DepartmentService {
         if (request.getDescription() != null && !request.getDescription().equals(d.getDescription())) {
             departmentAuditLogRepository.save(new DepartmentAuditLog(
                     id, "description", d.getDescription(), request.getDescription(),
-                    currentUser.getId(), currentUser.getFullName(), currentUser.getRole().getName(),
+                    auditUserId, auditUserName, auditUserRole,
                     "Updated department description"
             ));
             d.setDescription(request.getDescription());
@@ -201,7 +232,7 @@ public class DepartmentService {
                 }
                 departmentAuditLogRepository.save(new DepartmentAuditLog(
                         id, "parentDepartmentId", oldParentName, newParentName,
-                        currentUser.getId(), currentUser.getFullName(), currentUser.getRole().getName(),
+                        auditUserId, auditUserName, auditUserRole,
                         "Updated parent department"
                 ));
                 d.setParentDepartmentId(parentId);
@@ -235,8 +266,8 @@ public class DepartmentService {
                 }
                 departmentAuditLogRepository.save(new DepartmentAuditLog(
                         id, "Department Head", oldHeadName, newHeadName,
-                        currentUser.getId(), currentUser.getFullName(), currentUser.getRole().getName(),
-                        "Sarah Connor assigned as new head"
+                        auditUserId, auditUserName, auditUserRole,
+                        "Assigned as new department head"
                 ));
                 d.setManagerId(managerId);
             }
@@ -276,11 +307,21 @@ public class DepartmentService {
     }
 
     public List<DepartmentAuditLog> getDepartmentHistory(Long departmentId) {
+        Long orgId = TenantContext.getOrganizationId();
+        if (orgId != null && departmentRepository.findByIdAndOrganizationId(departmentId, orgId).isEmpty()) {
+            return List.of();
+        }
         return departmentAuditLogRepository.findByDepartmentId(departmentId);
     }
 
     public List<DepartmentResponseDto> getDepartmentsList() {
-        List<Department> departments = departmentRepository.findAll();
+        Long orgId = TenantContext.getOrganizationId();
+        List<Department> departments;
+        if (orgId != null) {
+            departments = departmentRepository.findByOrganizationId(orgId);
+        } else {
+            departments = departmentRepository.findAll();
+        }
         List<Employee> allEmployees = employeeRepository.findAll();
         List<DepartmentResponseDto> dtos = new ArrayList<>();
 
@@ -292,7 +333,14 @@ public class DepartmentService {
     }
 
     public Optional<DepartmentResponseDto> getDepartmentDetails(Long id) {
-        return departmentRepository.findById(id).map(d -> {
+        Long orgId = TenantContext.getOrganizationId();
+        Optional<Department> deptOpt;
+        if (orgId != null) {
+            deptOpt = departmentRepository.findByIdAndOrganizationId(id, orgId);
+        } else {
+            deptOpt = departmentRepository.findById(id);
+        }
+        return deptOpt.map(d -> {
             List<Employee> allEmployees = employeeRepository.findAll();
             DepartmentResponseDto dto = mapToDto(d, allEmployees);
 
@@ -416,8 +464,15 @@ public class DepartmentService {
 
     @Transactional
     public boolean deleteDepartment(Long id) {
-        if (departmentRepository.existsById(id)) {
-            departmentRepository.deleteById(id);
+        Long orgId = TenantContext.getOrganizationId();
+        Department d;
+        if (orgId != null) {
+            d = departmentRepository.findByIdAndOrganizationId(id, orgId).orElse(null);
+        } else {
+            d = departmentRepository.findById(id).orElse(null);
+        }
+        if (d != null) {
+            departmentRepository.delete(d);
             return true;
         }
         return false;
@@ -425,8 +480,15 @@ public class DepartmentService {
 
     @Transactional
     public Department toggleDepartmentStatus(Long id, String status) {
-        Department d = departmentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Department not found"));
+        Long orgId = TenantContext.getOrganizationId();
+        Department d;
+        if (orgId != null) {
+            d = departmentRepository.findByIdAndOrganizationId(id, orgId)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found in your organization with ID: " + id));
+        } else {
+            d = departmentRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + id));
+        }
         d.setStatus(status.equalsIgnoreCase("Active") ? "ACTIVE" : "INACTIVE");
         return departmentRepository.save(d);
     }

@@ -19,10 +19,7 @@ public class SignupValidationService {
             "billing", "dev", "test", "prod", "ems", "system", "auth", "login"
     ));
 
-    private static final Pattern PASSWORD_UPPER = Pattern.compile("[A-Z]");
-    private static final Pattern PASSWORD_LOWER = Pattern.compile("[a-z]");
-    private static final Pattern PASSWORD_DIGIT = Pattern.compile("\\d");
-    private static final Pattern PASSWORD_SPECIAL = Pattern.compile("[!@#$%^&*()_+\\-=\\[\\]{};':\",./<>?]");
+
 
     public SignupValidationService(UserRepository userRepository, OrganizationRepository organizationRepository) {
         this.userRepository = userRepository;
@@ -50,41 +47,8 @@ public class SignupValidationService {
     }
 
     public void validatePassword(String password, String fullName, String email, String phone, String orgName) {
-        if (password == null || password.length() < 8 || password.length() > 20) {
-            throw new IllegalArgumentException("Password must be between 8 and 20 characters.");
-        }
-        if (!PASSWORD_UPPER.matcher(password).find()) {
-            throw new IllegalArgumentException("Password must contain at least one uppercase letter.");
-        }
-        if (!PASSWORD_LOWER.matcher(password).find()) {
-            throw new IllegalArgumentException("Password must contain at least one lowercase letter.");
-        }
-        if (!PASSWORD_DIGIT.matcher(password).find()) {
-            throw new IllegalArgumentException("Password must contain at least one number.");
-        }
-        if (!PASSWORD_SPECIAL.matcher(password).find()) {
-            throw new IllegalArgumentException("Password must contain at least one special character.");
-        }
-
-        // Avoid common details
-        String lowerPass = password.toLowerCase();
-        if (fullName != null && !fullName.isBlank() && lowerPass.contains(fullName.toLowerCase().trim())) {
-            throw new IllegalArgumentException("Password cannot contain your name.");
-        }
-        if (email != null && email.contains("@")) {
-            String prefix = email.split("@")[0].trim().toLowerCase();
-            if (!prefix.isBlank() && lowerPass.contains(prefix)) {
-                throw new IllegalArgumentException("Password cannot contain part of your email address.");
-            }
-        }
-        if (phone != null) {
-            String digitsOnly = phone.replaceAll("\\D", "");
-            if (digitsOnly.length() >= 4 && lowerPass.contains(digitsOnly)) {
-                throw new IllegalArgumentException("Password cannot contain your phone number.");
-            }
-        }
-        if (orgName != null && !orgName.isBlank() && lowerPass.contains(orgName.toLowerCase().trim())) {
-            throw new IllegalArgumentException("Password cannot contain your organization name.");
+        if (password == null || password.isBlank()) {
+            throw new IllegalArgumentException("Password is required.");
         }
     }
 

@@ -23,4 +23,28 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
     java.util.List<Employee> findByManagerId(Long managerId);
 
     long countByManagerId(Long managerId);
+
+    boolean existsByDesignationIgnoreCase(String designation);
+
+    long countByDesignationIgnoreCase(String designation);
+
+    // ── Tenant-Scoped Organization Isolation Methods ─────────────────────────
+
+    Optional<Employee> findByIdAndOrganizationId(Long id, Long organizationId);
+
+    Optional<Employee> findByEmployeeIdAndOrganizationId(String employeeId, Long organizationId);
+
+    Optional<Employee> findByEmailAndOrganizationId(String email, Long organizationId);
+
+    java.util.List<Employee> findByOrganizationId(Long organizationId);
+
+    java.util.List<Employee> findByOrganizationIdAndStatus(Long organizationId, String status);
+
+    java.util.List<Employee> findByOrganizationIdAndDepartment(Long organizationId, String department);
+
+    java.util.List<Employee> findByOrganizationIdAndManagerId(Long organizationId, Long managerId);
+
+    boolean existsByEmailAndOrganizationId(String email, Long organizationId);
+
+    boolean existsByEmployeeIdAndOrganizationId(String employeeId, Long organizationId);
 }

@@ -25,6 +25,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class EmployeeSupportWorkflowSimulationTest {
 
@@ -96,6 +98,11 @@ public class EmployeeSupportWorkflowSimulationTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(createJson))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.data.ticketId").value(102))
+                .andExpect(jsonPath("$.data.ticketNumber").value("SUP-2026-000102"))
+                .andExpect(jsonPath("$.data.status").value("OPEN"))
+                .andExpect(jsonPath("$.data.priority").value("MEDIUM"))
                 .andReturn();
 
         String createResponseJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(
@@ -122,6 +129,9 @@ public class EmployeeSupportWorkflowSimulationTest {
         MvcResult listResult = mockMvc.perform(get("/api/v1/my-support/tickets")
                 .header("Authorization", "Bearer " + token)
                 .param("status", "OPEN"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.content[0].ticketId").value(102))
+                .andExpect(jsonPath("$.data.content[0].status").value("OPEN"))
                 .andReturn();
 
         String listResponseJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(
@@ -157,6 +167,10 @@ public class EmployeeSupportWorkflowSimulationTest {
 
         MvcResult detailResult = mockMvc.perform(get("/api/v1/my-support/tickets/102")
                 .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.ticketId").value(102))
+                .andExpect(jsonPath("$.data.priority").value("MEDIUM"))
+                .andExpect(jsonPath("$.data.status").value("OPEN"))
                 .andReturn();
 
         String detailResponseJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(
@@ -176,9 +190,10 @@ public class EmployeeSupportWorkflowSimulationTest {
                 "SUP-2026-000102",
                 updateReq.getSubject(),
                 updateReq.getDescription(),
-                "OPEN",
                 "MEDIUM",
-                LocalDateTime.now().toString()
+                "OPEN",
+                LocalDateTime.now().toString(),
+                "Ticket updated successfully"
         );
 
         when(supportService.updateTicket(eq(employeeEmail), eq(102L), any(UpdateTicketRequest.class))).thenReturn(mockUpdateResp);
@@ -192,6 +207,14 @@ public class EmployeeSupportWorkflowSimulationTest {
                 .header("Authorization", "Bearer " + token)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(updateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.id").value(102))
+                .andExpect(jsonPath("$.data.ticketNumber").value("SUP-2026-000102"))
+                .andExpect(jsonPath("$.data.subject").value("Workstation Monitor Flickering (Dell 24-inch)"))
+                .andExpect(jsonPath("$.data.description").value("Primary Dell 24-inch monitor flickers and turns black. Connection cables checked and swapped."))
+                .andExpect(jsonPath("$.data.priority").value("MEDIUM"))
+                .andExpect(jsonPath("$.data.status").value("OPEN"))
+                .andExpect(jsonPath("$.data.message").value("Ticket updated successfully"))
                 .andReturn();
 
         String updateResponseJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(

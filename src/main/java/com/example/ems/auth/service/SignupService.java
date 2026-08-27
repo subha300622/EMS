@@ -25,9 +25,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashSet;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class SignupService {
+
+    private static final Logger log = LoggerFactory.getLogger(SignupService.class);
 
     private final SignupValidationService validationService;
     private final OrganizationRepository organizationRepository;
@@ -82,22 +88,23 @@ public class SignupService {
             validationService.validateGst(dto.getGstNumber(), dto.getCountry());
 
             // 2. Create Organization
-            Organization org = new Organization();
-            org.setName(dto.getOrgName());
-            org.setNormalizedName(normalizedOrgName);
-            org.setIndustry(dto.getIndustry());
-            org.setRegNumber(dto.getRegNumber());
-            org.setGstNumber(dto.getGstNumber());
-            org.setEmail(normalizedEmail);
-            org.setPhone(normalizedPhone);
-            org.setStatus(OrganizationStatus.PENDING_VERIFICATION);
-            org.setOrganizationCode("TEMP_" + java.util.UUID.randomUUID().toString().substring(0, 10));
-            org = organizationRepository.save(org);
+            Organization newOrg = new Organization();
+            newOrg.setName(dto.getOrgName());
+            newOrg.setNormalizedName(normalizedOrgName);
+            newOrg.setIndustry(dto.getIndustry());
+            newOrg.setRegNumber(dto.getRegNumber());
+            newOrg.setGstNumber(dto.getGstNumber());
+            newOrg.setEmail(normalizedEmail);
+            newOrg.setPhone(normalizedPhone);
+            newOrg.setStatus(OrganizationStatus.ACTIVE);
+            newOrg.setOrganizationCode("TEMP_" + java.util.UUID.randomUUID().toString().substring(0, 10));
+            
+            final Organization savedOrg = organizationRepository.save(newOrg);
 
             // Set unique organization code: ORG + padded ID (e.g. ORG0001)
-            String orgCode = "ORG" + String.format("%04d", org.getId());
-            org.setOrganizationCode(orgCode);
-            org = organizationRepository.save(org);
+            String orgCode = "ORG" + String.format("%04d", savedOrg.getId());
+            savedOrg.setOrganizationCode(orgCode);
+            organizationRepository.save(savedOrg);
 
             // 3. Create Address
             OrganizationAddress addr = new OrganizationAddress();
@@ -106,28 +113,52 @@ public class SignupService {
             addr.setCity(dto.getCity());
             addr.setStreet(dto.getAddress());
             addr.setZipCode("000000"); // default
-            addr.setOrganization(org);
+            addr.setOrganization(savedOrg);
             addressRepository.save(addr);
 
             // 4. Create Tenant Subdomain
-            tenantProvisioningService.provisionTenant(org, dto.getTimezone(), dto.getCurrency(), dto.getLocale());
+            tenantProvisioningService.provisionTenant(savedOrg, dto.getTimezone(), dto.getCurrency(), dto.getLocale());
 
             // 5. Create Subscription
-            subscriptionService.createTrialSubscription(org, dto.getPlan(), dto.getBillingCycle());
+            subscriptionService.createTrialSubscription(savedOrg, dto.getPlan(), dto.getBillingCycle());
 
             // 6. Provision Default Tenant Roles from Platform Templates
-            tenantRoleProvisioningService.provisionTenantRoles(org.getId());
+            tenantRoleProvisioningService.provisionTenantRoles(savedOrg.getId());
 
-            // Load provisioned ADMIN Role for the user creation
-            Role adminRole = roleRepository.findByOrganizationIdAndName(org.getId(), "ADMIN")
-                    .orElseThrow(() -> new IllegalStateException("ADMIN role not provisioned correctly for organization."));
+            // Load provisioned SUPER_ADMIN or ADMIN Role for the tenant admin user creation
+            Role adminRole = roleRepository.findByOrganizationIdAndName(savedOrg.getId(), "SUPER_ADMIN")
+                    .or(() -> roleRepository.findByOrganizationIdAndName(savedOrg.getId(), "ADMIN"))
+                    .orElseGet(() -> {
+                        Role template = roleRepository.findByNameAndIsPlatformTemplateTrue("SUPER_ADMIN")
+                                .or(() -> roleRepository.findByNameAndIsPlatformTemplateTrue("ADMIN"))
+                                .orElseGet(() -> {
+                                    Role defaultRole = new Role();
+                                    defaultRole.setName("SUPER_ADMIN");
+                                    defaultRole.setDescription("Tenant Super Admin");
+                                    defaultRole.setPlatformTemplate(true);
+                                    defaultRole.setSystemRole(true);
+                                    return roleRepository.save(defaultRole);
+                                });
+                        Role tr = new Role();
+                        tr.setName(template.getName());
+                        tr.setDescription(template.getDescription());
+                        tr.setOrganization(savedOrg);
+                        tr.setPlatformTemplate(false);
+                        tr.setSystemRole(template.isSystemRole());
+                        if (template.getPermissions() != null) {
+                            tr.setPermissions(new HashSet<>(template.getPermissions()));
+                        } else {
+                            tr.setPermissions(new HashSet<>());
+                        }
+                        return roleRepository.save(tr);
+                    });
 
             // 7. Seed Default Departments: HR, Finance, IT, Sales
-            seedDefaultDepartments(org, orgCode);
+            seedDefaultDepartments(savedOrg, orgCode);
 
             // 8. Create Admin User & Employee profile
             User admin = userProvisioningService.createAdminUser(
-                    org,
+                    savedOrg,
                     adminRole,
                     dto.getFullName(),
                     normalizedEmail,
@@ -146,21 +177,28 @@ public class SignupService {
                     admin.getFullName(),
                     "SIGNUP_COMPLETED",
                     "Organization",
-                    org.getId().toString(),
+                    savedOrg.getId().toString(),
                     clientIp,
                     userAgent,
                     Severity.INFO,
-                    "Organization " + org.getName() + " (" + orgCode + ") successfully registered."
+                    "Organization " + savedOrg.getName() + " (" + orgCode + ") successfully registered."
             );
             auditLogRepository.save(audit);
 
             // 11. Publish User Registered Event (Async email sending post-commit)
             eventPublisher.publishEvent(new UserRegisteredEvent(this, admin, verification.getToken()));
 
-            return new SignupResult(org.getOrganizationCode(), admin.getUserId(), true);
+            return new SignupResult(savedOrg.getOrganizationCode(), admin.getUserId(), false);
 
         } catch (DataIntegrityViolationException ex) {
+            log.error("DataIntegrityViolationException during registration: ", ex);
             throw new IllegalArgumentException("An organization or user with this name, email, or phone number already exists.");
+        } catch (IllegalArgumentException ex) {
+            log.error("IllegalArgumentException during registration: ", ex);
+            throw ex;
+        } catch (Exception ex) {
+            log.error("Unexpected exception during registration: ", ex);
+            throw new IllegalArgumentException("Registration failed: " + ex.getMessage(), ex);
         }
     }
 

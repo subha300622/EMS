@@ -199,6 +199,8 @@ public class OnboardingWorkflowService {
         onboarding.setStartDate(LocalDate.now());
         onboarding.setStatus("PRE_JOINING");
         onboarding.setAssignedTemplateId(template.getTemplateCode());
+        template.setUsageCount(template.getUsageCount() + 1);
+        templateRepository.save(template);
 
         // Assign team members
         if (request.getTeamAssignments() != null) {
@@ -328,6 +330,8 @@ public class OnboardingWorkflowService {
                         () -> new ResourceNotFoundException("Template not found with ID: " + request.getTemplateId()));
 
         onboarding.setAssignedTemplateId(template.getTemplateCode());
+        template.setUsageCount(template.getUsageCount() + 1);
+        templateRepository.save(template);
 
         int phasesCreated = 0;
         int tasksCreated = 0;

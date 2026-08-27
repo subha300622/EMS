@@ -15,6 +15,18 @@ public class TenantContext {
         return currentTenant.get();
     }
 
+    public static Long getOrganizationId() {
+        return currentTenant.get();
+    }
+
+    public static Long requireOrganizationId() {
+        Long tenantId = currentTenant.get();
+        if (tenantId == null) {
+            throw new IllegalStateException("Access Denied: No active organization context found.");
+        }
+        return tenantId;
+    }
+
     public static void clear() {
         currentTenant.remove();
     }

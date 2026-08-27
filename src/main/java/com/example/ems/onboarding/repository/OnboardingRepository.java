@@ -12,4 +12,5 @@ public interface OnboardingRepository extends JpaRepository<Onboarding, Long> {
     Optional<Onboarding> findByEmployeeId(Long employeeId);
     Optional<Onboarding> findByEmployeeEmail(String email);
     List<Onboarding> findByStatus(String status);
+    boolean existsByAssignedTemplateId(String assignedTemplateId);
 }
