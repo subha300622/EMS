@@ -80,9 +80,9 @@ public class ApprovalWorkflowEngineService {
     }
 
     private ApprovalTaskDto mapToTaskDto(ApprovalTask task) {
-        String empIdStr = task.getApprover().getEmployeeId() != null 
+        String empIdStr = task.getApprover() != null && task.getApprover().getEmployeeId() != null 
                 ? task.getApprover().getEmployeeId() 
-                : "EMP-" + task.getApprover().getId();
+                : (task.getApprover() != null ? "EMP-" + task.getApprover().getId() : "UNASSIGNED");
 
         String stepName = task.getStep() != null ? task.getStep().getStepName() : "Step " + task.getStepOrder();
 
@@ -95,7 +95,7 @@ public class ApprovalWorkflowEngineService {
                 task.getStepOrder(),
                 stepName,
                 empIdStr,
-                task.getApprover().getFullName(),
+                task.getApprover() != null ? task.getApprover().getFullName() : "System",
                 task.getStatus(),
                 task.getAssignedAt() != null ? task.getAssignedAt().toString() : null,
                 task.getDueAt() != null ? task.getDueAt().toString() : null
@@ -123,7 +123,22 @@ public class ApprovalWorkflowEngineService {
                 });
 
         ApprovalWorkflowDefinition definition = definitionRepository.findActiveByWorkflowTypeAndOrganization(workflowType, orgId)
-                .orElseThrow(() -> new IllegalStateException("No active workflow definition found for type: " + workflowType));
+                .orElseGet(() -> {
+                    // Default fallback workflow definition if none configured
+                    ApprovalWorkflowDefinition defaultDef = new ApprovalWorkflowDefinition();
+                    defaultDef.setName("Default " + workflowType + " Workflow");
+                    defaultDef.setWorkflowType(workflowType);
+                    defaultDef.setOrganization(org);
+                    defaultDef.setStatus("ACTIVE");
+                    defaultDef = definitionRepository.save(defaultDef);
+
+                    ApprovalWorkflowStep step1 = new ApprovalWorkflowStep();
+                    step1.setStepOrder(1);
+                    step1.setStepName("Manager Approval");
+                    step1.setApproverType(ApproverType.DIRECT_MANAGER);
+                    defaultDef.addStep(step1);
+                    return definitionRepository.save(defaultDef);
+                });
 
         String wfiId = "WFI-" + String.format("%05d", System.currentTimeMillis() % 100000);
 
@@ -167,7 +182,8 @@ public class ApprovalWorkflowEngineService {
                     instance.getWorkflowType(),
                     instance.getBusinessReferenceType(),
                     instance.getBusinessReferenceId(),
-                    instance.getOrganization().getId()
+                    instance.getOrganization().getId(),
+                    ApprovalStatus.APPROVED
             ));
             return;
         }
@@ -320,6 +336,17 @@ public class ApprovalWorkflowEngineService {
         instance.setCompletedAt(Instant.now());
         instanceRepository.save(instance);
 
+        // Publish Workflow Completed Event with REJECTED status
+        eventPublisher.publishEvent(new ApprovalWorkflowCompletedEvent(
+                this,
+                instance.getWorkflowInstanceId(),
+                instance.getWorkflowType(),
+                instance.getBusinessReferenceType(),
+                instance.getBusinessReferenceId(),
+                instance.getOrganization().getId(),
+                ApprovalStatus.REJECTED
+        ));
+
         return mapToTaskDto(task);
     }
 
@@ -361,4 +388,129 @@ public class ApprovalWorkflowEngineService {
 
         return mapToTaskDto(task);
     }
+
+    // ── WORKFLOW CONFIGURATION APIS ──────────────────────────────────────────
+
+    @Transactional
+    public ApprovalWorkflowDefinition createWorkflow(User currentUser, CreateApprovalWorkflowRequest request) {
+        Long orgId = resolveOrganizationId(currentUser);
+        Organization org = organizationRepository.findById(orgId).orElse(null);
+
+        ApprovalWorkflowDefinition def = new ApprovalWorkflowDefinition();
+        def.setName(request.getName());
+        def.setWorkflowType(request.getWorkflowType());
+        def.setOrganization(org);
+        def.setStatus(request.isEnabled() ? "ACTIVE" : "INACTIVE");
+
+        if (request.getSteps() != null) {
+            int seq = 1;
+            for (CreateApprovalWorkflowRequest.StepRequest sReq : request.getSteps()) {
+                ApprovalWorkflowStep step = new ApprovalWorkflowStep();
+                step.setStepOrder(sReq.getSequence() != null ? sReq.getSequence() : seq);
+                step.setStepName("Step " + step.getStepOrder());
+                step.setApproverType(sReq.getApproverType() != null ? sReq.getApproverType() : ApproverType.DIRECT_MANAGER);
+                step.setApproverConfig(sReq.getApproverConfig());
+                step.setSlaHours(sReq.getSlaHours() != null ? sReq.getSlaHours() : 48);
+                def.addStep(step);
+                seq++;
+            }
+        }
+        return definitionRepository.save(def);
+    }
+
+    public List<ApprovalWorkflowDefinition> getWorkflows(User currentUser) {
+        Long orgId = resolveOrganizationId(currentUser);
+        return definitionRepository.findAll().stream()
+                .filter(d -> d.getOrganization() == null || orgId.equals(d.getOrganization().getId()))
+                .collect(Collectors.toList());
+    }
+
+    public ApprovalWorkflowDefinition getWorkflow(User currentUser, Long workflowId) {
+        return definitionRepository.findById(workflowId)
+                .orElseThrow(() -> new IllegalArgumentException("Workflow definition not found: " + workflowId));
+    }
+
+    @Transactional
+    public ApprovalWorkflowDefinition updateWorkflow(User currentUser, Long workflowId, CreateApprovalWorkflowRequest request) {
+        ApprovalWorkflowDefinition def = getWorkflow(currentUser, workflowId);
+        def.setName(request.getName());
+        if (request.getWorkflowType() != null) def.setWorkflowType(request.getWorkflowType());
+        def.setStatus(request.isEnabled() ? "ACTIVE" : "INACTIVE");
+        return definitionRepository.save(def);
+    }
+
+    @Transactional
+    public void deleteWorkflow(User currentUser, Long workflowId) {
+        ApprovalWorkflowDefinition def = getWorkflow(currentUser, workflowId);
+        def.setStatus("INACTIVE");
+        definitionRepository.save(def);
+    }
+
+    @Transactional
+    public ApprovalWorkflowStep addWorkflowStep(User currentUser, Long workflowId, CreateApprovalWorkflowRequest.StepRequest stepRequest) {
+        ApprovalWorkflowDefinition def = getWorkflow(currentUser, workflowId);
+        ApprovalWorkflowStep step = new ApprovalWorkflowStep();
+        step.setStepOrder(stepRequest.getSequence() != null ? stepRequest.getSequence() : def.getSteps().size() + 1);
+        step.setStepName("Step " + step.getStepOrder());
+        step.setApproverType(stepRequest.getApproverType() != null ? stepRequest.getApproverType() : ApproverType.DIRECT_MANAGER);
+        step.setApproverConfig(stepRequest.getApproverConfig());
+        step.setSlaHours(stepRequest.getSlaHours() != null ? stepRequest.getSlaHours() : 48);
+        def.addStep(step);
+        definitionRepository.save(def);
+        return step;
+    }
+
+    // ── APPROVAL INSTANCE APIS ───────────────────────────────────────────────
+
+    @Transactional
+    public ApprovalWorkflowInstance startWorkflowInstance(User currentUser, StartApprovalInstanceRequest request) {
+        Employee requester = resolveEmployeeForUser(currentUser);
+        WorkflowType wType = WorkflowType.LEAVE_APPROVAL;
+        if (request.getEntityType() != null) {
+            try {
+                wType = WorkflowType.valueOf(request.getEntityType().toUpperCase());
+            } catch (Exception ignored) {}
+        }
+        return startWorkflow(wType, request.getEntityType(), request.getEntityId(), requester, request.getContext());
+    }
+
+    public List<ApprovalWorkflowInstance> getInstances(User currentUser) {
+        Long orgId = resolveOrganizationId(currentUser);
+        return instanceRepository.findAll().stream()
+                .filter(i -> i.getOrganization() != null && orgId.equals(i.getOrganization().getId()))
+                .collect(Collectors.toList());
+    }
+
+    public ApprovalWorkflowInstance getInstance(User currentUser, String approvalId) {
+        Long orgId = resolveOrganizationId(currentUser);
+        return instanceRepository.findByWorkflowInstanceIdAndOrganizationId(approvalId, orgId)
+                .or(() -> instanceRepository.findByWorkflowInstanceId(approvalId))
+                .orElseThrow(() -> new IllegalArgumentException("Approval instance not found with ID: " + approvalId));
+    }
+
+    @Transactional
+    public ApprovalTaskDto approveInstanceTask(User currentUser, String approvalId, String comment) {
+        ApprovalWorkflowInstance instance = getInstance(currentUser, approvalId);
+
+        // Find current pending task for this instance
+        List<ApprovalTask> tasks = taskRepository.findByWorkflowInstanceIdAndStepOrder(instance.getId(), instance.getCurrentStep());
+        if (tasks.isEmpty()) {
+            throw new IllegalStateException("No pending task found for approval instance: " + approvalId);
+        }
+        ApprovalTask currentTask = tasks.get(0);
+        return approveTask(currentUser, currentTask.getApprovalTaskId(), comment);
+    }
+
+    @Transactional
+    public ApprovalTaskDto rejectInstanceTask(User currentUser, String approvalId, String comment) {
+        ApprovalWorkflowInstance instance = getInstance(currentUser, approvalId);
+
+        List<ApprovalTask> tasks = taskRepository.findByWorkflowInstanceIdAndStepOrder(instance.getId(), instance.getCurrentStep());
+        if (tasks.isEmpty()) {
+            throw new IllegalStateException("No pending task found for approval instance: " + approvalId);
+        }
+        ApprovalTask currentTask = tasks.get(0);
+        return rejectTask(currentUser, currentTask.getApprovalTaskId(), comment);
+    }
 }
+

@@ -24,6 +24,7 @@ public class ApproverResolver {
 
         switch (type) {
             case TARGET_EMPLOYEE:
+            case EMPLOYEE:
                 if (context != null && context.containsKey("targetEmployeeId")) {
                     Object targetEmpIdObj = context.get("targetEmployeeId");
                     if (targetEmpIdObj instanceof Long) {
@@ -40,9 +41,11 @@ public class ApproverResolver {
                                 .orElseThrow(() -> new IllegalArgumentException("Target employee not found with ID: " + empIdStr));
                     }
                 }
+                if (requester != null) return requester;
                 throw new IllegalArgumentException("targetEmployeeId context missing for TARGET_EMPLOYEE step");
 
             case DIRECT_MANAGER:
+            case REPORTING_MANAGER:
                 if (requester != null && requester.getManager() != null) {
                     return requester.getManager();
                 }
