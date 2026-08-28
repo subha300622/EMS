@@ -2,6 +2,8 @@ package com.example.ems.leave.entity;
 
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.organization.entity.Organization;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -15,14 +17,17 @@ public class LeaveBalanceAdjustment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "employee_id", nullable = false)
+    @JsonIgnoreProperties({"manager", "team", "hibernateLazyInitializer", "handler"})
     private Employee employee;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "leave_type_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private LeaveType leaveType;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
+    @JsonIgnore
     private Organization organization;
 
     @Column(nullable = false)
@@ -32,6 +37,7 @@ public class LeaveBalanceAdjustment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "adjusted_by_id")
+    @JsonIgnoreProperties({"manager", "team", "hibernateLazyInitializer", "handler"})
     private Employee adjustedBy;
 
     private LocalDateTime adjustedAt = LocalDateTime.now();

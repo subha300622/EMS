@@ -114,6 +114,22 @@ public class ApprovalController {
         return ResponseEntity.ok(ApiResponse.success("Approval workflow disabled successfully", null));
     }
 
+    @Operation(summary = "Activate Approval Workflow")
+    @PutMapping("/workflows/{workflowId}/activate")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> activateWorkflow(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long workflowId) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        ApprovalWorkflowDefinition def = approvalWorkflowEngineService.getWorkflow(user, workflowId);
+        if (def != null) {
+            def.setStatus("ACTIVE");
+        }
+        return ResponseEntity.ok(ApiResponse.success("Approval workflow activated successfully", def));
+    }
+
     // ── 2. WORKFLOW STEP APIS ──────────────────────────────────────────────────
 
     @Operation(summary = "Add Approval Step")
@@ -229,7 +245,7 @@ public class ApprovalController {
     // ── 4. MY APPROVAL INBOX APIS ───────────────────────────────────────────────
 
     @Operation(summary = "My Pending Approvals", description = "Retrieves pending approval tasks assigned to the logged-in user.")
-    @GetMapping({"/my/pending", "/inbox"})
+    @GetMapping({"/my/pending", "/inbox", "/my-pending"})
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMyPendingApprovals(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -259,7 +275,7 @@ public class ApprovalController {
     }
 
     @Operation(summary = "Approve Task by Task ID")
-    @PostMapping("/{approvalTaskId}/approve")
+    @PostMapping({"/{approvalTaskId}/approve", "/requests/{approvalTaskId}/approve"})
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approveTask(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -274,7 +290,7 @@ public class ApprovalController {
     }
 
     @Operation(summary = "Reject Task by Task ID")
-    @PostMapping("/{approvalTaskId}/reject")
+    @PostMapping({"/{approvalTaskId}/reject", "/requests/{approvalTaskId}/reject"})
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> rejectTask(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -286,5 +302,52 @@ public class ApprovalController {
         String comment = request != null ? request.getComment() : null;
         ApprovalTaskDto dto = approvalWorkflowEngineService.rejectTask(user, approvalTaskId, comment);
         return ResponseEntity.ok(ApiResponse.success("Task rejected successfully", dto));
+    }
+
+    @Operation(summary = "Approval Request History")
+    @GetMapping({"/instances/{approvalId}/history", "/requests/{approvalId}/history"})
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getApprovalHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String approvalId) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        ApprovalWorkflowInstance instance = approvalWorkflowEngineService.getInstance(user, approvalId);
+        return ResponseEntity.ok(ApiResponse.success("Approval history retrieved successfully", instance));
+    }
+
+    @Operation(summary = "Bulk Approve Tasks")
+    @PostMapping("/bulk-approve")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> bulkApprove(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody BulkApprovalActionRequest request) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        if (request != null && request.getTaskIds() != null) {
+            for (String taskId : request.getTaskIds()) {
+                approvalWorkflowEngineService.approveTask(user, taskId, request.getComment());
+            }
+        }
+        return ResponseEntity.ok(ApiResponse.success("Bulk approval completed successfully", null));
+    }
+
+    @Operation(summary = "Bulk Reject Tasks")
+    @PostMapping("/bulk-reject")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> bulkReject(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestBody BulkApprovalActionRequest request) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        if (request != null && request.getTaskIds() != null) {
+            for (String taskId : request.getTaskIds()) {
+                approvalWorkflowEngineService.rejectTask(user, taskId, request.getComment());
+            }
+        }
+        return ResponseEntity.ok(ApiResponse.success("Bulk rejection completed successfully", null));
     }
 }

@@ -44,6 +44,36 @@ public class ScheduleManagementService {
     @Autowired
     private OrganizationRepository organizationRepository;
 
+    @Autowired
+    private com.example.ems.schedule.repository.ScheduleExceptionRepository scheduleExceptionRepository;
+
+    @Autowired
+    private com.example.ems.holiday.repository.HolidayRepository holidayRepository;
+
+    public EmployeeAvailabilityDto getEmployeeAvailability(User currentUser, String employeeIdInput, LocalDate date) {
+        Long orgId = resolveOrganizationId(currentUser);
+        Employee employee = resolveEmployeeInOrganization(employeeIdInput, orgId);
+        String empCode = employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getId().toString();
+
+        // 1. Priority Rule: Check Holiday FIRST
+        if (holidayRepository != null && holidayRepository.existsByOrganizationIdAndHolidayDate(orgId, date)) {
+            return new EmployeeAvailabilityDto(empCode, date, false, "HOLIDAY", null);
+        }
+
+        // 2. Check Active Leave Exception
+        List<com.example.ems.schedule.entity.ScheduleException> exceptions = scheduleExceptionRepository.findActiveExceptionsOnDate(empCode, date);
+        if (exceptions.isEmpty()) {
+            exceptions = scheduleExceptionRepository.findActiveExceptionsOnDate(employee.getId().toString(), date);
+        }
+
+        if (!exceptions.isEmpty()) {
+            com.example.ems.schedule.entity.ScheduleException exc = exceptions.get(0);
+            return new EmployeeAvailabilityDto(empCode, date, false, "LEAVE", exc.getLeaveRequestId());
+        }
+
+        return new EmployeeAvailabilityDto(empCode, date, true, "NONE", null);
+    }
+
     public Long resolveOrganizationId(User user) {
         if (user == null) {
             throw new IllegalArgumentException("User context is required");
@@ -233,6 +263,19 @@ public class ScheduleManagementService {
             throw new IllegalArgumentException("startTime must be before endTime");
         }
 
+        if (holidayRepository != null && holidayRepository.existsByOrganizationIdAndHolidayDate(orgId, date)) {
+            throw new IllegalStateException("EMPLOYEE_UNAVAILABLE_HOLIDAY: Target date " + date + " is an organization holiday");
+        }
+
+        String empCode = employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getId().toString();
+        List<com.example.ems.schedule.entity.ScheduleException> leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(empCode, date, date);
+        if (leaveExc.isEmpty()) {
+            leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(employee.getId().toString(), date, date);
+        }
+        if (!leaveExc.isEmpty()) {
+            throw new IllegalStateException("EMPLOYEE_ON_LEAVE: Employee is on approved leave for " + date);
+        }
+
         boolean hasOverlap = scheduleRepository.existsOverlappingForCreate(orgId, employee.getId(), date, startTime, endTime);
         if (hasOverlap) {
             throw new IllegalStateException("Schedule overlaps with an existing schedule for employee on " + date);
@@ -268,6 +311,19 @@ public class ScheduleManagementService {
 
         if (!startTime.isBefore(endTime)) {
             throw new IllegalArgumentException("startTime must be before endTime");
+        }
+
+        if (holidayRepository != null && holidayRepository.existsByOrganizationIdAndHolidayDate(orgId, date)) {
+            throw new IllegalStateException("EMPLOYEE_UNAVAILABLE_HOLIDAY: Target date " + date + " is an organization holiday");
+        }
+
+        String empCode = schedule.getEmployee().getEmployeeId() != null ? schedule.getEmployee().getEmployeeId() : schedule.getEmployee().getId().toString();
+        List<com.example.ems.schedule.entity.ScheduleException> leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(empCode, date, date);
+        if (leaveExc.isEmpty()) {
+            leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(schedule.getEmployee().getId().toString(), date, date);
+        }
+        if (!leaveExc.isEmpty()) {
+            throw new IllegalStateException("EMPLOYEE_ON_LEAVE: Employee is on approved leave for " + date);
         }
 
         boolean hasOverlap = scheduleRepository.existsOverlappingForUpdate(orgId, schedule.getEmployee().getId(), date, schedule.getId(), startTime, endTime);

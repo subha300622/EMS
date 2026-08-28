@@ -34,13 +34,14 @@ public interface LeaveRepository extends JpaRepository<Leave, Long>, JpaSpecific
             @Param("endDate") LocalDate endDate
     );
 
-    @Query("SELECT l FROM Leave l WHERE (:orgId IS NULL OR l.organization.id = :orgId) " +
-           "AND (:employeeId IS NULL OR l.employee.id = :employeeId) " +
-           "AND (:leaveTypeId IS NULL OR l.leaveType.id = :leaveTypeId) " +
-           "AND (:status IS NULL OR l.status = :status) " +
-           "AND (:fromDate IS NULL OR l.endDate >= :fromDate) " +
-           "AND (:toDate IS NULL OR l.startDate <= :toDate) " +
-           "AND (:departmentId IS NULL OR l.employee.department.id = :departmentId)")
+    @Query(value = "SELECT l.* FROM leaves l JOIN employees e ON e.id = l.employee_id WHERE " +
+                   "(CAST(:orgId AS BIGINT) IS NULL OR l.organization_id = CAST(:orgId AS BIGINT)) AND " +
+                   "(CAST(:employeeId AS BIGINT) IS NULL OR l.employee_id = CAST(:employeeId AS BIGINT)) AND " +
+                   "(CAST(:leaveTypeId AS BIGINT) IS NULL OR l.leave_type_id = CAST(:leaveTypeId AS BIGINT)) AND " +
+                   "(CAST(:status AS VARCHAR) IS NULL OR l.status = CAST(:status AS VARCHAR)) AND " +
+                   "(CAST(:fromDate AS DATE) IS NULL OR l.end_date >= CAST(:fromDate AS DATE)) AND " +
+                   "(CAST(:toDate AS DATE) IS NULL OR l.start_date <= CAST(:toDate AS DATE)) AND " +
+                   "(CAST(:departmentId AS VARCHAR) IS NULL OR e.department = CAST(:departmentId AS VARCHAR))", nativeQuery = true)
     List<Leave> findFilteredLeaves(
             @Param("orgId") Long orgId,
             @Param("employeeId") Long employeeId,
@@ -48,7 +49,7 @@ public interface LeaveRepository extends JpaRepository<Leave, Long>, JpaSpecific
             @Param("status") String status,
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate,
-            @Param("departmentId") Long departmentId
+            @Param("departmentId") String departmentId
     );
 
     @Query("SELECT l FROM Leave l WHERE l.approver.id = :managerId " +

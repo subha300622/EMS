@@ -7,6 +7,9 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.leave.dto.*;
 import com.example.ems.leave.entity.*;
 import com.example.ems.leave.repository.*;
+import com.example.ems.leave.event.LeaveApprovedEvent;
+import com.example.ems.leave.event.LeaveCancelledEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +25,9 @@ import java.util.stream.Collectors;
  */
 @Service
 public class LeaveService {
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
 
     @Autowired
     private ApprovalWorkflowEngineService approvalWorkflowEngineService;
@@ -254,7 +260,7 @@ public class LeaveService {
                 .or(() -> leaveRuleRepository.findByLeaveTypeId(leaveType.getId()))
                 .orElse(null);
 
-        Double durationDays = leaveRuleValidationService.calculateLeaveDays(rule, request.getStartDate(), request.getEndDate(), request.getDurationType());
+        Double durationDays = leaveRuleValidationService.calculateLeaveDays(rule, request.getStartDate(), request.getEndDate(), request.getDurationType(), orgId);
 
         // Reserve Pending Balance
         int year = request.getStartDate().getYear();
@@ -305,7 +311,8 @@ public class LeaveService {
     }
 
     public List<Leave> getLeaves(Long orgId, Long employeeId, Long leaveTypeId, String status, LocalDate fromDate, LocalDate toDate, Long departmentId) {
-        return leaveRepository.findFilteredLeaves(orgId, employeeId, leaveTypeId, status, fromDate, toDate, departmentId);
+        String deptStr = departmentId != null ? String.valueOf(departmentId) : null;
+        return leaveRepository.findFilteredLeaves(orgId, employeeId, leaveTypeId, status, fromDate, toDate, deptStr);
     }
 
     public Optional<Leave> getLeaveById(Long id) {
@@ -331,7 +338,7 @@ public class LeaveService {
 
         Long orgId = employee.getOrganization() != null ? employee.getOrganization().getId() : 1L;
         LeaveRule rule = leaveRuleRepository.findByLeaveTypeIdAndOrganizationId(newLt.getId(), orgId).orElse(null);
-        Double newDuration = leaveRuleValidationService.calculateLeaveDays(rule, request.getStartDate(), request.getEndDate(), request.getDurationType());
+        Double newDuration = leaveRuleValidationService.calculateLeaveDays(rule, request.getStartDate(), request.getEndDate(), request.getDurationType(), orgId);
 
         // Reserve new pending balance
         balanceService.reserveBalance(employee, newLt, request.getStartDate().getYear(), newDuration);
@@ -376,6 +383,11 @@ public class LeaveService {
                 saved, "CANCELLED", actor, oldStatus, "CANCELLED", "Leave request cancelled"
         ));
 
+        if ("APPROVED".equalsIgnoreCase(oldStatus)) {
+            String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
+            eventPublisher.publishEvent(new LeaveCancelledEvent(saved.getId(), empCode, saved.getStartDate(), saved.getEndDate()));
+        }
+
         return saved;
     }
 
@@ -419,14 +431,19 @@ public class LeaveService {
         leave.setApprovedBy(approver);
         leave.setApprovedAt(LocalDateTime.now());
         leave.setUpdatedAt(LocalDateTime.now());
-        leaveRepository.save(leave);
+        Leave saved = leaveRepository.save(leave);
 
-        balanceService.commitBalance(leave.getEmployee(), leave.getLeaveType(), year, leave.getDurationDays());
+        balanceService.commitBalance(saved.getEmployee(), saved.getLeaveType(), year, saved.getDurationDays());
 
         historyRepository.save(new LeaveRequestHistory(
-                leave, "APPROVED", approver, oldStatus, "APPROVED", "Approved directly"
+                saved, "APPROVED", approver, oldStatus, "APPROVED", "Approved directly"
         ));
-        return leave;
+
+        String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
+        String leaveTypeName = saved.getLeaveType() != null ? saved.getLeaveType().getName() : "LEAVE";
+        eventPublisher.publishEvent(new LeaveApprovedEvent(saved.getId(), empCode, saved.getStartDate(), saved.getEndDate(), leaveTypeName));
+
+        return saved;
     }
 
     @Transactional
@@ -529,6 +546,38 @@ public class LeaveService {
         resp.setRejectedBy(approver != null ? approver.getId() : null);
         resp.setRejectedAt(LocalDateTime.now());
         return resp;
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getDashboardMetrics(Long orgId) {
+        List<Leave> allLeaves = leaveRepository.findFilteredLeaves(orgId, null, null, null, null, null, null);
+        long total = allLeaves.size();
+        long pending = allLeaves.stream().filter(l -> "PENDING".equalsIgnoreCase(l.getStatus())).count();
+        long approved = allLeaves.stream().filter(l -> "APPROVED".equalsIgnoreCase(l.getStatus())).count();
+        long rejected = allLeaves.stream().filter(l -> "REJECTED".equalsIgnoreCase(l.getStatus())).count();
+        long cancelled = allLeaves.stream().filter(l -> "CANCELLED".equalsIgnoreCase(l.getStatus())).count();
+
+        Map<String, Long> summary = Map.of(
+                "total", total,
+                "pending", pending,
+                "approved", approved,
+                "rejected", rejected,
+                "cancelled", cancelled
+        );
+
+        Map<String, Long> byType = allLeaves.stream()
+                .filter(l -> l.getLeaveType() != null && l.getLeaveType().getName() != null)
+                .collect(Collectors.groupingBy(l -> l.getLeaveType().getName(), Collectors.counting()));
+
+        Map<String, Long> byDept = allLeaves.stream()
+                .filter(l -> l.getEmployee() != null && l.getEmployee().getDepartment() != null)
+                .collect(Collectors.groupingBy(l -> l.getEmployee().getDepartment(), Collectors.counting()));
+
+        Map<String, Object> dashboard = new HashMap<>();
+        dashboard.put("summary", summary);
+        dashboard.put("leaveTypeDistribution", byType);
+        dashboard.put("departmentDistribution", byDept);
+        return dashboard;
     }
 }
 

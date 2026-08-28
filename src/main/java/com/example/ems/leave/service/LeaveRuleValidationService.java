@@ -34,7 +34,7 @@ public class LeaveRuleValidationService {
     @Autowired
     private HolidayRepository holidayRepository;
 
-    public Double calculateLeaveDays(LeaveRule rule, LocalDate startDate, LocalDate endDate, String durationType) {
+    public Double calculateLeaveDays(LeaveRule rule, LocalDate startDate, LocalDate endDate, String durationType, Long orgId) {
         if ("FIRST_HALF".equalsIgnoreCase(durationType) || "SECOND_HALF".equalsIgnoreCase(durationType)) {
             return 0.5;
         }
@@ -43,14 +43,15 @@ public class LeaveRuleValidationService {
         boolean incWeekends = rule != null && rule.isIncludeWeekends();
         boolean incHolidays = rule != null && rule.isIncludeHolidays();
 
+        Long targetOrgId = (rule != null && rule.getOrganization() != null) ? rule.getOrganization().getId() : (orgId != null ? orgId : 1L);
+
         LocalDate curr = startDate;
         while (!curr.isAfter(endDate)) {
             boolean isWeekend = (curr.getDayOfWeek() == DayOfWeek.SATURDAY || curr.getDayOfWeek() == DayOfWeek.SUNDAY);
             boolean isHoliday = false;
 
             if (!incHolidays) {
-                Long orgId = (rule != null && rule.getOrganization() != null) ? rule.getOrganization().getId() : 1L;
-                if (holidayRepository.existsByOrganizationIdAndHolidayDate(orgId, curr)) {
+                if (holidayRepository.existsByOrganizationIdAndHolidayDate(targetOrgId, curr)) {
                     isHoliday = true;
                 }
             }
@@ -60,7 +61,11 @@ public class LeaveRuleValidationService {
             }
             curr = curr.plusDays(1);
         }
-        return Math.max(totalDays, 0.5);
+        return totalDays;
+    }
+
+    public Double calculateLeaveDays(LeaveRule rule, LocalDate startDate, LocalDate endDate, String durationType) {
+        return calculateLeaveDays(rule, startDate, endDate, durationType, null);
     }
 
     public void validateLeaveRequest(Employee employee, LeaveType leaveType, LeaveRequest request) {
@@ -81,6 +86,12 @@ public class LeaveRuleValidationService {
                 .or(() -> leaveRuleRepository.findByLeaveTypeId(leaveType.getId()))
                 .orElse(null);
 
+        // Calculate Net Working Days (excluding weekends and holidays unless rule allows)
+        Double durationDays = calculateLeaveDays(rule, startDate, endDate, request.getDurationType(), orgId);
+        if (durationDays <= 0.0) {
+            throw new IllegalArgumentException("NO_WORKING_DAYS_IN_LEAVE_RANGE: Requested leave range contains no working days (all dates are holidays or weekends)");
+        }
+
         // 1. Min Service Days
         if (rule != null && rule.getMinServiceDays() != null && rule.getMinServiceDays() > 0) {
             if (employee.getJoiningDate() != null) {
@@ -99,7 +110,6 @@ public class LeaveRuleValidationService {
         }
 
         // 3. Max Consecutive Days
-        Double durationDays = calculateLeaveDays(rule, startDate, endDate, request.getDurationType());
         if (rule != null && rule.getMaxConsecutiveDays() != null && rule.getMaxConsecutiveDays() > 0) {
             if (durationDays > rule.getMaxConsecutiveDays()) {
                 throw new IllegalArgumentException("Requested duration (" + durationDays + " days) exceeds maximum consecutive limit of " + rule.getMaxConsecutiveDays() + " days");

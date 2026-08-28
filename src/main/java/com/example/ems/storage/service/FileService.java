@@ -60,7 +60,10 @@ public class FileService {
         FileMetadata savedMetadata = fileMetadataRepository.save(metadata);
 
         // 4. Update employee profile link (if employee exists)
-        employeeRepository.findByEmployeeId(user.getUserId()).ifPresent(emp -> {
+        employeeRepository.findAll().stream()
+                .filter(e -> user.getUserId().equals(e.getEmployeeId()))
+                .findFirst()
+                .ifPresent(emp -> {
             // Secure endpoint link
             String secureDownloadUrl = "/api/files/" + savedMetadata.getId() + "/download";
             emp.setProfileImage(secureDownloadUrl);

@@ -1,6 +1,7 @@
 package com.example.ems.approval.entity;
 
 import com.example.ems.organization.entity.Organization;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class ApprovalWorkflowDefinition {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
+    @JsonIgnore
     private Organization organization;
 
     @Column(nullable = false)

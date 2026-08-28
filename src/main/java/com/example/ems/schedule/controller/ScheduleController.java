@@ -237,6 +237,34 @@ public class ScheduleController {
         }
     }
 
+    @Operation(summary = "Get Employee Availability", description = "Checks if an employee is available or on approved leave on a given date.")
+    @GetMapping("/employee/{employeeId}/availability")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEmployeeAvailability(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String employeeId,
+            @RequestParam(required = false) @org.springframework.format.annotation.DateTimeFormat(iso = org.springframework.format.annotation.DateTimeFormat.ISO.DATE) java.time.LocalDate date) {
+
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkReadPermission(user)) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires schedule read permission", "AUTH_002"));
+        }
+
+        java.time.LocalDate targetDate = date != null ? date : java.time.LocalDate.now();
+        try {
+            EmployeeAvailabilityDto dto = scheduleManagementService.getEmployeeAvailability(user, employeeId, targetDate);
+            return ResponseEntity.ok(ApiResponse.success("Employee availability retrieved successfully", dto));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "VAL_001"));
+        }
+    }
+
     @Operation(summary = "Get Team Schedules", description = "Retrieves all schedules assigned to members of a team.")
     @GetMapping("/team/{teamId}")
     @SuppressWarnings({"unchecked", "rawtypes"})

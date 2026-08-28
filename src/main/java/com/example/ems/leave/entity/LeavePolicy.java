@@ -1,6 +1,7 @@
 package com.example.ems.leave.entity;
 
 import com.example.ems.organization.entity.Organization;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -26,6 +27,7 @@ public class LeavePolicy {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
+    @JsonIgnore
     private Organization organization;
 
     public LeavePolicy() {}

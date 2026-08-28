@@ -1,6 +1,7 @@
 package com.example.ems.leave.entity;
 
 import com.example.ems.employee.entity.Employee;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -21,6 +22,7 @@ public class LeaveRequestHistory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "performed_by_id")
+    @JsonIgnoreProperties({"manager", "team", "hibernateLazyInitializer", "handler"})
     private Employee performedBy;
 
     private LocalDateTime performedAt = LocalDateTime.now();

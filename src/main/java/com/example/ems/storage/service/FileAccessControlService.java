@@ -57,7 +57,9 @@ public class FileAccessControlService {
             }
 
             // Fallback: Query owner's current department in DB to see if it matches
-            Optional<Employee> ownerEmpOpt = employeeRepository.findByEmployeeId(fileOwnerId);
+            Optional<Employee> ownerEmpOpt = employeeRepository.findAll().stream()
+                    .filter(e -> fileOwnerId != null && fileOwnerId.equalsIgnoreCase(e.getEmployeeId()))
+                    .findFirst();
             if (ownerEmpOpt.isPresent()) {
                 String currentOwnerDept = ownerEmpOpt.get().getDepartment();
                 if (requesterDept != null && requesterDept.equalsIgnoreCase(currentOwnerDept)) {
@@ -86,7 +88,9 @@ public class FileAccessControlService {
                 return true;
             }
 
-            Optional<Employee> ownerEmpOpt = employeeRepository.findByEmployeeId(fileOwnerId);
+            Optional<Employee> ownerEmpOpt = employeeRepository.findAll().stream()
+                    .filter(e -> fileOwnerId != null && fileOwnerId.equalsIgnoreCase(e.getEmployeeId()))
+                    .findFirst();
             if (ownerEmpOpt.isPresent()) {
                 Employee ownerEmp = ownerEmpOpt.get();
                 // Match by owner's current department in DB

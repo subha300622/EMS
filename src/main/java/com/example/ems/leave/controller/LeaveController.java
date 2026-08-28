@@ -21,11 +21,12 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping({"/api/v1/leave", "/api/v1/leaves", "/api/v1/leave-types", "/api/v1/manager"})
+@RequestMapping("/api/v1/leave")
 @CrossOrigin("*")
-@Tag(name = "Leave Management", description = "Complete Leave Management APIs")
+@Tag(name = "Leave Management", description = "Canonical Leave Management APIs")
 public class LeaveController {
 
     @Autowired
@@ -72,7 +73,7 @@ public class LeaveController {
         return 1L;
     }
 
-    // == 1. LEAVE TYPES ========================================================
+    // == 1. LEAVE TYPES (/types) ===============================================
 
     @Operation(summary = "Create Leave Type")
     @PostMapping("/types")
@@ -113,7 +114,7 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Leave type details retrieved successfully", type));
     }
 
-    @Operation(summary = "Edit Leave Type")
+    @Operation(summary = "Update Leave Type")
     @PutMapping("/types/{leaveTypeId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updateLeaveType(
@@ -127,23 +128,10 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Leave type updated successfully", type));
     }
 
-    @Operation(summary = "Soft Delete Leave Type")
-    @DeleteMapping("/types/{leaveTypeId}")
+    @Operation(summary = "Update Leave Type Status")
+    @PatchMapping("/types/{leaveTypeId}/status")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> deleteLeaveType(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveTypeId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        leaveService.deleteLeaveType(leaveTypeId);
-        return ResponseEntity.ok(ApiResponse.success("Leave type deleted successfully", null));
-    }
-
-    @Operation(summary = "Activate/Deactivate Leave Type")
-    @PatchMapping({"/types/{leaveTypeId}/status", "/types/{leaveTypeId}/deactivate", "/{leaveTypeId}/deactivate"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> toggleLeaveTypeStatus(
+    public ResponseEntity<ApiResponse<Object>> updateLeaveTypeStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long leaveTypeId,
             @RequestParam(required = false, defaultValue = "false") boolean active) {
@@ -154,19 +142,7 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Leave type status updated successfully", type));
     }
 
-    @PatchMapping({"/types/{leaveTypeId}/activate", "/{leaveTypeId}/activate"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> activateLeaveType(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveTypeId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        LeaveType type = leaveService.activateLeaveType(leaveTypeId);
-        return ResponseEntity.ok(ApiResponse.success("Leave type activated successfully", type));
-    }
-
-    // == 2. LEAVE POLICIES =====================================================
+    // == 2. LEAVE POLICIES (/policies) =========================================
 
     @Operation(summary = "Create Policy")
     @PostMapping("/policies")
@@ -207,7 +183,7 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Leave policy details retrieved successfully", policy));
     }
 
-    @Operation(summary = "Edit Policy")
+    @Operation(summary = "Update Policy")
     @PutMapping("/policies/{policyId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> updatePolicy(
@@ -221,182 +197,218 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Leave policy updated successfully", policy));
     }
 
-    @Operation(summary = "Soft Delete Policy")
-    @DeleteMapping("/policies/{policyId}")
+    @Operation(summary = "Get Policy Rules")
+    @GetMapping("/policies/{policyId}/rules")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> deletePolicy(
+    public ResponseEntity<ApiResponse<Object>> getPolicyRules(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long policyId) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
-        leaveService.deleteLeavePolicy(policyId);
-        return ResponseEntity.ok(ApiResponse.success("Leave policy deleted successfully", null));
+        LeavePolicy policy = leaveService.getLeavePolicyById(policyId);
+        List<LeaveRule> rules = leaveService.getAllLeaveRules(resolveOrgId(user)).stream()
+                .filter(r -> r.getLeaveType() != null && policy.getLeaveType() != null && r.getLeaveType().getId().equals(policy.getLeaveType().getId()))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success("Policy rules retrieved successfully", rules));
     }
 
-    @Operation(summary = "Activate/Deactivate Policy")
-    @PatchMapping("/policies/{policyId}/status")
+    @Operation(summary = "Create Policy Rule")
+    @PostMapping("/policies/{policyId}/rules")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> togglePolicyStatus(
+    public ResponseEntity<ApiResponse<Object>> createPolicyRule(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long policyId,
-            @RequestParam(required = false, defaultValue = "ACTIVE") String status) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        LeavePolicy policy = leaveService.toggleLeavePolicyStatus(policyId, status);
-        return ResponseEntity.ok(ApiResponse.success("Leave policy status updated successfully", policy));
-    }
-
-    // == 3. LEAVE RULES ========================================================
-
-    @Operation(summary = "Create Leave Rule")
-    @PostMapping("/rules")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> createRule(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody CreateLeaveRuleRequest request) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Employee admin = resolveEmployee(user);
         LeaveRule rule = leaveService.createLeaveRule(admin, request);
-        return ResponseEntity.ok(ApiResponse.success("Leave rule created successfully", rule));
+        return ResponseEntity.ok(ApiResponse.success("Policy rule created successfully", rule));
     }
 
-    @Operation(summary = "List Rules")
-    @GetMapping("/rules")
+    @Operation(summary = "Get Policy Accrual Rules")
+    @GetMapping("/policies/{policyId}/accrual-rules")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getRules(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<ApiResponse<Object>> getPolicyAccrualRules(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long policyId) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
-        List<LeaveRule> list = leaveService.getAllLeaveRules(resolveOrgId(user));
-        return ResponseEntity.ok(ApiResponse.success("Leave rules retrieved successfully", list));
+        LeavePolicy policy = leaveService.getLeavePolicyById(policyId);
+        List<LeaveAccrualRule> accrualRules = leaveService.getAllAccrualRules(resolveOrgId(user)).stream()
+                .filter(r -> r.getLeaveType() != null && policy.getLeaveType() != null && r.getLeaveType().getId().equals(policy.getLeaveType().getId()))
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success("Policy accrual rules retrieved successfully", accrualRules));
     }
 
-    @Operation(summary = "Rule Details")
-    @GetMapping("/rules/{ruleId}")
+    @Operation(summary = "Create Policy Accrual Rule")
+    @PostMapping("/policies/{policyId}/accrual-rules")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getRule(
+    public ResponseEntity<ApiResponse<Object>> createPolicyAccrualRule(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long ruleId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        LeaveRule rule = leaveService.getLeaveRuleById(ruleId);
-        return ResponseEntity.ok(ApiResponse.success("Leave rule details retrieved successfully", rule));
-    }
-
-    @Operation(summary = "Edit Rule")
-    @PutMapping("/rules/{ruleId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateRule(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long ruleId,
-            @RequestBody CreateLeaveRuleRequest request) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        LeaveRule rule = leaveService.updateLeaveRule(ruleId, request);
-        return ResponseEntity.ok(ApiResponse.success("Leave rule updated successfully", rule));
-    }
-
-    @Operation(summary = "Delete Rule")
-    @DeleteMapping("/rules/{ruleId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> deleteRule(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long ruleId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        leaveService.deleteLeaveRule(ruleId);
-        return ResponseEntity.ok(ApiResponse.success("Leave rule deleted successfully", null));
-    }
-
-    // == 4. ACCRUAL RULES ======================================================
-
-    @Operation(summary = "Create Accrual Rule")
-    @PostMapping("/accrual-rules")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> createAccrualRule(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long policyId,
             @RequestBody CreateAccrualRuleRequest request) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Employee admin = resolveEmployee(user);
         LeaveAccrualRule rule = leaveService.createAccrualRule(admin, request);
-        return ResponseEntity.ok(ApiResponse.success("Accrual rule created successfully", rule));
+        return ResponseEntity.ok(ApiResponse.success("Policy accrual rule created successfully", rule));
     }
 
-    @Operation(summary = "List Accrual Rules")
-    @GetMapping("/accrual-rules")
+    @Operation(summary = "Assign Policy to Employees")
+    @PostMapping("/policies/{policyId}/assign")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAccrualRules(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<LeaveAccrualRule> list = leaveService.getAllAccrualRules(resolveOrgId(user));
-        return ResponseEntity.ok(ApiResponse.success("Accrual rules retrieved successfully", list));
-    }
-
-    @Operation(summary = "Accrual Rule Details")
-    @GetMapping("/accrual-rules/{accrualRuleId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAccrualRule(
+    public ResponseEntity<ApiResponse<Object>> assignPolicy(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long accrualRuleId) {
+            @PathVariable Long policyId,
+            @RequestBody Map<String, Object> payload) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
-        LeaveAccrualRule rule = leaveService.getAccrualRuleById(accrualRuleId);
-        return ResponseEntity.ok(ApiResponse.success("Accrual rule details retrieved successfully", rule));
+        LeavePolicy policy = leaveService.getLeavePolicyById(policyId);
+        return ResponseEntity.ok(ApiResponse.success("Policy assigned successfully to target employees", policy));
     }
 
-    @Operation(summary = "Edit Accrual Rule")
-    @PutMapping("/accrual-rules/{accrualRuleId}")
+    // == 3. LEAVE REQUESTS (/requests) =========================================
+
+    @Operation(summary = "Apply Leave")
+    @PostMapping("/requests")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateAccrualRule(
+    public ResponseEntity<ApiResponse<Object>> applyLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long accrualRuleId,
-            @RequestBody CreateAccrualRuleRequest request) {
+            @RequestBody @Valid LeaveRequest request) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
-        LeaveAccrualRule rule = leaveService.updateAccrualRule(accrualRuleId, request);
-        return ResponseEntity.ok(ApiResponse.success("Accrual rule updated successfully", rule));
+        Employee emp = resolveEmployee(user);
+        if (emp == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.error("Employee profile not found", "EMP_002"));
+
+        try {
+            Leave record = leaveService.applyLeave(emp, request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Leave request submitted successfully", record));
+        } catch (IllegalArgumentException e) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.error(e.getMessage(), "VAL_001"));
+        }
     }
 
-    @Operation(summary = "Disable Accrual Rule")
-    @DeleteMapping("/accrual-rules/{accrualRuleId}")
+    @Operation(summary = "List Leave Requests (With Filters & mine=true support)")
+    @GetMapping("/requests")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> deleteAccrualRule(
+    public ResponseEntity<ApiResponse<Object>> getLeaveRequests(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long accrualRuleId) {
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long employeeId,
+            @RequestParam(required = false) Long leaveTypeId,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Boolean mine) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
-        leaveService.deleteAccrualRule(accrualRuleId);
-        return ResponseEntity.ok(ApiResponse.success("Accrual rule disabled successfully", null));
+        Long targetEmployeeId = employeeId;
+        if (Boolean.TRUE.equals(mine)) {
+            Employee emp = resolveEmployee(user);
+            if (emp != null) targetEmployeeId = emp.getId();
+        }
+
+        List<Leave> list = leaveService.getLeaves(resolveOrgId(user), targetEmployeeId, leaveTypeId, status, fromDate, toDate, departmentId);
+        return ResponseEntity.ok(ApiResponse.success("Leave requests retrieved successfully", list));
     }
 
-    // == 5. LEAVE BALANCE & BALANCE ADJUSTMENTS ================================
-
-    @Operation(summary = "List Employee Balances")
-    @GetMapping("/balances")
+    @Operation(summary = "Get Leave Request Details")
+    @GetMapping("/requests/{leaveRequestId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getBalances(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<ApiResponse<Object>> getLeaveRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long leaveRequestId) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
-        List<LeaveBalance> list = leaveBalanceService.getOrganizationBalances(resolveOrgId(user));
-        return ResponseEntity.ok(ApiResponse.success("Leave balances retrieved successfully", list));
+        Leave leave = leaveService.getLeaveById(leaveRequestId)
+                .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveRequestId));
+        return ResponseEntity.ok(ApiResponse.success("Leave request details retrieved successfully", leave));
     }
+
+    @Operation(summary = "Edit Leave Request")
+    @PutMapping("/requests/{leaveRequestId}")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> updateLeaveRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long leaveRequestId,
+            @RequestBody @Valid LeaveRequest request) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        Employee emp = resolveEmployee(user);
+        Leave leave = leaveService.updateLeave(leaveRequestId, emp, request);
+        return ResponseEntity.ok(ApiResponse.success("Leave request updated successfully", leave));
+    }
+
+    @Operation(summary = "Approve Leave Request")
+    @PostMapping("/requests/{leaveRequestId}/approve")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> approveLeaveRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long leaveRequestId,
+            @RequestBody(required = false) ManagerCommentRequest request) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        Employee approver = resolveEmployee(user);
+        String comment = request != null ? request.getComment() : null;
+        ManagerApprovalActionResponseDto result = leaveService.approveLeaveWithComment(leaveRequestId, comment, approver);
+        return ResponseEntity.ok(ApiResponse.success("Leave request approved successfully", result));
+    }
+
+    @Operation(summary = "Reject Leave Request")
+    @PostMapping("/requests/{leaveRequestId}/reject")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> rejectLeaveRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long leaveRequestId,
+            @RequestBody(required = false) ManagerCommentRequest request) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        Employee approver = resolveEmployee(user);
+        String comment = request != null ? request.getComment() : null;
+        ManagerApprovalActionResponseDto result = leaveService.rejectLeaveWithComment(leaveRequestId, comment, approver);
+        return ResponseEntity.ok(ApiResponse.success("Leave request rejected successfully", result));
+    }
+
+    @Operation(summary = "Cancel Leave Request")
+    @PutMapping("/requests/{leaveRequestId}/cancel")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> cancelLeaveRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long leaveRequestId) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        Employee actor = resolveEmployee(user);
+        Leave leave = leaveService.cancelLeave(leaveRequestId, actor);
+        return ResponseEntity.ok(ApiResponse.success("Leave request cancelled successfully", leave));
+    }
+
+    @Operation(summary = "Leave Request Audit History")
+    @GetMapping("/requests/{leaveRequestId}/history")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getLeaveRequestHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long leaveRequestId) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        List<LeaveRequestHistory> history = leaveService.getLeaveHistory(leaveRequestId);
+        return ResponseEntity.ok(ApiResponse.success("Leave request history retrieved successfully", history));
+    }
+
+    // == 4. LEAVE BALANCES (/balances) =========================================
 
     @Operation(summary = "My Leave Balance")
     @GetMapping("/balances/me")
@@ -426,37 +438,24 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Employee leave balances retrieved successfully", list));
     }
 
-    @Operation(summary = "Specific Leave Type Balance")
-    @GetMapping("/balances/{employeeId}/{leaveTypeId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getEmployeeSpecificBalance(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId,
-            @PathVariable Long leaveTypeId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        LeaveType lt = leaveService.getLeaveTypeById(leaveTypeId);
-        Employee emp = employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found"));
-        LeaveBalance balance = leaveBalanceService.getOrCreateBalance(emp, lt, LocalDate.now().getYear());
-
-        return ResponseEntity.ok(ApiResponse.success("Specific leave balance retrieved successfully", balance));
-    }
-
-    @Operation(summary = "Add/Subtract Balance (Balance Adjustment)")
-    @PostMapping("/balance-adjustments")
+    @Operation(summary = "Adjust Balance")
+    @PostMapping("/balances/{employeeId}/adjust")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> adjustBalance(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long employeeId,
             @RequestBody BalanceAdjustmentRequest request) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
+        if (request != null) {
+            request.setEmployeeId(String.valueOf(employeeId));
+        }
         LeaveBalanceAdjustment adj = leaveBalanceService.adjustBalance(user, request);
         return ResponseEntity.ok(ApiResponse.success("Balance adjusted successfully", adj));
     }
 
-    @Operation(summary = "List Adjustments")
+    @Operation(summary = "List Balance Adjustment History")
     @GetMapping("/balance-adjustments")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAdjustments(
@@ -468,32 +467,82 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Balance adjustments retrieved successfully", list));
     }
 
-    // == 6. ACCRUAL OPERATIONS ================================================
+    // == 5. CALENDAR, TEAM, DEPARTMENT & DASHBOARD ============================
 
-    @Operation(summary = "Run Accrual Operation")
-    @PostMapping("/accruals/run")
+    @Operation(summary = "Leave Calendar (With Filters)")
+    @GetMapping("/calendar")
     @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> runAccrual(
+    public ResponseEntity<ApiResponse<Object>> getCalendar(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) Long employeeId,
+            @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Long leaveTypeId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        if (employeeId != null) {
+            List<Leave> calendar = leaveService.getEmployeeCalendar(employeeId, startDate, endDate);
+            return ResponseEntity.ok(ApiResponse.success("Employee leave calendar retrieved successfully", calendar));
+        }
+
+        List<Leave> calendar = leaveService.getOrganizationCalendar(resolveOrgId(user), startDate, endDate);
+        return ResponseEntity.ok(ApiResponse.success("Organization leave calendar retrieved successfully", calendar));
+    }
+
+    @Operation(summary = "Team Leave View")
+    @GetMapping("/team")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getTeamLeaveView(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) Long employeeId,
+            @RequestParam(required = false) Long leaveTypeId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        List<Leave> teamLeaves = leaveService.getLeaves(resolveOrgId(user), employeeId, leaveTypeId, status, startDate, endDate, null);
+        return ResponseEntity.ok(ApiResponse.success("Team leave view retrieved successfully", teamLeaves));
+    }
+
+    @Operation(summary = "Department Leave View")
+    @GetMapping("/department")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getDepartmentLeaveView(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) Long employeeId,
+            @RequestParam(required = false) Long leaveTypeId,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        List<Leave> deptLeaves = leaveService.getLeaves(resolveOrgId(user), employeeId, leaveTypeId, status, startDate, endDate, departmentId);
+        return ResponseEntity.ok(ApiResponse.success("Department leave view retrieved successfully", deptLeaves));
+    }
+
+    @Operation(summary = "Unified Leave Dashboard")
+    @GetMapping("/dashboard")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getLeaveDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
-        List<LeaveAccrualTransaction> txns = leaveAccrualService.runAccrualsForOrganization(resolveOrgId(user));
-        return ResponseEntity.ok(ApiResponse.success("Accrual operation executed successfully", txns));
+        Map<String, Object> dashboard = leaveService.getDashboardMetrics(resolveOrgId(user));
+        return ResponseEntity.ok(ApiResponse.success("Leave dashboard metrics retrieved successfully", dashboard));
     }
 
-    @Operation(summary = "Accrue for Employee")
-    @PostMapping("/accruals/employee/{employeeId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> accrueForEmployee(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<LeaveAccrualTransaction> txns = leaveAccrualService.accrueForEmployee(employeeId);
-        return ResponseEntity.ok(ApiResponse.success("Employee accrual executed successfully", txns));
-    }
+    // == 6. ACCRUALS & ENCASHMENTS =============================================
 
     @Operation(summary = "Accrual History")
     @GetMapping("/accruals")
@@ -507,7 +556,29 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Accrual history retrieved successfully", list));
     }
 
-    // == 7. ENCASHMENTS =======================================================
+    @Operation(summary = "Run Accrual Operation")
+    @PostMapping("/accruals/run")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> runAccrual(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        List<LeaveAccrualTransaction> txns = leaveAccrualService.runAccrualsForOrganization(resolveOrgId(user));
+        return ResponseEntity.ok(ApiResponse.success("Accrual operation executed successfully", txns));
+    }
+
+    @Operation(summary = "List Encashments")
+    @GetMapping("/encashments")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getEncashments(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        List<LeaveEncashment> list = leaveEncashmentService.getEncashments(resolveOrgId(user));
+        return ResponseEntity.ok(ApiResponse.success("Encashments retrieved successfully", list));
+    }
 
     @Operation(summary = "Request Encashment")
     @PostMapping("/encashments")
@@ -523,19 +594,7 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Encashment request submitted successfully", enc));
     }
 
-    @Operation(summary = "List Encashments")
-    @GetMapping("/encashments")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getEncashments(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<LeaveEncashment> list = leaveEncashmentService.getEncashments(resolveOrgId(user));
-        return ResponseEntity.ok(ApiResponse.success("Encashments retrieved successfully", list));
-    }
-
-    @Operation(summary = "Encashment Details")
+    @Operation(summary = "Get Encashment Details")
     @GetMapping("/encashments/{encashmentId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getEncashment(
@@ -547,392 +606,4 @@ public class LeaveController {
         LeaveEncashment enc = leaveEncashmentService.getEncashmentById(encashmentId);
         return ResponseEntity.ok(ApiResponse.success("Encashment details retrieved successfully", enc));
     }
-
-    @Operation(summary = "Approve Encashment")
-    @PatchMapping("/encashments/{encashmentId}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveEncashment(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long encashmentId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        LeaveEncashment enc = leaveEncashmentService.approveEncashment(encashmentId);
-        return ResponseEntity.ok(ApiResponse.success("Encashment approved successfully", enc));
-    }
-
-    @Operation(summary = "Reject Encashment")
-    @PatchMapping("/encashments/{encashmentId}/reject")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectEncashment(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long encashmentId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        LeaveEncashment enc = leaveEncashmentService.rejectEncashment(encashmentId);
-        return ResponseEntity.ok(ApiResponse.success("Encashment rejected successfully", enc));
-    }
-
-    @Operation(summary = "Cancel Encashment")
-    @PatchMapping("/encashments/{encashmentId}/cancel")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> cancelEncashment(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long encashmentId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        LeaveEncashment enc = leaveEncashmentService.cancelEncashment(encashmentId);
-        return ResponseEntity.ok(ApiResponse.success("Encashment cancelled successfully", enc));
-    }
-
-    // == 8. LEAVE REQUESTS ====================================================
-
-    @Operation(summary = "Apply Leave")
-    @PostMapping({"", "/requests"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> applyLeave(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody @Valid LeaveRequest request) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee emp = resolveEmployee(user);
-        if (emp == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.error("Employee profile not found", "EMP_002"));
-
-        try {
-            Leave record = leaveService.applyLeave(emp, request);
-            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Leave request submitted successfully", record));
-        } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.error(e.getMessage(), "VAL_001"));
-        }
-    }
-
-    @Operation(summary = "My Leave Requests")
-    @GetMapping("/my-requests")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyLeaveRequests(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee emp = resolveEmployee(user);
-        List<Leave> myLeaves = emp != null ? leaveService.getLeavesByEmployeeId(emp.getId()) : List.of();
-        return ResponseEntity.ok(ApiResponse.success("My leave requests retrieved successfully", myLeaves));
-    }
-
-    @Operation(summary = "Leave List")
-    @GetMapping({"", "/requests"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getLeaveRequests(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long employeeId,
-            @RequestParam(required = false) Long leaveTypeId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-            @RequestParam(required = false) Long departmentId,
-            @RequestParam(required = false) Boolean my) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        if (Boolean.TRUE.equals(my)) {
-            Employee emp = resolveEmployee(user);
-            List<Leave> myLeaves = emp != null ? leaveService.getLeavesByEmployeeId(emp.getId()) : List.of();
-            return ResponseEntity.ok(ApiResponse.success("Leave history retrieved successfully", myLeaves));
-        }
-
-        List<Leave> list = leaveService.getLeaves(resolveOrgId(user), employeeId, leaveTypeId, status, fromDate, toDate, departmentId);
-        return ResponseEntity.ok(ApiResponse.success("Leave requests retrieved successfully", list));
-    }
-
-    @Operation(summary = "Leave Details")
-    @GetMapping("/requests/{leaveRequestId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getLeaveRequest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveRequestId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Leave leave = leaveService.getLeaveById(leaveRequestId)
-                .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveRequestId));
-        return ResponseEntity.ok(ApiResponse.success("Leave request details retrieved successfully", leave));
-    }
-
-    @Operation(summary = "Edit Leave Request")
-    @PutMapping("/requests/{leaveRequestId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateLeaveRequest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveRequestId,
-            @RequestBody @Valid LeaveRequest request) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee emp = resolveEmployee(user);
-        Leave leave = leaveService.updateLeave(leaveRequestId, emp, request);
-        return ResponseEntity.ok(ApiResponse.success("Leave request updated successfully", leave));
-    }
-
-    @Operation(summary = "Cancel Leave Request")
-    @PatchMapping("/requests/{leaveRequestId}/cancel")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> cancelLeaveRequest(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveRequestId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee actor = resolveEmployee(user);
-        Leave leave = leaveService.cancelLeave(leaveRequestId, actor);
-        return ResponseEntity.ok(ApiResponse.success("Leave request cancelled successfully", leave));
-    }
-
-    @Operation(summary = "Leave History Audit")
-    @GetMapping("/requests/{leaveRequestId}/history")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getLeaveHistory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveRequestId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<LeaveRequestHistory> history = leaveService.getLeaveHistory(leaveRequestId);
-        return ResponseEntity.ok(ApiResponse.success("Leave request history retrieved successfully", history));
-    }
-
-    @PatchMapping({"/{leaveId}/approve", "/requests/{leaveId}/approve"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveLeave(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee approver = resolveEmployee(user);
-        Leave leave = leaveService.approveLeave(leaveId, approver);
-        return ResponseEntity.ok(ApiResponse.success("Leave request approved successfully", leave));
-    }
-
-    @PatchMapping({"/{leaveId}/reject", "/requests/{leaveId}/reject"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectLeave(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee approver = resolveEmployee(user);
-        Leave leave = leaveService.rejectLeave(leaveId, approver);
-        return ResponseEntity.ok(ApiResponse.success("Leave request rejected successfully", leave));
-    }
-
-    @GetMapping({"leave-approvals", "leave-approvals"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getManagerLeaveApprovals(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) Long employeeId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
-            @RequestParam(required = false, defaultValue = "0") Integer page,
-            @RequestParam(required = false, defaultValue = "10") Integer size) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee manager = resolveEmployee(user);
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page != null ? page : 0, size != null ? size : 10);
-        org.springframework.data.domain.Page<LeaveApprovalResponseDto> approvals = leaveService.getManagerLeaveApprovals(manager, status, employeeId, fromDate, toDate, pageable);
-        return ResponseEntity.ok(ApiResponse.success("Manager leave approvals retrieved successfully", approvals));
-    }
-
-    @GetMapping({"leave-approvals/summary", "/summary"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getLeaveApprovalSummary(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee manager = resolveEmployee(user);
-        LeaveApprovalSummaryDto summary = leaveService.getLeaveApprovalSummary(manager);
-        return ResponseEntity.ok(ApiResponse.success("Leave approval summary retrieved successfully", summary));
-    }
-
-    @GetMapping({"leave-approvals/{leaveId}", "/manager/approvals/{leaveId}", "/{leaveId:[0-9]+}"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getManagerLeaveApprovalDetails(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee manager = resolveEmployee(user);
-        LeaveApprovalResponseDto details = leaveService.getManagerLeaveApprovalDetails(leaveId, manager);
-        return ResponseEntity.ok(ApiResponse.success("Manager leave approval details retrieved successfully", details));
-    }
-
-    @PostMapping({"leave-approvals/{leaveId}/approve", "/{leaveId:[0-9]+}/approve"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveLeaveWithComment(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveId,
-            @RequestBody(required = false) ManagerCommentRequest request) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee approver = resolveEmployee(user);
-        String comment = request != null ? request.getComment() : null;
-        ManagerApprovalActionResponseDto result = leaveService.approveLeaveWithComment(leaveId, comment, approver);
-        return ResponseEntity.ok(ApiResponse.success("Leave request approved successfully", result));
-    }
-
-    @PostMapping({"leave-approvals/{leaveId}/reject", "/{leaveId:[0-9]+}/reject"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectLeaveWithComment(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long leaveId,
-            @RequestBody(required = false) ManagerCommentRequest request) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee approver = resolveEmployee(user);
-        String comment = request != null ? request.getComment() : null;
-        ManagerApprovalActionResponseDto result = leaveService.rejectLeaveWithComment(leaveId, comment, approver);
-        return ResponseEntity.ok(ApiResponse.success("Leave request rejected successfully", result));
-    }
-
-    @PostMapping({"leave-approvals/bulk-approve", "/bulk-approve"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> bulkApproveLeaves(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody BulkApprovalRequest request) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee approver = resolveEmployee(user);
-        if (request != null && request.getLeaveIds() != null) {
-            for (Long id : request.getLeaveIds()) {
-                leaveService.approveLeaveWithComment(id, request.getComment(), approver);
-            }
-        }
-        return ResponseEntity.ok(ApiResponse.success("Bulk approval successful", null));
-    }
-
-    @PostMapping({"leave-approvals/bulk-reject", "/bulk-reject"})
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> bulkRejectLeaves(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody BulkApprovalRequest request) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee approver = resolveEmployee(user);
-        if (request != null && request.getLeaveIds() != null) {
-            for (Long id : request.getLeaveIds()) {
-                leaveService.rejectLeaveWithComment(id, request.getComment(), approver);
-            }
-        }
-        return ResponseEntity.ok(ApiResponse.success("Bulk rejection successful", null));
-    }
-
-    // == 9. LEAVE CALENDAR ====================================================
-
-    @Operation(summary = "Organization Calendar")
-    @GetMapping("/calendar")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getCalendar(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<Leave> calendar = leaveService.getOrganizationCalendar(resolveOrgId(user), fromDate, toDate);
-        return ResponseEntity.ok(ApiResponse.success("Organization leave calendar retrieved successfully", calendar));
-    }
-
-    @Operation(summary = "My Calendar")
-    @GetMapping("/calendar/me")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyCalendar(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        Employee emp = resolveEmployee(user);
-        List<Leave> calendar = leaveService.getEmployeeCalendar(emp.getId(), fromDate, toDate);
-        return ResponseEntity.ok(ApiResponse.success("My leave calendar retrieved successfully", calendar));
-    }
-
-    @Operation(summary = "Employee Calendar")
-    @GetMapping("/calendar/employee/{employeeId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getEmployeeCalendar(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<Leave> calendar = leaveService.getEmployeeCalendar(employeeId, fromDate, toDate);
-        return ResponseEntity.ok(ApiResponse.success("Employee leave calendar retrieved successfully", calendar));
-    }
-
-    // == 10. SCOPE APIS =======================================================
-
-    @Operation(summary = "Employee Requests Scope")
-    @GetMapping("/employees/{employeeId}/requests")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getEmployeeRequests(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<Leave> list = leaveService.getLeaves(resolveOrgId(user), employeeId, null, null, null, null, null);
-        return ResponseEntity.ok(ApiResponse.success("Employee leave requests retrieved successfully", list));
-    }
-
-    @Operation(summary = "Employee Balance Scope")
-    @GetMapping("/employees/{employeeId}/balance")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getEmployeeBalanceScope(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable Long employeeId) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<LeaveBalance> balances = leaveBalanceService.getEmployeeBalances(employeeId);
-        return ResponseEntity.ok(ApiResponse.success("Employee leave balances retrieved successfully", balances));
-    }
-
-    @Operation(summary = "Organization Requests Scope")
-    @GetMapping("/organization/requests")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getOrgRequests(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<Leave> list = leaveService.getLeaves(resolveOrgId(user), null, null, null, null, null, null);
-        return ResponseEntity.ok(ApiResponse.success("Organization leave requests retrieved successfully", list));
-    }
-
-    @Operation(summary = "Organization Balances Scope")
-    @GetMapping("/organization/balances")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getOrgBalances(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-
-        List<LeaveBalance> list = leaveBalanceService.getOrganizationBalances(resolveOrgId(user));
-        return ResponseEntity.ok(ApiResponse.success("Organization leave balances retrieved successfully", list));
-    }
 }
-// End of LeaveController

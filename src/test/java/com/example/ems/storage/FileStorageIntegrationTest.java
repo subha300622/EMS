@@ -174,15 +174,23 @@ public class FileStorageIntegrationTest {
             "EMP_MGR_SAME", "EMP_MGR_DIRECT", "EMP_MGR_OTHER", "EMP_ADMIN"
         };
         for (String empId : testEmployeeIds) {
-            employeeRepository.findByEmployeeId(empId).ifPresent(emp -> {
-                emp.setManager(null);
-                employeeRepository.saveAndFlush(emp);
-            });
+            employeeRepository.findAll().stream()
+                    .filter(e -> empId.equals(e.getEmployeeId()))
+                    .forEach(emp -> {
+                        emp.setManager(null);
+                        employeeRepository.saveAndFlush(emp);
+                    });
         }
         for (String empId : testEmployeeIds) {
-            employeeRepository.findByEmployeeId(empId).ifPresent(emp -> {
-                employeeRepository.delete(emp);
-            });
+            employeeRepository.findAll().stream()
+                    .filter(e -> empId.equals(e.getEmployeeId()))
+                    .forEach(emp -> {
+                        try {
+                            employeeRepository.delete(emp);
+                        } catch (Exception e) {
+                            // Ignore if referenced by other test fixtures (e.g., expenses table)
+                        }
+                    });
         }
     }
 
@@ -210,7 +218,10 @@ public class FileStorageIntegrationTest {
     }
 
     private Employee createEmployee(String employeeId, String designation, String department, String email, Employee manager) {
-        Employee emp = new Employee();
+        Employee emp = employeeRepository.findAll().stream()
+                .filter(e -> employeeId.equals(e.getEmployeeId()) || email.equals(e.getEmail()))
+                .findFirst()
+                .orElseGet(Employee::new);
         emp.setEmployeeId(employeeId);
         emp.setFullName(employeeId.replace("EMP_", "") + " Employee");
         emp.setEmail(email);
@@ -222,7 +233,7 @@ public class FileStorageIntegrationTest {
     }
 
     private User createUser(String userId, String email, String department, Role role) {
-        User user = new User();
+        User user = userRepository.findByWorkEmail(email).orElseGet(User::new);
         user.setUserId(userId);
         user.setFullName(userId.replace("EMP_", "") + " User");
         user.setWorkEmail(email);
@@ -269,7 +280,10 @@ public class FileStorageIntegrationTest {
         Long fileId = objectMapper.readTree(uploadBody).path("data").path("id").asLong();
 
         // Verify Employee profileImage field was updated to point to the secure download endpoint
-        Employee emp = employeeRepository.findByEmployeeId("EMP_OWNER").orElse(null);
+        Employee emp = employeeRepository.findAll().stream()
+                .filter(e -> "EMP_OWNER".equals(e.getEmployeeId()))
+                .findFirst()
+                .orElse(null);
         assertNotNull(emp);
         assertEquals("/api/files/" + fileId + "/download", emp.getProfileImage());
 
