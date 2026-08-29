@@ -396,6 +396,118 @@ public class LeaveService {
     }
 
     // == 6. LEAVE CALENDAR APIS ====================================================
+
+    public List<LeaveCalendarEventDto> getLeaveCalendarEvents(
+            Long orgId,
+            Long employeeId,
+            Long teamId,
+            String department,
+            Long leaveTypeId,
+            String status,
+            LocalDate startDate,
+            LocalDate endDate) {
+
+        if (startDate != null && endDate != null && startDate.isAfter(endDate)) {
+            throw new IllegalArgumentException("Start date cannot be after end date");
+        }
+
+        List<String> targetStatuses;
+        if (status != null && !status.trim().isEmpty() && !"ALL".equalsIgnoreCase(status.trim())) {
+            targetStatuses = List.of(status.trim().toUpperCase());
+        } else {
+            targetStatuses = List.of("APPROVED", "PENDING");
+        }
+
+        String targetDept = (department != null && !department.trim().isEmpty()) ? department.trim().toLowerCase() : null;
+
+        List<Leave> leaves = leaveRepository.findCalendarEvents(
+                orgId, employeeId, teamId, targetDept, leaveTypeId, targetStatuses, startDate, endDate
+        );
+
+        return leaves.stream()
+                .map(this::mapToCalendarEventDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<LeaveCalendarEventDto> getEmployeeCalendarEvents(
+            Long orgId,
+            Long employeeId,
+            LocalDate startDate,
+            LocalDate endDate,
+            String status) {
+        return getLeaveCalendarEvents(orgId, employeeId, null, null, null, status, startDate, endDate);
+    }
+
+    public List<LeaveCalendarEventDto> getTeamCalendarEvents(
+            Long orgId,
+            Long teamId,
+            LocalDate startDate,
+            LocalDate endDate,
+            String status) {
+        return getLeaveCalendarEvents(orgId, null, teamId, null, null, status, startDate, endDate);
+    }
+
+    public List<LeaveCalendarEventDto> getDepartmentCalendarEvents(
+            Long orgId,
+            String department,
+            LocalDate startDate,
+            LocalDate endDate,
+            String status) {
+        return getLeaveCalendarEvents(orgId, null, null, department, null, status, startDate, endDate);
+    }
+
+    private LeaveCalendarEventDto mapToCalendarEventDto(Leave leave) {
+        Employee emp = leave.getEmployee();
+        LeaveType lt = leave.getLeaveType();
+
+        Long empId = emp != null ? emp.getId() : null;
+        String empCode = emp != null ? emp.getEmployeeId() : null;
+        String empName = emp != null ? emp.getFullName() : "Unknown";
+        String empEmail = emp != null ? emp.getEmail() : null;
+        String dept = emp != null ? emp.getDepartment() : null;
+
+        Long teamId = (emp != null && emp.getTeam() != null) ? emp.getTeam().getId() : null;
+        String teamName = (emp != null && emp.getTeam() != null) ? emp.getTeam().getTeamName() : null;
+
+        Long ltId = lt != null ? lt.getId() : null;
+        String ltName = lt != null ? lt.getName() : "Leave";
+        String color = getLeaveTypeColor(ltName, leave.getStatus());
+
+        return new LeaveCalendarEventDto(
+                leave.getId(),
+                empId,
+                empCode,
+                empName,
+                empEmail,
+                dept,
+                teamId,
+                teamName,
+                ltId,
+                ltName,
+                color,
+                leave.getStartDate(),
+                leave.getEndDate(),
+                leave.getDurationDays(),
+                leave.getDurationType(),
+                leave.getStatus(),
+                leave.getReason()
+        );
+    }
+
+    private String getLeaveTypeColor(String leaveTypeName, String status) {
+        if ("PENDING".equalsIgnoreCase(status)) return "#F59E0B";
+        if ("CANCELLED".equalsIgnoreCase(status)) return "#9CA3AF";
+        if ("REJECTED".equalsIgnoreCase(status)) return "#EF4444";
+
+        if (leaveTypeName == null) return "#3B82F6";
+        String lower = leaveTypeName.toLowerCase();
+        if (lower.contains("annual") || lower.contains("paid")) return "#3B82F6";
+        if (lower.contains("sick") || lower.contains("medical")) return "#10B981";
+        if (lower.contains("casual")) return "#8B5CF6";
+        if (lower.contains("maternity") || lower.contains("paternity")) return "#EC4899";
+        return "#3B82F6";
+    }
+
     public List<Leave> getOrganizationCalendar(Long orgId, LocalDate fromDate, LocalDate toDate) {
         return leaveRepository.findFilteredLeaves(orgId, null, null, "APPROVED", fromDate, toDate, null);
     }

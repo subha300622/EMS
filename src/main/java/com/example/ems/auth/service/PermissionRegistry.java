@@ -44,7 +44,22 @@ public final class PermissionRegistry {
         public static final String ORGANIZATION_AUDIT_READ = "organization.audit.read";
         public static final String ORGANIZATION_EXPORT = "organization.export";
 
+        // Training Management
+        public static final String TRAINING_CREATE = "training.create";
+        public static final String TRAINING_READ = "training.read";
+        public static final String TRAINING_UPDATE = "training.update";
+        public static final String TRAINING_DELETE = "training.delete";
+        public static final String TRAINING_APPROVE = "training.approve";
+        public static final String TRAINING_PUBLISH = "training.publish";
+        public static final String TRAINING_ASSIGN = "training.assign";
+        public static final String TRAINING_ATTENDANCE_MANAGE = "training.attendance.manage";
+        public static final String TRAINING_LIBRARY_MANAGE = "training.library.manage";
+        public static final String TRAINING_REPORTS_VIEW = "training.reports.view";
+
         public static final List<String> ALL_PERMISSIONS = Arrays.asList(
+                        // Training Management
+                        "training.create", "training.read", "training.update", "training.delete", "training.approve",
+                        "training.publish", "training.assign", "training.attendance.manage", "training.library.manage", "training.reports.view",
                         // User Management
                         "user.create", "user.read", "user.update", "user.delete", "user.manage",
                         // Employee Management

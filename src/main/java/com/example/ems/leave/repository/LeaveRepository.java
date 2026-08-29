@@ -73,4 +73,27 @@ public interface LeaveRepository extends JpaRepository<Leave, Long>, JpaSpecific
 
     @Query("SELECT COUNT(l) FROM Leave l WHERE l.approver.id = :managerId AND l.status = 'REJECTED' AND l.rejectedAt >= :startOfToday")
     long countRejectedTodayForManager(@Param("managerId") Long managerId, @Param("startOfToday") LocalDateTime startOfToday);
+
+    @Query(value = "SELECT l.* FROM leaves l " +
+           "JOIN employees e ON e.id = l.employee_id " +
+           "LEFT JOIN my_teams t ON t.id = e.team_id " +
+           "WHERE (CAST(:orgId AS BIGINT) IS NULL OR l.organization_id = CAST(:orgId AS BIGINT)) " +
+           "AND (CAST(:employeeId AS BIGINT) IS NULL OR l.employee_id = CAST(:employeeId AS BIGINT)) " +
+           "AND (CAST(:teamId AS BIGINT) IS NULL OR t.id = CAST(:teamId AS BIGINT)) " +
+           "AND (CAST(:department AS VARCHAR) IS NULL OR LOWER(e.department) = CAST(:department AS VARCHAR)) " +
+           "AND (CAST(:leaveTypeId AS BIGINT) IS NULL OR l.leave_type_id = CAST(:leaveTypeId AS BIGINT)) " +
+           "AND (l.status IN (:statuses)) " +
+           "AND (CAST(:startDate AS DATE) IS NULL OR l.end_date >= CAST(:startDate AS DATE)) " +
+           "AND (CAST(:endDate AS DATE) IS NULL OR l.start_date <= CAST(:endDate AS DATE)) " +
+           "ORDER BY l.start_date ASC", nativeQuery = true)
+    List<Leave> findCalendarEvents(
+            @Param("orgId") Long orgId,
+            @Param("employeeId") Long employeeId,
+            @Param("teamId") Long teamId,
+            @Param("department") String department,
+            @Param("leaveTypeId") Long leaveTypeId,
+            @Param("statuses") List<String> statuses,
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

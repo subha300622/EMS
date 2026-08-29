@@ -148,7 +148,7 @@ public class TeamManagementControllerTest {
 
         Attendance attendance = new Attendance();
         attendance.setId(10L);
-        attendance.setStatus("Present");
+        attendance.setStatus("PRESENT");
         when(attendanceService.getTodayAttendance(report)).thenReturn(Optional.of(attendance));
 
         mockMvc.perform(get("/api/v1/team/attendance")
