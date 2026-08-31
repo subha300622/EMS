@@ -82,6 +82,10 @@ public class ScheduleSwapModuleIntegrationTest {
     private Schedule sch5;
     private Schedule sch2;
 
+    private String schId1;
+    private String schId2;
+    private String schId5;
+
     @BeforeEach
     public void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
@@ -180,9 +184,13 @@ public class ScheduleSwapModuleIntegrationTest {
                     return workflowDefinitionRepository.save(def);
                 });
 
+        schId1 = "SCH-0001-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        schId2 = "SCH-0002-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        schId5 = "SCH-0005-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+
         // Create Schedules
         sch1 = new Schedule();
-        sch1.setScheduleId("SCH-0001");
+        sch1.setScheduleId(schId1);
         sch1.setOrganization(testOrg);
         sch1.setEmployee(emp1);
         sch1.setDate(LocalDate.of(2026, 8, 25));
@@ -194,7 +202,7 @@ public class ScheduleSwapModuleIntegrationTest {
         sch1 = scheduleRepository.save(sch1);
 
         sch5 = new Schedule();
-        sch5.setScheduleId("SCH-0005");
+        sch5.setScheduleId(schId5);
         sch5.setOrganization(testOrg);
         sch5.setEmployee(emp2);
         sch5.setDate(LocalDate.of(2026, 8, 27));
@@ -206,7 +214,7 @@ public class ScheduleSwapModuleIntegrationTest {
         sch5 = scheduleRepository.save(sch5);
 
         sch2 = new Schedule();
-        sch2.setScheduleId("SCH-0002");
+        sch2.setScheduleId(schId2);
         sch2.setOrganization(testOrg);
         sch2.setEmployee(emp1);
         sch2.setDate(LocalDate.of(2026, 8, 28));
@@ -219,13 +227,13 @@ public class ScheduleSwapModuleIntegrationTest {
 
     @Test
     public void testCreateSwapRequest_Success() throws Exception {
-        String payload = """
+        String payload = String.format("""
             {
-              "sourceScheduleId": "SCH-0001",
-              "targetScheduleId": "SCH-0005",
+              "sourceScheduleId": "%s",
+              "targetScheduleId": "%s",
               "reason": "Personal commitment"
             }
-            """;
+            """, schId1, schId5);
 
         mockMvc.perform(post("/api/v1/schedule-swap-requests")
                 .header("Authorization", "Bearer " + token1)
@@ -233,20 +241,20 @@ public class ScheduleSwapModuleIntegrationTest {
                 .content(payload))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success", is(true)))
-                .andExpect(jsonPath("$.data.sourceSchedule.scheduleId", is("SCH-0001")))
-                .andExpect(jsonPath("$.data.targetSchedule.scheduleId", is("SCH-0005")))
+                .andExpect(jsonPath("$.data.sourceSchedule.scheduleId", is(schId1)))
+                .andExpect(jsonPath("$.data.targetSchedule.scheduleId", is(schId5)))
                 .andExpect(jsonPath("$.data.status", is("PENDING_APPROVAL")));
     }
 
     @Test
     public void testCreateSwapRequest_SameEmployee_Fails() throws Exception {
-        String payload = """
+        String payload = String.format("""
             {
-              "sourceScheduleId": "SCH-0001",
-              "targetScheduleId": "SCH-0002",
+              "sourceScheduleId": "%s",
+              "targetScheduleId": "%s",
               "reason": "Self swap attempt"
             }
-            """;
+            """, schId1, schId2);
 
         mockMvc.perform(post("/api/v1/schedule-swap-requests")
                 .header("Authorization", "Bearer " + token1)
@@ -260,13 +268,13 @@ public class ScheduleSwapModuleIntegrationTest {
 
     @Test
     public void testCreateSwapRequest_DuplicateActiveRequest_Fails() throws Exception {
-        String payload1 = """
+        String payload1 = String.format("""
             {
-              "sourceScheduleId": "SCH-0001",
-              "targetScheduleId": "SCH-0005",
+              "sourceScheduleId": "%s",
+              "targetScheduleId": "%s",
               "reason": "First swap request"
             }
-            """;
+            """, schId1, schId5);
 
         mockMvc.perform(post("/api/v1/schedule-swap-requests")
                 .header("Authorization", "Bearer " + token1)
@@ -274,13 +282,13 @@ public class ScheduleSwapModuleIntegrationTest {
                 .content(payload1))
                 .andExpect(status().isCreated());
 
-        String payload2 = """
+        String payload2 = String.format("""
             {
-              "sourceScheduleId": "SCH-0001",
-              "targetScheduleId": "SCH-0005",
+              "sourceScheduleId": "%s",
+              "targetScheduleId": "%s",
               "reason": "Duplicate swap attempt"
             }
-            """;
+            """, schId1, schId5);
 
         mockMvc.perform(post("/api/v1/schedule-swap-requests")
                 .header("Authorization", "Bearer " + token1)
@@ -295,13 +303,13 @@ public class ScheduleSwapModuleIntegrationTest {
     @Test
     public void testFullApprovalAndAtomicSwapWorkflow() throws Exception {
         // 1. Employee 1 creates swap request
-        String createPayload = """
+        String createPayload = String.format("""
             {
-              "sourceScheduleId": "SCH-0001",
-              "targetScheduleId": "SCH-0005",
+              "sourceScheduleId": "%s",
+              "targetScheduleId": "%s",
               "reason": "Need Aug 25 off"
             }
-            """;
+            """, schId1, schId5);
 
         String createResp = mockMvc.perform(post("/api/v1/schedule-swap-requests")
                 .header("Authorization", "Bearer " + token1)
@@ -345,8 +353,8 @@ public class ScheduleSwapModuleIntegrationTest {
                 .andExpect(jsonPath("$.data.status", is("APPROVED")));
 
         // 4. Verify Atomic Swap Execution
-        Schedule updatedSch1 = scheduleRepository.findByScheduleIdAndOrganizationId("SCH-0001", testOrg.getId()).orElseThrow();
-        Schedule updatedSch5 = scheduleRepository.findByScheduleIdAndOrganizationId("SCH-0005", testOrg.getId()).orElseThrow();
+        Schedule updatedSch1 = scheduleRepository.findByScheduleIdAndOrganizationId(schId1, testOrg.getId()).orElseThrow();
+        Schedule updatedSch5 = scheduleRepository.findByScheduleIdAndOrganizationId(schId5, testOrg.getId()).orElseThrow();
 
         // Employee IDs must NOT be swapped
         assertEquals(emp1.getId(), updatedSch1.getEmployee().getId());
@@ -366,13 +374,13 @@ public class ScheduleSwapModuleIntegrationTest {
 
     @Test
     public void testRejectSwapRequest() throws Exception {
-        String createPayload = """
+        String createPayload = String.format("""
             {
-              "sourceScheduleId": "SCH-0001",
-              "targetScheduleId": "SCH-0005",
+              "sourceScheduleId": "%s",
+              "targetScheduleId": "%s",
               "reason": "Personal commitment"
             }
-            """;
+            """, schId1, schId5);
 
         mockMvc.perform(post("/api/v1/schedule-swap-requests")
                 .header("Authorization", "Bearer " + token1)
@@ -397,13 +405,13 @@ public class ScheduleSwapModuleIntegrationTest {
 
     @Test
     public void testCancelSwapRequest() throws Exception {
-        String createPayload = """
+        String createPayload = String.format("""
             {
-              "sourceScheduleId": "SCH-0001",
-              "targetScheduleId": "SCH-0005",
+              "sourceScheduleId": "%s",
+              "targetScheduleId": "%s",
               "reason": "Personal commitment"
             }
-            """;
+            """, schId1, schId5);
 
         String createResp = mockMvc.perform(post("/api/v1/schedule-swap-requests")
                 .header("Authorization", "Bearer " + token1)

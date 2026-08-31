@@ -32,4 +32,14 @@ public interface ApprovalTaskRepository extends JpaRepository<ApprovalTask, Long
             @Param("status") ApprovalStatus status,
             Pageable pageable
     );
+
+    @Query("SELECT t FROM ApprovalTask t WHERE t.workflowType = :workflowType " +
+           "AND t.businessReferenceType = :businessReferenceType " +
+           "AND t.businessReferenceId = :businessReferenceId " +
+           "AND t.status = com.example.ems.approval.entity.ApprovalStatus.PENDING")
+    List<ApprovalTask> findActiveTasksForBusinessRef(
+            @Param("workflowType") WorkflowType workflowType,
+            @Param("businessReferenceType") String businessReferenceType,
+            @Param("businessReferenceId") String businessReferenceId
+    );
 }

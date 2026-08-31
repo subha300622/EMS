@@ -3,6 +3,9 @@ package com.example.ems.approval.service;
 import com.example.ems.approval.dto.*;
 import com.example.ems.approval.entity.*;
 import com.example.ems.approval.event.ApprovalWorkflowCompletedEvent;
+import com.example.ems.approval.event.ApprovalChangesRequestedEvent;
+import com.example.ems.approval.event.ApprovalWorkflowRejectedEvent;
+import com.example.ems.approval.event.ApprovalWorkflowCancelledEvent;
 import com.example.ems.approval.repository.*;
 import com.example.ems.auth.entity.User;
 import com.example.ems.employee.entity.Employee;
@@ -137,6 +140,16 @@ public class ApprovalWorkflowEngineService {
                     step1.setStepName("Manager Approval");
                     step1.setApproverType(ApproverType.DIRECT_MANAGER);
                     defaultDef.addStep(step1);
+
+                    if (workflowType == WorkflowType.EXPENSE_APPROVAL) {
+                        ApprovalWorkflowStep step2 = new ApprovalWorkflowStep();
+                        step2.setStepOrder(2);
+                        step2.setStepName("Finance Approval");
+                        step2.setApproverType(ApproverType.ROLE);
+                        step2.setApproverConfig("FINANCE");
+                        defaultDef.addStep(step2);
+                    }
+
                     return definitionRepository.save(defaultDef);
                 });
 
@@ -336,7 +349,7 @@ public class ApprovalWorkflowEngineService {
         instance.setCompletedAt(Instant.now());
         instanceRepository.save(instance);
 
-        // Publish Workflow Completed Event with REJECTED status
+        // Publish Workflow Completed Event with REJECTED status and dedicated ApprovalWorkflowRejectedEvent
         eventPublisher.publishEvent(new ApprovalWorkflowCompletedEvent(
                 this,
                 instance.getWorkflowInstanceId(),
@@ -345,6 +358,16 @@ public class ApprovalWorkflowEngineService {
                 instance.getBusinessReferenceId(),
                 instance.getOrganization().getId(),
                 ApprovalStatus.REJECTED
+        ));
+
+        eventPublisher.publishEvent(new ApprovalWorkflowRejectedEvent(
+                this,
+                instance.getWorkflowInstanceId(),
+                instance.getWorkflowType(),
+                instance.getBusinessReferenceType(),
+                instance.getBusinessReferenceId(),
+                instance.getOrganization().getId(),
+                comment != null ? comment : "Rejected"
         ));
 
         return mapToTaskDto(task);
@@ -386,7 +409,75 @@ public class ApprovalWorkflowEngineService {
         instance.setStatus(ApprovalStatus.REQUEST_CHANGES);
         instanceRepository.save(instance);
 
+        eventPublisher.publishEvent(new ApprovalChangesRequestedEvent(
+                this,
+                instance.getWorkflowInstanceId(),
+                instance.getWorkflowType(),
+                instance.getBusinessReferenceType(),
+                instance.getBusinessReferenceId(),
+                instance.getOrganization().getId(),
+                comment != null ? comment : "Changes requested"
+        ));
+
         return mapToTaskDto(task);
+    }
+
+    @Transactional
+    public void cancelWorkflowByBusinessRef(WorkflowType workflowType, String businessReferenceType, String businessReferenceId, String reason) {
+        List<ApprovalWorkflowInstance> instances = instanceRepository.findAll().stream()
+                .filter(i -> i.getWorkflowType() == workflowType 
+                          && businessReferenceType.equalsIgnoreCase(i.getBusinessReferenceType())
+                          && businessReferenceId.equalsIgnoreCase(i.getBusinessReferenceId())
+                          && (i.getStatus() == ApprovalStatus.IN_PROGRESS || i.getStatus() == ApprovalStatus.PENDING || i.getStatus() == ApprovalStatus.REQUEST_CHANGES))
+                .collect(Collectors.toList());
+
+        for (ApprovalWorkflowInstance instance : instances) {
+            instance.setStatus(ApprovalStatus.CANCELLED);
+            instance.setCompletedAt(Instant.now());
+            instanceRepository.save(instance);
+
+            List<ApprovalTask> pendingTasks = taskRepository.findByWorkflowInstanceIdAndStepOrder(instance.getId(), instance.getCurrentStep());
+            for (ApprovalTask t : pendingTasks) {
+                if (t.getStatus() == ApprovalStatus.PENDING) {
+                    t.setStatus(ApprovalStatus.CANCELLED);
+                    t.setCompletedAt(Instant.now());
+                    taskRepository.save(t);
+                }
+            }
+
+            eventPublisher.publishEvent(new ApprovalWorkflowCancelledEvent(
+                    this,
+                    instance.getWorkflowInstanceId(),
+                    instance.getWorkflowType(),
+                    instance.getBusinessReferenceType(),
+                    instance.getBusinessReferenceId(),
+                    instance.getOrganization() != null ? instance.getOrganization().getId() : 1L,
+                    reason
+            ));
+        }
+    }
+
+    @Transactional
+    public void resubmitWorkflowByBusinessRef(WorkflowType workflowType, String businessReferenceType, String businessReferenceId, Employee requester, Map<String, Object> context) {
+        List<ApprovalWorkflowInstance> instances = instanceRepository.findAll().stream()
+                .filter(i -> i.getWorkflowType() == workflowType 
+                          && businessReferenceType.equalsIgnoreCase(i.getBusinessReferenceType())
+                          && businessReferenceId.equalsIgnoreCase(i.getBusinessReferenceId())
+                          && (i.getStatus() == ApprovalStatus.REQUEST_CHANGES || i.getStatus() == ApprovalStatus.CANCELLED || i.getStatus() == ApprovalStatus.REJECTED))
+                .collect(Collectors.toList());
+
+        for (ApprovalWorkflowInstance instance : instances) {
+            instance.setStatus(ApprovalStatus.IN_PROGRESS);
+            instance.setCurrentStep(1);
+            instance.setCompletedAt(null);
+            instanceRepository.save(instance);
+
+            createTasksForStep(instance, 1, requester, context);
+        }
+
+        if (instances.isEmpty()) {
+            startWorkflow(workflowType, businessReferenceType, businessReferenceId, requester, context);
+        }
     }
 
     // ── WORKFLOW CONFIGURATION APIS ──────────────────────────────────────────

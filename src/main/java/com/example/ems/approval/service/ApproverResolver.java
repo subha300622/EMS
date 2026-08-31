@@ -7,6 +7,7 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -74,9 +75,30 @@ public class ApproverResolver {
                 throw new IllegalArgumentException("Approver config required for SPECIFIC_USER step");
 
             case DEPARTMENT_HEAD:
+            case DEPARTMENT:
             case ROLE:
-            default:
+            case CUSTOM_ROLE:
+                if (context != null && context.containsKey("financeApproverId")) {
+                    Object finIdObj = context.get("financeApproverId");
+                    if (finIdObj instanceof Long) {
+                        return employeeRepository.findById((Long) finIdObj).orElse(requester);
+                    }
+                }
+                List<Employee> financeEmps = employeeRepository.findByDepartment("Finance");
+                if (financeEmps != null && !financeEmps.isEmpty()) {
+                    return financeEmps.get(0);
+                }
+                List<Employee> acctEmps = employeeRepository.findByDepartment("Accounting");
+                if (acctEmps != null && !acctEmps.isEmpty()) {
+                    return acctEmps.get(0);
+                }
                 // Fallback: If manager exists use manager, otherwise return requester
+                if (requester != null && requester.getManager() != null) {
+                    return requester.getManager();
+                }
+                return requester;
+
+            default:
                 if (requester != null && requester.getManager() != null) {
                     return requester.getManager();
                 }
