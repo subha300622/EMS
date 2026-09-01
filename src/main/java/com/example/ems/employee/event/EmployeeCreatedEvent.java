@@ -4,7 +4,8 @@ import com.example.ems.employee.entity.Employee;
 import org.springframework.context.ApplicationEvent;
 
 public class EmployeeCreatedEvent extends ApplicationEvent {
-    private final Employee employee;
+    private static final long serialVersionUID = 1L;
+    private final transient Employee employee;
 
     public EmployeeCreatedEvent(Object source, Employee employee) {
         super(source);

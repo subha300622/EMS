@@ -70,6 +70,8 @@ public class OnboardingDocumentVerificationListener {
                             finance.setUanVerificationNotes(notes);
                             updated = true;
                             break;
+                        default:
+                            break;
                     }
 
                     if (updated) {

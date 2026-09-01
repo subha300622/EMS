@@ -470,6 +470,6 @@ public class OnboardingWorkflowService {
         if (name == null)
             return "#8B5CF6";
         String[] colors = { "#8B5CF6", "#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#EC4899" };
-        return colors[Math.abs(name.hashCode()) % colors.length];
+        return colors[(name.hashCode() & Integer.MAX_VALUE) % colors.length];
     }
 }

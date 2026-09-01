@@ -454,9 +454,10 @@ public class LeaveController {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
-        if (request != null) {
-            request.setEmployeeId(String.valueOf(employeeId));
+        if (request == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ErrorResponse.error("Request body is required", "VAL_001"));
         }
+        request.setEmployeeId(String.valueOf(employeeId));
         LeaveBalanceAdjustment adj = leaveBalanceService.adjustBalance(user, request);
         return ResponseEntity.ok(ApiResponse.success("Balance adjusted successfully", adj));
     }

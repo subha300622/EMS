@@ -31,7 +31,8 @@ public class TeamMember {
     @Column(name = "is_team_lead", nullable = false)
     private Boolean isTeamLead = false;
 
-    public TeamMember() {}
+    public TeamMember() {
+    }
 
     public TeamMember(Team team, Employee employee, LocalDate joinedAt, Boolean isTeamLead) {
         this.team = team;

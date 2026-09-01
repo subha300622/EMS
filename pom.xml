@@ -14,19 +14,7 @@
 	<name>ems-backend</name>
 	<description>Employee Management System Backend</description>
 	<!-- Trigger rebuild: refresh workspace classpath caches -->
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+
 	<properties>
 		<java.version>21</java.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -162,7 +150,7 @@
 		<dependency>
 			<groupId>com.tngtech.archunit</groupId>
 			<artifactId>archunit-junit5</artifactId>
-			<version>1.3.0</version>
+			<version>1.5.0</version>
 			<scope>test</scope>
 		</dependency>
 		<!-- Firebase Admin SDK for Storage integration -->
@@ -265,35 +253,47 @@
 				<version>3.6.1</version>
 				<configuration>
 					<ignoreNonCompile>true</ignoreNonCompile>
-					<ignoredDependencies>
-						<ignoredDependency>org.springframework.boot:spring-boot-starter*</ignoredDependency>
-						<ignoredDependency>org.postgresql:postgresql</ignoredDependency>
-						<ignoredDependency>org.projectlombok:lombok</ignoredDependency>
-						<ignoredDependency>com.h2database:h2</ignoredDependency>
-						<ignoredDependency>org.springdoc:springdoc-openapi-starter-webmvc-ui</ignoredDependency>
-						<ignoredDependency>io.jsonwebtoken:jjwt-impl</ignoredDependency>
-						<ignoredDependency>io.jsonwebtoken:jjwt-jackson</ignoredDependency>
-					</ignoredDependencies>
+					<ignoredUnusedDeclaredDependencies>
+						<ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-starter*</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>org.postgresql:postgresql</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>org.projectlombok:lombok</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>com.h2database:h2</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>org.springdoc:springdoc-openapi-starter-webmvc-ui</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>io.jsonwebtoken:jjwt-impl</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>io.jsonwebtoken:jjwt-jackson</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>org.flywaydb:flyway-database-postgresql</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>io.micrometer:micrometer-registry-prometheus</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>com.resend:resend-java</ignoredUnusedDeclaredDependency>
+					</ignoredUnusedDeclaredDependencies>
 					<ignoredUsedUndeclaredDependencies>
 						<ignoredUsedUndeclaredDependency>org.springframework:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.springframework.boot:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.springframework.data:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.springframework.security:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>com.fasterxml.jackson.core:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>com.fasterxml.jackson.datatype:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>tools.jackson.core:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>jakarta.persistence:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>jakarta.annotation:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>jakarta.validation:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>jakarta.mail:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>io.swagger.core.v3:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.springdoc:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.hibernate.orm:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.slf4j:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.hamcrest:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.mockito:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.assertj:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.tngtech.archunit:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>commons-logging:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.apache.poi:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.junit.jupiter:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.apache.tomcat.embed:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.springframework.kafka:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.apache.kafka:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.google.auth:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.google.cloud:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.vaadin.external.google:*</ignoredUsedUndeclaredDependency>
 					</ignoredUsedUndeclaredDependencies>
 				</configuration>
 			</plugin>
@@ -306,6 +306,9 @@
 					<printFailingErrors>true</printFailingErrors>
 					<linkXRef>false</linkXRef>
 					<typeResolution>false</typeResolution>
+					<rulesets>
+						<ruleset>${project.basedir}/pmd-ruleset.xml</ruleset>
+					</rulesets>
 				</configuration>
 				<executions>
 					<execution>
@@ -315,6 +318,28 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>11.14.1</version>
+				<configuration>
+					<locations>
+						<location>filesystem:src/main/resources/db/migration</location>
+					</locations>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-database-postgresql</artifactId>
+						<version>11.14.1</version>
+					</dependency>
+					<dependency>
+						<groupId>org.postgresql</groupId>
+						<artifactId>postgresql</artifactId>
+						<version>42.7.5</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 
 		</plugins>

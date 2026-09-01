@@ -80,7 +80,8 @@ public class TeamService {
         Department dept = null;
         if (request.getDepartmentId() != null && request.getDepartmentId() > 0) {
             dept = departmentRepository.findById(request.getDepartmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + request.getDepartmentId()));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Department not found with ID: " + request.getDepartmentId()));
             if (!"ACTIVE".equalsIgnoreCase(dept.getStatus())) {
                 throw new IllegalArgumentException("Department is not active");
             }
@@ -89,7 +90,8 @@ public class TeamService {
         Employee teamLead = null;
         if (request.getTeamLeadEmployeeId() != null && request.getTeamLeadEmployeeId() > 0) {
             teamLead = employeeRepository.findById(request.getTeamLeadEmployeeId())
-                    .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + request.getTeamLeadEmployeeId()));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Employee not found with ID: " + request.getTeamLeadEmployeeId()));
             if (!"ACTIVE".equalsIgnoreCase(teamLead.getStatus())) {
                 throw new IllegalArgumentException("Team lead employee is not active");
             }
@@ -114,7 +116,8 @@ public class TeamService {
         }
 
         // Record Audit Log
-        recordAudit(savedTeam.getId(), "CREATE", null, savedTeam.getTeamName(), currentUser, "Created team " + savedTeam.getTeamName());
+        recordAudit(savedTeam.getId(), "CREATE", null, savedTeam.getTeamName(), currentUser,
+                "Created team " + savedTeam.getTeamName());
 
         return mapToResponseDto(savedTeam);
     }
@@ -130,7 +133,8 @@ public class TeamService {
 
     // 3. List Teams
     @Transactional(readOnly = true)
-    public Page<TeamDtos.TeamResponseDto> listTeams(String search, String status, Long departmentId, int page, int size, User currentUser) {
+    public Page<TeamDtos.TeamResponseDto> listTeams(String search, String status, Long departmentId, int page, int size,
+            User currentUser) {
         Long orgId = resolveOrganizationId(currentUser);
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
 
@@ -194,7 +198,8 @@ public class TeamService {
         // Department update (supports explicit null or 0 to disconnect)
         if (request.getDepartmentId() != null && request.getDepartmentId() > 0) {
             Department dept = departmentRepository.findById(request.getDepartmentId())
-                    .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + request.getDepartmentId()));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Department not found with ID: " + request.getDepartmentId()));
             if (!"ACTIVE".equalsIgnoreCase(dept.getStatus())) {
                 throw new IllegalArgumentException("Department is not active");
             }
@@ -208,17 +213,19 @@ public class TeamService {
         // Team Lead update (supports null or 0 to clear lead)
         if (request.getTeamLeadEmployeeId() != null && request.getTeamLeadEmployeeId() > 0) {
             Employee lead = employeeRepository.findById(request.getTeamLeadEmployeeId())
-                    .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + request.getTeamLeadEmployeeId()));
+                    .orElseThrow(() -> new IllegalArgumentException(
+                            "Employee not found with ID: " + request.getTeamLeadEmployeeId()));
             if (!"ACTIVE".equalsIgnoreCase(lead.getStatus())) {
                 throw new IllegalArgumentException("Employee is not active");
             }
-            updateTeamLeadInternal(team, lead, currentUser);
+            updateTeamLeadInternal(team, lead);
         } else {
-            updateTeamLeadInternal(team, null, currentUser);
+            updateTeamLeadInternal(team, null);
         }
 
         Team updated = teamRepository.save(team);
-        recordAudit(teamId, "UPDATE", oldVal, updated.getTeamName() + " (" + updated.getTeamCode() + ")", currentUser, "Updated team details");
+        recordAudit(teamId, "UPDATE", oldVal, updated.getTeamName() + " (" + updated.getTeamCode() + ")", currentUser,
+                "Updated team details");
 
         return mapToResponseDto(updated);
     }
@@ -252,7 +259,8 @@ public class TeamService {
 
         long activeMembers = teamMemberRepository.countByTeamIdAndStatus(teamId, "ACTIVE");
         if (activeMembers > 0) {
-            throw new ActiveMembersExistException("TEAM_HAS_ACTIVE_MEMBERS", "Team cannot be deleted while active members are assigned.");
+            throw new ActiveMembersExistException("TEAM_HAS_ACTIVE_MEMBERS",
+                    "Team cannot be deleted while active members are assigned.");
         }
 
         team.setDeleted(true);
@@ -298,9 +306,11 @@ public class TeamService {
         TeamMember member = new TeamMember(team, employee, LocalDate.now(), false);
         TeamMember saved = teamMemberRepository.save(member);
 
-        recordAudit(teamId, "ADD_MEMBER", null, employee.getFullName(), currentUser, "Added employee " + employee.getFullName() + " to team");
+        recordAudit(teamId, "ADD_MEMBER", null, employee.getFullName(), currentUser,
+                "Added employee " + employee.getFullName() + " to team");
 
-        return new TeamDtos.MemberDto(employee.getId(), employee.getFullName(), employee.getDesignation(), false, saved.getJoinedAt());
+        return new TeamDtos.MemberDto(employee.getId(), employee.getFullName(), employee.getDesignation(), false,
+                saved.getJoinedAt());
     }
 
     // 8. Remove Employee from Team
@@ -311,7 +321,8 @@ public class TeamService {
                 .orElseThrow(() -> new IllegalArgumentException("Team not found with ID: " + teamId));
 
         TeamMember member = teamMemberRepository.findByTeamIdAndEmployeeIdAndStatus(teamId, employeeId, "ACTIVE")
-                .orElseThrow(() -> new IllegalArgumentException("Active team membership not found for employee ID: " + employeeId));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Active team membership not found for employee ID: " + employeeId));
 
         // Block removal if employee is current Team Lead
         if (team.getTeamLead() != null && team.getTeamLead().getId().equals(employeeId)) {
@@ -323,7 +334,8 @@ public class TeamService {
         member.setIsTeamLead(false);
         teamMemberRepository.save(member);
 
-        recordAudit(teamId, "REMOVE_MEMBER", member.getEmployee().getFullName(), null, currentUser, "Removed employee " + member.getEmployee().getFullName() + " from team");
+        recordAudit(teamId, "REMOVE_MEMBER", member.getEmployee().getFullName(), null, currentUser,
+                "Removed employee " + member.getEmployee().getFullName() + " from team");
     }
 
     // 9. Get Team Members
@@ -339,8 +351,7 @@ public class TeamService {
                 m.getEmployee().getFullName(),
                 m.getEmployee().getDesignation(),
                 m.getIsTeamLead(),
-                m.getJoinedAt()
-        )).toList();
+                m.getJoinedAt())).toList();
 
         return new TeamDtos.TeamMemberListResponseDto(team.getId(), team.getTeamName(), memberDtos);
     }
@@ -368,11 +379,12 @@ public class TeamService {
             // Employee MUST already be an active member of the team
             boolean isMember = teamMemberRepository.existsByTeamIdAndEmployeeIdAndStatus(teamId, employeeId, "ACTIVE");
             if (!isMember) {
-                throw new IllegalArgumentException("Employee must already be an active member of the Team before being promoted to Team Lead");
+                throw new IllegalArgumentException(
+                        "Employee must already be an active member of the Team before being promoted to Team Lead");
             }
         }
 
-        updateTeamLeadInternal(team, newLead, currentUser);
+        updateTeamLeadInternal(team, newLead);
         Team saved = teamRepository.save(team);
 
         String newLeadName = newLead != null ? newLead.getFullName() : "None";
@@ -418,7 +430,8 @@ public class TeamService {
                     continue;
                 }
 
-                boolean alreadyMember = teamMemberRepository.existsByTeamIdAndEmployeeIdAndStatus(teamId, empId, "ACTIVE");
+                boolean alreadyMember = teamMemberRepository.existsByTeamIdAndEmployeeIdAndStatus(teamId, empId,
+                        "ACTIVE");
                 if (alreadyMember) {
                     results.add(new TeamDtos.MemberAddResult(empId, "FAILED", "EMPLOYEE_ALREADY_MEMBER"));
                     failedCount++;
@@ -429,7 +442,8 @@ public class TeamService {
                     try {
                         validateEmployeeDepartmentMatch(emp, team.getDepartment());
                     } catch (IllegalArgumentException e) {
-                        results.add(new TeamDtos.MemberAddResult(empId, "FAILED", "EMPLOYEE_BELONGS_TO_DIFFERENT_DEPARTMENT"));
+                        results.add(new TeamDtos.MemberAddResult(empId, "FAILED",
+                                "EMPLOYEE_BELONGS_TO_DIFFERENT_DEPARTMENT"));
                         failedCount++;
                         continue;
                     }
@@ -440,7 +454,8 @@ public class TeamService {
                 results.add(new TeamDtos.MemberAddResult(empId, "ADDED", null));
                 successCount++;
 
-                recordAudit(teamId, "ADD_MEMBER", null, emp.getFullName(), currentUser, "Bulk added employee " + emp.getFullName() + " to team");
+                recordAudit(teamId, "ADD_MEMBER", null, emp.getFullName(), currentUser,
+                        "Bulk added employee " + emp.getFullName() + " to team");
             }
         }
 
@@ -484,7 +499,8 @@ public class TeamService {
 
         Team saved = teamRepository.save(team);
         String newDeptName = saved.getDepartment() != null ? saved.getDepartment().getName() : "None";
-        recordAudit(teamId, "ASSIGN_DEPARTMENT", oldDeptName, newDeptName, currentUser, "Updated team department to " + newDeptName);
+        recordAudit(teamId, "ASSIGN_DEPARTMENT", oldDeptName, newDeptName, currentUser,
+                "Updated team department to " + newDeptName);
 
         return mapToResponseDto(saved);
     }
@@ -501,10 +517,11 @@ public class TeamService {
 
     // --- Private Helper Methods ---
 
-    private void updateTeamLeadInternal(Team team, Employee newLead, User currentUser) {
+    private void updateTeamLeadInternal(Team team, Employee newLead) {
         // Demote old lead in team_members
         if (team.getTeamLead() != null) {
-            Optional<TeamMember> oldLeadMember = teamMemberRepository.findByTeamIdAndEmployeeIdAndStatus(team.getId(), team.getTeamLead().getId(), "ACTIVE");
+            Optional<TeamMember> oldLeadMember = teamMemberRepository.findByTeamIdAndEmployeeIdAndStatus(team.getId(),
+                    team.getTeamLead().getId(), "ACTIVE");
             oldLeadMember.ifPresent(m -> {
                 m.setIsTeamLead(false);
                 teamMemberRepository.save(m);
@@ -513,7 +530,8 @@ public class TeamService {
 
         // Promote new lead in team_members
         if (newLead != null) {
-            Optional<TeamMember> newLeadMember = teamMemberRepository.findByTeamIdAndEmployeeIdAndStatus(team.getId(), newLead.getId(), "ACTIVE");
+            Optional<TeamMember> newLeadMember = teamMemberRepository.findByTeamIdAndEmployeeIdAndStatus(team.getId(),
+                    newLead.getId(), "ACTIVE");
             newLeadMember.ifPresent(m -> {
                 m.setIsTeamLead(true);
                 teamMemberRepository.save(m);
@@ -525,7 +543,8 @@ public class TeamService {
 
     private void validateEmployeeDepartmentMatch(Employee employee, Department teamDept) {
         if (employee.getDepartment() == null || !employee.getDepartment().equalsIgnoreCase(teamDept.getName())) {
-            throw new IllegalArgumentException("Employee department (" + employee.getDepartment() + ") does not match Team department (" + teamDept.getName() + ")");
+            throw new IllegalArgumentException("Employee department (" + employee.getDepartment()
+                    + ") does not match Team department (" + teamDept.getName() + ")");
         }
     }
 
@@ -548,12 +567,12 @@ public class TeamService {
             throw new DepartmentMismatchException(
                     "TEAM_MEMBER_DEPARTMENT_MISMATCH",
                     "Team cannot be assigned to this department because one or more active members belong to a different department.",
-                    mismatchDetails
-            );
+                    mismatchDetails);
         }
     }
 
-    private void recordAudit(Long teamId, String action, String oldValue, String newValue, User currentUser, String details) {
+    private void recordAudit(Long teamId, String action, String oldValue, String newValue, User currentUser,
+            String details) {
         TeamAuditLog log = new TeamAuditLog(
                 teamId,
                 action,
@@ -561,8 +580,7 @@ public class TeamService {
                 newValue,
                 currentUser != null ? currentUser.getId() : null,
                 currentUser != null ? currentUser.getFullName() : "System",
-                details
-        );
+                details);
         teamAuditLogRepository.save(log);
     }
 
@@ -575,7 +593,8 @@ public class TeamService {
         dto.setStatus(team.getStatus());
 
         if (team.getDepartment() != null) {
-            dto.setDepartment(new TeamDtos.DepartmentSummary(team.getDepartment().getId(), team.getDepartment().getName()));
+            dto.setDepartment(
+                    new TeamDtos.DepartmentSummary(team.getDepartment().getId(), team.getDepartment().getName()));
         } else {
             dto.setDepartment(null);
         }
@@ -602,7 +621,9 @@ public class TeamService {
             this.code = code;
         }
 
-        public String getCode() { return code; }
+        public String getCode() {
+            return code;
+        }
     }
 
     public static class DepartmentMismatchException extends RuntimeException {
@@ -615,7 +636,12 @@ public class TeamService {
             this.details = details;
         }
 
-        public String getCode() { return code; }
-        public List<Map<String, Object>> getDetails() { return details; }
+        public String getCode() {
+            return code;
+        }
+
+        public List<Map<String, Object>> getDetails() {
+            return details;
+        }
     }
 }

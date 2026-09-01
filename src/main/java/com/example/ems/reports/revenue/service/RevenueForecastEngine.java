@@ -64,7 +64,7 @@ public class RevenueForecastEngine {
 
         List<RevenueForecastResponse.ForecastDataPoint> dataPoints = new ArrayList<>();
         LocalDate baseDate = LocalDate.now();
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("YYYY-MM");
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM");
 
         BigDecimal monthlyGrowthFactor = new BigDecimal("1.015");
         BigDecimal runningProjection = nextProjectedRevenue;

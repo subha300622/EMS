@@ -102,7 +102,7 @@ public class OrganizationExportService {
             document.add(table);
             document.close();
             return out.toByteArray();
-        } catch (Exception e) {
+        } catch (com.lowagie.text.DocumentException | java.io.IOException e) {
             throw new RuntimeException("Failed to generate PDF export", e);
         }
     }

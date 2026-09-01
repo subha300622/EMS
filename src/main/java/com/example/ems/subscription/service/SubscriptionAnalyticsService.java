@@ -464,7 +464,7 @@ public class SubscriptionAnalyticsService {
             
             evictAnalyticsCaches();
             log.info("[SubscriptionAnalyticsService] Rebuild task completed successfully: {}", rebuildId);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("[SubscriptionAnalyticsService] Rebuild task failed: {}", rebuildId, e);
             jdbcTemplate.update(
                 "UPDATE analytics_snapshot_run SET status = 'FAILED', completed_at = ? WHERE rebuild_id = ?",

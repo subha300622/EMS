@@ -1,6 +1,9 @@
 package com.example.ems.security.dto;
 
-public class AuthPrincipal {
+import java.io.Serializable;
+
+public class AuthPrincipal implements Serializable {
+    private static final long serialVersionUID = 1L;
     private final String userId;
     private final String sessionId;
     private final int sessionVersion;

@@ -323,7 +323,7 @@ public class OnboardingTemplateService {
             }
         }
         resp.setDept(dept != null ? dept.getName() : template.getDepartmentId());
-        resp.setDeptColor(dept != null ? "#00B87C" : "#00B87C");
+        resp.setDeptColor("#00B87C");
 
         resp.setUsageCount(template.getUsageCount());
         resp.setStatus(template.getStatus().toLowerCase());

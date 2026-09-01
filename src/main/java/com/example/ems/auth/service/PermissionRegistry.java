@@ -1,11 +1,11 @@
 package com.example.ems.auth.service;
 
-import java.util.Arrays;
 import java.util.List;
 
 public final class PermissionRegistry {
 
-        private PermissionRegistry() {}
+        private PermissionRegistry() {
+        }
 
         // Attendance
         public static final String ATTENDANCE_READ = "attendance.read";
@@ -56,10 +56,11 @@ public final class PermissionRegistry {
         public static final String TRAINING_LIBRARY_MANAGE = "training.library.manage";
         public static final String TRAINING_REPORTS_VIEW = "training.reports.view";
 
-        public static final List<String> ALL_PERMISSIONS = Arrays.asList(
+        public static final List<String> ALL_PERMISSIONS = List.of(
                         // Training Management
                         "training.create", "training.read", "training.update", "training.delete", "training.approve",
-                        "training.publish", "training.assign", "training.attendance.manage", "training.library.manage", "training.reports.view",
+                        "training.publish", "training.assign", "training.attendance.manage", "training.library.manage",
+                        "training.reports.view",
                         // User Management
                         "user.create", "user.read", "user.update", "user.delete", "user.manage",
                         // Employee Management

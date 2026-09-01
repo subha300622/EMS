@@ -131,7 +131,9 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
             File logFile = new File(logFilePath);
             File parentDir = logFile.getParentFile();
             if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
+                if (!parentDir.mkdirs()) {
+                    logger.warn("Failed to create log directory: " + parentDir.getAbsolutePath());
+                }
             }
             try (FileWriter writer = new FileWriter(logFile, true)) {
                 writer.write("======================================================================\n");

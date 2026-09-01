@@ -3,7 +3,7 @@ package com.example.ems.leave.event;
 import java.time.LocalDate;
 
 public class LeaveCancelledEvent {
-    private final String eventType = "LEAVE_CANCELLED";
+    private static final String EVENT_TYPE = "LEAVE_CANCELLED";
     private final Long leaveRequestId;
     private final String employeeId;
     private final LocalDate startDate;
@@ -16,7 +16,7 @@ public class LeaveCancelledEvent {
         this.endDate = endDate;
     }
 
-    public String getEventType() { return eventType; }
+    public String getEventType() { return EVENT_TYPE; }
     public Long getLeaveRequestId() { return leaveRequestId; }
     public String getEmployeeId() { return employeeId; }
     public LocalDate getStartDate() { return startDate; }

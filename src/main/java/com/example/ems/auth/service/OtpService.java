@@ -29,18 +29,25 @@ public class OtpService {
 
     private static final Logger log = LoggerFactory.getLogger(OtpService.class);
 
-    private static final int OTP_EXPIRY_MINUTES        = 10;
+    private static final int OTP_EXPIRY_MINUTES = 10;
     private static final int RESET_TOKEN_EXPIRY_MINUTES = 5;
-    private static final int MAX_OTP_ATTEMPTS          = 5;
-    private static final int RESEND_COOLDOWN_SECONDS   = 60;
+    private static final int MAX_OTP_ATTEMPTS = 5;
+    private static final int RESEND_COOLDOWN_SECONDS = 60;
 
-    @Autowired private UserRepository userRepository;
-    @Autowired private EmailService emailService;
-    @Autowired private BCryptPasswordEncoder passwordEncoder;
-    @Autowired private SafeRedisService safeRedisService;
-    @Autowired private OtpTokenRepository otpTokenRepository;
-    @Autowired private org.springframework.core.env.Environment environment;
-    @Autowired private SessionService sessionService;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private EmailService emailService;
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+    @Autowired
+    private SafeRedisService safeRedisService;
+    @Autowired
+    private OtpTokenRepository otpTokenRepository;
+    @Autowired
+    private org.springframework.core.env.Environment environment;
+    @Autowired
+    private SessionService sessionService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -57,7 +64,7 @@ public class OtpService {
     }
 
     // ──────────────────────────────────────────────────────────────────────
-    //  STEP 1: Forgot Password — generate & send OTP (DB-backed, cache optional)
+    // STEP 1: Forgot Password — generate & send OTP (DB-backed, cache optional)
     // ──────────────────────────────────────────────────────────────────────
 
     public Map<String, String> forgotPassword(String email) {
@@ -108,7 +115,9 @@ public class OtpService {
                             cooldownActive = true;
                             waitSeconds = RESEND_COOLDOWN_SECONDS - secondsSinceCreated;
                         }
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        log.debug("Ignored exception while processing OTP token: {}", e.getMessage());
+                    }
                 }
 
                 if (!cooldownActive) {
@@ -118,20 +127,25 @@ public class OtpService {
                         if (dbOtpOpt.isPresent()) {
                             OtpToken dbOtp = dbOtpOpt.get();
                             if (dbOtp.getOtpHash() != null) {
-                                long secondsSinceCreated = Duration.between(dbOtp.getCreatedAt(), LocalDateTime.now()).getSeconds();
+                                long secondsSinceCreated = Duration.between(dbOtp.getCreatedAt(), LocalDateTime.now())
+                                        .getSeconds();
                                 if (secondsSinceCreated < RESEND_COOLDOWN_SECONDS) {
                                     cooldownActive = true;
                                     waitSeconds = RESEND_COOLDOWN_SECONDS - secondsSinceCreated;
-                                    
+
                                     // Cache it back to Redis
                                     try {
-                                        OtpRedisToken cacheToken = new OtpRedisToken(dbOtp.getOtpHash(), dbOtp.getAttemptCount(), false, dbOtp.getCreatedAt().toString());
+                                        OtpRedisToken cacheToken = new OtpRedisToken(dbOtp.getOtpHash(),
+                                                dbOtp.getAttemptCount(), false, dbOtp.getCreatedAt().toString());
                                         String json = objectMapper.writeValueAsString(cacheToken);
-                                        long ttl = Duration.between(LocalDateTime.now(), dbOtp.getExpiryTime()).getSeconds();
+                                        long ttl = Duration.between(LocalDateTime.now(), dbOtp.getExpiryTime())
+                                                .getSeconds();
                                         if (ttl > 0) {
                                             safeRedisService.set(otpKey, json, Duration.ofSeconds(ttl));
                                         }
-                                    } catch (Exception ignored) {}
+                                    } catch (Exception e) {
+                                        log.debug("Ignored exception while processing OTP token: {}", e.getMessage());
+                                    }
                                 }
                             }
                         }
@@ -171,8 +185,7 @@ public class OtpService {
                         otpHash,
                         0,
                         LocalDateTime.now(),
-                        LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES)
-                );
+                        LocalDateTime.now().plusMinutes(OTP_EXPIRY_MINUTES));
             }
             otpTokenRepository.save(dbOtp);
             log.info("OTP saved in DB for user {}", email);
@@ -206,7 +219,7 @@ public class OtpService {
     }
 
     // ──────────────────────────────────────────────────────────────────────
-    //  STEP 2: Verify OTP — returns short-lived reset token (DB-backed)
+    // STEP 2: Verify OTP — returns short-lived reset token (DB-backed)
     // ──────────────────────────────────────────────────────────────────────
 
     public Map<String, Object> verifyOtp(String email, String otp) {
@@ -242,7 +255,9 @@ public class OtpService {
                 if (cachedJson != null) {
                     try {
                         redisToken = objectMapper.readValue(cachedJson, OtpRedisToken.class);
-                    } catch (Exception ignored) {}
+                    } catch (Exception e) {
+                        log.debug("Ignored exception while processing OTP token: {}", e.getMessage());
+                    }
                 }
 
                 if (redisToken == null) {
@@ -255,7 +270,9 @@ public class OtpService {
                                 // Expired DB entry, cleanup
                                 try {
                                     otpTokenRepository.delete(candidate);
-                                } catch (Exception ignored) {}
+                                } catch (Exception e) {
+                                    log.debug("Ignored exception while processing OTP token: {}", e.getMessage());
+                                }
                             } else if (candidate.getOtpHash() == null) {
                                 // Already verified
                             } else {
@@ -265,8 +282,7 @@ public class OtpService {
                                         dbOtp.getOtpHash(),
                                         dbOtp.getAttemptCount(),
                                         false,
-                                        dbOtp.getCreatedAt().toString()
-                                );
+                                        dbOtp.getCreatedAt().toString());
                                 String json = objectMapper.writeValueAsString(redisToken);
                                 long ttl = Duration.between(LocalDateTime.now(), dbOtp.getExpiryTime()).getSeconds();
                                 if (ttl > 0) {
@@ -290,8 +306,10 @@ public class OtpService {
 
         // We have either redisToken or dbOtp (or both). Unify variables.
         // At this point, the early return above guarantees at least one is non-null.
-        String currentOtpHash = redisToken != null ? redisToken.getOtpHash() : Objects.requireNonNull(dbOtp).getOtpHash();
-        int currentAttemptCount = redisToken != null ? redisToken.getAttemptCount() : Objects.requireNonNull(dbOtp).getAttemptCount();
+        String currentOtpHash = redisToken != null ? redisToken.getOtpHash()
+                : Objects.requireNonNull(dbOtp).getOtpHash();
+        int currentAttemptCount = redisToken != null ? redisToken.getAttemptCount()
+                : Objects.requireNonNull(dbOtp).getAttemptCount();
 
         // Check attempts
         if (currentAttemptCount >= MAX_OTP_ATTEMPTS) {
@@ -356,7 +374,8 @@ public class OtpService {
             return response;
         }
 
-        // Correct OTP -> issue short-lived reset token (stored in DB and optionally cached in Redis)
+        // Correct OTP -> issue short-lived reset token (stored in DB and optionally
+        // cached in Redis)
         String resetToken = UUID.randomUUID().toString();
         String resetTokenKey = getResetTokenKey(resetToken);
 
@@ -371,7 +390,8 @@ public class OtpService {
                 t.setExpiryTime(LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
                 otpTokenRepository.save(t);
             } else {
-                OtpToken t = new OtpToken(email, null, 0, LocalDateTime.now(), LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
+                OtpToken t = new OtpToken(email, null, 0, LocalDateTime.now(),
+                        LocalDateTime.now().plusMinutes(RESET_TOKEN_EXPIRY_MINUTES));
                 t.setResetToken(resetToken);
                 otpTokenRepository.save(t);
             }
@@ -395,7 +415,7 @@ public class OtpService {
     }
 
     // ──────────────────────────────────────────────────────────────────────
-    //  RESEND OTP
+    // RESEND OTP
     // ──────────────────────────────────────────────────────────────────────
 
     public Map<String, String> resendOtp(String email) {
@@ -403,7 +423,7 @@ public class OtpService {
     }
 
     // ──────────────────────────────────────────────────────────────────────
-    //  STEP 3: Reset Password — validate reset token (DB-backed)
+    // STEP 3: Reset Password — validate reset token (DB-backed)
     // ──────────────────────────────────────────────────────────────────────
 
     public Map<String, String> resetPassword(String resetToken, String newPassword) {
@@ -426,7 +446,8 @@ public class OtpService {
                             if (LocalDateTime.now().isBefore(dbOtp.getExpiryTime())) {
                                 email = dbOtp.getEmail();
                                 // Cache it back to Redis
-                                safeRedisService.set(resetTokenKey, email, Duration.ofMinutes(RESET_TOKEN_EXPIRY_MINUTES));
+                                safeRedisService.set(resetTokenKey, email,
+                                        Duration.ofMinutes(RESET_TOKEN_EXPIRY_MINUTES));
                             }
                         }
                     } catch (Exception e) {
@@ -447,7 +468,9 @@ public class OtpService {
             try {
                 Optional<OtpToken> dbOtpOpt = otpTokenRepository.findByResetToken(resetToken);
                 dbOtpOpt.ifPresent(token -> otpTokenRepository.delete(token));
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("Ignored exception during reset token deletion: {}", e.getMessage());
+            }
             safeRedisService.delete(resetTokenKey);
 
             response.put("message", "User account not found.");

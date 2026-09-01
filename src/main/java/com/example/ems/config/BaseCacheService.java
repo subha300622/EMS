@@ -270,20 +270,23 @@ public abstract class BaseCacheService {
 
             return dbVal;
         } finally {
+            if (jvmLock != null) {
+                try {
+                    jvmLock.lock.unlock();
+                } finally {
+                    keyLocks.compute(key, (k, existing) -> {
+                        if (existing != null) {
+                            existing.refCount--;
+                            if (existing.refCount == 0) {
+                                return null;
+                            }
+                        }
+                        return existing;
+                    });
+                }
+            }
             if (hasRedisLock) {
                 releaseRedisLock(lockKey);
-            }
-            if (jvmLock != null) {
-                jvmLock.lock.unlock();
-                keyLocks.compute(key, (k, existing) -> {
-                    if (existing != null) {
-                        existing.refCount--;
-                        if (existing.refCount == 0) {
-                            return null;
-                        }
-                    }
-                    return existing;
-                });
             }
         }
     }

@@ -28,6 +28,8 @@ import java.util.stream.Collectors;
 @Service
 public class TrainingManagementService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(TrainingManagementService.class);
+
     @Autowired
     private TrainingRepository trainingRepository;
 
@@ -272,8 +274,7 @@ public class TrainingManagementService {
                         requester,
                         Map.of("trainingTitle", saved.getTitle()));
             } catch (Exception e) {
-                // Log and gracefully swallow if default workflow instance is skipped in non-DB
-                // integration tests
+                log.warn("Approval workflow start failed/skipped: {}", e.getMessage());
             }
         }
 

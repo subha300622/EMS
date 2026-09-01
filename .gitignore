@@ -12,6 +12,9 @@ scratch/
 tmp/
 uploads/
 *.pdf
+validate-flyway-local.sh
+.env
+.env.local
 
 ### STS ###
 .apt_generated

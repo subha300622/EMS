@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 @Service
 public class LeaveService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LeaveService.class);
+
     @Autowired
     private ApplicationEventPublisher eventPublisher;
 
@@ -299,7 +301,7 @@ public class LeaveService {
             savedLeave.setApprovalWorkflowInstanceId(instance.getWorkflowInstanceId());
             savedLeave = leaveRepository.save(savedLeave);
         } catch (Exception e) {
-            // Fallback if no specific definition exists
+            log.warn("Approval workflow start failed/skipped: {}", e.getMessage());
         }
 
         // Audit History

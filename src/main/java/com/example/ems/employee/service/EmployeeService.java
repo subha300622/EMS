@@ -40,6 +40,8 @@ import com.example.ems.auth.service.SessionService;
 @Service
 public class EmployeeService {
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(EmployeeService.class);
+
     @Autowired
     private EmployeeRepository employeeRepository;
 
@@ -436,7 +438,7 @@ public class EmployeeService {
                     "Created employee " + saved.getFullName() + " (ID: " + saved.getEmployeeId() + ")"
             ));
         } catch (Exception e) {
-            // Ignore audit log failure
+            log.warn("Audit log save failed: {}", e.getMessage());
         }
 
         eventPublisher.publishEvent(new EmployeeCreatedEvent(this, saved));
@@ -766,7 +768,7 @@ public class EmployeeService {
                     "Assigned role '" + role.getName() + "' to employee ID " + employeeId
             ));
         } catch (Exception e) {
-            // Ignore audit exception
+            log.warn("Audit log save failed: {}", e.getMessage());
         }
 
         return getEmployeeRoles(employeeId, currentUser);
@@ -830,7 +832,7 @@ public class EmployeeService {
                     "Assigned bulk roles to employee ID " + employeeId
             ));
         } catch (Exception e) {
-            // Ignore audit exception
+            log.warn("Audit log save failed: {}", e.getMessage());
         }
 
         return getEmployeeRoles(employeeId, currentUser);
@@ -916,7 +918,7 @@ public class EmployeeService {
                     "Changed roles for employee ID " + employeeId + ". Reason: " + request.getReason()
             ));
         } catch (Exception e) {
-            // Ignore audit exception
+            log.warn("Audit log save failed: {}", e.getMessage());
         }
 
         return getEmployeeRoles(employeeId, currentUser);
@@ -965,7 +967,7 @@ public class EmployeeService {
                     "Removed role ID " + roleId + " from employee ID " + employeeId
             ));
         } catch (Exception e) {
-            // Ignore audit exception
+            log.warn("Audit log save failed: {}", e.getMessage());
         }
 
         return getEmployeeRoles(employeeId, currentUser);
