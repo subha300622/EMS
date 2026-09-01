@@ -12,6 +12,8 @@ public interface AssetLocationRepository extends JpaRepository<AssetLocation, Lo
 
     Optional<AssetLocation> findByIdAndOrganizationId(Long id, Long organizationId);
 
+    Optional<AssetLocation> findByIdAndOrganizationIdAndActiveTrue(Long id, Long organizationId);
+
     List<AssetLocation> findByOrganizationId(Long organizationId);
 
     List<AssetLocation> findByOrganizationIdAndActiveTrue(Long organizationId);

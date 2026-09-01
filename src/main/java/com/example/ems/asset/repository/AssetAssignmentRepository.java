@@ -17,6 +17,10 @@ public interface AssetAssignmentRepository extends JpaRepository<AssetAssignment
 
     List<AssetAssignment> findByEmployeeIdAndOrganizationIdAndStatus(Long employeeId, Long organizationId, AssignmentStatus status);
 
+    List<AssetAssignment> findByOrganizationId(Long organizationId);
+
+    List<AssetAssignment> findByAssetIdOrderByAssignedDateDesc(Long assetId);
+
     List<AssetAssignment> findByAssetIdAndOrganizationId(Long assetId, Long organizationId);
 
     boolean existsByLocationIdAndStatus(Long locationId, AssignmentStatus status);

@@ -646,4 +646,121 @@ public class AssetDtos {
         public Long getApprovalInstanceId() { return approvalInstanceId; }
         public String getMessage() { return message; }
     }
+
+    public static class AssetDocumentResponse {
+        private Long id;
+        private Long assetId;
+        private String documentType;
+        private String fileName;
+        private String contentType;
+        private Long fileSize;
+        private String storageProvider;
+        private String uploadedBy;
+        private LocalDateTime uploadedAt;
+
+        public AssetDocumentResponse(Long id, Long assetId, String documentType, String fileName, String contentType, Long fileSize, String storageProvider, String uploadedBy, LocalDateTime uploadedAt) {
+            this.id = id;
+            this.assetId = assetId;
+            this.documentType = documentType;
+            this.fileName = fileName;
+            this.contentType = contentType;
+            this.fileSize = fileSize;
+            this.storageProvider = storageProvider;
+            this.uploadedBy = uploadedBy;
+            this.uploadedAt = uploadedAt;
+        }
+
+        public Long getId() { return id; }
+        public Long getAssetId() { return assetId; }
+        public String getDocumentType() { return documentType; }
+        public String getFileName() { return fileName; }
+        public String getContentType() { return contentType; }
+        public Long getFileSize() { return fileSize; }
+        public String getStorageProvider() { return storageProvider; }
+        public String getUploadedBy() { return uploadedBy; }
+        public LocalDateTime getUploadedAt() { return uploadedAt; }
+    }
+
+    public static class AssetVerificationResponse {
+        private String assetCode;
+        private String assetName;
+        private String category;
+        private AssetStatus status;
+        private boolean verified;
+
+        public AssetVerificationResponse(String assetCode, String assetName, String category, AssetStatus status, boolean verified) {
+            this.assetCode = assetCode;
+            this.assetName = assetName;
+            this.category = category;
+            this.status = status;
+            this.verified = verified;
+        }
+
+        public String getAssetCode() { return assetCode; }
+        public String getAssetName() { return assetName; }
+        public String getCategory() { return category; }
+        public AssetStatus getStatus() { return status; }
+        public boolean isVerified() { return verified; }
+    }
+
+    public static class AssetDashboardResponse {
+        private long totalAssets;
+        private long availableAssets;
+        private long assignedAssets;
+        private long returnedAssets;
+        private long inMaintenanceAssets;
+        private long lostAssets;
+        private long damagedAssets;
+        private long retiredAssets;
+        private long disposedAssets;
+        private BigDecimal totalPurchaseValue;
+
+        public AssetDashboardResponse(long totalAssets, long availableAssets, long assignedAssets, long returnedAssets,
+                                      long inMaintenanceAssets, long lostAssets, long damagedAssets, long retiredAssets,
+                                      long disposedAssets, BigDecimal totalPurchaseValue) {
+            this.totalAssets = totalAssets;
+            this.availableAssets = availableAssets;
+            this.assignedAssets = assignedAssets;
+            this.returnedAssets = returnedAssets;
+            this.inMaintenanceAssets = inMaintenanceAssets;
+            this.lostAssets = lostAssets;
+            this.damagedAssets = damagedAssets;
+            this.retiredAssets = retiredAssets;
+            this.disposedAssets = disposedAssets;
+            this.totalPurchaseValue = totalPurchaseValue != null ? totalPurchaseValue : BigDecimal.ZERO;
+        }
+
+        public long getTotalAssets() { return totalAssets; }
+        public long getAvailableAssets() { return availableAssets; }
+        public long getAssignedAssets() { return assignedAssets; }
+        public long getReturnedAssets() { return returnedAssets; }
+        public long getInMaintenanceAssets() { return inMaintenanceAssets; }
+        public long getLostAssets() { return lostAssets; }
+        public long getDamagedAssets() { return damagedAssets; }
+        public long getRetiredAssets() { return retiredAssets; }
+        public long getDisposedAssets() { return disposedAssets; }
+        public BigDecimal getTotalPurchaseValue() { return totalPurchaseValue; }
+    }
+
+    public static class PaginatedAssetResponse {
+        private java.util.List<AssetResponse> content;
+        private int page;
+        private int size;
+        private long totalElements;
+        private int totalPages;
+
+        public PaginatedAssetResponse(java.util.List<AssetResponse> content, int page, int size, long totalElements, int totalPages) {
+            this.content = content;
+            this.page = page;
+            this.size = size;
+            this.totalElements = totalElements;
+            this.totalPages = totalPages;
+        }
+
+        public java.util.List<AssetResponse> getContent() { return content; }
+        public int getPage() { return page; }
+        public int getSize() { return size; }
+        public long getTotalElements() { return totalElements; }
+        public int getTotalPages() { return totalPages; }
+    }
 }

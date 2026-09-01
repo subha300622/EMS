@@ -65,12 +65,8 @@ public class SwaggerConfig {
                                                                 "Manager team schedule overview grid, shift assignments, and painter operations."),
                                                 new Tag().name("Leave Management")
                                                                 .description("Leave requests submission, approvals, leave balances, and holidays."),
-                                                new Tag().name("Payslip Management")
-                                                                .description("Generates, exports, downloads, and manages employee salary slips."),
                                                 new Tag().name("Expense Management")
                                                                 .description("Employee expense claims, category setup, and reimbursement approvals."),
-                                                new Tag().name("Performance Cycles")
-                                                                .description("Performance review cycle configuration and deadlines."),
                                                 new Tag().name("Increment Policies")
                                                                 .description("Salary increment guidelines and policies based on appraisal ratings."),
                                                 new Tag().name("Asset Management").description(
@@ -89,10 +85,6 @@ public class SwaggerConfig {
                                                                 .description("Webhooks configuration and outgoing event dispatch logs."),
                                                 new Tag().name("Approval Center")
                                                                 .description("Pending approvals list, actions history, and workflow routing."),
-                                                new Tag().name("HR Dashboard")
-                                                                .description("HR metrics, team composition, department distribution KPIs."),
-                                                new Tag().name("Manager Dashboard")
-                                                                .description("Manager team overview, pending approvals, and operational metrics."),
                                                 new Tag().name("Employee Self Service - Profile")
                                                                 .description("Self-Service profile updates, address details, phone number revisions."),
                                                 new Tag().name("Employee Self Service - Schedule")
@@ -269,7 +261,6 @@ public class SwaggerConfig {
                                 .pathsToMatch("/api/v1/**")
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Payroll Processing",
-                                                "Payslip Management",
                                                 "Finance Onboarding",
                                                 "Expense Management"), null, false))
                                 .build();
@@ -282,7 +273,6 @@ public class SwaggerConfig {
                                 .pathsToMatch("/api/v1/**")
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Performance Reviews",
-                                                "Performance Cycles",
                                                 "Increment Policies",
                                                 "Goal Management",
                                                 "Appraisals"), List.of("/reports/", "/dashboard/", "/analytics/"),
@@ -300,7 +290,6 @@ public class SwaggerConfig {
                                                 "/api/v1/performance/**/analytics/**")
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Performance Reviews",
-                                                "Performance Cycles",
                                                 "Increment Policies",
                                                 "Goal Management",
                                                 "Appraisals"), null, false))
@@ -343,16 +332,7 @@ public class SwaggerConfig {
                                 .build();
         }
 
-        @Bean
-        public GroupedOpenApi analyticsReportsApi() {
-                return GroupedOpenApi.builder()
-                                .group("Analytics & Reports")
-                                .pathsToMatch("/api/v1/**")
-                                .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
-                                                "HR Dashboard",
-                                                "Manager Dashboard"), null, false))
-                                .build();
-        }
+
 
         @Bean
         public GroupedOpenApi essApi() {

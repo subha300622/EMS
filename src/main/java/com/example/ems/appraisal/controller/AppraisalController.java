@@ -1,6 +1,5 @@
 package com.example.ems.appraisal.controller;
 
-import com.example.ems.appraisal.dto.AppraisalCycleResponse;
 import com.example.ems.appraisal.dto.IncrementPolicyResponse;
 import com.example.ems.appraisal.service.AppraisalService;
 import com.example.ems.auth.entity.User;
@@ -71,21 +70,7 @@ public class AppraisalController {
                 || roleService.hasPermission(user.getWorkEmail(), "reports.finance");
     }
 
-    // ── PERFORMANCE CYCLES & POLICIES ───────────────────────────────────────
-    @Operation(summary = "Get Appraisal Cycles", tags = { "Performance Cycles" })
-    @GetMapping("/appraisal-cycles")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getAppraisalCycles(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        List<AppraisalCycleResponse> list = appraisalService.getAppraisalCycles();
-        return ResponseEntity.ok(ApiResponse.success("Appraisal cycles retrieved successfully", list));
-    }
+    // ── INCREMENT POLICIES ─────────────────────────────────────────────────
 
     @Operation(summary = "Get Increment Policies", tags = { "Increment Policies" })
     @GetMapping("/increment-policies")

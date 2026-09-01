@@ -12,10 +12,17 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+
 @Repository
-public interface AssetRepository extends JpaRepository<Asset, Long> {
+public interface AssetRepository extends JpaRepository<Asset, Long>, JpaSpecificationExecutor<Asset> {
 
     Optional<Asset> findByIdAndOrganizationIdAndDeletedFalse(Long id, Long organizationId);
+
+    Optional<Asset> findByAssetCodeIgnoreCaseAndDeletedFalse(String assetCode);
+
+    Optional<Asset> findByOrganizationIdAndAssetCodeIgnoreCaseAndDeletedFalse(Long organizationId, String assetCode);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT a FROM Asset a WHERE a.id = :id AND a.organizationId = :orgId AND a.deleted = false")
