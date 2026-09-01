@@ -224,6 +224,7 @@ public class ApprovalWorkflowEngineService {
         taskRepository.save(task);
     }
 
+    @Transactional(readOnly = true)
     public ApprovalInboxResponse getInbox(User currentUser, WorkflowType workflowType, ApprovalStatus status, int page, int size) {
         Employee currentEmp = resolveEmployeeForUser(currentUser);
         Long orgId = resolveOrganizationId(currentUser);
@@ -235,6 +236,7 @@ public class ApprovalWorkflowEngineService {
         return new ApprovalInboxResponse(dtos, taskPage.getTotalElements(), taskPage.getNumber(), taskPage.getSize());
     }
 
+    @Transactional(readOnly = true)
     public ApprovalTaskDetailDto getTaskDetail(User currentUser, String approvalTaskId) {
         Employee currentEmp = resolveEmployeeForUser(currentUser);
         Long orgId = resolveOrganizationId(currentUser);

@@ -46,6 +46,7 @@ public class ConcurrentApprovalRaceConditionTest {
     public void setUp() {
         Organization org = new Organization();
         org.setName("Concurrent Test Org " + System.currentTimeMillis());
+        org.setOrganizationCode("ORG-CODE-" + System.currentTimeMillis());
         org = organizationRepository.save(org);
 
         testEmployee = new Employee();
