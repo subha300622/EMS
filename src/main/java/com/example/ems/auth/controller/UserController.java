@@ -578,10 +578,9 @@ public class UserController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 11. GET /api/v1/users/me/bootstrap - Current User Bootstrap (Deprecated: Use /api/v1/me/bootstrap)
+    // 11. GET /api/v1/users/me/bootstrap - Current User Bootstrap
     // ─────────────────────────────────────────────────────────────────────────
-    @Operation(summary = "Get Current User Bootstrap Data (Deprecated)", description = "Deprecated. Use /api/v1/me/bootstrap instead.")
-    @Deprecated
+    @Operation(summary = "Get Current User Bootstrap Data", description = "Retrieves user summary, organization details, and roles for initial application bootstrap.")
     @GetMapping("/me/bootstrap")
     public ResponseEntity<?> getMyBootstrap(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -610,10 +609,9 @@ public class UserController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 12. GET /api/v1/users/me/context - Current User Organization Context (Deprecated: Use /api/v1/me/context)
+    // 12. GET /api/v1/users/me/context - Current User Organization Context
     // ─────────────────────────────────────────────────────────────────────────
-    @Operation(summary = "Get Current User Org Context (Deprecated)", description = "Deprecated. Use /api/v1/me/context instead.")
-    @Deprecated
+    @Operation(summary = "Get Current User Org Context", description = "Retrieves user organization context.")
     @GetMapping("/me/context")
     public ResponseEntity<?> getMyContext(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
@@ -638,10 +636,9 @@ public class UserController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // 13. GET /api/v1/users/me/profile - Current User Profile (Deprecated: Use /api/v1/me/profile)
+    // 13. GET /api/v1/users/me/profile - Current User Profile
     // ─────────────────────────────────────────────────────────────────────────
-    @Operation(summary = "Get Current User Profile (Deprecated)", description = "Deprecated. Use /api/v1/me/profile instead.")
-    @Deprecated
+    @Operation(summary = "Get Current User Profile", description = "Retrieves current authenticated user profile.")
     @GetMapping("/me/profile")
     public ResponseEntity<?> getMyProfile(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {

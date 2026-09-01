@@ -69,8 +69,6 @@ public class SwaggerConfig {
                                                                 .description("Generates, exports, downloads, and manages employee salary slips."),
                                                 new Tag().name("Expense Management")
                                                                 .description("Employee expense claims, category setup, and reimbursement approvals."),
-                                                new Tag().name("Settlement Management")
-                                                                .description("Employee Full & Final (F&F) settlements, exit dues computation."),
                                                 new Tag().name("Performance Cycles")
                                                                 .description("Performance review cycle configuration and deadlines."),
                                                 new Tag().name("Increment Policies")
@@ -87,8 +85,6 @@ public class SwaggerConfig {
                                                                 .description("Bearer authentication, JWT session security, token refreshes."),
                                                 new Tag().name("Audit & Compliance")
                                                                 .description("System activity logging, event tracking, auditing history."),
-                                                new Tag().name("System Administration").description(
-                                                                "Company security rules, notifications settings, UI preferences, system monitoring."),
                                                 new Tag().name("Webhook Integration")
                                                                 .description("Webhooks configuration and outgoing event dispatch logs."),
                                                 new Tag().name("Approval Center")
@@ -275,7 +271,6 @@ public class SwaggerConfig {
                                                 "Payroll Processing",
                                                 "Payslip Management",
                                                 "Finance Onboarding",
-                                                "Settlement Management",
                                                 "Expense Management"), null, false))
                                 .build();
         }
@@ -344,7 +339,6 @@ public class SwaggerConfig {
                                                 "Audit & Compliance",
                                                 "Permission Management",
                                                 "User Management",
-                                                "System Administration",
                                                 "Approval Center"), null, false))
                                 .build();
         }
