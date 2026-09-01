@@ -17,15 +17,20 @@ import java.util.Optional;
 @Repository
 public interface ApprovalTaskRepository extends JpaRepository<ApprovalTask, Long>, JpaSpecificationExecutor<ApprovalTask> {
 
-    Optional<ApprovalTask> findByApprovalTaskId(String approvalTaskId);
+    @Query("SELECT t FROM ApprovalTask t LEFT JOIN FETCH t.approver LEFT JOIN FETCH t.workflowInstance LEFT JOIN FETCH t.step WHERE t.approvalTaskId = :approvalTaskId")
+    Optional<ApprovalTask> findByApprovalTaskId(@Param("approvalTaskId") String approvalTaskId);
 
     @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT t FROM ApprovalTask t WHERE t.approvalTaskId = :approvalTaskId")
+    @Query("SELECT t FROM ApprovalTask t LEFT JOIN FETCH t.approver LEFT JOIN FETCH t.workflowInstance LEFT JOIN FETCH t.step WHERE t.approvalTaskId = :approvalTaskId")
     Optional<ApprovalTask> findByApprovalTaskIdWithLock(@Param("approvalTaskId") String approvalTaskId);
 
     List<ApprovalTask> findByWorkflowInstanceIdAndStepOrder(Long workflowInstanceId, Integer stepOrder);
 
-    @Query("SELECT t FROM ApprovalTask t WHERE t.approver.id = :approverId " +
+    @Query(value = "SELECT t FROM ApprovalTask t LEFT JOIN FETCH t.approver LEFT JOIN FETCH t.workflowInstance LEFT JOIN FETCH t.step WHERE t.approver.id = :approverId " +
+           "AND (:orgId IS NULL OR t.workflowInstance.organization.id = :orgId) " +
+           "AND (:workflowType IS NULL OR t.workflowType = :workflowType) " +
+           "AND (:status IS NULL OR t.status = :status)",
+           countQuery = "SELECT count(t) FROM ApprovalTask t WHERE t.approver.id = :approverId " +
            "AND (:orgId IS NULL OR t.workflowInstance.organization.id = :orgId) " +
            "AND (:workflowType IS NULL OR t.workflowType = :workflowType) " +
            "AND (:status IS NULL OR t.status = :status)")
