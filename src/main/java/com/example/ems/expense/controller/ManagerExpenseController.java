@@ -78,6 +78,16 @@ public class ManagerExpenseController {
         return null;
     }
 
+    private Long resolveOrgId(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            if (jwtService.validateAccessToken(token)) {
+                return jwtService.getOrgIdFromToken(token);
+            }
+        }
+        return null;
+    }
+
     private Employee resolveEmployee(User user) {
         if (user == null) return null;
         return employeeRepository.findByEmail(user.getWorkEmail()).orElse(null);
@@ -120,6 +130,9 @@ public class ManagerExpenseController {
                     .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
         }
 
+        // Resolve org ID from JWT token (multi-tenant barrier)
+        Long orgId = resolveOrgId(authHeader);
+
         // Task-based security: Query approval tasks assigned to current employee
         ApprovalStatus taskStatus = ApprovalStatus.PENDING;
         if (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) {
@@ -129,7 +142,7 @@ public class ManagerExpenseController {
         }
 
         Pageable pageable = PageRequest.of(page, size);
-        var taskPage = taskRepository.findInboxTasks(currentEmp.getId(), 1L, WorkflowType.EXPENSE_APPROVAL, taskStatus, pageable);
+        var taskPage = taskRepository.findInboxTasks(currentEmp.getId(), orgId, WorkflowType.EXPENSE_APPROVAL, taskStatus, pageable);
 
         List<MyExpenseItem> items = taskPage.getContent().stream().map(task -> {
             Long expId = Long.parseLong(task.getBusinessReferenceId());

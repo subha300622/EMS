@@ -22,7 +22,7 @@ public interface ApprovalTaskRepository extends JpaRepository<ApprovalTask, Long
     List<ApprovalTask> findByWorkflowInstanceIdAndStepOrder(Long workflowInstanceId, Integer stepOrder);
 
     @Query("SELECT t FROM ApprovalTask t WHERE t.approver.id = :approverId " +
-           "AND t.workflowInstance.organization.id = :orgId " +
+           "AND (:orgId IS NULL OR t.workflowInstance.organization.id = :orgId) " +
            "AND (:workflowType IS NULL OR t.workflowType = :workflowType) " +
            "AND (:status IS NULL OR t.status = :status)")
     Page<ApprovalTask> findInboxTasks(
