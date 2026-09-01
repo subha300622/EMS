@@ -232,6 +232,43 @@ public class ScheduleSwapService {
     }
 
     @Transactional
+    public ScheduleSwapResponseDto approveSwapRequest(User currentUser, String requestId, String comment) {
+        Long orgId = resolveOrganizationId(currentUser);
+        ScheduleSwapRequest req = swapRequestRepository.findByRequestIdAndOrganizationId(requestId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Swap request not found with ID: " + requestId));
+
+        executeAtomicSwap(requestId);
+
+        return mapToResponseDto(req);
+    }
+
+    @Transactional
+    public ScheduleSwapResponseDto rejectSwapRequest(User currentUser, String requestId, String comment) {
+        Long orgId = resolveOrganizationId(currentUser);
+        ScheduleSwapRequest req = swapRequestRepository.findByRequestIdAndOrganizationId(requestId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Swap request not found with ID: " + requestId));
+
+        req.setStatus(ScheduleSwapStatus.REJECTED);
+        req.setUpdatedAt(Instant.now());
+        swapRequestRepository.save(req);
+
+        return mapToResponseDto(req);
+    }
+
+    @Transactional
+    public ScheduleSwapResponseDto sendBackSwapRequest(User currentUser, String requestId, String comment) {
+        Long orgId = resolveOrganizationId(currentUser);
+        ScheduleSwapRequest req = swapRequestRepository.findByRequestIdAndOrganizationId(requestId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Swap request not found with ID: " + requestId));
+
+        req.setStatus(ScheduleSwapStatus.PENDING_APPROVAL);
+        req.setUpdatedAt(Instant.now());
+        swapRequestRepository.save(req);
+
+        return mapToResponseDto(req);
+    }
+
+    @Transactional
     public void executeAtomicSwap(String requestId) {
         ScheduleSwapRequest req = swapRequestRepository.findByRequestId(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Swap request not found for ID: " + requestId));

@@ -11,9 +11,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/admin/employment-structures")
+@RequestMapping("/api/v1/employment-structures")
 @CrossOrigin("*")
-@Tag(name = "Admin Employment Structure Management")
+@Tag(name = "Employment Structures", description = "Designation and employment structure hierarchy APIs")
 public class EmploymentStructureController {
 
     @Autowired
@@ -44,43 +44,43 @@ public class EmploymentStructureController {
 
     // ── 3. Employment Structure Details ───────────────────────────────────────
     @Operation(summary = "Employment Structure Details", description = "Retrieves complete hierarchy for a designation.")
-    @GetMapping("/{designationId}")
+    @GetMapping("/{employmentStructureId}")
     public ResponseEntity<EmploymentStructureDtos.EmploymentStructureResponse> getStructure(
-            @PathVariable String designationId) {
+            @PathVariable("employmentStructureId") String employmentStructureId) {
 
-        EmploymentStructureDtos.EmploymentStructureResponse response = employmentStructureService.getStructure(designationId);
+        EmploymentStructureDtos.EmploymentStructureResponse response = employmentStructureService.getStructure(employmentStructureId);
         return ResponseEntity.ok(response);
     }
 
     // ── 4. Edit Employment Structure ──────────────────────────────────────────
     @Operation(summary = "Edit Employment Structure", description = "Updates designation and iteratively merges job levels and employment types.")
-    @PutMapping("/{designationId}")
+    @PutMapping("/{employmentStructureId}")
     public ResponseEntity<EmploymentStructureDtos.EmploymentStructureResponse> editStructure(
-            @PathVariable String designationId,
+            @PathVariable("employmentStructureId") String employmentStructureId,
             @RequestBody @Valid EmploymentStructureDtos.EditEmploymentStructureRequest request) {
 
-        EmploymentStructureDtos.EmploymentStructureResponse response = employmentStructureService.editStructure(designationId, request);
+        EmploymentStructureDtos.EmploymentStructureResponse response = employmentStructureService.editStructure(employmentStructureId, request);
         return ResponseEntity.ok(response);
     }
 
     // ── 5. Activate / Deactivate Employment Structure ─────────────────────────
     @Operation(summary = "Update Status", description = "Activates or deactivates an employment structure.")
-    @PatchMapping("/{designationId}/status")
+    @PatchMapping("/{employmentStructureId}/status")
     public ResponseEntity<EmploymentStructureDtos.EmploymentStructureResponse> updateStatus(
-            @PathVariable String designationId,
+            @PathVariable("employmentStructureId") String employmentStructureId,
             @RequestBody @Valid EmploymentStructureDtos.StatusRequest request) {
 
-        EmploymentStructureDtos.EmploymentStructureResponse response = employmentStructureService.updateStatus(designationId, request);
+        EmploymentStructureDtos.EmploymentStructureResponse response = employmentStructureService.updateStatus(employmentStructureId, request);
         return ResponseEntity.ok(response);
     }
 
     // ── 6. Delete Employment Structure ────────────────────────────────────────
     @Operation(summary = "Delete Employment Structure", description = "Deletes an unused employment structure.")
-    @DeleteMapping("/{designationId}")
+    @DeleteMapping("/{employmentStructureId}")
     public ResponseEntity<EmploymentStructureDtos.EmploymentStructureDeleteResponse> deleteStructure(
-            @PathVariable String designationId) {
+            @PathVariable("employmentStructureId") String employmentStructureId) {
 
-        EmploymentStructureDtos.EmploymentStructureDeleteResponse response = employmentStructureService.deleteStructure(designationId);
+        EmploymentStructureDtos.EmploymentStructureDeleteResponse response = employmentStructureService.deleteStructure(employmentStructureId);
         return ResponseEntity.ok(response);
     }
 }

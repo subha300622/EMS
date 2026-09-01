@@ -36,6 +36,7 @@ public class ApprovalTaskDto {
     }
 
     public String getApprovalTaskId() { return approvalTaskId; }
+    public String getTaskId() { return approvalTaskId; }
     public void setApprovalTaskId(String approvalTaskId) { this.approvalTaskId = approvalTaskId; }
 
     public String getWorkflowInstanceId() { return workflowInstanceId; }

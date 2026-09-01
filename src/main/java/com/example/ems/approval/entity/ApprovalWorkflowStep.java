@@ -13,6 +13,7 @@ public class ApprovalWorkflowStep {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workflow_definition_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private ApprovalWorkflowDefinition workflowDefinition;
 
     @Column(name = "step_order", nullable = false)

@@ -275,8 +275,9 @@ public class ApprovalWorkflowEngineService {
         Employee actor = resolveEmployeeForUser(currentUser);
         Long orgId = resolveOrganizationId(currentUser);
 
-        ApprovalTask task = taskRepository.findByApprovalTaskId(approvalTaskId)
-                .orElseThrow(() -> new IllegalArgumentException("Approval task not found with ID: " + approvalTaskId));
+        ApprovalTask task = taskRepository.findByApprovalTaskIdWithLock(approvalTaskId)
+                .orElseGet(() -> taskRepository.findByApprovalTaskId(approvalTaskId)
+                        .orElseThrow(() -> new IllegalArgumentException("Approval task not found with ID: " + approvalTaskId)));
 
         if (!orgId.equals(task.getWorkflowInstance().getOrganization().getId())) {
             throw new IllegalArgumentException("Approval task does not belong to user's organization");
@@ -317,8 +318,9 @@ public class ApprovalWorkflowEngineService {
         Employee actor = resolveEmployeeForUser(currentUser);
         Long orgId = resolveOrganizationId(currentUser);
 
-        ApprovalTask task = taskRepository.findByApprovalTaskId(approvalTaskId)
-                .orElseThrow(() -> new IllegalArgumentException("Approval task not found with ID: " + approvalTaskId));
+        ApprovalTask task = taskRepository.findByApprovalTaskIdWithLock(approvalTaskId)
+                .orElseGet(() -> taskRepository.findByApprovalTaskId(approvalTaskId)
+                        .orElseThrow(() -> new IllegalArgumentException("Approval task not found with ID: " + approvalTaskId)));
 
         if (!orgId.equals(task.getWorkflowInstance().getOrganization().getId())) {
             throw new IllegalArgumentException("Approval task does not belong to user's organization");
@@ -378,8 +380,9 @@ public class ApprovalWorkflowEngineService {
         Employee actor = resolveEmployeeForUser(currentUser);
         Long orgId = resolveOrganizationId(currentUser);
 
-        ApprovalTask task = taskRepository.findByApprovalTaskId(approvalTaskId)
-                .orElseThrow(() -> new IllegalArgumentException("Approval task not found with ID: " + approvalTaskId));
+        ApprovalTask task = taskRepository.findByApprovalTaskIdWithLock(approvalTaskId)
+                .orElseGet(() -> taskRepository.findByApprovalTaskId(approvalTaskId)
+                        .orElseThrow(() -> new IllegalArgumentException("Approval task not found with ID: " + approvalTaskId)));
 
         if (!orgId.equals(task.getWorkflowInstance().getOrganization().getId())) {
             throw new IllegalArgumentException("Approval task does not belong to user's organization");

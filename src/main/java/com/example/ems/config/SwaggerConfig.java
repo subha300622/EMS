@@ -61,34 +61,24 @@ public class SwaggerConfig {
                                                                 .description("Corporate employee directory and contact search."),
                                                 new Tag().name("User Management")
                                                                 .description("System user accounts, lifecycle administration, user search."),
-                                                new Tag().name("Role Management")
-                                                                .description("Role configurations (HR, Employee, Manager, Recruiter, Finance, Admin)."),
                                                 new Tag().name("Team Scheduling Module").description(
                                                                 "Manager team schedule overview grid, shift assignments, and painter operations."),
                                                 new Tag().name("Leave Management")
                                                                 .description("Leave requests submission, approvals, leave balances, and holidays."),
                                                 new Tag().name("Payslip Management")
                                                                 .description("Generates, exports, downloads, and manages employee salary slips."),
-                                                new Tag().name("Salary Management").description(
-                                                                "Salary revisions, compensation changes, increment approvals, salary history."),
                                                 new Tag().name("Expense Management")
                                                                 .description("Employee expense claims, category setup, and reimbursement approvals."),
-                                                new Tag().name("Finance Setup").description(
-                                                                "Configures tax details, company bank accounts, payment methods, and budgets."),
                                                 new Tag().name("Settlement Management")
                                                                 .description("Employee Full & Final (F&F) settlements, exit dues computation."),
                                                 new Tag().name("Performance Cycles")
                                                                 .description("Performance review cycle configuration and deadlines."),
                                                 new Tag().name("Increment Policies")
                                                                 .description("Salary increment guidelines and policies based on appraisal ratings."),
-                                                new Tag().name("Recruitment Management").description(
-                                                                "Job openings, applications, interview tracking, candidate pipeline, offer letters."),
                                                 new Tag().name("Asset Management").description(
                                                                 "Organization hardware assets assignments, return logs, value depreciation."),
                                                 new Tag().name("Document Management").description(
                                                                 "Employee secure document folder, uploads, downloads, history verification."),
-                                                new Tag().name("Offboarding Management")
-                                                                .description("Resignations, exit clearances, asset returns, exit interviews."),
                                                 new Tag().name("Training Management")
                                                                 .description("Learning courses, assessments, enrollments, learning progress."),
                                                 new Tag().name("Notification Management")
@@ -103,8 +93,6 @@ public class SwaggerConfig {
                                                                 .description("Webhooks configuration and outgoing event dispatch logs."),
                                                 new Tag().name("Approval Center")
                                                                 .description("Pending approvals list, actions history, and workflow routing."),
-                                                new Tag().name("Reports & Analytics")
-                                                                .description("Payroll reports, attendance logs, finance reports, export files."),
                                                 new Tag().name("HR Dashboard")
                                                                 .description("HR metrics, team composition, department distribution KPIs."),
                                                 new Tag().name("Manager Dashboard")
@@ -113,18 +101,12 @@ public class SwaggerConfig {
                                                                 .description("Self-Service profile updates, address details, phone number revisions."),
                                                 new Tag().name("Employee Self Service - Schedule")
                                                                 .description("Self-Service calendar dashboard, shift changes requests."),
-                                                new Tag().name("Employee Self Service - Payroll")
-                                                                .description("Self-Service payslip downloads, compensation slips history."),
                                                 new Tag().name("Employee Self Service - Expenses")
                                                                 .description("Self-Service reimbursement logs, receipt uploads, request progress."),
                                                 new Tag().name("Employee Self Service - Documents")
                                                                 .description("Self-Service personal document safe uploads, downloads."),
-                                                new Tag().name("Employee Self Service - Performance")
-                                                                .description("Self-Service reviews, ratings logs, assessments submissions."),
                                                 new Tag().name("Employee Self Service - Exit Management")
                                                                 .description("Self-Service resignation submissions, final clearance tracking."),
-                                                new Tag().name("Employee Self Service - Support").description(
-                                                                "Self-Service help desk tickets submission, comments, ticketing lifecycle management."),
                                                 new Tag().name("Employee Self Service - Assets").description(
                                                                 "Self-Service assigned assets listing, damage reports, return requests.")));
         }
@@ -292,8 +274,6 @@ public class SwaggerConfig {
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Payroll Processing",
                                                 "Payslip Management",
-                                                "Salary Management",
-                                                "Finance Setup",
                                                 "Finance Onboarding",
                                                 "Settlement Management",
                                                 "Expense Management"), null, false))
@@ -337,8 +317,7 @@ public class SwaggerConfig {
                 return GroupedOpenApi.builder()
                                 .group("Recruitment")
                                 .pathsToMatch("/api/v1/**")
-                                .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
-                                                "Recruitment Management"), null, false))
+                                .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(), null, false))
                                 .build();
         }
 
@@ -350,7 +329,6 @@ public class SwaggerConfig {
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Asset Management",
                                                 "Document Management",
-                                                "Offboarding Management",
                                                 "Training Management",
                                                 "Notification Management"), null, false))
                                 .build();
@@ -365,10 +343,8 @@ public class SwaggerConfig {
                                                 "Authentication & Security",
                                                 "Audit & Compliance",
                                                 "Permission Management",
-                                                "Role Management",
                                                 "User Management",
                                                 "System Administration",
-                                                "Webhook Integration",
                                                 "Approval Center"), null, false))
                                 .build();
         }
@@ -379,7 +355,6 @@ public class SwaggerConfig {
                                 .group("Analytics & Reports")
                                 .pathsToMatch("/api/v1/**")
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
-                                                "Reports & Analytics",
                                                 "HR Dashboard",
                                                 "Manager Dashboard"), null, false))
                                 .build();

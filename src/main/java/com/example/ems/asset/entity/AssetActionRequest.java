@@ -31,8 +31,7 @@ public class AssetActionRequest {
     @Column(nullable = false, length = 50)
     private AssetActionStatus status = AssetActionStatus.PENDING_APPROVAL;
 
-    @Lob
-    @Column(name = "payload_json")
+    @Column(name = "payload_json", columnDefinition = "TEXT")
     private String payloadJson;
 
     @Column(name = "created_at", nullable = false, updatable = false)

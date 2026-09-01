@@ -19,6 +19,7 @@ public class ApprovalInboxResponse {
     }
 
     public List<ApprovalTaskDto> getContent() { return content; }
+    public List<ApprovalTaskDto> getTasks() { return content; }
     public void setContent(List<ApprovalTaskDto> content) { this.content = content; }
 
     public long getTotalElements() { return totalElements; }

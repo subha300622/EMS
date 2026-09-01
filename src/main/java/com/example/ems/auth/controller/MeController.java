@@ -319,6 +319,60 @@ public class MeController {
         return ResponseEntity.ok(ApiResponse.success("Dashboard statistics retrieved successfully", dashboardResponse));
     }
 
+    @Operation(summary = "Get Current User Bootstrap Data", description = "Returns bootstrap summary containing user details, org summary, and assigned roles.")
+    @GetMapping("/bootstrap")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyBootstrap(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Long orgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : currentUser.getOrganizationId();
+        String orgName = currentUser.getOrganization() != null ? currentUser.getOrganization().getName() : currentUser.getOrganizationName();
+
+        Map<String, Object> userSummary = Map.of(
+                "userId", currentUser.getUserId(),
+                "employeeId", currentUser.getEmployeeId() != null ? currentUser.getEmployeeId() : currentUser.getUserId(),
+                "fullName", currentUser.getFullName() != null ? currentUser.getFullName() : "",
+                "email", currentUser.getWorkEmail() != null ? currentUser.getWorkEmail() : "",
+                "status", currentUser.getStatus() != null ? currentUser.getStatus() : "ACTIVE"
+        );
+        Map<String, Object> orgSummary = Map.of(
+                "organizationId", orgId != null ? orgId.toString() : "",
+                "name", orgName != null ? orgName : ""
+        );
+        List<String> roles = currentUser.getRole() != null ? List.of(currentUser.getRole().getName()) : Collections.emptyList();
+
+        Map<String, Object> data = Map.of("user", userSummary, "organization", orgSummary, "roles", roles);
+        return ResponseEntity.ok(ApiResponse.success("Bootstrap data retrieved successfully", data));
+    }
+
+    @Operation(summary = "Get Current User Org Context", description = "Returns organization scope and boundary details for current user.")
+    @GetMapping("/context")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> getMyContext(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Long orgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : currentUser.getOrganizationId();
+        String orgName = currentUser.getOrganization() != null ? currentUser.getOrganization().getName() : currentUser.getOrganizationName();
+
+        Map<String, Object> data = Map.of(
+                "userId", currentUser.getUserId(),
+                "organizationId", orgId != null ? orgId.toString() : "",
+                "organizationName", orgName != null ? orgName : "",
+                "scope", "ORGANIZATION"
+        );
+        return ResponseEntity.ok(ApiResponse.success("User organization context retrieved successfully", data));
+    }
+
     /**
      * Builds a production-grade HRMS profile response.
      * Covers: employee info, org hierarchy, contact, personalInfo,

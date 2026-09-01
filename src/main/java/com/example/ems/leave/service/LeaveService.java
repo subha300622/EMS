@@ -662,6 +662,29 @@ public class LeaveService {
         return resp;
     }
 
+    @Transactional
+    public ManagerApprovalActionResponseDto sendBackLeaveWithComment(Long leaveId, String comment, Employee approver) {
+        Leave leave = getLeaveById(leaveId)
+                .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveId));
+        int year = leave.getStartDate().getYear();
+        String oldStatus = leave.getStatus();
+        leave.setStatus("NEEDS_REVISION");
+        leave.setManagerComment(comment);
+        leave.setUpdatedAt(LocalDateTime.now());
+        leaveRepository.save(leave);
+
+        balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, leave.getDurationDays());
+
+        historyRepository.save(new LeaveRequestHistory(
+                leave, "SENT_BACK", approver, oldStatus, "NEEDS_REVISION", comment != null ? comment : "Sent back for revision"
+        ));
+
+        ManagerApprovalActionResponseDto resp = new ManagerApprovalActionResponseDto();
+        resp.setLeaveId(leave.getId());
+        resp.setStatus("NEEDS_REVISION");
+        return resp;
+    }
+
     @Transactional(readOnly = true)
     public Map<String, Object> getDashboardMetrics(Long orgId) {
         List<Leave> allLeaves = leaveRepository.findFilteredLeaves(orgId, null, null, null, null, null, null);

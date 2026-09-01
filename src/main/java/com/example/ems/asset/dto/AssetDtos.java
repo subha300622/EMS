@@ -632,6 +632,12 @@ public class AssetDtos {
             this.message = message;
         }
 
+        public AssetActionResultResponse(Long requestId, String status, String message) {
+            this.requestId = requestId;
+            this.status = status;
+            this.message = message;
+        }
+
         public Long getRequestId() { return requestId; }
         public Long getAssetId() { return assetId; }
         public String getRequestType() { return requestType; }

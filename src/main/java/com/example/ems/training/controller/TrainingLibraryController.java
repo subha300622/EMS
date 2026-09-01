@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/training-library")
+@RequestMapping({"/api/v1/training/library", "/api/v1/training-library"})
 @CrossOrigin("*")
 @Tag(name = "Training Library Resources")
 public class TrainingLibraryController {

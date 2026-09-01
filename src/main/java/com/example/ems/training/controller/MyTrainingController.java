@@ -18,7 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/my/trainings")
+@RequestMapping({"/api/v1/my-training", "/api/v1/my/trainings"})
 @CrossOrigin("*")
 @Tag(name = "Employee Self-Service Trainings")
 public class MyTrainingController {

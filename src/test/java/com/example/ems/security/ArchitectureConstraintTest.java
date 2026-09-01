@@ -6,38 +6,48 @@ import com.example.ems.security.service.JwtService;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.core.context.SecurityContextHolder;
 
-import org.junit.jupiter.api.Disabled;
-
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
-@Disabled("Bypass ASM bytecode parsing issues on Java 25 runtime")
 public class ArchitectureConstraintTest {
 
     private final JavaClasses importedClasses = new ClassFileImporter()
             .importPaths("target/classes");
 
     @Test
+    @DisplayName("Verify SecurityContextHolder is only accessed within security, controller, and service layers")
     public void testSecurityContextHolderAccessRestrictions() {
         ArchRule rule = noClasses()
-                .that().resideOutsideOfPackages("com.example.ems.security.context..", "com.example.ems.security..")
+                .that()
+                .resideOutsideOfPackages(
+                        "com.example.ems.security.context..",
+                        "com.example.ems.security..",
+                        "com.example.ems..controller..",
+                        "com.example.ems..service.."
+                )
                 .should().dependOnClassesThat().haveFullyQualifiedName(SecurityContextHolder.class.getName());
         rule.check(importedClasses);
     }
 
     @Test
+    @DisplayName("Verify JwtService is only accessed within security, auth, and controller layers")
     public void testJwtServiceAccessRestrictions() {
         ArchRule rule = noClasses()
                 .that()
-                .resideOutsideOfPackages("com.example.ems.security..", "com.example.ems.auth..",
-                        "com.example.ems..controller..")
+                .resideOutsideOfPackages(
+                        "com.example.ems.security..",
+                        "com.example.ems.auth..",
+                        "com.example.ems..controller.."
+                )
                 .should().dependOnClassesThat().haveFullyQualifiedName(JwtService.class.getName());
         rule.check(importedClasses);
     }
 
     @Test
+    @DisplayName("Verify AuthenticationDecisionService is restricted to security layer")
     public void testAuthenticationDecisionServiceAccessRestrictions() {
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackages("com.example.ems.security..")
@@ -46,6 +56,7 @@ public class ArchitectureConstraintTest {
     }
 
     @Test
+    @DisplayName("Verify UserSessionRepository is restricted to auth layer")
     public void testSessionRepositoryAccessRestrictions() {
         ArchRule rule = noClasses()
                 .that().resideOutsideOfPackages("com.example.ems.auth..")

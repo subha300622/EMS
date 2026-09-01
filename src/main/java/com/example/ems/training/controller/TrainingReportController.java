@@ -21,7 +21,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/training-reports")
+@RequestMapping({"/api/v1/training/reports", "/api/v1/training-reports"})
 @CrossOrigin("*")
 @Tag(name = "Training Analytics & Reports")
 public class TrainingReportController {

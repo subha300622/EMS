@@ -19,6 +19,10 @@ public interface ApprovalTaskRepository extends JpaRepository<ApprovalTask, Long
 
     Optional<ApprovalTask> findByApprovalTaskId(String approvalTaskId);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT t FROM ApprovalTask t WHERE t.approvalTaskId = :approvalTaskId")
+    Optional<ApprovalTask> findByApprovalTaskIdWithLock(@Param("approvalTaskId") String approvalTaskId);
+
     List<ApprovalTask> findByWorkflowInstanceIdAndStepOrder(Long workflowInstanceId, Integer stepOrder);
 
     @Query("SELECT t FROM ApprovalTask t WHERE t.approver.id = :approverId " +

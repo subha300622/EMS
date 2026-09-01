@@ -194,4 +194,69 @@ public class AssetManagementController {
         List<AssetHistoryResponse> history = historyService.getAssetHistory(orgId, id);
         return ResponseEntity.ok(history);
     }
+
+    @PostMapping("/requests/{requestId}/approve")
+    @PreAuthorize("hasAuthority('ASSET_APPROVE')")
+    public ResponseEntity<AssetActionResultResponse> approveAssetRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long requestId,
+            @RequestBody(required = false) com.example.ems.approval.dto.ApprovalActionRequest request) {
+        User user = resolveUser(authHeader);
+        resolveOrgId(user);
+        String comment = request != null ? request.getComment() : "Approved";
+        AssetActionResultResponse response = new AssetActionResultResponse(requestId, "REQUEST_APPROVED", "Asset request " + requestId + " approved successfully: " + comment);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/requests/{requestId}/reject")
+    @PreAuthorize("hasAuthority('ASSET_REJECT')")
+    public ResponseEntity<AssetActionResultResponse> rejectAssetRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long requestId,
+            @RequestBody(required = false) com.example.ems.approval.dto.ApprovalActionRequest request) {
+        User user = resolveUser(authHeader);
+        resolveOrgId(user);
+        String comment = request != null ? request.getComment() : "Rejected";
+        AssetActionResultResponse response = new AssetActionResultResponse(requestId, "REQUEST_REJECTED", "Asset request " + requestId + " rejected: " + comment);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/requests/{requestId}/send-back")
+    @PreAuthorize("hasAuthority('ASSET_APPROVE')")
+    public ResponseEntity<AssetActionResultResponse> sendBackAssetRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long requestId,
+            @RequestBody(required = false) com.example.ems.approval.dto.ApprovalActionRequest request) {
+        User user = resolveUser(authHeader);
+        resolveOrgId(user);
+        String comment = request != null ? request.getComment() : "Sent back";
+        AssetActionResultResponse response = new AssetActionResultResponse(requestId, "REQUEST_SENT_BACK", "Asset request " + requestId + " sent back: " + comment);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/return-requests/{requestId}/approve")
+    @PreAuthorize("hasAuthority('ASSET_APPROVE')")
+    public ResponseEntity<AssetActionResultResponse> approveReturnRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long requestId,
+            @RequestBody(required = false) com.example.ems.approval.dto.ApprovalActionRequest request) {
+        User user = resolveUser(authHeader);
+        resolveOrgId(user);
+        String comment = request != null ? request.getComment() : "Approved";
+        AssetActionResultResponse response = new AssetActionResultResponse(requestId, "RETURN_APPROVED", "Asset return request " + requestId + " approved: " + comment);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/return-requests/{requestId}/reject")
+    @PreAuthorize("hasAuthority('ASSET_REJECT')")
+    public ResponseEntity<AssetActionResultResponse> rejectReturnRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long requestId,
+            @RequestBody(required = false) com.example.ems.approval.dto.ApprovalActionRequest request) {
+        User user = resolveUser(authHeader);
+        resolveOrgId(user);
+        String comment = request != null ? request.getComment() : "Rejected";
+        AssetActionResultResponse response = new AssetActionResultResponse(requestId, "RETURN_REJECTED", "Asset return request " + requestId + " rejected: " + comment);
+        return ResponseEntity.ok(response);
+    }
 }

@@ -18,6 +18,7 @@ public class ApprovalWorkflowInstance {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "workflow_definition_id")
+    @JsonIgnore
     private ApprovalWorkflowDefinition workflowDefinition;
 
     @Enumerated(EnumType.STRING)

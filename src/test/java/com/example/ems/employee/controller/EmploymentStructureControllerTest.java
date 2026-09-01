@@ -112,7 +112,7 @@ public class EmploymentStructureControllerTest {
     // ── 1. Create Structure Tests ────────────────────────────────────────────
 
     @Test
-    @DisplayName("POST /api/v1/admin/employment-structures - Create Structure Success")
+    @DisplayName("POST /api/v1/employment-structures - Create Structure Success")
     public void testCreateStructure_Success() throws Exception {
         EmploymentStructureDtos.CreateEmploymentTypeRequest et = EmploymentStructureDtos.CreateEmploymentTypeRequest.builder()
                 .employmentType("Contract")
@@ -131,7 +131,7 @@ public class EmploymentStructureControllerTest {
                 .jobLevels(List.of(jl))
                 .build();
 
-        mockMvc.perform(post("/api/v1/admin/employment-structures")
+        mockMvc.perform(post("/api/v1/employment-structures")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isCreated())
@@ -146,14 +146,14 @@ public class EmploymentStructureControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/v1/admin/employment-structures - Duplicate Designation Returns 400")
+    @DisplayName("POST /api/v1/employment-structures - Duplicate Designation Returns 400")
     public void testCreateStructure_Duplicate() throws Exception {
         EmploymentStructureDtos.CreateEmploymentStructureRequest req = EmploymentStructureDtos.CreateEmploymentStructureRequest.builder()
                 .designation("software engineer") // case-insensitive duplicate
                 .description("Duplicate test")
                 .build();
 
-        mockMvc.perform(post("/api/v1/admin/employment-structures")
+        mockMvc.perform(post("/api/v1/employment-structures")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isBadRequest());
@@ -162,9 +162,9 @@ public class EmploymentStructureControllerTest {
     // ── 2. List Structure Summary Tests ──────────────────────────────────────
 
     @Test
-    @DisplayName("GET /api/v1/admin/employment-structures - List Summary")
+    @DisplayName("GET /api/v1/employment-structures - List Summary")
     public void testListStructures_Summary() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/employment-structures"))
+        mockMvc.perform(get("/api/v1/employment-structures"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))))
                 .andExpect(jsonPath("$.content[0].designationId").exists())
@@ -179,9 +179,9 @@ public class EmploymentStructureControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/employment-structures - Filter by Search")
+    @DisplayName("GET /api/v1/employment-structures - Filter by Search")
     public void testListStructures_SearchFilter() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/employment-structures")
+        mockMvc.perform(get("/api/v1/employment-structures")
                         .param("search", "software"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))))
@@ -191,11 +191,11 @@ public class EmploymentStructureControllerTest {
     // ── 3. Details Tests ─────────────────────────────────────────────────────
 
     @Test
-    @DisplayName("GET /api/v1/admin/employment-structures/{designationId} - Details with Formatted ID")
+    @DisplayName("GET /api/v1/employment-structures/{designationId} - Details with Formatted ID")
     public void testGetStructure_FormattedId() throws Exception {
         String desIdStr = String.format("DES-%03d", seededDesignation.getId());
 
-        mockMvc.perform(get("/api/v1/admin/employment-structures/" + desIdStr))
+        mockMvc.perform(get("/api/v1/employment-structures/" + desIdStr))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.designationId").value(desIdStr))
                 .andExpect(jsonPath("$.designation").value("Software Engineer"))
@@ -205,32 +205,32 @@ public class EmploymentStructureControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/employment-structures/{designationId} - Details with Numeric ID")
+    @DisplayName("GET /api/v1/employment-structures/{designationId} - Details with Numeric ID")
     public void testGetStructure_NumericId() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/employment-structures/" + seededDesignation.getId()))
+        mockMvc.perform(get("/api/v1/employment-structures/" + seededDesignation.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.designationId").value(String.format("DES-%03d", seededDesignation.getId())))
                 .andExpect(jsonPath("$.designation").value("Software Engineer"));
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/employment-structures/{designationId} - Nonexistent Returns 404")
+    @DisplayName("GET /api/v1/employment-structures/{designationId} - Nonexistent Returns 404")
     public void testGetStructure_NotFound() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/employment-structures/DES-999999"))
+        mockMvc.perform(get("/api/v1/employment-structures/DES-999999"))
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("GET /api/v1/admin/employment-structures/{designationId} - Invalid ID Format Returns 400")
+    @DisplayName("GET /api/v1/employment-structures/{designationId} - Invalid ID Format Returns 400")
     public void testGetStructure_InvalidFormat() throws Exception {
-        mockMvc.perform(get("/api/v1/admin/employment-structures/DES-"))
+        mockMvc.perform(get("/api/v1/employment-structures/DES-"))
                 .andExpect(status().isBadRequest());
     }
 
     // ── 4. Edit Structure Tests ──────────────────────────────────────────────
 
     @Test
-    @DisplayName("PUT /api/v1/admin/employment-structures/{designationId} - Edit Iterative Update")
+    @DisplayName("PUT /api/v1/employment-structures/{designationId} - Edit Iterative Update")
     public void testEditStructure_Success() throws Exception {
         String jlIdStr = String.format("JL-%03d", seededJobLevel.getId());
         String etIdStr = String.format("ET-%03d", seededEmploymentType.getId());
@@ -261,7 +261,7 @@ public class EmploymentStructureControllerTest {
                 .jobLevels(List.of(existingJl, newJl))
                 .build();
 
-        mockMvc.perform(put("/api/v1/admin/employment-structures/" + seededDesignation.getId())
+        mockMvc.perform(put("/api/v1/employment-structures/" + seededDesignation.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -276,13 +276,13 @@ public class EmploymentStructureControllerTest {
     // ── 5. Status Update Tests ───────────────────────────────────────────────
 
     @Test
-    @DisplayName("PATCH /api/v1/admin/employment-structures/{designationId}/status - Deactivate")
+    @DisplayName("PATCH /api/v1/employment-structures/{designationId}/status - Deactivate")
     public void testUpdateStatus_Deactivate() throws Exception {
         EmploymentStructureDtos.StatusRequest req = EmploymentStructureDtos.StatusRequest.builder()
                 .status("INACTIVE")
                 .build();
 
-        mockMvc.perform(patch("/api/v1/admin/employment-structures/" + seededDesignation.getId() + "/status")
+        mockMvc.perform(patch("/api/v1/employment-structures/" + seededDesignation.getId() + "/status")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(req)))
                 .andExpect(status().isOk())
@@ -293,7 +293,7 @@ public class EmploymentStructureControllerTest {
     // ── 6. Delete Structure Tests ────────────────────────────────────────────
 
     @Test
-    @DisplayName("DELETE /api/v1/admin/employment-structures/{designationId} - Delete Unused Success")
+    @DisplayName("DELETE /api/v1/employment-structures/{designationId} - Delete Unused Success")
     public void testDeleteStructure_Success() throws Exception {
         Designation unusedDes = new Designation();
         unusedDes.setDesignation("Unused QA Lead");
@@ -304,7 +304,7 @@ public class EmploymentStructureControllerTest {
 
         String desIdStr = String.format("DES-%03d", unusedDes.getId());
 
-        mockMvc.perform(delete("/api/v1/admin/employment-structures/" + unusedDes.getId()))
+        mockMvc.perform(delete("/api/v1/employment-structures/" + unusedDes.getId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Employment structure deleted successfully"))
                 .andExpect(jsonPath("$.designationId").value(desIdStr));
@@ -313,7 +313,7 @@ public class EmploymentStructureControllerTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/v1/admin/employment-structures/{designationId} - Conflict on Employee Assigned")
+    @DisplayName("DELETE /api/v1/employment-structures/{designationId} - Conflict on Employee Assigned")
     public void testDeleteStructure_AssignedConflict() throws Exception {
         Employee emp = new Employee();
         emp.setFirstName("John");
@@ -324,7 +324,7 @@ public class EmploymentStructureControllerTest {
         emp.setOrganization(testOrg);
         employeeRepository.save(emp);
 
-        mockMvc.perform(delete("/api/v1/admin/employment-structures/" + seededDesignation.getId()))
+        mockMvc.perform(delete("/api/v1/employment-structures/" + seededDesignation.getId()))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message", containsString("assigned to employees")));
     }

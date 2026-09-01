@@ -13,6 +13,7 @@ import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -357,6 +358,7 @@ public class LeaveController {
 
     @Operation(summary = "Approve Leave Request")
     @PostMapping("/requests/{leaveRequestId}/approve")
+    @PreAuthorize("hasAuthority('LEAVE_APPROVE')")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approveLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -373,6 +375,7 @@ public class LeaveController {
 
     @Operation(summary = "Reject Leave Request")
     @PostMapping("/requests/{leaveRequestId}/reject")
+    @PreAuthorize("hasAuthority('LEAVE_REJECT')")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> rejectLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -387,8 +390,25 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Leave request rejected successfully", result));
     }
 
+    @Operation(summary = "Send Back Leave Request")
+    @PostMapping("/requests/{leaveRequestId}/send-back")
+    @PreAuthorize("hasAuthority('LEAVE_APPROVE')")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> sendBackLeaveRequest(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long leaveRequestId,
+            @RequestBody(required = false) ManagerCommentRequest request) {
+        User user = resolveUser(authHeader);
+        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        Employee approver = resolveEmployee(user);
+        String comment = request != null ? request.getComment() : null;
+        ManagerApprovalActionResponseDto result = leaveService.sendBackLeaveWithComment(leaveRequestId, comment, approver);
+        return ResponseEntity.ok(ApiResponse.success("Leave request sent back successfully", result));
+    }
+
     @Operation(summary = "Cancel Leave Request")
-    @PutMapping("/requests/{leaveRequestId}/cancel")
+    @PostMapping({"requests/{leaveRequestId}/cancel", "/requests/{leaveRequestId}/cancel"})
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> cancelLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,6 +36,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -102,7 +102,8 @@ public class EmployeeController {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.", "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
+                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
+                                "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
             }
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_001"));
         }
@@ -254,7 +255,8 @@ public class EmployeeController {
         }
 
         try {
-            Map<String, Object> data = employeeService.updateEmployeeMasterProfile(employeeId, request, currentUser.getWorkEmail());
+            Map<String, Object> data = employeeService.updateEmployeeMasterProfile(employeeId, request,
+                    currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Employee updated successfully", data));
         } catch (IllegalArgumentException e) {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_003"));
@@ -289,7 +291,7 @@ public class EmployeeController {
     }
 
     @Operation(summary = "Update Employee Status", description = "Updates status indicators for an employee.")
-    @RequestMapping(value = "/employees/{employeeId}/status", method = {RequestMethod.PATCH, RequestMethod.PUT, RequestMethod.POST})
+    @PatchMapping("/employees/{employeeId}/status")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> updateEmployeeStatusPatch(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -315,7 +317,8 @@ public class EmployeeController {
         }
 
         try {
-            Map<String, Object> data = employeeService.updateEmployeeStatusPatch(employeeId, newStatus, reason, currentUser);
+            Map<String, Object> data = employeeService.updateEmployeeStatusPatch(employeeId, newStatus, reason,
+                    currentUser);
             return ResponseEntity.ok(ApiResponse.success("Employee status updated successfully", data));
         } catch (IllegalArgumentException e) {
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_003"));
@@ -347,13 +350,12 @@ public class EmployeeController {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("LAST_SUPER_ADMIN_CANNOT_BE_REMOVED")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.", "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
+                        .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.",
+                                "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
             }
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_004"));
         }
     }
-
-
 
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -365,8 +367,6 @@ public class EmployeeController {
         }
         return null;
     }
-
-
 
     // ── Employee Role Management Endpoints ─────────────────────────────────────
 
@@ -392,7 +392,8 @@ public class EmployeeController {
             EmployeeRolesResponse res = employeeService.getEmployeeRoles(employeeId, currentUser);
             return ResponseEntity.ok(ApiResponse.success("Employee roles retrieved successfully", res));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_ROLE_001"));
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "EMP_ROLE_001"));
         }
     }
 
@@ -417,17 +418,21 @@ public class EmployeeController {
         }
 
         try {
-            EmployeeRolesResponse res = employeeService.assignRoleToEmployee(employeeId, request.getRoleId(), currentUser);
-            return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Role assigned successfully", res));
+            EmployeeRolesResponse res = employeeService.assignRoleToEmployee(employeeId, request.getRoleId(),
+                    currentUser);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Role assigned successfully", res));
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.", "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
+                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
+                                "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
             }
             if (msg != null && msg.startsWith("ROLE_ALREADY_ASSIGNED")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("One or more roles are already assigned to the employee.", "ROLE_ALREADY_ASSIGNED"));
+                        .body(ErrorResponse.error("One or more roles are already assigned to the employee.",
+                                "ROLE_ALREADY_ASSIGNED"));
             }
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_002"));
         }
@@ -454,17 +459,20 @@ public class EmployeeController {
         }
 
         try {
-            EmployeeRolesResponse res = employeeService.assignBulkRolesToEmployee(employeeId, request.getRoleIds(), currentUser);
+            EmployeeRolesResponse res = employeeService.assignBulkRolesToEmployee(employeeId, request.getRoleIds(),
+                    currentUser);
             return ResponseEntity.ok(ApiResponse.success("Bulk roles assigned successfully", res));
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.", "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
+                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
+                                "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
             }
             if (msg != null && msg.startsWith("ROLE_ALREADY_ASSIGNED")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("One or more roles are already assigned to the employee.", "ROLE_ALREADY_ASSIGNED"));
+                        .body(ErrorResponse.error("One or more roles are already assigned to the employee.",
+                                "ROLE_ALREADY_ASSIGNED"));
             }
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_003"));
         }
@@ -497,11 +505,13 @@ public class EmployeeController {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("LAST_SUPER_ADMIN_CANNOT_BE_REMOVED")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.", "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
+                        .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.",
+                                "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
             }
             if (msg != null && msg.startsWith("PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.", "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
+                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
+                                "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
             }
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_004"));
         }
@@ -534,7 +544,8 @@ public class EmployeeController {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("LAST_SUPER_ADMIN_CANNOT_BE_REMOVED")) {
                 return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.", "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
+                        .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.",
+                                "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
             }
             return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_005"));
         }

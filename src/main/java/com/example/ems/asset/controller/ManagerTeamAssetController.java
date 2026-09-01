@@ -26,9 +26,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/manager/team-assets")
+@RequestMapping({"/api/v1/assets/team", "/api/v1/manager/team-assets"})
 @CrossOrigin("*")
-@Tag(name = "Manager Self Service - Team Assets")
+@Tag(name = "Manager Self Service - Team Assets (Deprecated)")
+@Deprecated
+@io.swagger.v3.oas.annotations.Hidden
 public class ManagerTeamAssetController {
 
     @Autowired
@@ -84,6 +86,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Get Team Assets Dashboard Summary", description = "Retrieves count statistics for the manager's team assets.")
+    @Deprecated
     @GetMapping("/dashboard")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getDashboard(
@@ -100,6 +103,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Get Team Assets Inventory List", description = "Retrieves a paginated list of assets assigned to the manager's team.")
+    @Deprecated
     @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamAssets(
@@ -126,6 +130,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Get Team Asset Details", description = "Retrieves detailed information for a specific asset assigned to a team member.")
+    @Deprecated
     @GetMapping("/{assetId}")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamAssetDetails(
@@ -151,6 +156,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Get Team Asset Timeline", description = "Retrieves the lifecycle event history log for a specific team asset.")
+    @Deprecated
     @GetMapping("/{assetId}/timeline")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getTeamAssetTimeline(
@@ -176,6 +182,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Get Pending Team Asset Requests", description = "Retrieves a paginated list of pending asset requests from the manager's team.")
+    @Deprecated
     @GetMapping("/requests")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getPendingAssetRequests(
@@ -195,6 +202,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Approve Asset Request", description = "Approves a team member's asset request.")
+    @Deprecated
     @PutMapping("/requests/{requestId}/approve")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approveAssetRequest(
@@ -226,6 +234,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Reject Asset Request", description = "Rejects a team member's asset request.")
+    @Deprecated
     @PutMapping("/requests/{requestId}/reject")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> rejectAssetRequest(
@@ -257,6 +266,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Get Pending Team Return Requests", description = "Retrieves a paginated list of pending asset returns from the manager's team.")
+    @Deprecated
     @GetMapping("/returns")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getPendingReturnRequests(
@@ -276,6 +286,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Approve Asset Return", description = "Approves a team member's asset return request.")
+    @Deprecated
     @PutMapping("/returns/{returnRequestId}/approve")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approveReturnRequest(
@@ -307,6 +318,7 @@ public class ManagerTeamAssetController {
     }
 
     @Operation(summary = "Get Manager Team Asset Analytics", description = "Retrieves category inventory metrics and value metrics for the manager's team.")
+    @Deprecated
     @GetMapping("/analytics")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getAnalytics(

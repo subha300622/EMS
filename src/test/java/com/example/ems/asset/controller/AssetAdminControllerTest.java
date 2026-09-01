@@ -35,6 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@SuppressWarnings("deprecation")
 public class AssetAdminControllerTest {
 
     private MockMvc mockMvc;
@@ -98,7 +99,7 @@ public class AssetAdminControllerTest {
 
         when(myAssetRepository.findAll()).thenReturn(List.of(asset1, asset2));
 
-        mockMvc.perform(get("/api/v1/assets/dashboard")
+        mockMvc.perform(get("/api/v1/admin/assets/dashboard")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -119,7 +120,7 @@ public class AssetAdminControllerTest {
         Page<MyAsset> page = new PageImpl<>(List.of(asset), PageRequest.of(0, 10), 1);
         when(myAssetRepository.findFiltered(any(), any(), any(), any(), any())).thenReturn(page);
 
-        mockMvc.perform(get("/api/v1/assets")
+        mockMvc.perform(get("/api/v1/admin/assets")
                 .header("Authorization", AUTH_HEADER)
                 .param("search", "Test")
                 .param("page", "0")
@@ -139,7 +140,7 @@ public class AssetAdminControllerTest {
         
         when(myAssetRepository.findById(1L)).thenReturn(Optional.of(asset));
 
-        mockMvc.perform(get("/api/v1/assets/1")
+        mockMvc.perform(get("/api/v1/admin/assets/1")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -166,7 +167,7 @@ public class AssetAdminControllerTest {
         
         when(myAssetRepository.save(any(MyAsset.class))).thenReturn(asset);
 
-        mockMvc.perform(post("/api/v1/assets")
+        mockMvc.perform(post("/api/v1/admin/assets")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(dto)))
@@ -188,7 +189,7 @@ public class AssetAdminControllerTest {
 
         when(myAssetRepository.save(any(MyAsset.class))).thenReturn(asset);
 
-        mockMvc.perform(post("/api/v1/assets/1/assign")
+        mockMvc.perform(post("/api/v1/admin/assets/1/assign")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(Map.of("employeeId", 10L))))
@@ -207,7 +208,7 @@ public class AssetAdminControllerTest {
         toEmp.setId(20L);
         when(employeeRepository.findById(20L)).thenReturn(Optional.of(toEmp));
 
-        mockMvc.perform(post("/api/v1/assets/1/transfer")
+        mockMvc.perform(post("/api/v1/admin/assets/1/transfer")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(Map.of("toEmployeeId", 20L, "remarks", "transfer remarks"))))
@@ -223,7 +224,7 @@ public class AssetAdminControllerTest {
         when(myAssetRepository.findById(1L)).thenReturn(Optional.of(asset));
         when(myAssetRepository.save(any(MyAsset.class))).thenReturn(asset);
 
-        mockMvc.perform(post("/api/v1/assets/1/return")
+        mockMvc.perform(post("/api/v1/admin/assets/1/return")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -240,7 +241,7 @@ public class AssetAdminControllerTest {
 
         when(myAssetMaintenanceRepository.findByAssetIdOrderByStartDateDesc(1L)).thenReturn(List.of(maint));
 
-        mockMvc.perform(get("/api/v1/assets/1/maintenance")
+        mockMvc.perform(get("/api/v1/admin/assets/1/maintenance")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -253,7 +254,7 @@ public class AssetAdminControllerTest {
         asset.setId(1L);
         when(myAssetRepository.findById(1L)).thenReturn(Optional.of(asset));
 
-        mockMvc.perform(post("/api/v1/assets/1/maintenance")
+        mockMvc.perform(post("/api/v1/admin/assets/1/maintenance")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(Map.of("issue", "Screen broken", "vendor", "Dell Services", "estimatedCost", 8000))))
@@ -271,7 +272,7 @@ public class AssetAdminControllerTest {
         maint.setId(201L);
         when(myAssetMaintenanceRepository.findById(201L)).thenReturn(Optional.of(maint));
 
-        mockMvc.perform(patch("/api/v1/assets/maintenance/201/complete")
+        mockMvc.perform(patch("/api/v1/admin/assets/maintenance/201/complete")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(new ObjectMapper().writeValueAsString(Map.of("actualCost", 7500))))
@@ -288,7 +289,7 @@ public class AssetAdminControllerTest {
 
         MockMultipartFile file = new MockMultipartFile("file", "invoice.pdf", "application/pdf", "dummy data".getBytes());
 
-        mockMvc.perform(multipart("/api/v1/assets/1/documents")
+        mockMvc.perform(multipart("/api/v1/admin/assets/1/documents")
                 .file(file)
                 .param("documentType", "Invoice")
                 .header("Authorization", AUTH_HEADER))
@@ -308,7 +309,7 @@ public class AssetAdminControllerTest {
 
         when(myAssetDocumentRepository.findByAssetIdOrderByUploadedAtDesc(1L)).thenReturn(List.of(doc));
 
-        mockMvc.perform(get("/api/v1/assets/1/documents")
+        mockMvc.perform(get("/api/v1/admin/assets/1/documents")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -323,7 +324,7 @@ public class AssetAdminControllerTest {
         when(myAssetRepository.findById(1L)).thenReturn(Optional.of(asset));
         when(myAssetRepository.save(any(MyAsset.class))).thenReturn(asset);
 
-        mockMvc.perform(patch("/api/v1/assets/1/status")
+        mockMvc.perform(patch("/api/v1/admin/assets/1/status")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"status\":\"RETIRED\",\"remarks\":\"obsolete\"}"))
@@ -338,7 +339,7 @@ public class AssetAdminControllerTest {
         asset.setId(1L);
         when(myAssetRepository.findById(1L)).thenReturn(Optional.of(asset));
 
-        mockMvc.perform(patch("/api/v1/assets/1/status")
+        mockMvc.perform(patch("/api/v1/admin/assets/1/status")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"status\":\"INVALID_STATUS\"}"))
@@ -353,7 +354,7 @@ public class AssetAdminControllerTest {
         asset.setStatus("DISPOSED");
         when(myAssetRepository.findById(1L)).thenReturn(Optional.of(asset));
 
-        mockMvc.perform(patch("/api/v1/assets/1/status")
+        mockMvc.perform(patch("/api/v1/admin/assets/1/status")
                 .header("Authorization", AUTH_HEADER)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"status\":\"AVAILABLE\"}"))
@@ -371,19 +372,19 @@ public class AssetAdminControllerTest {
 
         when(myAssetRepository.findAll()).thenReturn(List.of(asset1));
 
-        mockMvc.perform(get("/api/v1/assets/reports/utilization")
+        mockMvc.perform(get("/api/v1/admin/assets/reports/utilization")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.totalAssets").value(1));
 
-        mockMvc.perform(get("/api/v1/assets/reports/depreciation")
+        mockMvc.perform(get("/api/v1/admin/assets/reports/depreciation")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.totalDepreciation").value(100));
 
-        mockMvc.perform(get("/api/v1/assets/reports/inventory")
+        mockMvc.perform(get("/api/v1/admin/assets/reports/inventory")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))

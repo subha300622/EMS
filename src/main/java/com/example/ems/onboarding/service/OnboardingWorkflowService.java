@@ -321,6 +321,36 @@ public class OnboardingWorkflowService {
     }
 
     @Transactional
+    public OnboardingQueueResponse.QueueItem approveOnboarding(Long onboardingId, String comments) {
+        Onboarding onboarding = onboardingRepository.findById(onboardingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Onboarding not found with ID: " + onboardingId));
+        onboarding.setStatus("APPROVED");
+        onboarding.setUpdatedAt(LocalDateTime.now());
+        onboarding = onboardingRepository.save(onboarding);
+        return mapToQueueItem(onboarding);
+    }
+
+    @Transactional
+    public OnboardingQueueResponse.QueueItem rejectOnboarding(Long onboardingId, String comments) {
+        Onboarding onboarding = onboardingRepository.findById(onboardingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Onboarding not found with ID: " + onboardingId));
+        onboarding.setStatus("REJECTED");
+        onboarding.setUpdatedAt(LocalDateTime.now());
+        onboarding = onboardingRepository.save(onboarding);
+        return mapToQueueItem(onboarding);
+    }
+
+    @Transactional
+    public OnboardingQueueResponse.QueueItem sendBackOnboarding(Long onboardingId, String comments) {
+        Onboarding onboarding = onboardingRepository.findById(onboardingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Onboarding not found with ID: " + onboardingId));
+        onboarding.setStatus("NEEDS_REVISION");
+        onboarding.setUpdatedAt(LocalDateTime.now());
+        onboarding = onboardingRepository.save(onboarding);
+        return mapToQueueItem(onboarding);
+    }
+
+    @Transactional
     public java.util.Map<String, Object> assignTemplate(Long onboardingId, OnboardingAssignTemplateRequest request) {
         Onboarding onboarding = onboardingRepository.findById(onboardingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Onboarding not found with ID: " + onboardingId));

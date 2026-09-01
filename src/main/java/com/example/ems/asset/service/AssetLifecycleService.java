@@ -257,7 +257,7 @@ public class AssetLifecycleService {
                                           LocalDate assignedDate, LocalDate expectedReturnDate, String remarks, String performedBy) {
 
         AssetAssignment assignment = new AssetAssignment(organizationId, asset, employee, location, assignedDate, expectedReturnDate, remarks);
-        assignmentRepository.save(assignment);
+        assignment = assignmentRepository.save(assignment);
 
         String oldStatus = asset.getStatus().name();
         asset.setStatus(AssetStatus.ASSIGNED);
@@ -339,10 +339,10 @@ public class AssetLifecycleService {
 
         currentAssignment.setStatus(AssignmentStatus.TRANSFERRED);
         currentAssignment.setReturnedDate(transferDate);
-        assignmentRepository.save(currentAssignment);
+        assignmentRepository.saveAndFlush(currentAssignment);
 
         AssetAssignment newAssignment = new AssetAssignment(organizationId, asset, newEmployee, newLocation, transferDate, null, remarks);
-        assignmentRepository.save(newAssignment);
+        newAssignment = assignmentRepository.save(newAssignment);
 
         asset.setLocation(newLocation);
         assetRepository.save(asset);

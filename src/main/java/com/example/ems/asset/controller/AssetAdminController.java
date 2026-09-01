@@ -52,9 +52,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/assets")
+@RequestMapping({"/api/v1/assets/admin", "/api/v1/admin/assets"})
 @CrossOrigin("*")
-@Tag(name = "Asset Management")
+@Tag(name = "Asset Management (Admin)")
+@Deprecated
+@io.swagger.v3.oas.annotations.Hidden
 public class AssetAdminController {
 
     @Autowired
@@ -93,6 +95,7 @@ public class AssetAdminController {
     @Autowired
     private MyAssetService assetService;
 
+    @Deprecated
     @GetMapping("/dashboard")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetDashboard(
@@ -152,6 +155,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Dashboard metrics retrieved successfully", dashboard));
     }
 
+    @Deprecated
     @GetMapping
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAllAssets(
@@ -192,6 +196,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Assets list retrieved successfully", dtoPage));
     }
 
+    @Deprecated
     @GetMapping("/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetById(
@@ -217,6 +222,7 @@ public class AssetAdminController {
                 .ok(ApiResponse.success("Asset details retrieved successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @PostMapping
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -277,6 +283,7 @@ public class AssetAdminController {
                 .body(ApiResponse.success("Asset created successfully", new AssetDetailResponse(saved)));
     }
 
+    @Deprecated
     @PutMapping("/{id}")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -367,6 +374,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset updated successfully", new AssetDetailResponse(updated)));
     }
 
+    @Deprecated
     @DeleteMapping("/{id}")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -407,6 +415,7 @@ public class AssetAdminController {
         }
     }
 
+    @Deprecated
     @GetMapping("/{id}/timeline")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetTimeline(
@@ -431,6 +440,7 @@ public class AssetAdminController {
         }
     }
 
+    @Deprecated
     @GetMapping("/{assetId}/assignments")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssignmentHistory(
@@ -460,6 +470,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset assignment history retrieved successfully", response));
     }
 
+    @Deprecated
     @PostMapping("/{id}/assign")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -523,6 +534,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset assigned successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @PostMapping("/{id}/transfer")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -583,6 +595,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset transferred successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @PostMapping("/{id}/return")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -628,6 +641,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset returned successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @PatchMapping("/{id}/status")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -692,6 +706,7 @@ public class AssetAdminController {
                 .ok(ApiResponse.success("Asset status updated successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @GetMapping("/{assetId}/maintenance")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getMaintenanceRecords(
@@ -711,6 +726,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Maintenance records retrieved successfully", records));
     }
 
+    @Deprecated
     @PostMapping("/{assetId}/maintenance")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -753,6 +769,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Maintenance request created successfully", maintenance));
     }
 
+    @Deprecated
     @PatchMapping("/maintenance/{maintenanceId}/complete")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -795,6 +812,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Maintenance completed successfully", maintenance));
     }
 
+    @Deprecated
     @PostMapping(value = "/{assetId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -842,6 +860,7 @@ public class AssetAdminController {
         }
     }
 
+    @Deprecated
     @GetMapping("/{assetId}/documents")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getDocuments(
@@ -871,6 +890,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset documents retrieved successfully", response));
     }
 
+    @Deprecated
     @GetMapping("/reports/utilization")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getUtilizationReport(
@@ -900,6 +920,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset utilization report retrieved successfully", response));
     }
 
+    @Deprecated
     @GetMapping("/reports/depreciation")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getDepreciationReport(
@@ -934,6 +955,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset depreciation report retrieved successfully", response));
     }
 
+    @Deprecated
     @GetMapping("/reports/maintenance")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getMaintenanceReport(
@@ -967,6 +989,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset maintenance report retrieved successfully", response));
     }
 
+    @Deprecated
     @GetMapping("/reports/inventory")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getInventoryReport(
