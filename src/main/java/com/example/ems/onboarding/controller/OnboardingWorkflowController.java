@@ -62,7 +62,7 @@ public class OnboardingWorkflowController {
         return ResponseEntity.ok(ApiResponse.success("Stats retrieved successfully", stats));
     }
 
-    @GetMapping("/{onboardingId}")
+    @GetMapping("/{onboardingId:\\d+}")
     @Operation(summary = "Get Onboarding Details")
     public ResponseEntity<ApiResponse<OnboardingQueueResponse.QueueItem>> getOnboardingDetails(
             @PathVariable Long onboardingId) {
@@ -70,7 +70,7 @@ public class OnboardingWorkflowController {
         return ResponseEntity.ok(ApiResponse.success("Onboarding details retrieved successfully", response));
     }
 
-    @PatchMapping("/{onboardingId}")
+    @PatchMapping("/{onboardingId:\\d+}")
     @Operation(summary = "Update Onboarding Profile")
     public ResponseEntity<ApiResponse<OnboardingQueueResponse.QueueItem>> updateOnboarding(
             @PathVariable Long onboardingId,
@@ -79,7 +79,7 @@ public class OnboardingWorkflowController {
         return ResponseEntity.ok(ApiResponse.success("Onboarding profile updated successfully", response));
     }
 
-    @DeleteMapping("/{onboardingId}")
+    @DeleteMapping("/{onboardingId:\\d+}")
     @Operation(summary = "Delete Onboarding Process")
     public ResponseEntity<ApiResponse<Void>> deleteOnboarding(
             @PathVariable Long onboardingId) {
@@ -87,7 +87,7 @@ public class OnboardingWorkflowController {
         return ResponseEntity.ok(ApiResponse.success("Onboarding deleted successfully", null));
     }
 
-    @PatchMapping("/{onboardingId}/template")
+    @PatchMapping("/{onboardingId:\\d+}/template")
     @Operation(summary = "Assign or Replace Template")
     public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> assignTemplate(
             @PathVariable Long onboardingId,

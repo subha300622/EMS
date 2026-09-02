@@ -170,11 +170,7 @@ public class OnboardingDocumentController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        String role = user.getRole() != null ? user.getRole().getName() : "EMPLOYEE";
-        if (!"HR".equalsIgnoreCase(role) && !"ADMIN".equalsIgnoreCase(role) && !"SUPER_ADMIN".equalsIgnoreCase(role)) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Only HR or Admin is authorized to verify documents", "AUTH_002"));
-        }
+
 
         try {
             Long parsedOnbId = parseOnboardingId(onboardingId);

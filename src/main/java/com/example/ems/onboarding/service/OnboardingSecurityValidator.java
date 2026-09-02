@@ -114,12 +114,15 @@ public class OnboardingSecurityValidator {
             return;
         }
 
-        // All non-PLATFORM_ADMIN users (including organization SUPER_ADMIN) must have an organization context and match candidate organization
-        if (user.getOrganization() == null || candidate.getOrganization() == null) {
-            throw new AccessDeniedException("Access denied - user or candidate is missing organization context");
+        // Check organization context via TenantContext thread-local
+        Long activeOrgId = com.example.ems.security.context.TenantContext.getOrganizationId();
+        if (activeOrgId == null && user.getOrganization() != null) {
+            activeOrgId = user.getOrganization().getId();
         }
 
-        if (!user.getOrganization().getId().equals(candidate.getOrganization().getId())) {
+        Long candidateOrgId = candidate.getOrganization() != null ? candidate.getOrganization().getId() : null;
+
+        if (activeOrgId != null && candidateOrgId != null && !activeOrgId.equals(candidateOrgId)) {
             throw new AccessDeniedException("Access denied - cross-organization onboarding access is strictly forbidden");
         }
     }
