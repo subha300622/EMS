@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping({"/api/v1/leave", "/api/v1/leaves"})
+@RequestMapping("/api/v1/leaves")
 @CrossOrigin("*")
 @Tag(name = "Leave Management", description = "Canonical Leave Management APIs")
 public class LeaveController {
