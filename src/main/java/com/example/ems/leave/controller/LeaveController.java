@@ -13,7 +13,7 @@ import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.security.access.prepost.PreAuthorize;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -359,7 +359,7 @@ public class LeaveController {
 
     @Operation(summary = "Approve Leave Request")
     @PostMapping("/requests/{leaveRequestId}/approve")
-    @PreAuthorize("hasAuthority('LEAVE_APPROVE')")
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> approveLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -376,7 +376,7 @@ public class LeaveController {
 
     @Operation(summary = "Reject Leave Request")
     @PostMapping("/requests/{leaveRequestId}/reject")
-    @PreAuthorize("hasAuthority('LEAVE_REJECT')")
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> rejectLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -393,7 +393,7 @@ public class LeaveController {
 
     @Operation(summary = "Send Back Leave Request")
     @PostMapping("/requests/{leaveRequestId}/send-back")
-    @PreAuthorize("hasAuthority('LEAVE_APPROVE')")
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> sendBackLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

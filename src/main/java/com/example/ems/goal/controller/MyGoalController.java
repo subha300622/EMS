@@ -19,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -70,7 +69,6 @@ public class MyGoalController {
 
     @Operation(summary = "Get My Assigned Goals", description = "Retrieves goals assigned to the authenticated employee")
     @GetMapping
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('ADMIN')")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMyGoals(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -91,7 +89,6 @@ public class MyGoalController {
 
     @Operation(summary = "Get My Goal Details", description = "Retrieves details of a specific assigned goal")
     @GetMapping("/{goalId}")
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<Object>> getMyGoalById(@PathVariable("goalId") Long goalId) {
         GoalResponse goal = goalService.getGoalById(goalId);
         return ResponseEntity.ok(ApiResponse.success("Goal details retrieved successfully", goal));
@@ -99,7 +96,6 @@ public class MyGoalController {
 
     @Operation(summary = "Submit My Goal Progress", description = "Submits progress entry for assigned goal")
     @PostMapping("/{goalId}/progress")
-    @PreAuthorize("hasAuthority('GOAL_PROGRESS_UPDATE') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('ADMIN')")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> submitMyGoalProgress(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -119,7 +115,6 @@ public class MyGoalController {
 
     @Operation(summary = "Log My Goal Effort", description = "Logs actual effort hours spent on assigned goal")
     @PostMapping("/{goalId}/efforts")
-    @PreAuthorize("hasAuthority('GOAL_EFFORT_LOG') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('ADMIN')")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> logMyGoalEffort(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -139,7 +134,6 @@ public class MyGoalController {
 
     @Operation(summary = "Add My Goal Comment", description = "Adds a discussion comment on assigned goal")
     @PostMapping("/{goalId}/comments")
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('ADMIN')")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> addMyGoalComment(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
@@ -159,7 +153,6 @@ public class MyGoalController {
 
     @Operation(summary = "Get My Goal Dashboard", description = "Calculates personal goal metrics for authenticated employee")
     @GetMapping("/dashboard")
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('ADMIN')")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> getMyGoalDashboard(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {

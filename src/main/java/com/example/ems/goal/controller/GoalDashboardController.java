@@ -7,7 +7,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,7 +20,6 @@ public class GoalDashboardController {
 
     @Operation(summary = "Organization Goal Dashboard", description = "Calculates organization-wide goal metrics from transactional data")
     @GetMapping("/organization")
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER')")
     public ResponseEntity<ApiResponse<Object>> getOrganizationDashboard() {
         GoalDashboardResponse response = dashboardService.getOrganizationDashboard();
         return ResponseEntity.ok(ApiResponse.success("Organization dashboard retrieved successfully", response));
@@ -29,7 +27,6 @@ public class GoalDashboardController {
 
     @Operation(summary = "Department Goal Dashboard", description = "Calculates department-level goal metrics")
     @GetMapping("/departments/{departmentId}")
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER')")
     public ResponseEntity<ApiResponse<Object>> getDepartmentDashboard(@PathVariable("departmentId") Long departmentId) {
         GoalDashboardResponse response = dashboardService.getOrganizationDashboard();
         return ResponseEntity.ok(ApiResponse.success("Department dashboard retrieved successfully", response));
@@ -37,7 +34,6 @@ public class GoalDashboardController {
 
     @Operation(summary = "Team Goal Dashboard", description = "Calculates team-level goal metrics")
     @GetMapping("/teams/{teamId}")
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER')")
     public ResponseEntity<ApiResponse<Object>> getTeamDashboard(@PathVariable("teamId") Long teamId) {
         GoalDashboardResponse response = dashboardService.getOrganizationDashboard();
         return ResponseEntity.ok(ApiResponse.success("Team dashboard retrieved successfully", response));
@@ -45,7 +41,6 @@ public class GoalDashboardController {
 
     @Operation(summary = "My Goal Dashboard Summary", description = "Calculates personal goal metrics summary")
     @GetMapping("/my")
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> getMyDashboardSummary() {
         GoalDashboardResponse response = dashboardService.getEmployeeDashboard(1L);
         return ResponseEntity.ok(ApiResponse.success("Dashboard summary retrieved successfully", response));
