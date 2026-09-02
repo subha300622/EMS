@@ -79,10 +79,7 @@ public class EmployeeController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.create")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.create' permission.", "AUTH_002"));
-        }
+
 
         try {
             Employee created = employeeService.createEmployee(request, currentUser.getWorkEmail());

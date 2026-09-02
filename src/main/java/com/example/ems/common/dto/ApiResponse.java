@@ -17,6 +17,7 @@ public class ApiResponse<T> {
     private String timestamp;
     private String requestId;
     private T data;
+    private Long organizationId;
     private Map<String, String> links = new HashMap<>();
     private Map<String, Object> metadata = new HashMap<>();
 
@@ -25,6 +26,11 @@ public class ApiResponse<T> {
         this.requestId = getCorrelationId();
         this.metadata.put("version", "v1");
         this.metadata.put("executionTimeMs", getExecutionTime());
+        Long currentOrgId = com.example.ems.security.context.TenantContext.getOrganizationId();
+        if (currentOrgId != null) {
+            this.organizationId = currentOrgId;
+            this.metadata.put("organizationId", currentOrgId);
+        }
     }
 
     public ApiResponse(boolean success, String message, String timestamp, T data) {
@@ -40,6 +46,11 @@ public class ApiResponse<T> {
         this.data = data;
         this.metadata.put("version", "v1");
         this.metadata.put("executionTimeMs", getExecutionTime());
+        Long currentOrgId = com.example.ems.security.context.TenantContext.getOrganizationId();
+        if (currentOrgId != null) {
+            this.organizationId = currentOrgId;
+            this.metadata.put("organizationId", currentOrgId);
+        }
     }
 
     public ApiResponse(boolean success, String message, T data, Map<String, String> links) {
@@ -150,6 +161,17 @@ public class ApiResponse<T> {
 
     public void setLinks(Map<String, String> links) {
         this.links = links;
+    }
+
+    public Long getOrganizationId() {
+        return organizationId;
+    }
+
+    public void setOrganizationId(Long organizationId) {
+        this.organizationId = organizationId;
+        if (organizationId != null) {
+            this.metadata.put("organizationId", organizationId);
+        }
     }
 
     public Map<String, Object> getMetadata() {

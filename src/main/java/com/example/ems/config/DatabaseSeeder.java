@@ -607,6 +607,8 @@ public class DatabaseSeeder implements ApplicationRunner {
             emp.setFullName(u.getFullName());
             emp.setEmail(u.getWorkEmail());
             emp.setEmployeeId(u.getUserId());
+            if (emp.getOrganization() == null)
+                emp.setOrganization(u.getOrganization());
             if (emp.getPhone() == null)
                 emp.setPhone(u.getMobileNumber() != null ? u.getMobileNumber() : "1234567890");
             if (emp.getGender() == null)

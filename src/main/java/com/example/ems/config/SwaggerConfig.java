@@ -36,7 +36,7 @@ public class SwaggerConfig {
                                                 .version("1.0")
                                                 .description(
                                                                 "Comprehensive Human Resource Management System (HRMS) APIs supporting employee lifecycle management, recruitment, onboarding, attendance, leave, payroll, finance, performance, training, assets, documents, reporting, approvals, and employee self-service operations."))
-                                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
+                                .addSecurityItem(new SecurityRequirement().addList(securitySchemeName).addList(orgHeaderSchemeName))
                                 .components(new Components()
                                                 .addSecuritySchemes(securitySchemeName,
                                                                 new SecurityScheme()
@@ -49,7 +49,7 @@ public class SwaggerConfig {
                                                                                 .name("X-Organization-Id")
                                                                                 .type(SecurityScheme.Type.APIKEY)
                                                                                 .in(SecurityScheme.In.HEADER)
-                                                                                .description("Optional Tenant Organization ID header (e.g. ORG-001 or 1). Required for tenant-scoped operations; omitted for Platform Admin operations.")))
+                                                                                .description("Tenant Organization ID header (e.g. 9631). Must match authenticated JWT organizationId or request will be rejected.")))
                                 .tags(List.of(
                                                 new Tag().name("Employees")
                                                                 .description("Employee records, employment detail, reporting lines, work information."),
@@ -341,5 +341,33 @@ public class SwaggerConfig {
                                 .pathsToMatch("/api/v1/**")
                                 .addOpenApiCustomizer(filterByTagsCustomizer(null, null, true))
                                 .build();
+        }
+
+        @Bean
+        public OpenApiCustomizer globalHeaderCleanerCustomizer() {
+                return openApi -> {
+                        if (openApi.getPaths() != null) {
+                                openApi.getPaths().values().forEach(pathItem -> {
+                                        pathItem.readOperations().forEach(operation -> {
+                                                if (operation.getParameters() != null) {
+                                                        operation.setParameters(
+                                                                operation.getParameters().stream()
+                                                                        .filter(p -> !"Authorization".equalsIgnoreCase(p.getName()))
+                                                                        .collect(Collectors.toList())
+                                                        );
+                                                }
+                                                boolean hasOrgIdParam = operation.getParameters() != null && operation.getParameters().stream()
+                                                        .anyMatch(p -> "X-Organization-Id".equalsIgnoreCase(p.getName()) || "organizationId".equalsIgnoreCase(p.getName()));
+                                                if (!hasOrgIdParam) {
+                                                        operation.addParametersItem(new io.swagger.v3.oas.models.parameters.HeaderParameter()
+                                                                .name("X-Organization-Id")
+                                                                .description("Organization ID header (e.g. 9645). Mandatory for POST, PUT, DELETE, and PATCH operations.")
+                                                                .required(true)
+                                                                .schema(new io.swagger.v3.oas.models.media.StringSchema().example("9645")));
+                                                }
+                                        });
+                                });
+                        }
+                };
         }
 }

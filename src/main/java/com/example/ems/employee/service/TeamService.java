@@ -79,7 +79,7 @@ public class TeamService {
 
         Department dept = null;
         if (request.getDepartmentId() != null && request.getDepartmentId() > 0) {
-            dept = departmentRepository.findById(request.getDepartmentId())
+            dept = departmentRepository.findByIdAndOrganizationId(request.getDepartmentId(), orgId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Department not found with ID: " + request.getDepartmentId()));
             if (!"ACTIVE".equalsIgnoreCase(dept.getStatus())) {
@@ -89,7 +89,7 @@ public class TeamService {
 
         Employee teamLead = null;
         if (request.getTeamLeadEmployeeId() != null && request.getTeamLeadEmployeeId() > 0) {
-            teamLead = employeeRepository.findById(request.getTeamLeadEmployeeId())
+            teamLead = employeeRepository.findByIdAndOrganizationId(request.getTeamLeadEmployeeId(), orgId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Employee not found with ID: " + request.getTeamLeadEmployeeId()));
             if (!"ACTIVE".equalsIgnoreCase(teamLead.getStatus())) {
@@ -197,7 +197,7 @@ public class TeamService {
 
         // Department update (supports explicit null or 0 to disconnect)
         if (request.getDepartmentId() != null && request.getDepartmentId() > 0) {
-            Department dept = departmentRepository.findById(request.getDepartmentId())
+            Department dept = departmentRepository.findByIdAndOrganizationId(request.getDepartmentId(), orgId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Department not found with ID: " + request.getDepartmentId()));
             if (!"ACTIVE".equalsIgnoreCase(dept.getStatus())) {
@@ -212,7 +212,7 @@ public class TeamService {
 
         // Team Lead update (supports null or 0 to clear lead)
         if (request.getTeamLeadEmployeeId() != null && request.getTeamLeadEmployeeId() > 0) {
-            Employee lead = employeeRepository.findById(request.getTeamLeadEmployeeId())
+            Employee lead = employeeRepository.findByIdAndOrganizationId(request.getTeamLeadEmployeeId(), orgId)
                     .orElseThrow(() -> new IllegalArgumentException(
                             "Employee not found with ID: " + request.getTeamLeadEmployeeId()));
             if (!"ACTIVE".equalsIgnoreCase(lead.getStatus())) {
@@ -281,7 +281,7 @@ public class TeamService {
             throw new IllegalArgumentException("Cannot add member to an INACTIVE team");
         }
 
-        Employee employee = employeeRepository.findById(employeeId)
+        Employee employee = employeeRepository.findByIdAndOrganizationId(employeeId, orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
 
         if (!"ACTIVE".equalsIgnoreCase(employee.getStatus())) {
@@ -369,7 +369,7 @@ public class TeamService {
 
         Employee newLead = null;
         if (employeeId != null && employeeId > 0) {
-            newLead = employeeRepository.findById(employeeId)
+            newLead = employeeRepository.findByIdAndOrganizationId(employeeId, orgId)
                     .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
 
             if (!"ACTIVE".equalsIgnoreCase(newLead.getStatus())) {
@@ -410,7 +410,7 @@ public class TeamService {
 
         if (employeeIds != null) {
             for (Long empId : employeeIds) {
-                Optional<Employee> empOpt = employeeRepository.findById(empId);
+                Optional<Employee> empOpt = employeeRepository.findByIdAndOrganizationId(empId, orgId);
                 if (empOpt.isEmpty()) {
                     results.add(new TeamDtos.MemberAddResult(empId, "FAILED", "EMPLOYEE_NOT_FOUND"));
                     failedCount++;
@@ -466,7 +466,7 @@ public class TeamService {
     @Transactional(readOnly = true)
     public List<TeamDtos.TeamResponseDto> getTeamsByDepartment(Long departmentId, User currentUser) {
         Long orgId = resolveOrganizationId(currentUser);
-        departmentRepository.findById(departmentId)
+        departmentRepository.findByIdAndOrganizationId(departmentId, orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + departmentId));
 
         List<Team> teams = teamRepository.findByDepartmentIdAndOrganizationIdAndDeletedFalse(departmentId, orgId);
@@ -483,7 +483,7 @@ public class TeamService {
         String oldDeptName = team.getDepartment() != null ? team.getDepartment().getName() : "None";
 
         if (departmentId != null) {
-            Department dept = departmentRepository.findById(departmentId)
+            Department dept = departmentRepository.findByIdAndOrganizationId(departmentId, orgId)
                     .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + departmentId));
 
             if (!"ACTIVE".equalsIgnoreCase(dept.getStatus())) {

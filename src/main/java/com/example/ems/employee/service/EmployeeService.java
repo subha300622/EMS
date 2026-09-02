@@ -649,20 +649,21 @@ public class EmployeeService {
                 timeline.add(joined);
             }
 
+            Long empOrgId = employee.getOrganization() != null ? employee.getOrganization().getId() : null;
             List<com.example.ems.employee.entity.DepartmentTransfer> transfers = departmentTransferRepository
                     .findByEmployeeId(employee.getId());
             for (com.example.ems.employee.entity.DepartmentTransfer transfer : transfers) {
                 String fromName = "Unknown";
                 String toName = "Unknown";
                 if (transfer.getFromDepartmentId() != null) {
-                    fromName = departmentRepository.findById(transfer.getFromDepartmentId())
-                            .map(com.example.ems.employee.entity.Department::getName)
-                            .orElse("Unknown");
+                    fromName = (empOrgId == null)
+                            ? departmentRepository.findById(transfer.getFromDepartmentId()).map(com.example.ems.employee.entity.Department::getName).orElse("Unknown")
+                            : departmentRepository.findByIdAndOrganizationId(transfer.getFromDepartmentId(), empOrgId).map(com.example.ems.employee.entity.Department::getName).orElse("Unknown");
                 }
                 if (transfer.getToDepartmentId() != null) {
-                    toName = departmentRepository.findById(transfer.getToDepartmentId())
-                            .map(com.example.ems.employee.entity.Department::getName)
-                            .orElse("Unknown");
+                    toName = (empOrgId == null)
+                            ? departmentRepository.findById(transfer.getToDepartmentId()).map(com.example.ems.employee.entity.Department::getName).orElse("Unknown")
+                            : departmentRepository.findByIdAndOrganizationId(transfer.getToDepartmentId(), empOrgId).map(com.example.ems.employee.entity.Department::getName).orElse("Unknown");
                 }
 
                 java.util.Map<String, Object> event = new java.util.LinkedHashMap<>();

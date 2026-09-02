@@ -75,9 +75,10 @@ public class LeaveController {
 
     private Long resolveOrgId(User user) {
         if (user != null && user.getOrganization() != null) return user.getOrganization().getId();
+        if (user != null && user.getOrganizationId() != null) return user.getOrganizationId();
         Employee emp = resolveEmployee(user);
         if (emp != null && emp.getOrganization() != null) return emp.getOrganization().getId();
-        return 1L;
+        return com.example.ems.security.context.TenantContext.requireOrganizationId();
     }
 
     // == 1. LEAVE TYPES (/types) ===============================================

@@ -135,7 +135,7 @@ class TeamServiceTest {
         TeamMember member = new TeamMember(team, employee, LocalDate.now(), false);
 
         when(teamRepository.findByIdAndOrganizationIdAndDeletedFalse(101L, 1L)).thenReturn(Optional.of(team));
-        when(departmentRepository.findById(10L)).thenReturn(Optional.of(targetDept));
+        when(departmentRepository.findByIdAndOrganizationId(10L, 1L)).thenReturn(Optional.of(targetDept));
         when(teamMemberRepository.findByTeamIdAndStatus(101L, "ACTIVE")).thenReturn(List.of(member));
 
         TeamService.DepartmentMismatchException ex = assertThrows(
@@ -165,8 +165,8 @@ class TeamServiceTest {
         emp2.setOrganization(organization);
 
         when(teamRepository.findByIdAndOrganizationIdAndDeletedFalse(101L, 1L)).thenReturn(Optional.of(team));
-        when(employeeRepository.findById(150L)).thenReturn(Optional.of(emp1));
-        when(employeeRepository.findById(151L)).thenReturn(Optional.of(emp2));
+        when(employeeRepository.findByIdAndOrganizationId(150L, 1L)).thenReturn(Optional.of(emp1));
+        when(employeeRepository.findByIdAndOrganizationId(151L, 1L)).thenReturn(Optional.of(emp2));
         when(teamMemberRepository.existsByTeamIdAndEmployeeIdAndStatus(101L, 150L, "ACTIVE")).thenReturn(false);
 
         TeamDtos.TeamMemberBulkAddResponse response = teamService.bulkAddMembers(101L, List.of(150L, 151L), user);

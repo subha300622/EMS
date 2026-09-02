@@ -4,7 +4,7 @@ import com.example.ems.common.dto.ApprovalItemDto;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
+
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.service.ApprovalCenterService;
@@ -28,8 +28,7 @@ public class ApprovalCenterController {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private RoleService roleService;
+
 
     @Autowired
     private JwtService jwtService;
@@ -44,10 +43,7 @@ public class ApprovalCenterController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         return ResponseEntity.ok(ApiResponse.success("Pending approvals retrieved successfully",
                 approvalCenterService.getPendingApprovals()));
@@ -69,10 +65,7 @@ public class ApprovalCenterController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         return ResponseEntity.ok(ApiResponse.success("Approval history retrieved successfully",
                 approvalCenterService.getApprovalHistory()));
@@ -89,10 +82,7 @@ public class ApprovalCenterController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         return approvalCenterService.getApprovalById(id)
                 .map(item -> ResponseEntity.ok(ApiResponse.success("Approval retrieved successfully", item)))
@@ -111,10 +101,7 @@ public class ApprovalCenterController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         try {
             approvalCenterService.approveItem(id, currentUser.getWorkEmail());
@@ -138,10 +125,7 @@ public class ApprovalCenterController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         try {
             approvalCenterService.rejectItem(id, currentUser.getWorkEmail());

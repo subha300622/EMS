@@ -65,7 +65,13 @@ public class ApprovalWorkflowEngineService {
             Optional<Employee> emp = employeeRepository.findByEmployeeId(user.getUserId());
             if (emp.isPresent()) return emp.get();
         }
-        throw new IllegalArgumentException("Employee profile not found for user: " + user.getWorkEmail());
+        Employee synthetic = new Employee();
+        synthetic.setFullName(user.getFullName() != null ? user.getFullName() : user.getWorkEmail());
+        synthetic.setEmail(user.getWorkEmail());
+        synthetic.setEmployeeId(user.getUserId() != null ? user.getUserId() : "EMP-" + user.getId());
+        synthetic.setOrganization(user.getOrganization());
+        synthetic.setStatus("ACTIVE");
+        return synthetic;
     }
 
     public Long resolveOrganizationId(User user) {

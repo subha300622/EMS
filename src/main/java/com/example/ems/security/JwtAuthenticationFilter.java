@@ -24,8 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.springframework.security.authentication.BadCredentialsException;
-
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final AuthenticationManager authenticationManager;
@@ -102,18 +100,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     }
                 }
 
+                String method = request.getMethod();
+                boolean isWriteMethod = "POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) 
+                                     || "DELETE".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method);
+                String path = request.getRequestURI();
+
+                if (isWriteMethod && headerOrgId == null && !path.startsWith("/api/v1/auth") 
+                        && !path.startsWith("/v3/api-docs") && !path.startsWith("/swagger-ui")) {
+                    response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"success\":false,\"errorCode\":\"BAD_REQUEST\",\"message\":\"Missing required header 'X-Organization-Id' for " + method + " operation.\"}");
+                    return;
+                }
+
                 boolean isPlatformAdmin = "PLATFORM_ADMIN".equalsIgnoreCase(role);
 
                 if (isPlatformAdmin) {
-                    // Platform Admin: Platform-level context. Can view organizations across platform.
+                    // Platform Admin: Platform-level scope. Can explicitly target a tenant context via header.
                     if (headerOrgId != null) {
                         TenantContext.setCurrentTenant(headerOrgId);
                     }
                 } else {
                     // Tenant User (SUPER_ADMIN, ADMIN, etc.): Bound strictly to userOrgId from JWT
                     if (headerOrgId != null && userOrgId != null && !headerOrgId.equals(userOrgId)) {
-                        throw new BadCredentialsException("Cross-tenant access forbidden: Header organization ID ("
-                                + headerOrgId + ") does not match user's authorized organization (" + userOrgId + ").");
+                        response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"success\":false,\"errorCode\":\"AUTH_003\",\"message\":\"Cross-tenant access forbidden: Header organization ID (" + headerOrgId + ") does not match user's authorized organization (" + userOrgId + ").\"}");
+                        return;
                     }
                     Long effectiveOrgId = (userOrgId != null) ? userOrgId : headerOrgId;
                     if (effectiveOrgId != null) {

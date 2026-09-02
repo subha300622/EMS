@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.dto.DepartmentCreateRequest;
@@ -39,8 +38,7 @@ public class DepartmentController {
         @Autowired
         private JwtService jwtService;
 
-        @Autowired
-        private RoleService roleService;
+
 
         private User resolveUser(String authHeader) {
                 if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -73,11 +71,7 @@ public class DepartmentController {
                         return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                                         .body(ErrorResponse.error("Platform Admin cannot perform organization domain mutations", "AUTH_003"));
                 }
-                if (!roleService.hasPermission(currentUser.getWorkEmail(), "department.create") &&
-                    !(currentUser.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()))) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                        .body(ErrorResponse.error("Access Denied: Requires 'department.create' permission.", "AUTH_002"));
-                }
+
 
                 try {
                         Department created = departmentService.createDepartment(request, currentUser);
@@ -142,11 +136,7 @@ public class DepartmentController {
                         return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                                         .body(ErrorResponse.error("Platform Admin cannot perform organization domain mutations", "AUTH_003"));
                 }
-                if (!roleService.hasPermission(currentUser.getWorkEmail(), "department.update") &&
-                    !(currentUser.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()))) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                        .body(ErrorResponse.error("Access Denied: Requires 'department.update' permission.", "AUTH_002"));
-                }
+
 
                 try {
                         DepartmentResponseDto updated = departmentService.updateDepartment(id, request, currentUser);
@@ -191,11 +181,7 @@ public class DepartmentController {
                         return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                                         .body(ErrorResponse.error("Platform Admin cannot perform organization domain mutations", "AUTH_003"));
                 }
-                if (!roleService.hasPermission(currentUser.getWorkEmail(), "department.delete") &&
-                    !(currentUser.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()))) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                        .body(ErrorResponse.error("Access Denied: Requires 'department.delete' permission.", "AUTH_002"));
-                }
+
 
                 boolean deleted = departmentService.deleteDepartment(id);
                 if (deleted) {
@@ -225,11 +211,7 @@ public class DepartmentController {
                         return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                                         .body(ErrorResponse.error("Platform Admin cannot perform organization domain mutations", "AUTH_003"));
                 }
-                if (!roleService.hasPermission(currentUser.getWorkEmail(), "department.update") &&
-                    !(currentUser.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()))) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                        .body(ErrorResponse.error("Access Denied: Requires 'department.update' permission.", "AUTH_002"));
-                }
+
 
                 String status = statusMap.get("status");
                 if (status == null || (!status.equalsIgnoreCase("Active") && !status.equalsIgnoreCase("Inactive"))) {

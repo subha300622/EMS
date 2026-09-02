@@ -23,4 +23,6 @@ public interface TeamRepository extends JpaRepository<Team, Long>, JpaSpecificat
     boolean existsByTeamCodeAndOrganizationIdAndIdNotAndDeletedFalse(String teamCode, Long organizationId, Long id);
 
     List<Team> findByDepartmentIdAndOrganizationIdAndDeletedFalse(Long departmentId, Long organizationId);
+
+    List<Team> findByOrganizationIdAndDeletedFalse(Long organizationId);
 }
