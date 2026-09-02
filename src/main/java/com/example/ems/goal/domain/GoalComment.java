@@ -26,6 +26,9 @@ public class GoalComment {
     @Column(name = "created_by", nullable = false)
     private Long createdBy;
 
+    @Column(name = "employee_id")
+    private Long employeeId;
+
     @Column(name = "is_edited")
     private Boolean isEdited = false;
 
@@ -57,6 +60,9 @@ public class GoalComment {
 
     public Long getCreatedBy() { return createdBy; }
     public void setCreatedBy(Long createdBy) { this.createdBy = createdBy; }
+
+    public Long getEmployeeId() { return employeeId; }
+    public void setEmployeeId(Long employeeId) { this.employeeId = employeeId; }
 
     public Boolean getIsEdited() { return isEdited; }
     public void setIsEdited(Boolean isEdited) { this.isEdited = isEdited; }

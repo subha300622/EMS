@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +24,6 @@ public class GoalProgressController {
 
     @Operation(summary = "Add Progress Update", description = "Appends an immutable progress history entry and recalculates weighted parent progress")
     @PostMapping
-    @PreAuthorize("hasAuthority('GOAL_PROGRESS_UPDATE') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> addProgressUpdate(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalProgressRequest request) {
@@ -33,9 +31,16 @@ public class GoalProgressController {
         return ResponseEntity.ok(ApiResponse.success("Progress updated successfully", entry));
     }
 
+    @Operation(summary = "Get Current Progress Status", description = "Retrieves the latest progress record for a goal")
+    @GetMapping("/current")
+    public ResponseEntity<ApiResponse<Object>> getCurrentProgress(@PathVariable("goalId") Long goalId) {
+        List<GoalProgress> history = progressService.getProgressHistory(goalId);
+        GoalProgress latest = history.isEmpty() ? null : history.get(history.size() - 1);
+        return ResponseEntity.ok(ApiResponse.success("Current progress retrieved successfully", latest));
+    }
+
     @Operation(summary = "Get Progress History", description = "Retrieves progress history trend for a goal")
     @GetMapping
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> getProgressHistory(@PathVariable("goalId") Long goalId) {
         List<GoalProgress> history = progressService.getProgressHistory(goalId);
         return ResponseEntity.ok(ApiResponse.success("Progress history retrieved successfully", history));

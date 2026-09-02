@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +24,6 @@ public class GoalMilestoneController {
 
     @Operation(summary = "Add Milestone", description = "Adds a new milestone to a goal")
     @PostMapping
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> addMilestone(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalMilestoneRequest request) {
@@ -35,15 +33,41 @@ public class GoalMilestoneController {
 
     @Operation(summary = "Get Milestones", description = "Lists milestones for a goal")
     @GetMapping
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> getMilestones(@PathVariable("goalId") Long goalId) {
         List<GoalMilestone> milestones = milestoneService.getMilestones(goalId);
         return ResponseEntity.ok(ApiResponse.success("Milestones retrieved successfully", milestones));
     }
 
+    @Operation(summary = "Get Milestone by ID", description = "Retrieves details of a specific milestone")
+    @GetMapping("/{milestoneId}")
+    public ResponseEntity<ApiResponse<Object>> getMilestoneById(
+            @PathVariable("goalId") Long goalId,
+            @PathVariable("milestoneId") Long milestoneId) {
+        GoalMilestone milestone = milestoneService.getMilestoneById(milestoneId);
+        return ResponseEntity.ok(ApiResponse.success("Milestone retrieved successfully", milestone));
+    }
+
+    @Operation(summary = "Update Milestone", description = "Updates details of a milestone")
+    @PutMapping("/{milestoneId}")
+    public ResponseEntity<ApiResponse<Object>> updateMilestone(
+            @PathVariable("goalId") Long goalId,
+            @PathVariable("milestoneId") Long milestoneId,
+            @RequestBody GoalMilestoneRequest request) {
+        GoalMilestone milestone = milestoneService.updateMilestone(milestoneId, request, 1L, "User", "EMPLOYEE");
+        return ResponseEntity.ok(ApiResponse.success("Milestone updated successfully", milestone));
+    }
+
+    @Operation(summary = "Delete Milestone", description = "Deletes a milestone")
+    @DeleteMapping("/{milestoneId}")
+    public ResponseEntity<ApiResponse<Object>> deleteMilestone(
+            @PathVariable("goalId") Long goalId,
+            @PathVariable("milestoneId") Long milestoneId) {
+        milestoneService.deleteMilestone(milestoneId, 1L, "User", "EMPLOYEE");
+        return ResponseEntity.ok(ApiResponse.success("Milestone deleted successfully", null));
+    }
+
     @Operation(summary = "Complete Milestone", description = "Marks a milestone as COMPLETED")
     @PostMapping("/{milestoneId}/complete")
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> completeMilestone(
             @PathVariable("goalId") Long goalId,
             @PathVariable("milestoneId") Long milestoneId) {

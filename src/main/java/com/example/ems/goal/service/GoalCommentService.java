@@ -30,6 +30,7 @@ public class GoalCommentService {
         comment.setParentCommentId(request.getParentCommentId());
         comment.setComment(request.getComment());
         comment.setCreatedBy(createdById);
+        comment.setEmployeeId(createdById);
         comment.setIsEdited(false);
         comment.setIsDeleted(false);
 
@@ -56,6 +57,16 @@ public class GoalCommentService {
 
         comment.setIsDeleted(true);
         commentRepository.save(comment);
+    }
+
+    @Transactional
+    public GoalComment updateComment(Long commentId, GoalCommentRequest request, Long actorId, String actorName, String actorRole) {
+        Long orgId = TenantContext.requireOrganizationId();
+        GoalComment comment = commentRepository.findByIdAndOrganizationIdAndIsDeletedFalse(commentId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found with ID: " + commentId));
+        comment.setComment(request.getComment());
+        comment.setIsEdited(true);
+        return commentRepository.save(comment);
     }
 
     public List<GoalComment> getComments(Long goalId) {

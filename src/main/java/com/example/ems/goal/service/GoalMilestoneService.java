@@ -76,4 +76,31 @@ public class GoalMilestoneService {
         Long orgId = TenantContext.requireOrganizationId();
         return milestoneRepository.findByOrganizationIdAndGoalIdOrderByTargetDateAsc(orgId, goalId);
     }
+
+    public GoalMilestone getMilestoneById(Long milestoneId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        return milestoneRepository.findByIdAndOrganizationId(milestoneId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Milestone not found with ID: " + milestoneId));
+    }
+
+    @Transactional
+    public GoalMilestone updateMilestone(Long milestoneId, GoalMilestoneRequest request, Long actorId, String actorName, String actorRole) {
+        Long orgId = TenantContext.requireOrganizationId();
+        GoalMilestone milestone = milestoneRepository.findByIdAndOrganizationId(milestoneId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Milestone not found with ID: " + milestoneId));
+        if (request.getName() != null) milestone.setName(request.getName());
+        if (request.getDescription() != null) milestone.setDescription(request.getDescription());
+        if (request.getTargetDate() != null) milestone.setTargetDate(request.getTargetDate());
+        if (request.getWeightage() != null) milestone.setWeightage(request.getWeightage());
+        if (request.getStatus() != null) milestone.setStatus(request.getStatus());
+        return milestoneRepository.save(milestone);
+    }
+
+    @Transactional
+    public void deleteMilestone(Long milestoneId, Long actorId, String actorName, String actorRole) {
+        Long orgId = TenantContext.requireOrganizationId();
+        GoalMilestone milestone = milestoneRepository.findByIdAndOrganizationId(milestoneId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Milestone not found with ID: " + milestoneId));
+        milestoneRepository.delete(milestone);
+    }
 }

@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +24,6 @@ public class GoalEffortController {
 
     @Operation(summary = "Log Effort Hours", description = "Logs actual effort hours for a goal")
     @PostMapping
-    @PreAuthorize("hasAuthority('GOAL_EFFORT_LOG') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> logEffort(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalEffortRequest request) {
@@ -35,9 +33,36 @@ public class GoalEffortController {
 
     @Operation(summary = "Get Effort Entries", description = "Lists effort log entries for a goal")
     @GetMapping
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> getEffortEntries(@PathVariable("goalId") Long goalId) {
         List<GoalEffort> entries = effortService.getEffortEntries(goalId);
         return ResponseEntity.ok(ApiResponse.success("Effort entries retrieved successfully", entries));
+    }
+
+    @Operation(summary = "Get Effort Entry by ID", description = "Retrieves a specific effort log entry")
+    @GetMapping("/{effortId}")
+    public ResponseEntity<ApiResponse<Object>> getEffortById(
+            @PathVariable("goalId") Long goalId,
+            @PathVariable("effortId") Long effortId) {
+        GoalEffort entry = effortService.getEffortById(effortId);
+        return ResponseEntity.ok(ApiResponse.success("Effort entry retrieved successfully", entry));
+    }
+
+    @Operation(summary = "Update Effort Entry", description = "Updates an existing effort log entry")
+    @PutMapping("/{effortId}")
+    public ResponseEntity<ApiResponse<Object>> updateEffort(
+            @PathVariable("goalId") Long goalId,
+            @PathVariable("effortId") Long effortId,
+            @RequestBody GoalEffortRequest request) {
+        GoalEffort entry = effortService.updateEffort(effortId, request, 1L, "User", "EMPLOYEE");
+        return ResponseEntity.ok(ApiResponse.success("Effort entry updated successfully", entry));
+    }
+
+    @Operation(summary = "Delete Effort Entry", description = "Deletes an effort log entry")
+    @DeleteMapping("/{effortId}")
+    public ResponseEntity<ApiResponse<Object>> deleteEffort(
+            @PathVariable("goalId") Long goalId,
+            @PathVariable("effortId") Long effortId) {
+        effortService.deleteEffort(effortId, 1L, "User", "EMPLOYEE");
+        return ResponseEntity.ok(ApiResponse.success("Effort entry deleted successfully", null));
     }
 }

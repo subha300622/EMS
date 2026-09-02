@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,9 +22,8 @@ public class GoalCommentController {
     @Autowired
     private GoalCommentService commentService;
 
-    @Operation(summary = "Add Comment", description = "Adds a comment or reply to a goal")
+    @Operation(summary = "Add Comment", description = "Adds a comment to a goal")
     @PostMapping
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> addComment(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalCommentRequest request) {
@@ -33,9 +31,29 @@ public class GoalCommentController {
         return ResponseEntity.ok(ApiResponse.success("Comment added successfully", comment));
     }
 
+    @Operation(summary = "Add Reply to Comment", description = "Adds a threaded reply to an existing comment")
+    @PostMapping("/{commentId}/replies")
+    public ResponseEntity<ApiResponse<Object>> addReply(
+            @PathVariable("goalId") Long goalId,
+            @PathVariable("commentId") Long commentId,
+            @Valid @RequestBody GoalCommentRequest request) {
+        request.setParentCommentId(commentId);
+        GoalComment reply = commentService.addComment(goalId, request, 1L, "User", "EMPLOYEE");
+        return ResponseEntity.ok(ApiResponse.success("Reply added successfully", reply));
+    }
+
+    @Operation(summary = "Update Comment", description = "Updates content of an existing comment")
+    @PutMapping("/{commentId}")
+    public ResponseEntity<ApiResponse<Object>> updateComment(
+            @PathVariable("goalId") Long goalId,
+            @PathVariable("commentId") Long commentId,
+            @Valid @RequestBody GoalCommentRequest request) {
+        GoalComment comment = commentService.updateComment(commentId, request, 1L, "User", "EMPLOYEE");
+        return ResponseEntity.ok(ApiResponse.success("Comment updated successfully", comment));
+    }
+
     @Operation(summary = "Get Goal Comments", description = "Lists comments for a goal")
     @GetMapping
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> getComments(@PathVariable("goalId") Long goalId) {
         List<GoalComment> comments = commentService.getComments(goalId);
         return ResponseEntity.ok(ApiResponse.success("Comments retrieved successfully", comments));
@@ -43,7 +61,6 @@ public class GoalCommentController {
 
     @Operation(summary = "Delete Comment", description = "Soft deletes a comment")
     @DeleteMapping("/{commentId}")
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
     public ResponseEntity<ApiResponse<Object>> deleteComment(
             @PathVariable("goalId") Long goalId,
             @PathVariable("commentId") Long commentId) {

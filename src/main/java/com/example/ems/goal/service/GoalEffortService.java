@@ -65,4 +65,45 @@ public class GoalEffortService {
         Long orgId = TenantContext.requireOrganizationId();
         return effortRepository.findByOrganizationIdAndGoalIdOrderByWorkDateDesc(orgId, goalId);
     }
+
+    public GoalEffort getEffortById(Long effortId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        return effortRepository.findByIdAndOrganizationId(effortId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Effort entry not found with ID: " + effortId));
+    }
+
+    @Transactional
+    public GoalEffort updateEffort(Long effortId, GoalEffortRequest request, Long employeeId, String actorName, String actorRole) {
+        Long orgId = TenantContext.requireOrganizationId();
+        GoalEffort entry = effortRepository.findByIdAndOrganizationId(effortId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Effort entry not found with ID: " + effortId));
+        if (request.getHours() != null) entry.setHours(request.getHours());
+        if (request.getWorkDate() != null) entry.setWorkDate(request.getWorkDate());
+        if (request.getDescription() != null) entry.setDescription(request.getDescription());
+        GoalEffort saved = effortRepository.save(entry);
+
+        Double totalActual = effortRepository.sumHoursByOrganizationIdAndGoalId(orgId, entry.getGoalId());
+        Goal goal = goalRepository.findByIdAndOrganizationIdAndIsDeletedFalse(entry.getGoalId(), orgId).orElse(null);
+        if (goal != null) {
+            goal.setActualHours(totalActual != null ? totalActual : 0.0);
+            goalRepository.save(goal);
+        }
+        return saved;
+    }
+
+    @Transactional
+    public void deleteEffort(Long effortId, Long employeeId, String actorName, String actorRole) {
+        Long orgId = TenantContext.requireOrganizationId();
+        GoalEffort entry = effortRepository.findByIdAndOrganizationId(effortId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Effort entry not found with ID: " + effortId));
+        Long goalId = entry.getGoalId();
+        effortRepository.delete(entry);
+
+        Double totalActual = effortRepository.sumHoursByOrganizationIdAndGoalId(orgId, goalId);
+        Goal goal = goalRepository.findByIdAndOrganizationIdAndIsDeletedFalse(goalId, orgId).orElse(null);
+        if (goal != null) {
+            goal.setActualHours(totalActual != null ? totalActual : 0.0);
+            goalRepository.save(goal);
+        }
+    }
 }

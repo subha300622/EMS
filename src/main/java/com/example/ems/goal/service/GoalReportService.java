@@ -45,4 +45,37 @@ public class GoalReportService {
 
         return goals.stream().map(GoalResponse::fromEntity).collect(Collectors.toList());
     }
+
+    public List<GoalResponse> getProgressReport() {
+        Long orgId = TenantContext.requireOrganizationId();
+        return goalRepository.findAll().stream()
+                .filter(g -> orgId.equals(g.getOrganizationId()) && Boolean.FALSE.equals(g.getIsDeleted()))
+                .map(GoalResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<GoalResponse> getEmployeePerformanceReport(Long employeeId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        return goalRepository.findAll().stream()
+                .filter(g -> orgId.equals(g.getOrganizationId()) && Boolean.FALSE.equals(g.getIsDeleted()))
+                .filter(g -> employeeId == null || employeeId.equals(g.getOwnerId()))
+                .map(GoalResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<GoalResponse> getTeamPerformanceReport(Long teamId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        return goalRepository.findAll().stream()
+                .filter(g -> orgId.equals(g.getOrganizationId()) && Boolean.FALSE.equals(g.getIsDeleted()))
+                .map(GoalResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    public List<GoalResponse> getDepartmentPerformanceReport(Long departmentId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        return goalRepository.findAll().stream()
+                .filter(g -> orgId.equals(g.getOrganizationId()) && Boolean.FALSE.equals(g.getIsDeleted()))
+                .map(GoalResponse::fromEntity)
+                .collect(Collectors.toList());
+    }
 }

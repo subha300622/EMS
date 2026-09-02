@@ -20,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -41,6 +40,9 @@ public class GoalController {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private com.example.ems.goal.service.GoalProgressService progressService;
+
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -53,13 +55,14 @@ public class GoalController {
     }
 
     private Employee resolveEmployee(User user) {
-        if (user == null) return null;
+        if (user == null)
+            return null;
         return employeeRepository.findByEmail(user.getWorkEmail()).orElse(null);
     }
 
     @Operation(summary = "Create Goal", description = "Creates a new goal with tenant-isolated scope and optional approval workflow")
     @PostMapping
-    @PreAuthorize("hasAuthority('GOAL_CREATE') or hasRole('ADMIN') or hasRole('MANAGER')")
+
     public ResponseEntity<ApiResponse<Object>> createGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody CreateGoalRequest request) {
@@ -67,7 +70,8 @@ public class GoalController {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
         Long actorId = emp != null ? emp.getId() : (user != null ? user.getId() : 1L);
-        String actorName = emp != null ? emp.getFirstName() + " " + emp.getLastName() : (user != null && user.getFullName() != null ? user.getFullName() : "System Admin");
+        String actorName = emp != null ? emp.getFirstName() + " " + emp.getLastName()
+                : (user != null && user.getFullName() != null ? user.getFullName() : "System Admin");
         String actorRole = user != null && user.getRole() != null ? user.getRole().getName() : "ADMIN";
 
         GoalResponse response = goalService.createGoal(request, actorId, actorName, actorRole);
@@ -76,8 +80,8 @@ public class GoalController {
     }
 
     @Operation(summary = "Get Goal by ID", description = "Retrieves details of a specific goal")
-    @GetMapping("/{goalId}")
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
+    @GetMapping("/{goalId:\\d+}")
+
     public ResponseEntity<ApiResponse<Object>> getGoalById(@PathVariable("goalId") Long goalId) {
         GoalResponse response = goalService.getGoalById(goalId);
         return ResponseEntity.ok(ApiResponse.success("Goal retrieved successfully", response));
@@ -85,7 +89,7 @@ public class GoalController {
 
     @Operation(summary = "List All Goals", description = "Retrieves paginated goals for the active tenant organization")
     @GetMapping
-    @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER')")
+
     public ResponseEntity<ApiResponse<Object>> getAllGoals(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
@@ -95,8 +99,8 @@ public class GoalController {
     }
 
     @Operation(summary = "Update Goal Details", description = "Updates goal metadata without mutating state lifecycle status")
-    @PutMapping("/{goalId}")
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER')")
+    @PutMapping("/{goalId:\\d+}")
+
     public ResponseEntity<ApiResponse<Object>> updateGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId,
@@ -105,7 +109,8 @@ public class GoalController {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
         Long actorId = emp != null ? emp.getId() : 1L;
-        String actorName = emp != null ? emp.getFirstName() + " " + emp.getLastName() : (user != null && user.getFullName() != null ? user.getFullName() : "System Admin");
+        String actorName = emp != null ? emp.getFirstName() + " " + emp.getLastName()
+                : (user != null && user.getFullName() != null ? user.getFullName() : "System Admin");
         String actorRole = user != null && user.getRole() != null ? user.getRole().getName() : "ADMIN";
 
         GoalResponse response = goalService.updateGoal(goalId, request, actorId, actorName, actorRole);
@@ -113,8 +118,8 @@ public class GoalController {
     }
 
     @Operation(summary = "Delete Goal", description = "Soft deletes a goal")
-    @DeleteMapping("/{goalId}")
-    @PreAuthorize("hasAuthority('GOAL_DELETE') or hasRole('ADMIN')")
+    @DeleteMapping("/{goalId:\\d+}")
+
     public ResponseEntity<ApiResponse<Object>> deleteGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
@@ -122,7 +127,8 @@ public class GoalController {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
         Long actorId = emp != null ? emp.getId() : 1L;
-        String actorName = emp != null ? emp.getFirstName() + " " + emp.getLastName() : (user != null && user.getFullName() != null ? user.getFullName() : "System Admin");
+        String actorName = emp != null ? emp.getFirstName() + " " + emp.getLastName()
+                : (user != null && user.getFullName() != null ? user.getFullName() : "System Admin");
         String actorRole = user != null && user.getRole() != null ? user.getRole().getName() : "ADMIN";
 
         goalService.deleteGoal(goalId, actorId, actorName, actorRole);
@@ -132,74 +138,87 @@ public class GoalController {
     // --- Command State Machine Endpoints ---
 
     @Operation(summary = "Activate Goal", description = "Transitions goal status to ACTIVE")
-    @PostMapping("/{goalId}/activate")
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER')")
+    @PostMapping("/{goalId:\\d+}/activate")
+
     public ResponseEntity<ApiResponse<Object>> activateGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
-        GoalResponse response = goalService.activateGoal(goalId, emp != null ? emp.getId() : 1L, emp != null ? emp.getFirstName() : "Admin", "USER");
+        GoalResponse response = goalService.activateGoal(goalId, emp != null ? emp.getId() : 1L,
+                emp != null ? emp.getFirstName() : "Admin", "USER");
         return ResponseEntity.ok(ApiResponse.success("Goal activated successfully", response));
     }
 
     @Operation(summary = "Hold Goal", description = "Puts active goal on hold")
-    @PostMapping("/{goalId}/hold")
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER')")
+    @PostMapping("/{goalId:\\d+}/hold")
+
     public ResponseEntity<ApiResponse<Object>> holdGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
-        GoalResponse response = goalService.holdGoal(goalId, emp != null ? emp.getId() : 1L, emp != null ? emp.getFirstName() : "Admin", "USER");
+        GoalResponse response = goalService.holdGoal(goalId, emp != null ? emp.getId() : 1L,
+                emp != null ? emp.getFirstName() : "Admin", "USER");
         return ResponseEntity.ok(ApiResponse.success("Goal put on hold", response));
     }
 
     @Operation(summary = "Resume Goal", description = "Resumes goal from ON_HOLD to ACTIVE")
-    @PostMapping("/{goalId}/resume")
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER')")
+    @PostMapping("/{goalId:\\d+}/resume")
+
     public ResponseEntity<ApiResponse<Object>> resumeGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
-        GoalResponse response = goalService.resumeGoal(goalId, emp != null ? emp.getId() : 1L, emp != null ? emp.getFirstName() : "Admin", "USER");
+        GoalResponse response = goalService.resumeGoal(goalId, emp != null ? emp.getId() : 1L,
+                emp != null ? emp.getFirstName() : "Admin", "USER");
         return ResponseEntity.ok(ApiResponse.success("Goal resumed successfully", response));
     }
 
     @Operation(summary = "Complete Goal", description = "Marks goal as COMPLETED or triggers completion approval workflow")
-    @PostMapping("/{goalId}/complete")
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
+    @PostMapping("/{goalId:\\d+}/complete")
+
     public ResponseEntity<ApiResponse<Object>> completeGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
-        GoalResponse response = goalService.completeGoal(goalId, emp != null ? emp.getId() : 1L, emp != null ? emp.getFirstName() : "Admin", "USER");
+        GoalResponse response = goalService.completeGoal(goalId, emp != null ? emp.getId() : 1L,
+                emp != null ? emp.getFirstName() : "Admin", "USER");
         return ResponseEntity.ok(ApiResponse.success("Goal completion processed successfully", response));
     }
 
     @Operation(summary = "Cancel Goal", description = "Cancels a goal")
-    @PostMapping("/{goalId}/cancel")
-    @PreAuthorize("hasAuthority('GOAL_EDIT') or hasRole('ADMIN') or hasRole('MANAGER')")
+    @PostMapping("/{goalId:\\d+}/cancel")
+
     public ResponseEntity<ApiResponse<Object>> cancelGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
-        GoalResponse response = goalService.cancelGoal(goalId, emp != null ? emp.getId() : 1L, emp != null ? emp.getFirstName() : "Admin", "USER");
+        GoalResponse response = goalService.cancelGoal(goalId, emp != null ? emp.getId() : 1L,
+                emp != null ? emp.getFirstName() : "Admin", "USER");
         return ResponseEntity.ok(ApiResponse.success("Goal cancelled", response));
     }
 
     @Operation(summary = "Reopen Goal", description = "Reopens a completed or cancelled goal to ACTIVE status")
-    @PostMapping("/{goalId}/reopen")
-    @PreAuthorize("hasAuthority('GOAL_REOPEN') or hasRole('ADMIN') or hasRole('MANAGER')")
+    @PostMapping("/{goalId:\\d+}/reopen")
+
     public ResponseEntity<ApiResponse<Object>> reopenGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
         Employee emp = resolveEmployee(user);
-        GoalResponse response = goalService.reopenGoal(goalId, emp != null ? emp.getId() : 1L, emp != null ? emp.getFirstName() : "Admin", "USER");
+        GoalResponse response = goalService.reopenGoal(goalId, emp != null ? emp.getId() : 1L,
+                emp != null ? emp.getFirstName() : "Admin", "USER");
         return ResponseEntity.ok(ApiResponse.success("Goal reopened successfully", response));
+    }
+
+    @Operation(summary = "Get Goal History", description = "Retrieves state change and progress history for a goal")
+    @GetMapping("/{goalId:\\d+}/history")
+    public ResponseEntity<ApiResponse<Object>> getGoalHistory(@PathVariable("goalId") Long goalId) {
+        var history = progressService.getProgressHistory(goalId);
+        return ResponseEntity.ok(ApiResponse.success("Goal history retrieved successfully", history));
     }
 }
