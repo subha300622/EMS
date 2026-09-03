@@ -194,7 +194,7 @@ public class DatabaseSeeder implements ApplicationRunner {
         // 3. Seed Mock Data (Dev/Test only)
         List<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
         boolean isProduction = activeProfiles.contains("prod") || activeProfiles.contains("production");
-        
+
         if (mockDataEnabled && !isProduction) {
             System.out.println("DatabaseSeeder: Seeding mock development data...");
             seedMockData();
@@ -245,7 +245,8 @@ public class DatabaseSeeder implements ApplicationRunner {
     }
 
     public void seedCoreAuthData() {
-        System.out.println("DatabaseSeeder: Seeding permissions, system permission groups, roles, and core configuration...");
+        System.out.println(
+                "DatabaseSeeder: Seeding permissions, system permission groups, roles, and core configuration...");
 
         // 1. Seed Permissions from PermissionRegistry
         Map<String, Permission> permissionMap = new HashMap<>();
@@ -263,78 +264,82 @@ public class DatabaseSeeder implements ApplicationRunner {
         // 2. Seed System Master Permission Groups
         Map<String, List<String>> groupDefinitions = new LinkedHashMap<>();
         groupDefinitions.put("EMPLOYEE_MANAGEMENT", Arrays.asList(
-            "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
-            "employee.directory.read", "employee.directory.manage", "employee.report.read", "employee.profile.read", "employee.profile.update"
-        ));
+                "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
+                "employee.directory.read", "employee.directory.manage", "employee.report.read", "employee.profile.read",
+                "employee.profile.update"));
         groupDefinitions.put("ATTENDANCE", Arrays.asList(
-            "attendance.read", "attendance.manage", "attendance.team.read", "attendance.self.read",
-            "employee.attendance.read", "employee.attendance.create"
-        ));
+                "attendance.read", "attendance.manage", "attendance.team.read", "attendance.self.read",
+                "employee.attendance.read", "employee.attendance.create"));
         groupDefinitions.put("LEAVE_MANAGEMENT", Arrays.asList(
-            "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve", "leave.self.read",
-            "employee.leave.create", "employee.leave.read", "employee.leave.cancel"
-        ));
+                "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve", "leave.self.read",
+                "employee.leave.create", "employee.leave.read", "employee.leave.cancel"));
         groupDefinitions.put("PAYROLL", Arrays.asList(
-            "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
-            "employee.payslip.read", "employee.payslip.download", "payroll-settings.manage", "fnf.manage"
-        ));
+                "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
+                "employee.payslip.read", "employee.payslip.download", "payroll-settings.manage", "fnf.manage"));
         groupDefinitions.put("RECRUITMENT", Arrays.asList(
-            "recruitment.manage", "employee.training.read", "employee.training.complete"
-        ));
+                "recruitment.manage", "employee.training.read", "employee.training.complete"));
         groupDefinitions.put("PERFORMANCE", Arrays.asList(
-            "performance.review", "performance.self.read", "performance.self.goal.update", "performance.self.assessment.submit",
-            "performance.self.feedback.read", "performance.self.history.read", "employee.performance.read", "employee.performance.self-review.submit"
-        ));
+                "performance.review", "performance.self.read", "performance.self.goal.update",
+                "performance.self.assessment.submit",
+                "performance.self.feedback.read", "performance.self.history.read", "employee.performance.read",
+                "employee.performance.self-review.submit"));
         groupDefinitions.put("GOALS", Arrays.asList(
-            "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update", "goal.submit",
-            "goal.approve", "goal.reject", "goal.analytics.read", "employee.goal.read", "employee.goal.update"
-        ));
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update",
+                "goal.submit",
+                "goal.approve", "goal.reject", "goal.analytics.read", "employee.goal.read", "employee.goal.update"));
         groupDefinitions.put("ASSETS", Arrays.asList(
-            "asset.manage", "asset.self.read", "employee.asset.read", "employee.asset.request"
-        ));
+                "asset.manage", "asset.self.read", "employee.asset.read", "employee.asset.request"));
         groupDefinitions.put("EXPENSES", Arrays.asList(
-            "expense.manage", "expense.self.read", "employee.expense.create", "employee.expense.read", "employee.expense.update"
-        ));
+                "expense.manage", "expense.self.read", "employee.expense.create", "employee.expense.read",
+                "employee.expense.update"));
         groupDefinitions.put("DOCUMENTS", Arrays.asList(
-            "document.self.read", "employee.document.read", "employee.document.upload", "employee.document.delete"
-        ));
+                "document.self.read", "employee.document.read", "employee.document.upload",
+                "employee.document.delete"));
         groupDefinitions.put("ONBOARDING", Arrays.asList(
-            "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload", "onboarding.document.read.self",
-            "onboarding.self.submit", "employee.onboarding.read.self", "employee.onboarding.read", "employee.onboarding.update",
-            "employee.onboarding.document.upload", "employee.onboarding.document.read", "employee.onboarding.submit"
-        ));
+                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload",
+                "onboarding.document.read.self",
+                "onboarding.self.submit", "employee.onboarding.read.self", "employee.onboarding.read",
+                "employee.onboarding.update",
+                "employee.onboarding.document.upload", "employee.onboarding.document.read",
+                "employee.onboarding.submit"));
         groupDefinitions.put("SUPPORT", Arrays.asList(
-            "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
-            "support.view", "support.reply", "support.manage", "employee.support-ticket.create", "employee.support-ticket.read", "employee.support-ticket.update"
-        ));
+                "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
+                "support.view", "support.reply", "support.manage", "employee.support-ticket.create",
+                "employee.support-ticket.read", "employee.support-ticket.update"));
         groupDefinitions.put("REPORTS", Arrays.asList(
-            "reports.view", "reports.hr", "reports.finance", "reports.manager"
-        ));
+                "reports.view", "reports.hr", "reports.finance", "reports.manager"));
         groupDefinitions.put("TEAM", Arrays.asList(
-            "team.read", "task.assign", "employee.team.hierarchy.read", "employee.schedule.read", "schedule.self.read",
-            "schedule.self.change.create", "schedule.self.availability.update", "schedule.self.notification.read", "schedule.self.timeline.read"
-        ));
+                "team.read", "task.assign", "employee.team.hierarchy.read", "employee.schedule.read",
+                "schedule.self.read",
+                "schedule.self.change.create", "schedule.self.availability.update", "schedule.self.notification.read",
+                "schedule.self.timeline.read"));
         groupDefinitions.put("SETTINGS", Arrays.asList(
-            "settings.manage", "settings.self.read", "settings.security.read", "settings.security.update", "settings.privacy.read",
-            "settings.privacy.update", "settings.notifications.read", "settings.notifications.update", "settings.appearance.read",
-            "settings.appearance.update", "settings.language.read", "settings.language.update", "settings.devices.read",
-            "settings.devices.remove", "settings.data.export", "settings.support.create", "settings.support.read",
-            "announcement.manage", "employee.announcement.read", "employee.notification.read", "employee.notification.update"
-        ));
+                "settings.manage", "settings.self.read", "settings.security.read", "settings.security.update",
+                "settings.privacy.read",
+                "settings.privacy.update", "settings.notifications.read", "settings.notifications.update",
+                "settings.appearance.read",
+                "settings.appearance.update", "settings.language.read", "settings.language.update",
+                "settings.devices.read",
+                "settings.devices.remove", "settings.data.export", "settings.support.create", "settings.support.read",
+                "announcement.manage", "employee.announcement.read", "employee.notification.read",
+                "employee.notification.update"));
         groupDefinitions.put("AUDIT", Arrays.asList(
-            "audit.read", "audit.export"
-        ));
+                "audit.read", "audit.export"));
         groupDefinitions.put("ORGANIZATION", Arrays.asList(
-            "organization.read", "organization.create", "organization.update", "organization.delete", "organization.subscription", "organization.audit.read", "organization.export"
-        ));
+                "organization.read", "organization.create", "organization.update", "organization.delete",
+                "organization.subscription", "organization.audit.read", "organization.export"));
         groupDefinitions.put("PLATFORM", Arrays.asList(
-            "platform.organization.view", "platform.organization.edit", "platform.role.view", "platform.role.override",
-            "platform.permission.override", "platform.dashboard.view", "platform.audit.view", "platform.reports.view",
-            "platform.dashboard.subscription.view", "platform.reports.subscription.view", "platform.reports.subscription.export",
-            "platform.revenue.dashboard.view", "platform.revenue.payments.view", "platform.revenue.invoices.view",
-            "platform.revenue.refunds.view", "platform.revenue.plans.view", "platform.revenue.forecast.view", "platform.revenue.export",
-            "system.manage", "role.manage", "permission.manage", "user.manage", "user.create", "user.read", "user.update", "user.delete", "user.role.assign"
-        ));
+                "platform.organization.view", "platform.organization.edit", "platform.role.view",
+                "platform.role.override",
+                "platform.permission.override", "platform.dashboard.view", "platform.audit.view",
+                "platform.reports.view",
+                "platform.dashboard.subscription.view", "platform.reports.subscription.view",
+                "platform.reports.subscription.export",
+                "platform.revenue.dashboard.view", "platform.revenue.payments.view", "platform.revenue.invoices.view",
+                "platform.revenue.refunds.view", "platform.revenue.plans.view", "platform.revenue.forecast.view",
+                "platform.revenue.export",
+                "system.manage", "role.manage", "permission.manage", "user.manage", "user.create", "user.read",
+                "user.update", "user.delete", "user.role.assign"));
 
         Map<String, PermissionGroup> groupMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : groupDefinitions.entrySet()) {
@@ -362,13 +367,25 @@ public class DatabaseSeeder implements ApplicationRunner {
 
         // 3. Seed Platform Template Roles and map Permission Groups
         Map<String, List<String>> roleGroupsMap = new HashMap<>();
-        roleGroupsMap.put("PLATFORM_ADMIN", Arrays.asList("PLATFORM", "ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS", "EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
-        roleGroupsMap.put("SUPER_ADMIN", Arrays.asList("ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS", "EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
-        roleGroupsMap.put("ADMIN", Arrays.asList("EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "REPORTS", "TEAM", "SETTINGS", "AUDIT"));
-        roleGroupsMap.put("HR", Arrays.asList("EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "RECRUITMENT", "PERFORMANCE", "GOALS", "DOCUMENTS", "ONBOARDING", "SUPPORT", "REPORTS", "TEAM"));
-        roleGroupsMap.put("MANAGER", Arrays.asList("ATTENDANCE", "LEAVE_MANAGEMENT", "PERFORMANCE", "GOALS", "SUPPORT", "REPORTS", "TEAM"));
+        roleGroupsMap.put("PLATFORM_ADMIN",
+                Arrays.asList("PLATFORM", "ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS", "EMPLOYEE_MANAGEMENT",
+                        "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS",
+                        "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
+        roleGroupsMap.put("SUPER_ADMIN",
+                Arrays.asList("ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS", "EMPLOYEE_MANAGEMENT", "ATTENDANCE",
+                        "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES",
+                        "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
+        roleGroupsMap.put("ADMIN",
+                Arrays.asList("EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT",
+                        "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "REPORTS",
+                        "TEAM", "SETTINGS", "AUDIT"));
+        roleGroupsMap.put("HR", Arrays.asList("EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "RECRUITMENT",
+                "PERFORMANCE", "GOALS", "DOCUMENTS", "ONBOARDING", "SUPPORT", "REPORTS", "TEAM"));
+        roleGroupsMap.put("MANAGER",
+                Arrays.asList("ATTENDANCE", "LEAVE_MANAGEMENT", "PERFORMANCE", "GOALS", "SUPPORT", "REPORTS", "TEAM"));
         roleGroupsMap.put("FINANCE", Arrays.asList("PAYROLL", "EXPENSES", "REPORTS", "AUDIT"));
-        roleGroupsMap.put("EMPLOYEE", Arrays.asList("ATTENDANCE", "LEAVE_MANAGEMENT", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
+        roleGroupsMap.put("EMPLOYEE",
+                Arrays.asList("ATTENDANCE", "LEAVE_MANAGEMENT", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
 
         Map<String, Role> roleMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : roleGroupsMap.entrySet()) {
@@ -396,7 +413,8 @@ public class DatabaseSeeder implements ApplicationRunner {
             role.setPermissionGroups(selGroups);
             role.setPermissions(effectivePerms);
             role.setPlatformTemplate(true);
-            role.setSystemRole("PLATFORM_ADMIN".equalsIgnoreCase(roleName) || "SUPER_ADMIN".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName) || "EMPLOYEE".equalsIgnoreCase(roleName));
+            role.setSystemRole("PLATFORM_ADMIN".equalsIgnoreCase(roleName) || "SUPER_ADMIN".equalsIgnoreCase(roleName)
+                    || "ADMIN".equalsIgnoreCase(roleName) || "EMPLOYEE".equalsIgnoreCase(roleName));
             role.setVersion(1);
             role.setOrganization(null);
             roleRepository.save(role);
@@ -406,13 +424,15 @@ public class DatabaseSeeder implements ApplicationRunner {
         // 3. Seed PLATFORM_ADMIN default user
         Role platformAdminRole = roleMap.get("PLATFORM_ADMIN");
         if (platformAdminRole != null) {
-            String email = "platform_admin@" + seedDomain;
+            String email = "platform_admin@gmail.com";
             String legacyEmail = "super_admin@" + seedDomain;
-            String password = "platform_admin@" + platformAdminRole.getId();
+            String password = "pladmin@123";
             String displayName = "Platform Admin";
 
             User platformAdminUser;
-            Optional<User> existingUserOpt = userRepository.findByWorkEmail(email).or(() -> userRepository.findByWorkEmail(legacyEmail));
+            Optional<User> existingUserOpt = userRepository.findByWorkEmail(email)
+                    .or(() -> userRepository.findByWorkEmail("platform_admin@" + seedDomain))
+                    .or(() -> userRepository.findByWorkEmail(legacyEmail));
             if (existingUserOpt.isEmpty()) {
                 platformAdminUser = new User();
                 platformAdminUser.setFullName(displayName);
@@ -444,7 +464,8 @@ public class DatabaseSeeder implements ApplicationRunner {
             emp.setEmail(platformAdminUser.getWorkEmail());
             emp.setEmployeeId(platformAdminUser.getUserId());
             if (emp.getPhone() == null)
-                emp.setPhone(platformAdminUser.getMobileNumber() != null ? platformAdminUser.getMobileNumber() : "1234567890");
+                emp.setPhone(platformAdminUser.getMobileNumber() != null ? platformAdminUser.getMobileNumber()
+                        : "1234567890");
             if (emp.getGender() == null)
                 emp.setGender("MALE");
             if (emp.getDob() == null)
@@ -462,7 +483,8 @@ public class DatabaseSeeder implements ApplicationRunner {
             if (emp.getJoiningDate() == null)
                 emp.setJoiningDate(LocalDate.of(2026, 6, 10));
             if (emp.getLocation() == null)
-                emp.setLocation(platformAdminUser.getLocation() != null ? platformAdminUser.getLocation() : "Headquarters");
+                emp.setLocation(
+                        platformAdminUser.getLocation() != null ? platformAdminUser.getLocation() : "Headquarters");
             if (emp.getEmploymentType() == null)
                 emp.setEmploymentType("FULL_TIME");
             if (emp.getStatus() == null || emp.getStatus().isBlank())
@@ -501,50 +523,85 @@ public class DatabaseSeeder implements ApplicationRunner {
         OnboardingTemplate savedTemplate = templateRepository.save(template);
 
         // Pre-Joining Phase Tasks (6 tasks)
-        seedOnboardingTemplateTask(savedTemplate, "Submit Personal Documents", "Please upload your Government ID and Bank Account details.", "PRE_JOINING", "EMPLOYEE", "1 hr", -3, "HIGH", 24);
-        seedOnboardingTemplateTask(savedTemplate, "Sign NDA and Offer Letter", "Review and sign employment agreement.", "PRE_JOINING", "EMPLOYEE", "30 mins", -5, "CRITICAL", 48);
-        seedOnboardingTemplateTask(savedTemplate, "Background Verification", "HR triggers background screening check.", "PRE_JOINING", "HR", "15 mins", -2, "MEDIUM", 120);
-        seedOnboardingTemplateTask(savedTemplate, "IT Asset Allocation Request", "Allocate laptop and standard work setup.", "PRE_JOINING", "IT", "20 mins", -4, "HIGH", 72);
-        seedOnboardingTemplateTask(savedTemplate, "Corporate Email Setup", "Provision company corporate email address.", "PRE_JOINING", "IT", "15 mins", -1, "CRITICAL", 24);
-        seedOnboardingTemplateTask(savedTemplate, "Bank Account Details Submission", "Submit details for salary credit.", "PRE_JOINING", "EMPLOYEE", "20 mins", -3, "MEDIUM", 72);
+        seedOnboardingTemplateTask(savedTemplate, "Submit Personal Documents",
+                "Please upload your Government ID and Bank Account details.", "PRE_JOINING", "EMPLOYEE", "1 hr", -3,
+                "HIGH", 24);
+        seedOnboardingTemplateTask(savedTemplate, "Sign NDA and Offer Letter", "Review and sign employment agreement.",
+                "PRE_JOINING", "EMPLOYEE", "30 mins", -5, "CRITICAL", 48);
+        seedOnboardingTemplateTask(savedTemplate, "Background Verification", "HR triggers background screening check.",
+                "PRE_JOINING", "HR", "15 mins", -2, "MEDIUM", 120);
+        seedOnboardingTemplateTask(savedTemplate, "IT Asset Allocation Request",
+                "Allocate laptop and standard work setup.", "PRE_JOINING", "IT", "20 mins", -4, "HIGH", 72);
+        seedOnboardingTemplateTask(savedTemplate, "Corporate Email Setup", "Provision company corporate email address.",
+                "PRE_JOINING", "IT", "15 mins", -1, "CRITICAL", 24);
+        seedOnboardingTemplateTask(savedTemplate, "Bank Account Details Submission",
+                "Submit details for salary credit.", "PRE_JOINING", "EMPLOYEE", "20 mins", -3, "MEDIUM", 72);
 
         // Day 1 Phase Tasks (7 tasks)
-        seedOnboardingTemplateTask(savedTemplate, "Welcome 1:1 Meeting", "Initial manager welcome check-in.", "DAY_1", "MANAGER", "30 mins", 0, "HIGH", 8);
-        seedOnboardingTemplateTask(savedTemplate, "Workspace Tour and Team Introduction", "Guided tour of the floor and team intro.", "DAY_1", "MANAGER", "45 mins", 0, "LOW", 8);
-        seedOnboardingTemplateTask(savedTemplate, "Collect Access Badge", "Collect physical office entry badge.", "DAY_1", "ADMIN", "15 mins", 0, "MEDIUM", 4);
-        seedOnboardingTemplateTask(savedTemplate, "Day 1 HR Briefing & Orientation", "HR orientation and portal registration.", "DAY_1", "HR", "2 hrs", 0, "HIGH", 8);
-        seedOnboardingTemplateTask(savedTemplate, "Login Credential Activation", "Activate Active Directory and VPN access.", "DAY_1", "IT", "30 mins", 0, "CRITICAL", 4);
-        seedOnboardingTemplateTask(savedTemplate, "Verify Personal Details in EMS Portal", "Confirm details in the system portal.", "DAY_1", "EMPLOYEE", "20 mins", 0, "MEDIUM", 12);
-        seedOnboardingTemplateTask(savedTemplate, "Setup Developer Environment", "Clone repo, build code, install SDKs.", "DAY_1", "EMPLOYEE", "3 hrs", 0, "HIGH", 16);
+        seedOnboardingTemplateTask(savedTemplate, "Welcome 1:1 Meeting", "Initial manager welcome check-in.", "DAY_1",
+                "MANAGER", "30 mins", 0, "HIGH", 8);
+        seedOnboardingTemplateTask(savedTemplate, "Workspace Tour and Team Introduction",
+                "Guided tour of the floor and team intro.", "DAY_1", "MANAGER", "45 mins", 0, "LOW", 8);
+        seedOnboardingTemplateTask(savedTemplate, "Collect Access Badge", "Collect physical office entry badge.",
+                "DAY_1", "ADMIN", "15 mins", 0, "MEDIUM", 4);
+        seedOnboardingTemplateTask(savedTemplate, "Day 1 HR Briefing & Orientation",
+                "HR orientation and portal registration.", "DAY_1", "HR", "2 hrs", 0, "HIGH", 8);
+        seedOnboardingTemplateTask(savedTemplate, "Login Credential Activation",
+                "Activate Active Directory and VPN access.", "DAY_1", "IT", "30 mins", 0, "CRITICAL", 4);
+        seedOnboardingTemplateTask(savedTemplate, "Verify Personal Details in EMS Portal",
+                "Confirm details in the system portal.", "DAY_1", "EMPLOYEE", "20 mins", 0, "MEDIUM", 12);
+        seedOnboardingTemplateTask(savedTemplate, "Setup Developer Environment",
+                "Clone repo, build code, install SDKs.", "DAY_1", "EMPLOYEE", "3 hrs", 0, "HIGH", 16);
 
         // Week 1 Phase Tasks (8 tasks)
-        seedOnboardingTemplateTask(savedTemplate, "Complete Security Compliance Training", "Mandatory security awareness training.", "WEEK_1", "EMPLOYEE", "2 hrs", 7, "HIGH", 168);
-        seedOnboardingTemplateTask(savedTemplate, "Review Team Goals & OKRs", "Align on performance deliverables.", "WEEK_1", "EMPLOYEE", "1 hr", 5, "MEDIUM", 120);
-        seedOnboardingTemplateTask(savedTemplate, "Install Required Development Tools", "Get compiler licenses and tools.", "WEEK_1", "EMPLOYEE", "1 hr", 3, "LOW", 72);
-        seedOnboardingTemplateTask(savedTemplate, "1:1 Sync with Onboarding Buddy", "Casual coffee chat and buddy check-in.", "WEEK_1", "EMPLOYEE", "30 mins", 4, "LOW", 96);
-        seedOnboardingTemplateTask(savedTemplate, "EMS Time Logging Training", "Learn how to record weekly timecards.", "WEEK_1", "EMPLOYEE", "30 mins", 6, "MEDIUM", 144);
-        seedOnboardingTemplateTask(savedTemplate, "Week 1 Manager Retrospective", "Feedback session on first week experience.", "WEEK_1", "MANAGER", "30 mins", 7, "HIGH", 48);
-        seedOnboardingTemplateTask(savedTemplate, "Review Project Documentation", "Read documentation on architecture.", "WEEK_1", "EMPLOYEE", "4 hrs", 4, "LOW", 96);
-        seedOnboardingTemplateTask(savedTemplate, "Understand Code Review Process", "Learn about code styling rules.", "WEEK_1", "EMPLOYEE", "1 hr", 5, "MEDIUM", 120);
+        seedOnboardingTemplateTask(savedTemplate, "Complete Security Compliance Training",
+                "Mandatory security awareness training.", "WEEK_1", "EMPLOYEE", "2 hrs", 7, "HIGH", 168);
+        seedOnboardingTemplateTask(savedTemplate, "Review Team Goals & OKRs", "Align on performance deliverables.",
+                "WEEK_1", "EMPLOYEE", "1 hr", 5, "MEDIUM", 120);
+        seedOnboardingTemplateTask(savedTemplate, "Install Required Development Tools",
+                "Get compiler licenses and tools.", "WEEK_1", "EMPLOYEE", "1 hr", 3, "LOW", 72);
+        seedOnboardingTemplateTask(savedTemplate, "1:1 Sync with Onboarding Buddy",
+                "Casual coffee chat and buddy check-in.", "WEEK_1", "EMPLOYEE", "30 mins", 4, "LOW", 96);
+        seedOnboardingTemplateTask(savedTemplate, "EMS Time Logging Training", "Learn how to record weekly timecards.",
+                "WEEK_1", "EMPLOYEE", "30 mins", 6, "MEDIUM", 144);
+        seedOnboardingTemplateTask(savedTemplate, "Week 1 Manager Retrospective",
+                "Feedback session on first week experience.", "WEEK_1", "MANAGER", "30 mins", 7, "HIGH", 48);
+        seedOnboardingTemplateTask(savedTemplate, "Review Project Documentation", "Read documentation on architecture.",
+                "WEEK_1", "EMPLOYEE", "4 hrs", 4, "LOW", 96);
+        seedOnboardingTemplateTask(savedTemplate, "Understand Code Review Process", "Learn about code styling rules.",
+                "WEEK_1", "EMPLOYEE", "1 hr", 5, "MEDIUM", 120);
 
         // Month 1 Phase Tasks (12 tasks)
-        seedOnboardingTemplateTask(savedTemplate, "Complete Employee Code of Conduct", "Ethics and compliance verification.", "MONTH_1", "EMPLOYEE", "1 hr", 14, "HIGH", 336);
-        seedOnboardingTemplateTask(savedTemplate, "First Project Contribution", "Submit first pull request in repository.", "MONTH_1", "EMPLOYEE", "8 hrs", 21, "HIGH", 504);
-        seedOnboardingTemplateTask(savedTemplate, "Day 30 HR Check-in", "HR survey on onboarding feedback.", "MONTH_1", "HR", "30 mins", 30, "MEDIUM", 48);
-        seedOnboardingTemplateTask(savedTemplate, "Day 30 Manager Performance Review", "Review progress against goals.", "MONTH_1", "MANAGER", "1 hr", 30, "HIGH", 48);
-        seedOnboardingTemplateTask(savedTemplate, "Share Onboarding Process Feedback", "Complete checklist survey form.", "MONTH_1", "EMPLOYEE", "15 mins", 28, "LOW", 72);
-        seedOnboardingTemplateTask(savedTemplate, "Attend Department Welcome Lunch", "Informal department team lunch.", "MONTH_1", "MANAGER", "1 hr", 15, "LOW", 168);
-        seedOnboardingTemplateTask(savedTemplate, "Read Architecture Guidelines", "In-depth codebase guide.", "MONTH_1", "EMPLOYEE", "2 hrs", 12, "LOW", 288);
-        seedOnboardingTemplateTask(savedTemplate, "Request Database Production Read Access", "Obtain read permissions for databases.", "MONTH_1", "IT", "15 mins", 10, "MEDIUM", 120);
-        seedOnboardingTemplateTask(savedTemplate, "Setup 1:1s with Cross-functional Leads", "Meet with product and design leads.", "MONTH_1", "EMPLOYEE", "2 hrs", 20, "LOW", 480);
-        seedOnboardingTemplateTask(savedTemplate, "Shadow Senior Engineer on Code Review", "Learn style guidelines in practice.", "MONTH_1", "EMPLOYEE", "2 hrs", 15, "MEDIUM", 360);
-        seedOnboardingTemplateTask(savedTemplate, "Understand Security & PII Policies", "Training on handling personal data.", "MONTH_1", "EMPLOYEE", "1 hr", 18, "HIGH", 432);
-        seedOnboardingTemplateTask(savedTemplate, "First Bug Fix Deployment to Sandbox", "Build and deploy patch fix.", "MONTH_1", "EMPLOYEE", "4 hrs", 25, "MEDIUM", 600);
+        seedOnboardingTemplateTask(savedTemplate, "Complete Employee Code of Conduct",
+                "Ethics and compliance verification.", "MONTH_1", "EMPLOYEE", "1 hr", 14, "HIGH", 336);
+        seedOnboardingTemplateTask(savedTemplate, "First Project Contribution",
+                "Submit first pull request in repository.", "MONTH_1", "EMPLOYEE", "8 hrs", 21, "HIGH", 504);
+        seedOnboardingTemplateTask(savedTemplate, "Day 30 HR Check-in", "HR survey on onboarding feedback.", "MONTH_1",
+                "HR", "30 mins", 30, "MEDIUM", 48);
+        seedOnboardingTemplateTask(savedTemplate, "Day 30 Manager Performance Review", "Review progress against goals.",
+                "MONTH_1", "MANAGER", "1 hr", 30, "HIGH", 48);
+        seedOnboardingTemplateTask(savedTemplate, "Share Onboarding Process Feedback",
+                "Complete checklist survey form.", "MONTH_1", "EMPLOYEE", "15 mins", 28, "LOW", 72);
+        seedOnboardingTemplateTask(savedTemplate, "Attend Department Welcome Lunch", "Informal department team lunch.",
+                "MONTH_1", "MANAGER", "1 hr", 15, "LOW", 168);
+        seedOnboardingTemplateTask(savedTemplate, "Read Architecture Guidelines", "In-depth codebase guide.", "MONTH_1",
+                "EMPLOYEE", "2 hrs", 12, "LOW", 288);
+        seedOnboardingTemplateTask(savedTemplate, "Request Database Production Read Access",
+                "Obtain read permissions for databases.", "MONTH_1", "IT", "15 mins", 10, "MEDIUM", 120);
+        seedOnboardingTemplateTask(savedTemplate, "Setup 1:1s with Cross-functional Leads",
+                "Meet with product and design leads.", "MONTH_1", "EMPLOYEE", "2 hrs", 20, "LOW", 480);
+        seedOnboardingTemplateTask(savedTemplate, "Shadow Senior Engineer on Code Review",
+                "Learn style guidelines in practice.", "MONTH_1", "EMPLOYEE", "2 hrs", 15, "MEDIUM", 360);
+        seedOnboardingTemplateTask(savedTemplate, "Understand Security & PII Policies",
+                "Training on handling personal data.", "MONTH_1", "EMPLOYEE", "1 hr", 18, "HIGH", 432);
+        seedOnboardingTemplateTask(savedTemplate, "First Bug Fix Deployment to Sandbox", "Build and deploy patch fix.",
+                "MONTH_1", "EMPLOYEE", "4 hrs", 25, "MEDIUM", 600);
 
         System.out.println("DatabaseSeeder: Default onboarding template tasks successfully seeded.");
     }
 
-    private void seedOnboardingTemplateTask(OnboardingTemplate template, String title, String description, String phase, String owner, String estTime, int dueDays, String priority, int slaHours) {
+    private void seedOnboardingTemplateTask(OnboardingTemplate template, String title, String description, String phase,
+            String owner, String estTime, int dueDays, String priority, int slaHours) {
         OnboardingTemplateTask task = new OnboardingTemplateTask();
         task.setTemplate(template);
         task.setTitle(title);
