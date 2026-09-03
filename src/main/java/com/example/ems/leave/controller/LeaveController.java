@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/leaves")
+@RequestMapping({"/api/v1/leaves", "/api/v1/leave"})
 @CrossOrigin("*")
 @Tag(name = "Leave Management", description = "Canonical Leave Management APIs")
 public class LeaveController {
@@ -78,8 +78,9 @@ public class LeaveController {
         if (user != null && user.getOrganizationId() != null) return user.getOrganizationId();
         Employee emp = resolveEmployee(user);
         if (emp != null && emp.getOrganization() != null) return emp.getOrganization().getId();
-        return com.example.ems.security.context.TenantContext.requireOrganizationId();
+        return null;
     }
+
 
     // == 1. LEAVE TYPES (/types) ===============================================
 

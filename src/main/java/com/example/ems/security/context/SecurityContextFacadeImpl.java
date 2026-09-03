@@ -1,6 +1,5 @@
 package com.example.ems.security.context;
 
-import com.example.ems.security.dto.AuthAuthenticationToken;
 import com.example.ems.security.dto.AuthPrincipal;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -12,7 +11,7 @@ public class SecurityContextFacadeImpl implements SecurityContextFacade {
     @Override
     public AuthPrincipal getPrincipal() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth instanceof AuthAuthenticationToken && auth.isAuthenticated()) {
+        if (auth != null && auth.isAuthenticated()) {
             Object principal = auth.getPrincipal();
             if (principal instanceof AuthPrincipal) {
                 return (AuthPrincipal) principal;
@@ -30,13 +29,31 @@ public class SecurityContextFacadeImpl implements SecurityContextFacade {
     @Override
     public String getUserId() {
         AuthPrincipal principal = getPrincipal();
-        return principal != null ? principal.getUserId() : null;
+        if (principal != null) {
+            return principal.getUserId();
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            if (auth.getName() != null && !auth.getName().equals("anonymousUser")) {
+                return auth.getName();
+            }
+        }
+        return null;
     }
 
     @Override
     public String getEmail() {
         AuthPrincipal principal = getPrincipal();
-        return principal != null ? principal.getEmail() : null;
+        if (principal != null) {
+            return principal.getEmail();
+        }
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            if (auth.getName() != null && !auth.getName().equals("anonymousUser")) {
+                return auth.getName();
+            }
+        }
+        return null;
     }
 
     @Override
@@ -44,4 +61,5 @@ public class SecurityContextFacadeImpl implements SecurityContextFacade {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         return auth != null && auth.isAuthenticated();
     }
+
 }

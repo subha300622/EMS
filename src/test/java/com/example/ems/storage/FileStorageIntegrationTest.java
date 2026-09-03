@@ -1,6 +1,5 @@
 package com.example.ems.storage;
 
-import com.example.ems.auth.controller.AuthController;
 import com.example.ems.auth.dto.LoginRequest;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
@@ -11,8 +10,6 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.JwtAuthenticationFilter;
 import com.example.ems.security.RateLimitingFilter;
-import com.example.ems.config.GlobalExceptionHandler;
-import com.example.ems.storage.controller.FileController;
 import com.example.ems.storage.entity.FileMetadata;
 import com.example.ems.storage.repository.FileMetadataRepository;
 import com.example.ems.storage.service.MockStorageServiceImpl;
@@ -46,12 +43,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class FileStorageIntegrationTest {
 
     private MockMvc mockMvc;
-
-    @Autowired
-    private FileController fileController;
-
-    @Autowired
-    private AuthController authController;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -99,6 +90,10 @@ public class FileStorageIntegrationTest {
     private String mgrOtherToken;
     private String adminToken;
 
+    @Autowired
+    private org.springframework.web.context.WebApplicationContext webApplicationContext;
+
+
     @BeforeEach
     public void setUp() throws Exception {
         SecurityContextHolder.clearContext();
@@ -106,10 +101,11 @@ public class FileStorageIntegrationTest {
                 authenticationManager, authenticationEntryPoint, environment
         );
 
-        mockMvc = MockMvcBuilders.standaloneSetup(fileController, authController)
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
                 .addFilters(jwtAuthenticationFilter, rateLimitingFilter)
-                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
+
+
 
         cleanup();
         mockStorageService.clear();
