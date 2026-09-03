@@ -91,24 +91,40 @@ public class FileStorageIntegrationTest {
     private String adminToken;
 
     @Autowired
+    private com.example.ems.organization.repository.OrganizationRepository organizationRepository;
+
+    @Autowired
     private org.springframework.web.context.WebApplicationContext webApplicationContext;
 
+    @Autowired
+    private com.example.ems.security.service.JwtService jwtService;
+
+    private Long testOrgId;
 
     @BeforeEach
     public void setUp() throws Exception {
         SecurityContextHolder.clearContext();
+
         JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(
-                authenticationManager, authenticationEntryPoint, environment
+                authenticationManager, authenticationEntryPoint, environment, jwtService, userRepository
         );
 
         mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext)
                 .addFilters(jwtAuthenticationFilter, rateLimitingFilter)
                 .build();
 
-
-
         cleanup();
         mockStorageService.clear();
+
+        // Organization
+        com.example.ems.organization.entity.Organization org = organizationRepository.findAll().stream().findFirst().orElseGet(() -> {
+            com.example.ems.organization.entity.Organization o = new com.example.ems.organization.entity.Organization();
+            o.setName("Storage Test Org");
+            o.setNormalizedName("storage test org");
+            o.setOrganizationCode("STORG01");
+            return organizationRepository.save(o);
+        });
+        testOrgId = org.getId();
 
         // 1. Roles Setup
         Role employeeRole = getOrCreateRole("EMPLOYEE");
@@ -138,6 +154,7 @@ public class FileStorageIntegrationTest {
 
         // 4. Log in and get Access Tokens
         empOwnerToken = loginUser("test.owner@company.com");
+
         empOtherToken = loginUser("test.other@company.com");
         hrSameToken = loginUser("test.hr_same@company.com");
         hrOtherToken = loginUser("test.hr_other@company.com");
@@ -225,6 +242,9 @@ public class FileStorageIntegrationTest {
         emp.setDepartment(department);
         emp.setManager(manager);
         emp.setPhone("1234567890");
+        if (testOrgId != null) {
+            organizationRepository.findById(testOrgId).ifPresent(emp::setOrganization);
+        }
         return employeeRepository.save(emp);
     }
 
@@ -237,6 +257,9 @@ public class FileStorageIntegrationTest {
         user.setRole(role);
         user.setPassword(passwordEncoder.encode(PASSWORD));
         user.setStatus("ACTIVE");
+        if (testOrgId != null) {
+            organizationRepository.findById(testOrgId).ifPresent(user::setOrganization);
+        }
         return userRepository.save(user);
     }
 
@@ -264,6 +287,7 @@ public class FileStorageIntegrationTest {
 
         MvcResult uploadResult = mockMvc.perform(multipart("/api/files/profile-image")
                 .file(file)
+                .header("X-Organization-Id", testOrgId)
                 .header("Authorization", "Bearer " + empOwnerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
@@ -306,12 +330,14 @@ public class FileStorageIntegrationTest {
         MvcResult uploadResult = mockMvc.perform(multipart("/api/files/upload-document")
                 .file(file)
                 .param("fileType", "DOCUMENT")
+                .header("X-Organization-Id", testOrgId)
                 .header("Authorization", "Bearer " + empOwnerToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.fileName").value("contract.pdf"))
                 .andExpect(jsonPath("$.data.fileType").value("DOCUMENT"))
                 .andReturn();
+
 
         String uploadBody = uploadResult.getResponse().getContentAsString();
         Long fileId = objectMapper.readTree(uploadBody).path("data").path("id").asLong();

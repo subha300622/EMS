@@ -51,21 +51,39 @@ public class FileController {
     @Autowired
     private FileMetadataRepository fileMetadataRepository;
 
+    @Autowired
+    private com.example.ems.security.service.JwtService jwtService;
+
     private ResponseEntity<Object> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private User getAuthenticatedUser() {
+    private User getAuthenticatedUser(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            if (jwtService != null && jwtService.validateAccessToken(token)) {
+                String email = jwtService.getEmailFromToken(token);
+                if (email != null) {
+                    Optional<User> u = userRepository.findByWorkEmail(email);
+                    if (u.isPresent()) return u.get();
+                }
+            }
+        }
         String email = securityContextFacade.getEmail();
-        if (email == null) return null;
-        return userRepository.findByWorkEmail(email).orElse(null);
+        if (email != null) {
+            Optional<User> u = userRepository.findByWorkEmail(email);
+            if (u.isPresent()) return u.get();
+        }
+        return null;
     }
 
     @Operation(summary = "Upload Profile Image", description = "Uploads a profile image for the authenticated user and replaces any previous profile picture.")
     @PostMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Object> uploadProfileImage(@RequestParam("file") MultipartFile file) {
-        User user = getAuthenticatedUser();
+    public ResponseEntity<Object> uploadProfileImage(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam("file") MultipartFile file) {
+        User user = getAuthenticatedUser(authHeader);
         if (user == null) {
             return unauthorizedResponse();
         }
@@ -84,9 +102,10 @@ public class FileController {
     @Operation(summary = "Upload Document", description = "Uploads an HR document or attendance proof for the authenticated user.")
     @PostMapping(value = "/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Object> uploadDocument(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "fileType", defaultValue = "DOCUMENT") String fileType) {
-        User user = getAuthenticatedUser();
+        User user = getAuthenticatedUser(authHeader);
         if (user == null) {
             return unauthorizedResponse();
         }
@@ -104,8 +123,11 @@ public class FileController {
 
     @Operation(summary = "Download File (Private Streaming)", description = "Performs RBAC access check on the requested file and streams the private byte content directly to the requester.")
     @GetMapping("/{fileId}/download")
-    public ResponseEntity<Object> downloadFile(@PathVariable("fileId") Long fileId) {
-        User user = getAuthenticatedUser();
+    public ResponseEntity<Object> downloadFile(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable("fileId") Long fileId) {
+        User user = getAuthenticatedUser(authHeader);
+
 
         Optional<FileMetadata> fileOpt = fileMetadataRepository.findById(fileId);
         if (fileOpt.isEmpty()) {
