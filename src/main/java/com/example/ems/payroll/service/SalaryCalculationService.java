@@ -54,6 +54,11 @@ public class SalaryCalculationService {
     }
 
     @Transactional(readOnly = true)
+    public SalaryCalculationResponse calculateSalaryForDate(Long employeeId, LocalDate effectiveDate) {
+        return calculateSalaryForDate(employeeId, effectiveDate, null);
+    }
+
+    @Transactional(readOnly = true)
     public SalaryCalculationResponse calculateSalaryForDate(
             Long employeeId, LocalDate effectiveDate, List<EmployeeSalaryComponentValueRequest> adHocOverrides) {
 

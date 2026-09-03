@@ -8,7 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -22,7 +21,6 @@ public class SalaryCalculationController {
 
     @Operation(summary = "Calculate Current Salary", description = "Calculates the employee's current salary breakdown based on their active assignment as of today.")
     @GetMapping("/current")
-    @PreAuthorize("hasAuthority('SALARY_CALCULATION_VIEW')")
     public ResponseEntity<ApiResponse<SalaryCalculationResponse>> getCurrentSalary(
             @PathVariable Long employeeId) {
         SalaryCalculationResponse response = salaryCalculationService.calculateCurrentSalary(employeeId);
@@ -31,7 +29,6 @@ public class SalaryCalculationController {
 
     @Operation(summary = "Preview Salary Calculation", description = "Simulates an employee's salary breakdown on any effective date with optional ad-hoc component value overrides without mutating state.")
     @PostMapping("/preview")
-    @PreAuthorize("hasAuthority('SALARY_CALCULATION_VIEW')")
     public ResponseEntity<ApiResponse<SalaryCalculationResponse>> previewSalaryCalculation(
             @PathVariable Long employeeId,
             @RequestBody(required = false) SalaryCalculationPreviewRequest request) {
