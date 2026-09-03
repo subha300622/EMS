@@ -242,4 +242,20 @@ public class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errorCode").value("AUTH_014"));
     }
+
+    @Test
+    public void testPlatformAdminLoginWithDefaultCredentials() throws Exception {
+        LoginRequest loginRequest = new LoginRequest();
+        loginRequest.setEmail("platform_admin@gmail.com");
+        loginRequest.setPassword("pladmin@123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.tokens.accessToken").exists())
+                .andExpect(jsonPath("$.data.user.email").value("platform_admin@gmail.com"))
+                .andExpect(jsonPath("$.data.user.role").value("PLATFORM_ADMIN"));
+    }
 }

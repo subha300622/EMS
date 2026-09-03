@@ -180,9 +180,12 @@ public class DatabaseSeeder implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) throws Exception {
-        // 1. Lock Check: Check if seeding is already complete using SystemSetting
+        // Always ensure core permissions, roles, and platform admin user are updated
+        seedCoreAuthData();
+
+        // 1. Lock Check: Check if full seeding is already complete using SystemSetting
         if (systemSettingRepository.findBySettingKey("seeder.completed").isPresent()) {
-            System.out.println("DatabaseSeeder: Seeding has already been completed in a previous startup. Skipping.");
+            System.out.println("DatabaseSeeder: Full seeding has already been completed in a previous startup. Skipping mock data.");
             return;
         }
 
@@ -451,13 +454,16 @@ public class DatabaseSeeder implements ApplicationRunner {
                 System.out.println("DatabaseSeeder: " + displayName + " User seeded: " + email + " with ID: " + userId);
             } else {
                 platformAdminUser = existingUserOpt.get();
+                platformAdminUser.setWorkEmail(email);
                 platformAdminUser.setRole(platformAdminRole);
                 platformAdminUser.setPassword(passwordEncoder.encode(password));
                 userRepository.save(platformAdminUser);
             }
 
             // Ensure Super Admin has fully-populated Employee record
-            Employee emp = employeeRepository.findByEmail(platformAdminUser.getWorkEmail())
+            Employee emp = employeeRepository.findByEmail(email)
+                    .or(() -> employeeRepository.findByEmail("platform_admin@" + seedDomain))
+                    .or(() -> employeeRepository.findByEmail(legacyEmail))
                     .orElseGet(Employee::new);
 
             emp.setFullName(platformAdminUser.getFullName());
