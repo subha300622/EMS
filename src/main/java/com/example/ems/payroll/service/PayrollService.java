@@ -27,6 +27,8 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.ems.payroll.entity.SalaryComponentType;
+
 @Service
 public class PayrollService {
 
@@ -61,9 +63,9 @@ public class PayrollService {
             payrollSettingRepository.save(new PayrollSetting("tax_enabled", "true", "Whether income tax calculation is enabled"));
         }
         if (salaryComponentRepository.count() == 0) {
-            salaryComponentRepository.save(new SalaryComponent("Basic Salary", "EARNING", BigDecimal.valueOf(50.0), null, true));
-            salaryComponentRepository.save(new SalaryComponent("HRA", "EARNING", BigDecimal.valueOf(20.0), null, true));
-            salaryComponentRepository.save(new SalaryComponent("Provident Fund", "DEDUCTION", BigDecimal.valueOf(12.0), null, false));
+            salaryComponentRepository.save(new SalaryComponent(1L, "Basic Salary", "BASIC_SALARY", "Standard basic salary", SalaryComponentType.EARNING, true, true));
+            salaryComponentRepository.save(new SalaryComponent(1L, "HRA", "HRA", "House Rent Allowance", SalaryComponentType.EARNING, true, true));
+            salaryComponentRepository.save(new SalaryComponent(1L, "Provident Fund", "PROVIDENT_FUND", "Employee Provident Fund contribution", SalaryComponentType.DEDUCTION, false, true));
         }
         if (taxSlabRepository.count() == 0) {
             taxSlabRepository.save(new TaxSlab("NEW", BigDecimal.valueOf(0.0), BigDecimal.valueOf(300000.0), BigDecimal.ZERO));
