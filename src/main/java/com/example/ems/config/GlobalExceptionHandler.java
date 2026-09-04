@@ -22,8 +22,12 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
+        java.util.List<ErrorResponse.ErrorDetails.Detail> details = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> new ErrorResponse.ErrorDetails.Detail(error.getField(), error.getRejectedValue()))
+                .collect(Collectors.toList());
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ErrorResponse.error("Validation failed: " + errors, "VAL_001"));
+                .body(ErrorResponse.error("Validation failed: " + errors, "VAL_001", details));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -42,11 +46,52 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error("Malformed JSON request body: " + ex.getMessage(), "VAL_003"));
     }
 
+    @ExceptionHandler(com.example.ems.attendance.exception.DuplicateCheckInException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateCheckIn(
+            com.example.ems.attendance.exception.DuplicateCheckInException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error(ex.getMessage(), "ATT_002"));
+    }
+
+    @ExceptionHandler(com.example.ems.common.exception.ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFound(
+            com.example.ems.common.exception.ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.error(ex.getMessage(), "RES_404"));
+    }
+
+    @ExceptionHandler(com.example.ems.onboarding.exception.InvalidOnboardingTransitionException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidOnboardingTransition(
+            com.example.ems.onboarding.exception.InvalidOnboardingTransitionException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), "ONB_400"));
+    }
+
+    @ExceptionHandler(com.example.ems.common.exception.ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflictException(
+            com.example.ems.common.exception.ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error(ex.getMessage(), "CON_409"));
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), "BAD_REQUEST"));
+    }
+
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error(ex.getMessage(), "CONFLICT"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) throws Exception {
         if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
             throw ex;
         }
+        ex.printStackTrace();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ErrorResponse.error("An unexpected error occurred: " + ex.getMessage(), "SYS_500"));
     }

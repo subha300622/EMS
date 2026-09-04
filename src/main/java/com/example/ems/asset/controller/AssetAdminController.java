@@ -52,9 +52,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/assets")
+@RequestMapping({"/api/v1/assets/admin", "/api/v1/admin/assets"})
 @CrossOrigin("*")
-@Tag(name = "Asset Management")
+@Tag(name = "Asset Management (Admin)")
+@Deprecated
+@io.swagger.v3.oas.annotations.Hidden
 public class AssetAdminController {
 
     @Autowired
@@ -93,6 +95,7 @@ public class AssetAdminController {
     @Autowired
     private MyAssetService assetService;
 
+    @Deprecated
     @GetMapping("/dashboard")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetDashboard(
@@ -152,6 +155,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Dashboard metrics retrieved successfully", dashboard));
     }
 
+    @Deprecated
     @GetMapping
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAllAssets(
@@ -192,6 +196,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Assets list retrieved successfully", dtoPage));
     }
 
+    @Deprecated
     @GetMapping("/{id}")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetById(
@@ -217,6 +222,7 @@ public class AssetAdminController {
                 .ok(ApiResponse.success("Asset details retrieved successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @PostMapping
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -277,6 +283,7 @@ public class AssetAdminController {
                 .body(ApiResponse.success("Asset created successfully", new AssetDetailResponse(saved)));
     }
 
+    @Deprecated
     @PutMapping("/{id}")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -367,6 +374,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset updated successfully", new AssetDetailResponse(updated)));
     }
 
+    @Deprecated
     @DeleteMapping("/{id}")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -407,6 +415,7 @@ public class AssetAdminController {
         }
     }
 
+    @Deprecated
     @GetMapping("/{id}/timeline")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssetTimeline(
@@ -431,6 +440,7 @@ public class AssetAdminController {
         }
     }
 
+    @Deprecated
     @GetMapping("/{assetId}/assignments")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getAssignmentHistory(
@@ -460,13 +470,14 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset assignment history retrieved successfully", response));
     }
 
+    @Deprecated
     @PostMapping("/{id}/assign")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> assignAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, Object> payload) {
+            @RequestBody @Valid com.example.ems.asset.dto.AssignAssetRequest payload) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -484,12 +495,11 @@ public class AssetAdminController {
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 
-        Object employeeIdObj = payload.get("employeeId");
-        if (employeeIdObj == null) {
+        Long employeeId = payload != null ? payload.employeeId() : null;
+        if (employeeId == null) {
             return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Employee ID is required", "ASS_002"));
         }
-        Long employeeId = Long.valueOf(employeeIdObj.toString());
 
         Employee employee = employeeRepository.findById(employeeId).orElse(null);
         if (employee == null) {
@@ -497,10 +507,7 @@ public class AssetAdminController {
                     .body(ErrorResponse.error("Employee not found with ID: " + employeeId, "EMP_002"));
         }
 
-        LocalDate expectedReturnDate = null;
-        if (payload.containsKey("expectedReturnDate") && payload.get("expectedReturnDate") != null) {
-            expectedReturnDate = LocalDate.parse(payload.get("expectedReturnDate").toString());
-        }
+        LocalDate expectedReturnDate = payload.expectedReturnDate();
 
         List<MyAssetAssignment> activeAssignments = myAssetAssignmentRepository.findByAssetIdOrderByAssignedDateDesc(id)
                 .stream().filter(a -> "ACTIVE".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
@@ -517,19 +524,20 @@ public class AssetAdminController {
         myAssetRepository.save(asset);
 
         MyAssetAssignment assignment = new MyAssetAssignment(asset, employee, LocalDate.now(), expectedReturnDate,
-                "ACTIVE", "Assigned via Admin API");
+                "ACTIVE", payload.notes() != null ? payload.notes() : "Assigned via Admin API");
         myAssetAssignmentRepository.save(assignment);
 
         return ResponseEntity.ok(ApiResponse.success("Asset assigned successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @PostMapping("/{id}/transfer")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> transferAsset(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, Object> payload) {
+            @RequestBody @Valid com.example.ems.asset.dto.TransferAssetRequest payload) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -546,12 +554,11 @@ public class AssetAdminController {
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 
-        Object toEmpIdObj = payload.get("toEmployeeId");
-        if (toEmpIdObj == null) {
+        Long toEmployeeId = payload != null ? payload.toEmployeeId() : null;
+        if (toEmployeeId == null) {
             return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Target employee ID is required", "ASS_002"));
         }
-        Long toEmployeeId = Long.valueOf(toEmpIdObj.toString());
 
         Employee toEmployee = employeeRepository.findById(toEmployeeId).orElse(null);
         if (toEmployee == null) {
@@ -559,7 +566,7 @@ public class AssetAdminController {
                     .body(ErrorResponse.error("Target employee not found with ID: " + toEmployeeId, "EMP_002"));
         }
 
-        String remarks = (String) payload.getOrDefault("remarks", "Transferred via Admin API");
+        String remarks = payload != null ? payload.getEffectiveRemarks() : "Transferred via Admin API";
 
         List<MyAssetAssignment> activeAssignments = myAssetAssignmentRepository.findByAssetIdOrderByAssignedDateDesc(id)
                 .stream().filter(a -> "ACTIVE".equalsIgnoreCase(a.getStatus())).collect(Collectors.toList());
@@ -583,6 +590,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset transferred successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @PostMapping("/{id}/return")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -628,6 +636,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset returned successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @PatchMapping("/{id}/status")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -692,6 +701,7 @@ public class AssetAdminController {
                 .ok(ApiResponse.success("Asset status updated successfully", new AssetDetailResponse(asset)));
     }
 
+    @Deprecated
     @GetMapping("/{assetId}/maintenance")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getMaintenanceRecords(
@@ -711,13 +721,14 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Maintenance records retrieved successfully", records));
     }
 
+    @Deprecated
     @PostMapping("/{assetId}/maintenance")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> createMaintenanceRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assetId,
-            @RequestBody Map<String, Object> payload) {
+            @RequestBody @Valid com.example.ems.asset.dto.CreateMaintenanceRequest payload) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -734,14 +745,13 @@ public class AssetAdminController {
                     .body(ErrorResponse.error("Asset not found with ID: " + assetId, "ASS_001"));
         }
 
-        String issue = (String) payload.get("issue");
-        String vendor = (String) payload.get("vendor");
-        Object costObj = payload.get("estimatedCost");
-        if (issue == null || vendor == null || costObj == null) {
+        String issue = payload != null ? payload.issue() : null;
+        String vendor = payload != null ? payload.vendor() : null;
+        BigDecimal estimatedCost = payload != null ? payload.estimatedCost() : null;
+        if (issue == null || vendor == null || estimatedCost == null) {
             return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("issue, vendor, and estimatedCost are required", "ASS_002"));
         }
-        BigDecimal estimatedCost = new BigDecimal(costObj.toString());
 
         MyAssetMaintenance maintenance = new MyAssetMaintenance(asset, issue, vendor, estimatedCost);
         myAssetMaintenanceRepository.save(maintenance);
@@ -753,13 +763,14 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Maintenance request created successfully", maintenance));
     }
 
+    @Deprecated
     @PatchMapping("/maintenance/{maintenanceId}/complete")
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> completeMaintenance(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long maintenanceId,
-            @RequestBody(required = false) Map<String, Object> payload) {
+            @RequestBody(required = false) @Valid com.example.ems.asset.dto.CompleteMaintenanceRequest payload) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -777,8 +788,8 @@ public class AssetAdminController {
         }
 
         BigDecimal actualCost = maintenance.getEstimatedCost();
-        if (payload != null && payload.containsKey("actualCost") && payload.get("actualCost") != null) {
-            actualCost = new BigDecimal(payload.get("actualCost").toString());
+        if (payload != null && payload.actualCost() != null) {
+            actualCost = payload.actualCost();
         }
 
         maintenance.setStatus("COMPLETED");
@@ -795,6 +806,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Maintenance completed successfully", maintenance));
     }
 
+    @Deprecated
     @PostMapping(value = "/{assetId}/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Transactional
     @SuppressWarnings({ "unchecked", "rawtypes" })
@@ -842,6 +854,7 @@ public class AssetAdminController {
         }
     }
 
+    @Deprecated
     @GetMapping("/{assetId}/documents")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getDocuments(
@@ -871,6 +884,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset documents retrieved successfully", response));
     }
 
+    @Deprecated
     @GetMapping("/reports/utilization")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getUtilizationReport(
@@ -900,6 +914,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset utilization report retrieved successfully", response));
     }
 
+    @Deprecated
     @GetMapping("/reports/depreciation")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getDepreciationReport(
@@ -934,6 +949,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset depreciation report retrieved successfully", response));
     }
 
+    @Deprecated
     @GetMapping("/reports/maintenance")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getMaintenanceReport(
@@ -967,6 +983,7 @@ public class AssetAdminController {
         return ResponseEntity.ok(ApiResponse.success("Asset maintenance report retrieved successfully", response));
     }
 
+    @Deprecated
     @GetMapping("/reports/inventory")
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public ResponseEntity<ApiResponse<Object>> getInventoryReport(

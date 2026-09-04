@@ -28,18 +28,60 @@ public class User {
     // Optional — provided by user
     private String employeeId;
 
+    @Column(name = "first_name")
+    private String firstName;
+
+    @Column(name = "last_name")
+    private String lastName;
+
     private String department;
 
     private String requestedRole;
 
+    @Column(name = "role_id")
+    private Long roleId;
+
     @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id")
+    @JoinColumn(name = "role_id", insertable = false, updatable = false)
     private Role role;
+
+    @Column(name = "organization_id")
+    private Long organizationId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", insertable = false, updatable = false)
+    private com.example.ems.organization.entity.Organization organization;
+
+    @Column(name = "department_id")
+    private Long departmentId;
+
+    @Column(name = "designation_id")
+    private Long designationId;
+
+    @Column(name = "job_level_id")
+    private Long jobLevelId;
+
+    @Column(name = "employment_type_id")
+    private Long employmentTypeId;
+
+    @Column(name = "reporting_manager_id")
+    private Long reportingManagerId;
 
     // Optional
     private String location;
 
+    @Column(name = "organization_name")
+    private String organizationName;
+
+    private String branch;
+
+    @Transient
+    private UserStatus statusEnum = UserStatus.ACTIVE;
+
     private String status = "ACTIVE";
+
+    @Enumerated(EnumType.STRING)
+    private AuthProvider provider = AuthProvider.LOCAL;
 
     @Column(name = "created_at", updatable = false)
     private java.time.Instant createdAt;
@@ -81,6 +123,12 @@ public class User {
         this.location = location;
         this.status = status;
         this.password = password;
+        this.provider = AuthProvider.LOCAL;
+        try {
+            this.statusEnum = UserStatus.valueOf(status);
+        } catch (Exception e) {
+            this.statusEnum = UserStatus.ACTIVE;
+        }
     }
 
     public Long getId() {
@@ -153,6 +201,7 @@ public class User {
 
     public void setRole(Role role) {
         this.role = role;
+        this.roleId = (role != null) ? role.getId() : null;
     }
 
     public String getLocation() {
@@ -169,6 +218,30 @@ public class User {
 
     public void setStatus(String status) {
         this.status = status;
+        try {
+            this.statusEnum = UserStatus.valueOf(status);
+        } catch (Exception e) {
+        }
+    }
+
+    public UserStatus getStatusEnum() {
+        return statusEnum;
+    }
+
+    public void setStatusEnum(UserStatus statusEnum) {
+        this.statusEnum = statusEnum;
+        if (statusEnum != null) {
+            this.status = statusEnum.name();
+        }
+    }
+
+
+    public AuthProvider getProvider() {
+        return provider;
+    }
+
+    public void setProvider(AuthProvider provider) {
+        this.provider = provider;
     }
 
     public String getPassword() {
@@ -178,4 +251,58 @@ public class User {
     public void setPassword(String password) {
         this.password = password;
     }
+
+    public com.example.ems.organization.entity.Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(com.example.ems.organization.entity.Organization organization) {
+        this.organization = organization;
+        this.organizationId = (organization != null) ? organization.getId() : null;
+    }
+
+    public String getOrganizationName() {
+        return organizationName;
+    }
+
+    public void setOrganizationName(String organizationName) {
+        this.organizationName = organizationName;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
+    }
+
+    // --- New Multi-Tenant Property Accessors ---
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+
+    public Long getRoleId() { return roleId; }
+    public void setRoleId(Long roleId) { this.roleId = roleId; }
+
+    public Long getOrganizationId() { return organizationId; }
+    public void setOrganizationId(Long organizationId) { this.organizationId = organizationId; }
+
+    public Long getDepartmentId() { return departmentId; }
+    public void setDepartmentId(Long departmentId) { this.departmentId = departmentId; }
+
+    public Long getDesignationId() { return designationId; }
+    public void setDesignationId(Long designationId) { this.designationId = designationId; }
+
+    public Long getJobLevelId() { return jobLevelId; }
+    public void setJobLevelId(Long jobLevelId) { this.jobLevelId = jobLevelId; }
+
+    public Long getEmploymentTypeId() { return employmentTypeId; }
+    public void setEmploymentTypeId(Long employmentTypeId) { this.employmentTypeId = employmentTypeId; }
+
+    public Long getReportingManagerId() { return reportingManagerId; }
+    public void setReportingManagerId(Long reportingManagerId) { this.reportingManagerId = reportingManagerId; }
 }

@@ -1,0 +1,99 @@
+package com.example.ems.employee.entity;
+
+import jakarta.persistence.*;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@Table(name = "designations")
+public class Designation {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id", nullable = false)
+    private com.example.ems.organization.entity.Organization organization;
+
+    @Column(nullable = false)
+    private String designation;
+
+    @Column(length = 500)
+    private String description;
+
+    @Column(nullable = false)
+    private String status = "ACTIVE";
+
+    @Column(name = "created_at", updatable = false)
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @OneToMany(mappedBy = "designation", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<JobLevel> jobLevels = new ArrayList<>();
+
+    @PrePersist
+    public void prePersist() {
+        if (this.createdAt == null) {
+            this.createdAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = this.createdAt;
+        }
+        if (this.status == null || this.status.isBlank()) {
+            this.status = "ACTIVE";
+        }
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+    }
+
+    public Designation() {}
+
+    public Designation(Long id, String designation, String description, String status) {
+        this.id = id;
+        this.designation = designation;
+        this.description = description;
+        this.status = status;
+    }
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public com.example.ems.organization.entity.Organization getOrganization() { return organization; }
+    public void setOrganization(com.example.ems.organization.entity.Organization organization) { this.organization = organization; }
+
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
+    public List<JobLevel> getJobLevels() { return jobLevels; }
+    public void setJobLevels(List<JobLevel> jobLevels) { this.jobLevels = jobLevels; }
+
+    public void addJobLevel(JobLevel jl) {
+        jobLevels.add(jl);
+        jl.setDesignation(this);
+    }
+
+    public void removeJobLevel(JobLevel jl) {
+        jobLevels.remove(jl);
+        jl.setDesignation(null);
+    }
+}

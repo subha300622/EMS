@@ -148,14 +148,14 @@ public class TeamManagementControllerTest {
 
         Attendance attendance = new Attendance();
         attendance.setId(10L);
-        attendance.setStatus("Present");
+        attendance.setStatus("PRESENT");
         when(attendanceService.getTodayAttendance(report)).thenReturn(Optional.of(attendance));
 
         mockMvc.perform(get("/api/v1/team/attendance")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].status").value("Present"));
+                .andExpect(jsonPath("$.data[0].status").value("PRESENT"));
     }
 
     @Test

@@ -21,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/audit-logs")
@@ -192,7 +191,7 @@ public class AuditLogController {
     public ResponseEntity<ApiResponse<Object>> reviewLog(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody(required = false) Map<String, String> body) {
+            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.audit.dto.ReviewAuditLogRequest body) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
@@ -201,7 +200,7 @@ public class AuditLogController {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'audit.read' permission.", "AUTH_002"));
         }
-        String remarks = body != null ? body.get("remarks") : null;
+        String remarks = body != null ? body.remarks() : null;
         try {
             AuditLog reviewed = auditLogService.reviewLog(id, currentUser.getFullName(), remarks);
             return ResponseEntity.ok(ApiResponse.success("Audit log reviewed and flag cleared", reviewed));

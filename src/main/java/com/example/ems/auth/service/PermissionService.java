@@ -44,11 +44,48 @@ public class PermissionService {
         });
     }
 
+    public Permission savePermission(Permission permission) {
+        return permissionRepository.save(permission);
+    }
+
     public boolean deletePermission(Long id) {
         if (permissionRepository.existsById(id)) {
             permissionRepository.deleteById(id);
             return true;
         }
         return false;
+    }
+
+    @Autowired
+    private com.example.ems.auth.repository.PermissionGroupRepository permissionGroupRepository;
+
+    public com.example.ems.auth.dto.PermissionCatalogResponseDto getPermissionCatalog() {
+        List<com.example.ems.auth.entity.PermissionGroup> groups = permissionGroupRepository.findAll();
+        List<com.example.ems.auth.dto.PermissionGroupDto> groupDtos = new java.util.ArrayList<>();
+        java.util.Set<Long> groupedPermissionIds = new java.util.HashSet<>();
+
+        for (com.example.ems.auth.entity.PermissionGroup group : groups) {
+            List<com.example.ems.auth.dto.PermissionResponse> permDtos = new java.util.ArrayList<>();
+            for (Permission p : group.getPermissions()) {
+                groupedPermissionIds.add(p.getId());
+                permDtos.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+            }
+            groupDtos.add(new com.example.ems.auth.dto.PermissionGroupDto(
+                group.getId(),
+                group.getCode(),
+                group.getName(),
+                group.getDescription(),
+                permDtos
+            ));
+        }
+
+        List<com.example.ems.auth.dto.PermissionResponse> standalonePerms = new java.util.ArrayList<>();
+        for (Permission p : permissionRepository.findAll()) {
+            if (!groupedPermissionIds.contains(p.getId())) {
+                standalonePerms.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+            }
+        }
+
+        return new com.example.ems.auth.dto.PermissionCatalogResponseDto(groupDtos, standalonePerms);
     }
 }

@@ -27,6 +27,13 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.ems.approval.entity.ApprovalTask;
+import com.example.ems.approval.entity.WorkflowType;
+import com.example.ems.approval.repository.ApprovalTaskRepository;
+import com.example.ems.approval.service.ApprovalWorkflowEngineService;
+import com.example.ems.auth.entity.User;
+import com.example.ems.auth.repository.UserRepository;
+
 @Service
 @Transactional(readOnly = true)
 public class FinanceExpenseService {
@@ -37,6 +44,15 @@ public class FinanceExpenseService {
     @Autowired
     private ExpenseAuditLogRepository expenseAuditLogRepository;
 
+    @Autowired
+    private ApprovalTaskRepository taskRepository;
+
+    @Autowired
+    private ApprovalWorkflowEngineService approvalWorkflowEngineService;
+
+    @Autowired
+    private UserRepository userRepository;
+
     private boolean isPending(ExpenseStatus status) {
         return status == ExpenseStatus.PENDING
                 || status == ExpenseStatus.SUBMITTED
@@ -45,7 +61,8 @@ public class FinanceExpenseService {
     }
 
     private void validateTransition(ExpenseStatus cur, ExpenseStatus tgt) {
-        if (cur == tgt) return;
+        if (cur == tgt)
+            return;
         if (cur == ExpenseStatus.REJECTED && tgt == ExpenseStatus.APPROVED) {
             throw new IllegalStateException("REJECTED -> APPROVED is blocked.");
         }
@@ -109,14 +126,16 @@ public class FinanceExpenseService {
                 if (sub != null && app != null) {
                     long diffMs = java.time.Duration.between(sub, app).toMillis();
                     double diffDays = (double) diffMs / (1000.0 * 60 * 60 * 24);
-                    if (diffDays < 0) diffDays = 0;
+                    if (diffDays < 0)
+                        diffDays = 0;
                     totalDays += diffDays;
                     approvedCount++;
                 }
             }
         }
 
-        double averageApprovalDays = approvedCount > 0 ? (double) Math.round((totalDays / approvedCount) * 10) / 10 : 0.0;
+        double averageApprovalDays = approvedCount > 0 ? (double) Math.round((totalDays / approvedCount) * 10) / 10
+                : 0.0;
 
         return new ExpenseDashboardResponse(
                 totalPending,
@@ -125,13 +144,12 @@ public class FinanceExpenseService {
                 approvedAmountThisMonth,
                 rejected,
                 rejectedAmount,
-                averageApprovalDays
-        );
+                averageApprovalDays);
     }
 
     // ── 2. EXPENSE LISTING ───────────────────────────────────────────────────
     public FinanceExpenseListResponse getExpenses(String status, String category, String department, String search,
-                                                BigDecimal minAmount, BigDecimal maxAmount, Pageable pageable) {
+            BigDecimal minAmount, BigDecimal maxAmount, Pageable pageable) {
         List<Expense> filtered = filterExpenses(status, category, department, search, minAmount, maxAmount, null, null);
 
         long totalElements = filtered.size();
@@ -150,7 +168,8 @@ public class FinanceExpenseService {
             content = filtered.subList(start, end).stream()
                     .map(e -> {
                         Employee emp = e.getEmployee();
-                        LocalDate submittedDate = e.getSubmittedAt() != null ? e.getSubmittedAt().toLocalDate() : e.getExpenseDate();
+                        LocalDate submittedDate = e.getSubmittedAt() != null ? e.getSubmittedAt().toLocalDate()
+                                : e.getExpenseDate();
                         boolean receiptAttached = (e.getAttachmentUrl() != null && !e.getAttachmentUrl().isBlank())
                                 || !e.getReceipts().isEmpty();
 
@@ -164,8 +183,7 @@ public class FinanceExpenseService {
                                 e.getAmount(),
                                 receiptAttached,
                                 submittedDate,
-                                mapToStandardStatus(e.getExpenseStatus())
-                        );
+                                mapToStandardStatus(e.getExpenseStatus()));
                     })
                     .collect(Collectors.toList());
         }
@@ -174,8 +192,10 @@ public class FinanceExpenseService {
     }
 
     private String mapToStandardStatus(ExpenseStatus s) {
-        if (s == null) return "PENDING";
-        if (isPending(s)) return "PENDING";
+        if (s == null)
+            return "PENDING";
+        if (isPending(s))
+            return "PENDING";
         return s.name();
     }
 
@@ -187,12 +207,13 @@ public class FinanceExpenseService {
         Employee emp = e.getEmployee();
         FinanceExpenseDetailsResponse.EmployeeInfo empInfo = null;
         if (emp != null) {
-            empInfo = new FinanceExpenseDetailsResponse.EmployeeInfo(emp.getId(), emp.getFullName(), emp.getDepartment());
+            empInfo = new FinanceExpenseDetailsResponse.EmployeeInfo(emp.getId(), emp.getFullName(),
+                    emp.getDepartment());
         }
 
         LocalDate submittedDate = e.getSubmittedAt() != null ? e.getSubmittedAt().toLocalDate() : e.getExpenseDate();
         boolean receiptAttached = (e.getAttachmentUrl() != null && !e.getAttachmentUrl().isBlank())
-                                || !e.getReceipts().isEmpty();
+                || !e.getReceipts().isEmpty();
 
         String receiptUrl = e.getAttachmentUrl();
         if ((receiptUrl == null || receiptUrl.isBlank()) && !e.getReceipts().isEmpty()) {
@@ -209,8 +230,7 @@ public class FinanceExpenseService {
                 submittedDate,
                 mapToStandardStatus(e.getExpenseStatus()),
                 receiptAttached,
-                receiptUrl
-        );
+                receiptUrl);
     }
 
     // ── 4. RECEIPT APIs ──────────────────────────────────────────────────────
@@ -228,7 +248,8 @@ public class FinanceExpenseService {
             size = e.getAttachmentData() != null ? e.getAttachmentData().length : 10000L;
         } else if (!e.getReceipts().isEmpty()) {
             fileName = e.getReceipts().get(0).getFileName();
-            contentType = e.getReceipts().get(0).getFileType() != null ? e.getReceipts().get(0).getFileType() : "application/pdf";
+            contentType = e.getReceipts().get(0).getFileType() != null ? e.getReceipts().get(0).getFileType()
+                    : "application/pdf";
             size = e.getReceipts().get(0).getFileSize();
         }
 
@@ -250,6 +271,21 @@ public class FinanceExpenseService {
         expenseRepository.save(e);
 
         expenseAuditLogRepository.save(new ExpenseAuditLog(expenseId, ExpenseStatus.APPROVED, remarks, username));
+
+        // Complete active Approval Engine task if exists
+        try {
+            List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL,
+                    "EXPENSE", expenseId.toString());
+            if (!tasks.isEmpty()) {
+                ApprovalTask task = tasks.get(0);
+                User actorUser = userRepository.findByWorkEmail(username).orElse(null);
+                if (actorUser != null) {
+                    approvalWorkflowEngineService.approveTask(actorUser, task.getApprovalTaskId(), remarks);
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Finance approval engine delegation note: " + ex.getMessage());
+        }
     }
 
     // ── 6. REJECT CLAIM ──────────────────────────────────────────────────────
@@ -266,6 +302,20 @@ public class FinanceExpenseService {
         expenseRepository.save(e);
 
         expenseAuditLogRepository.save(new ExpenseAuditLog(expenseId, ExpenseStatus.REJECTED, reason, username));
+
+        try {
+            List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL,
+                    "EXPENSE", expenseId.toString());
+            if (!tasks.isEmpty()) {
+                ApprovalTask task = tasks.get(0);
+                User actorUser = userRepository.findByWorkEmail(username).orElse(null);
+                if (actorUser != null) {
+                    approvalWorkflowEngineService.rejectTask(actorUser, task.getApprovalTaskId(), reason);
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Finance rejection engine delegation note: " + ex.getMessage());
+        }
     }
 
     // ── 7. SEND BACK FOR CORRECTION ──────────────────────────────────────────
@@ -277,16 +327,32 @@ public class FinanceExpenseService {
         validateTransition(e.getExpenseStatus(), ExpenseStatus.SENT_BACK);
 
         e.setExpenseStatus(ExpenseStatus.SENT_BACK);
+        e.setStatus("CHANGES_REQUESTED");
         e.setSendBackReason(reason);
         e.setUpdatedAt(LocalDateTime.now());
         expenseRepository.save(e);
 
         expenseAuditLogRepository.save(new ExpenseAuditLog(expenseId, ExpenseStatus.SENT_BACK, reason, username));
+
+        try {
+            List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL,
+                    "EXPENSE", expenseId.toString());
+            if (!tasks.isEmpty()) {
+                ApprovalTask task = tasks.get(0);
+                User actorUser = userRepository.findByWorkEmail(username).orElse(null);
+                if (actorUser != null) {
+                    approvalWorkflowEngineService.requestChanges(actorUser, task.getApprovalTaskId(), reason);
+                }
+            }
+        } catch (Exception ex) {
+            System.err.println("Finance send-back engine delegation note: " + ex.getMessage());
+        }
     }
 
     // ── 8. REIMBURSE CLAIM ───────────────────────────────────────────────────
     @Transactional
-    public ReimburseExpenseResponse reimburseExpense(Long expenseId, String paymentMode, String txnRef, String username) {
+    public ReimburseExpenseResponse reimburseExpense(Long expenseId, String paymentMode, String txnRef,
+            String username) {
         Expense e = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new IllegalArgumentException("Expense claim not found with ID: " + expenseId));
 
@@ -330,8 +396,7 @@ public class FinanceExpenseService {
                 .map(log -> new FinanceExpenseTimelineItem(
                         log.getStatus() != null ? log.getStatus().name() : "PENDING",
                         log.getUpdatedBy(),
-                        log.getUpdatedAt()
-                ))
+                        log.getUpdatedAt()))
                 .collect(Collectors.toList());
     }
 
@@ -376,14 +441,16 @@ public class FinanceExpenseService {
                 if (sub != null && app != null) {
                     long diffMs = java.time.Duration.between(sub, app).toMillis();
                     double diffDays = (double) diffMs / (1000.0 * 60 * 60 * 24);
-                    if (diffDays < 0) diffDays = 0;
+                    if (diffDays < 0)
+                        diffDays = 0;
                     totalDays += diffDays;
                     approvedCount++;
                 }
             }
         }
 
-        double averageApprovalDays = approvedCount > 0 ? (double) Math.round((totalDays / approvedCount) * 10) / 10 : 0.0;
+        double averageApprovalDays = approvedCount > 0 ? (double) Math.round((totalDays / approvedCount) * 10) / 10
+                : 0.0;
 
         return new ExpenseReportsSummaryResponse(
                 totalExpenses,
@@ -392,13 +459,12 @@ public class FinanceExpenseService {
                 rejectedExpenses,
                 totalAmount,
                 approvedAmount,
-                averageApprovalDays
-        );
+                averageApprovalDays);
     }
 
     // ── 12. EXPORT APIs (CSV / PDF / XLSX) ────────────────────────────────────
     public List<Expense> filterExpenses(String status, String category, String department, String search,
-                                        BigDecimal minAmount, BigDecimal maxAmount, LocalDate fromDate, LocalDate toDate) {
+            BigDecimal minAmount, BigDecimal maxAmount, LocalDate fromDate, LocalDate toDate) {
         List<Expense> list = expenseRepository.findAll();
         return list.stream()
                 .filter(e -> {
@@ -415,9 +481,11 @@ public class FinanceExpenseService {
 
                         ExpenseStatus s = e.getExpenseStatus();
                         if ("PENDING".equalsIgnoreCase(status)) {
-                            if (!isPending(s)) return false;
+                            if (!isPending(s))
+                                return false;
                         } else {
-                            if (s != filterStatus) return false;
+                            if (s != filterStatus)
+                                return false;
                         }
                     }
                     // category filter
@@ -437,8 +505,10 @@ public class FinanceExpenseService {
                         String term = search.toLowerCase();
                         boolean matchesName = e.getEmployee() != null && e.getEmployee().getFullName() != null
                                 && e.getEmployee().getFullName().toLowerCase().contains(term);
-                        boolean matchesDesc = e.getDescription() != null && e.getDescription().toLowerCase().contains(term);
-                        boolean matchesPurpose = e.getBusinessPurpose() != null && e.getBusinessPurpose().toLowerCase().contains(term);
+                        boolean matchesDesc = e.getDescription() != null
+                                && e.getDescription().toLowerCase().contains(term);
+                        boolean matchesPurpose = e.getBusinessPurpose() != null
+                                && e.getBusinessPurpose().toLowerCase().contains(term);
                         if (!matchesName && !matchesDesc && !matchesPurpose) {
                             return false;
                         }
@@ -470,17 +540,19 @@ public class FinanceExpenseService {
 
     public byte[] exportCsv(String status, String department, LocalDate fromDate, LocalDate toDate) {
         List<Expense> expenses = filterExpenses(status, null, department, null, null, null, fromDate, toDate);
-        StringBuilder csv = new StringBuilder("Expense ID,Employee Name,Department,Category,Description,Amount,Date,Status\n");
+        StringBuilder csv = new StringBuilder(
+                "Expense ID,Employee Name,Department,Category,Description,Amount,Date,Status\n");
         for (Expense e : expenses) {
             Employee emp = e.getEmployee();
             csv.append(e.getId()).append(",")
-               .append(emp != null ? emp.getFullName().replace(",", " ") : "").append(",")
-               .append(emp != null ? emp.getDepartment() : "").append(",")
-               .append(e.getCategory() != null ? e.getCategory().getCode() : "").append(",")
-               .append(e.getDescription() != null ? e.getDescription().replace(",", " ").replace("\n", " ") : "").append(",")
-               .append(e.getAmount() != null ? e.getAmount() : "0.00").append(",")
-               .append(e.getExpenseDate() != null ? e.getExpenseDate().toString() : "").append(",")
-               .append(mapToStandardStatus(e.getExpenseStatus())).append("\n");
+                    .append(emp != null ? emp.getFullName().replace(",", " ") : "").append(",")
+                    .append(emp != null ? emp.getDepartment() : "").append(",")
+                    .append(e.getCategory() != null ? e.getCategory().getCode() : "").append(",")
+                    .append(e.getDescription() != null ? e.getDescription().replace(",", " ").replace("\n", " ") : "")
+                    .append(",")
+                    .append(e.getAmount() != null ? e.getAmount() : "0.00").append(",")
+                    .append(e.getExpenseDate() != null ? e.getExpenseDate().toString() : "").append(",")
+                    .append(mapToStandardStatus(e.getExpenseStatus())).append("\n");
         }
         return csv.toString().getBytes(StandardCharsets.UTF_8);
     }
@@ -489,13 +561,14 @@ public class FinanceExpenseService {
         List<Expense> expenses = filterExpenses(status, null, department, null, null, null, fromDate, toDate);
 
         try (Workbook workbook = new XSSFWorkbook();
-             ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
 
             Sheet sheet = workbook.createSheet("Expense Approvals");
 
             // Header row
             Row headerRow = sheet.createRow(0);
-            String[] headers = {"Expense ID", "Employee Name", "Department", "Category", "Description", "Amount", "Date", "Status"};
+            String[] headers = { "Expense ID", "Employee Name", "Department", "Category", "Description", "Amount",
+                    "Date", "Status" };
             for (int i = 0; i < headers.length; i++) {
                 Cell cell = headerRow.createCell(i);
                 cell.setCellValue(headers[i]);
@@ -560,7 +633,8 @@ public class FinanceExpenseService {
                 table.addCell(new Paragraph(emp != null ? emp.getDepartment() : "", normalFont));
                 table.addCell(new Paragraph(e.getCategory() != null ? e.getCategory().getCode() : "", normalFont));
                 table.addCell(new Paragraph(e.getAmount() != null ? e.getAmount().toString() : "0.00", normalFont));
-                table.addCell(new Paragraph(e.getExpenseDate() != null ? e.getExpenseDate().toString() : "", normalFont));
+                table.addCell(
+                        new Paragraph(e.getExpenseDate() != null ? e.getExpenseDate().toString() : "", normalFont));
                 table.addCell(new Paragraph(mapToStandardStatus(e.getExpenseStatus()), normalFont));
             }
 

@@ -3,10 +3,11 @@ package com.example.ems.auth.repository;
 import com.example.ems.auth.entity.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     User findByWorkEmailAndPassword(String workEmail, String password);
 
@@ -15,6 +16,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     boolean existsByUserId(String userId);
 
     boolean existsByWorkEmail(String workEmail);
+
+    boolean existsByMobileNumber(String mobileNumber);
 
     boolean existsByEmployeeId(String employeeId);
 
@@ -29,4 +32,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
     java.util.List<User> searchUsers(@org.springframework.data.repository.query.Param("query") String query);
 
     java.util.List<User> findByRoleId(Long roleId);
+
+    java.util.List<User> findByOrganizationId(Long organizationId);
+
+    long countByOrganizationId(Long organizationId);
+
+    Optional<User> findByIdAndOrganizationId(Long id, Long organizationId);
+    Optional<User> findByUserIdAndOrganizationId(String userId, Long organizationId);
+    Optional<User> findByWorkEmailAndOrganizationId(String workEmail, Long organizationId);
+    boolean existsByEmployeeIdAndOrganizationId(String employeeId, Long organizationId);
+    boolean existsByWorkEmailAndOrganizationId(String workEmail, Long organizationId);
 }

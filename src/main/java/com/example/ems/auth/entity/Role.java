@@ -14,7 +14,7 @@ public class Role {
     @JsonProperty("roleId")
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     private String description;
@@ -22,14 +22,60 @@ public class Role {
     @Column(name = "created_at", updatable = false)
     private java.time.Instant createdAt;
 
+    @Column(name = "updated_at")
+    private java.time.Instant updatedAt;
+
+    @Column(name = "status", nullable = false)
+    private String status = "ACTIVE";
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private com.example.ems.organization.entity.Organization organization;
+
+    @Column(name = "is_platform_template", nullable = false)
+    private boolean isPlatformTemplate = false;
+
+    @Column(name = "version", nullable = false)
+    private int version = 1;
+
+    @Column(name = "system_role", nullable = false)
+    private boolean systemRole = false;
+
     @PrePersist
     public void prePersist() {
         if (this.createdAt == null) {
             this.createdAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
         }
+        if (this.updatedAt == null) {
+            this.updatedAt = this.createdAt;
+        }
+        if (this.status == null || this.status.isBlank()) {
+            this.status = "ACTIVE";
+        }
     }
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+    }
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "role_permission_groups",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "group_id")
+    )
+    private Set<PermissionGroup> permissionGroups = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "role_direct_permissions",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private Set<Permission> directPermissions = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "role_permissions",
         joinColumns = @JoinColumn(name = "role_id"),
@@ -78,11 +124,75 @@ public class Role {
         this.createdAt = createdAt;
     }
 
+    public com.example.ems.organization.entity.Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(com.example.ems.organization.entity.Organization organization) {
+        this.organization = organization;
+    }
+
+    public boolean isPlatformTemplate() {
+        return isPlatformTemplate;
+    }
+
+    public void setPlatformTemplate(boolean platformTemplate) {
+        isPlatformTemplate = platformTemplate;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public boolean isSystemRole() {
+        return systemRole;
+    }
+
+    public void setSystemRole(boolean systemRole) {
+        this.systemRole = systemRole;
+    }
+
+    public Set<PermissionGroup> getPermissionGroups() {
+        return permissionGroups;
+    }
+
+    public void setPermissionGroups(Set<PermissionGroup> permissionGroups) {
+        this.permissionGroups = permissionGroups;
+    }
+
+    public Set<Permission> getDirectPermissions() {
+        return directPermissions;
+    }
+
+    public void setDirectPermissions(Set<Permission> directPermissions) {
+        this.directPermissions = directPermissions;
+    }
+
     public Set<Permission> getPermissions() {
         return permissions;
     }
 
     public void setPermissions(Set<Permission> permissions) {
         this.permissions = permissions;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public java.time.Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(java.time.Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

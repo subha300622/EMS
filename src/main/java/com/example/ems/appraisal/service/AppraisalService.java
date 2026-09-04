@@ -18,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -65,8 +64,8 @@ public class AppraisalService {
     @Autowired
     private com.example.ems.appraisal.repository.BulkAppraisalActionLogRepository bulkActionLogRepository;
 
-    @PostConstruct
-    public void seedInitialData() {
+    @Transactional
+    public void seedCoreAppraisalData() {
         if (policyRepository.count() == 0) {
             savePolicy(1, 0.0, "Needs improvement - No increment");
             savePolicy(2, 2.0, "Below expectations - 2% baseline increment");
@@ -188,7 +187,7 @@ public class AppraisalService {
     @CacheEvict(value = "appraisalDashboard", allEntries = true)
     public Optional<AppraisalResponse> submitManagerReview(Long id, AppraisalManagerReviewRequest request,
             String reviewerEmail) {
-        User user = userRepository.findByWorkEmail(reviewerEmail)
+        userRepository.findByWorkEmail(reviewerEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + reviewerEmail));
 
         Employee manager = employeeRepository.findByEmail(reviewerEmail).orElse(null);
@@ -421,7 +420,7 @@ public class AppraisalService {
     @Transactional
     @CacheEvict(value = "appraisalDashboard", allEntries = true)
     public Optional<IncrementResponse> approveIncrement(Long id, String approvedByEmail) {
-        User user = userRepository.findByWorkEmail(approvedByEmail)
+        userRepository.findByWorkEmail(approvedByEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + approvedByEmail));
 
         Employee manager = employeeRepository.findByEmail(approvedByEmail).orElse(null);
@@ -514,7 +513,7 @@ public class AppraisalService {
     @Transactional
     @CacheEvict(value = "appraisalDashboard", allEntries = true)
     public Optional<IncrementResponse> rejectIncrement(Long id, String rejectedByEmail) {
-        User user = userRepository.findByWorkEmail(rejectedByEmail)
+        userRepository.findByWorkEmail(rejectedByEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + rejectedByEmail));
 
         Employee manager = employeeRepository.findByEmail(rejectedByEmail).orElse(null);
@@ -781,7 +780,8 @@ public class AppraisalService {
         Employee managerEmp = employeeRepository.findByEmail(managerEmail).orElse(null);
 
         String roleName = managerUser.getRole() != null ? managerUser.getRole().getName().toUpperCase() : "";
-        boolean isAdminOrHrOrFinance = "ADMIN".equals(roleName) || "HR".equals(roleName) || "SUPER_ADMIN".equals(roleName) || "FINANCE".equals(roleName);
+        boolean isAdminOrHrOrFinance = "ADMIN".equals(roleName) || "HR".equals(roleName)
+                || "SUPER_ADMIN".equals(roleName) || "FINANCE".equals(roleName);
 
         Long queryManagerId = isAdminOrHrOrFinance ? null : (managerEmp != null ? managerEmp.getId() : -1L);
 
@@ -909,7 +909,8 @@ public class AppraisalService {
         Employee managerEmp = employeeRepository.findByEmail(managerEmail).orElse(null);
 
         String roleName = managerUser.getRole() != null ? managerUser.getRole().getName().toUpperCase() : "";
-        boolean isAdminOrHrOrFinance = "ADMIN".equals(roleName) || "HR".equals(roleName) || "SUPER_ADMIN".equals(roleName) || "FINANCE".equals(roleName);
+        boolean isAdminOrHrOrFinance = "ADMIN".equals(roleName) || "HR".equals(roleName)
+                || "SUPER_ADMIN".equals(roleName) || "FINANCE".equals(roleName);
 
         if (!isAdminOrHrOrFinance) {
             if (managerEmp == null || a.getEmployee().getManager() == null
@@ -1183,7 +1184,7 @@ public class AppraisalService {
         Appraisal a = appraisalRepository.findById(appraisalId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal not found: " + appraisalId));
 
-        User user = userRepository.findByWorkEmail(financeEmail)
+        userRepository.findByWorkEmail(financeEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + financeEmail));
         Employee financeEmp = employeeRepository.findByEmail(financeEmail).orElse(null);
 
@@ -1231,7 +1232,7 @@ public class AppraisalService {
         Appraisal a = appraisalRepository.findById(appraisalId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal not found: " + appraisalId));
 
-        User user = userRepository.findByWorkEmail(financeEmail)
+        userRepository.findByWorkEmail(financeEmail)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with email: " + financeEmail));
         Employee financeEmp = employeeRepository.findByEmail(financeEmail).orElse(null);
 
@@ -1273,7 +1274,8 @@ public class AppraisalService {
 
     // ── E. Hardened Lifecycle, Timeline & Audit Methods ───────────────────────
 
-    private void recordTimelineEvent(Appraisal appraisal, AppraisalStatus state, String description, Employee actionBy) {
+    private void recordTimelineEvent(Appraisal appraisal, AppraisalStatus state, String description,
+            Employee actionBy) {
         AppraisalTimelineEvent event = new AppraisalTimelineEvent();
         event.setAppraisal(appraisal);
         event.setState(state.name());
@@ -1283,7 +1285,8 @@ public class AppraisalService {
         timelineEventRepository.save(event);
     }
 
-    private void recordHistory(Appraisal appraisal, String fieldName, String oldValue, String newValue, Employee changedBy) {
+    private void recordHistory(Appraisal appraisal, String fieldName, String oldValue, String newValue,
+            Employee changedBy) {
         AppraisalHistory history = new AppraisalHistory();
         history.setAppraisal(appraisal);
         history.setFieldName(fieldName);
@@ -1298,14 +1301,16 @@ public class AppraisalService {
         if (a.getCycle() != null && "FROZEN".equalsIgnoreCase(a.getCycle().getStatus())) {
             AppraisalStatus currentStatus = a.getStatus();
             if (currentStatus == AppraisalStatus.DRAFT || currentStatus == AppraisalStatus.ELIGIBLE) {
-                throw new BadRequestException("Appraisal Cycle is frozen. Modifications to DRAFT or ELIGIBLE appraisals are blocked.");
+                throw new BadRequestException(
+                        "Appraisal Cycle is frozen. Modifications to DRAFT or ELIGIBLE appraisals are blocked.");
             }
             if (currentStatus == AppraisalStatus.SUBMITTED || currentStatus == AppraisalStatus.UNDER_REVIEW) {
                 throw new BadRequestException("Appraisal Cycle is frozen. State changes are frozen/paused.");
             }
             if (currentStatus == AppraisalStatus.LOCKED || currentStatus == AppraisalStatus.FINANCE_PENDING) {
                 if (a.isFinanceStageStarted()) {
-                    throw new BadRequestException("Appraisal Cycle is frozen. Finance review stage has started; forward actions are blocked.");
+                    throw new BadRequestException(
+                            "Appraisal Cycle is frozen. Finance review stage has started; forward actions are blocked.");
                 }
             }
         }
@@ -1316,15 +1321,15 @@ public class AppraisalService {
         Appraisal a = appraisalRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
         checkCycleFreezeRules(a, AppraisalStatus.SUBMITTED);
-        
+
         Employee employee = employeeRepository.findByEmail(email).orElse(null);
         StateTransitionValidator.validate(a.getStatus(), AppraisalStatus.SUBMITTED);
-        
+
         a.setStatus(AppraisalStatus.SUBMITTED);
         a.setSelfReviewSubmittedAt(LocalDateTime.now());
         a.setUpdatedAt(LocalDateTime.now());
         Appraisal saved = appraisalRepository.save(a);
-        
+
         recordTimelineEvent(saved, AppraisalStatus.SUBMITTED, "Appraisal submitted by employee.", employee);
         return new AppraisalResponse(saved);
     }
@@ -1334,17 +1339,18 @@ public class AppraisalService {
         Appraisal a = appraisalRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
         Employee actionBy = employeeRepository.findByEmail(email).orElse(null);
-        
+
         AppraisalStatus current = a.getStatus();
-        if (current == AppraisalStatus.FINANCE_APPROVED || current == AppraisalStatus.PROCESSED || current == AppraisalStatus.CLOSED) {
+        if (current == AppraisalStatus.FINANCE_APPROVED || current == AppraisalStatus.PROCESSED
+                || current == AppraisalStatus.CLOSED) {
             throw new BadRequestException("Cannot reopen appraisal in " + current + " state.");
         }
-        
+
         StateTransitionValidator.validate(current, AppraisalStatus.DRAFT);
         a.setStatus(AppraisalStatus.DRAFT);
         a.setUpdatedAt(LocalDateTime.now());
         Appraisal saved = appraisalRepository.save(a);
-        
+
         recordTimelineEvent(saved, AppraisalStatus.DRAFT, "Appraisal reopened.", actionBy);
         return new AppraisalResponse(saved);
     }
@@ -1355,12 +1361,12 @@ public class AppraisalService {
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
         checkCycleFreezeRules(a, AppraisalStatus.DRAFT);
         Employee actionBy = employeeRepository.findByEmail(email).orElse(null);
-        
+
         StateTransitionValidator.validate(a.getStatus(), AppraisalStatus.DRAFT);
         a.setStatus(AppraisalStatus.DRAFT);
         a.setUpdatedAt(LocalDateTime.now());
         Appraisal saved = appraisalRepository.save(a);
-        
+
         recordTimelineEvent(saved, AppraisalStatus.DRAFT, "Revision requested: " + instructions, actionBy);
         return new AppraisalResponse(saved);
     }
@@ -1371,20 +1377,21 @@ public class AppraisalService {
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
         checkCycleFreezeRules(a, AppraisalStatus.DRAFT);
         Employee employee = employeeRepository.findByEmail(email).orElse(null);
-        
+
         if (request.getSelfRating() != null) {
-            recordHistory(a, "selfRating", String.valueOf(a.getSelfRating()), String.valueOf(request.getSelfRating()), employee);
+            recordHistory(a, "selfRating", String.valueOf(a.getSelfRating()), String.valueOf(request.getSelfRating()),
+                    employee);
             a.setSelfRating(request.getSelfRating());
         }
         if (request.getSelfReview() != null) {
             recordHistory(a, "selfReview", a.getSelfReview(), request.getSelfReview(), employee);
             a.setSelfReview(request.getSelfReview());
         }
-        
+
         a.setStatus(AppraisalStatus.DRAFT);
         a.setUpdatedAt(LocalDateTime.now());
         Appraisal saved = appraisalRepository.save(a);
-        
+
         recordTimelineEvent(saved, AppraisalStatus.DRAFT, "Appraisal draft updated.", employee);
         return new AppraisalResponse(saved);
     }
@@ -1395,12 +1402,12 @@ public class AppraisalService {
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
         checkCycleFreezeRules(a, AppraisalStatus.LOCKED);
         Employee actionBy = employeeRepository.findByEmail(email).orElse(null);
-        
+
         StateTransitionValidator.validate(a.getStatus(), AppraisalStatus.LOCKED);
         a.setStatus(AppraisalStatus.LOCKED);
         a.setUpdatedAt(LocalDateTime.now());
         Appraisal saved = appraisalRepository.save(a);
-        
+
         recordTimelineEvent(saved, AppraisalStatus.LOCKED, "Appraisal locked by HR.", actionBy);
         return new AppraisalResponse(saved);
     }
@@ -1408,11 +1415,13 @@ public class AppraisalService {
     public Map<String, Object> simulateIncrement(Long id) {
         Appraisal a = appraisalRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
-        BigDecimal currentSalary = a.getEmployee().getAnnualSalary() != null ? a.getEmployee().getAnnualSalary() : BigDecimal.ZERO;
-        BigDecimal percentage = calculateRecommendedPercentage(a.getManagerRating() != null ? a.getManagerRating() : a.getSelfRating());
+        BigDecimal currentSalary = a.getEmployee().getAnnualSalary() != null ? a.getEmployee().getAnnualSalary()
+                : BigDecimal.ZERO;
+        BigDecimal percentage = calculateRecommendedPercentage(
+                a.getManagerRating() != null ? a.getManagerRating() : a.getSelfRating());
         BigDecimal amount = currentSalary.multiply(percentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
         BigDecimal newSalary = currentSalary.add(amount);
-        
+
         Map<String, Object> sim = new LinkedHashMap<>();
         sim.put("appraisalId", a.getId());
         sim.put("employeeName", a.getEmployee().getFullName());
@@ -1448,7 +1457,7 @@ public class AppraisalService {
                 .orElseThrow(() -> new BadRequestException("Appraisal cycle not found: " + cycleId));
         cycle.setStatus("CLOSED");
         AppraisalCycle saved = cycleRepository.save(cycle);
-        
+
         List<Appraisal> appraisals = appraisalRepository.findAll().stream()
                 .filter(a -> a.getCycle().getId().equals(cycleId))
                 .collect(Collectors.toList());
@@ -1475,20 +1484,21 @@ public class AppraisalService {
     }
 
     @Transactional
-    public AppraisalResponse financeApproveHardened(Long appraisalId, FinanceDecisionRequest request, String financeEmail) {
+    public AppraisalResponse financeApproveHardened(Long appraisalId, FinanceDecisionRequest request,
+            String financeEmail) {
         Appraisal a = appraisalRepository.findById(appraisalId)
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + appraisalId));
         checkCycleFreezeRules(a, AppraisalStatus.FINANCE_APPROVED);
         Employee financeEmp = employeeRepository.findByEmail(financeEmail).orElse(null);
-        
+
         StateTransitionValidator.validate(a.getStatus(), AppraisalStatus.FINANCE_APPROVED);
         a.setStatus(AppraisalStatus.FINANCE_APPROVED);
         a.setFinalRating(a.getManagerRating());
         a.setUpdatedAt(LocalDateTime.now());
         Appraisal saved = appraisalRepository.save(a);
-        
+
         recordTimelineEvent(saved, AppraisalStatus.FINANCE_APPROVED, "Increment approved by finance.", financeEmp);
-        
+
         createOrUpdateIncrementForAppraisal(saved);
         Increment inc = incrementRepository.findAll().stream()
                 .filter(i -> i.getAppraisal() != null && i.getAppraisal().getId().equals(saved.getId()))
@@ -1499,24 +1509,25 @@ public class AppraisalService {
         inc.setReason(request.comments());
         inc.setUpdatedAt(LocalDateTime.now());
         incrementRepository.save(inc);
-        
+
         return new AppraisalResponse(saved);
     }
 
     @Transactional
-    public AppraisalResponse financeRejectHardened(Long appraisalId, FinanceDecisionRequest request, String financeEmail) {
+    public AppraisalResponse financeRejectHardened(Long appraisalId, FinanceDecisionRequest request,
+            String financeEmail) {
         Appraisal a = appraisalRepository.findById(appraisalId)
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + appraisalId));
         checkCycleFreezeRules(a, AppraisalStatus.FINANCE_REJECTED);
         Employee financeEmp = employeeRepository.findByEmail(financeEmail).orElse(null);
-        
+
         StateTransitionValidator.validate(a.getStatus(), AppraisalStatus.FINANCE_REJECTED);
         a.setStatus(AppraisalStatus.FINANCE_REJECTED);
         a.setUpdatedAt(LocalDateTime.now());
         Appraisal saved = appraisalRepository.save(a);
-        
+
         recordTimelineEvent(saved, AppraisalStatus.FINANCE_REJECTED, "Increment rejected by finance.", financeEmp);
-        
+
         createOrUpdateIncrementForAppraisal(saved);
         Increment inc = incrementRepository.findAll().stream()
                 .filter(i -> i.getAppraisal() != null && i.getAppraisal().getId().equals(saved.getId()))
@@ -1527,7 +1538,7 @@ public class AppraisalService {
         inc.setReason(request.comments());
         inc.setUpdatedAt(LocalDateTime.now());
         incrementRepository.save(inc);
-        
+
         return new AppraisalResponse(saved);
     }
 
@@ -1537,12 +1548,12 @@ public class AppraisalService {
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + appraisalId));
         checkCycleFreezeRules(a, AppraisalStatus.UNDER_REVIEW);
         Employee financeEmp = employeeRepository.findByEmail(financeEmail).orElse(null);
-        
+
         StateTransitionValidator.validate(a.getStatus(), AppraisalStatus.UNDER_REVIEW);
         a.setStatus(AppraisalStatus.UNDER_REVIEW);
         a.setUpdatedAt(LocalDateTime.now());
         Appraisal saved = appraisalRepository.save(a);
-        
+
         recordTimelineEvent(saved, AppraisalStatus.UNDER_REVIEW, "Send back requested by finance.", financeEmp);
         return new AppraisalResponse(saved);
     }
@@ -1551,16 +1562,16 @@ public class AppraisalService {
     public Map<String, Object> bulkApprove(List<Long> ids, String email) {
         Employee manager = employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Employee not found for email: " + email));
-        
+
         List<Long> successIds = new ArrayList<>();
         List<Map<String, Object>> failedList = new ArrayList<>();
-        
+
         BulkAppraisalActionLog log = new BulkAppraisalActionLog();
         log.setOperationType("APPROVE");
         log.setExecutedBy(manager);
         log.setTimestamp(LocalDateTime.now());
         BulkAppraisalActionLog savedLog = bulkActionLogRepository.save(log);
-        
+
         for (Long id : ids) {
             BulkAppraisalItemResult itemResult = new BulkAppraisalItemResult();
             itemResult.setActionLog(savedLog);
@@ -1568,18 +1579,20 @@ public class AppraisalService {
             try {
                 Appraisal a = appraisalRepository.findById(id)
                         .orElseThrow(() -> new BadRequestException("Appraisal not found."));
-                
+
                 checkCycleFreezeRules(a, AppraisalStatus.MANUAL_REVIEW_REQUIRED);
-                
-                if (a.getEmployee().getManager() == null || !a.getEmployee().getManager().getId().equals(manager.getId())) {
+
+                if (a.getEmployee().getManager() == null
+                        || !a.getEmployee().getManager().getId().equals(manager.getId())) {
                     throw new BadRequestException("Employee does not report to you.");
                 }
-                
+
                 a.setStatus(AppraisalStatus.MANUAL_REVIEW_REQUIRED);
                 a.setUpdatedAt(LocalDateTime.now());
                 Appraisal savedAppraisal = appraisalRepository.save(a);
-                
-                recordTimelineEvent(savedAppraisal, AppraisalStatus.MANUAL_REVIEW_REQUIRED, "Bulk approved by manager.", manager);
+
+                recordTimelineEvent(savedAppraisal, AppraisalStatus.MANUAL_REVIEW_REQUIRED, "Bulk approved by manager.",
+                        manager);
                 successIds.add(id);
                 itemResult.setStatus("SUCCESS");
                 savedLog.getResults().add(itemResult);
@@ -1588,14 +1601,14 @@ public class AppraisalService {
                 failure.put("id", id);
                 failure.put("reason", e.getMessage());
                 failedList.add(failure);
-                
+
                 itemResult.setStatus("FAILED");
                 itemResult.setReason(e.getMessage());
                 savedLog.getResults().add(itemResult);
             }
         }
         bulkActionLogRepository.save(savedLog);
-        
+
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("success", successIds);
         resp.put("failed", failedList);
@@ -1606,16 +1619,16 @@ public class AppraisalService {
     public Map<String, Object> bulkReject(List<Long> ids, String email) {
         Employee manager = employeeRepository.findByEmail(email)
                 .orElseThrow(() -> new BadRequestException("Employee not found for email: " + email));
-        
+
         List<Long> successIds = new ArrayList<>();
         List<Map<String, Object>> failedList = new ArrayList<>();
-        
+
         BulkAppraisalActionLog log = new BulkAppraisalActionLog();
         log.setOperationType("REJECT");
         log.setExecutedBy(manager);
         log.setTimestamp(LocalDateTime.now());
         BulkAppraisalActionLog savedLog = bulkActionLogRepository.save(log);
-        
+
         for (Long id : ids) {
             BulkAppraisalItemResult itemResult = new BulkAppraisalItemResult();
             itemResult.setActionLog(savedLog);
@@ -1623,17 +1636,18 @@ public class AppraisalService {
             try {
                 Appraisal a = appraisalRepository.findById(id)
                         .orElseThrow(() -> new BadRequestException("Appraisal not found."));
-                
+
                 checkCycleFreezeRules(a, AppraisalStatus.DRAFT);
-                
-                if (a.getEmployee().getManager() == null || !a.getEmployee().getManager().getId().equals(manager.getId())) {
+
+                if (a.getEmployee().getManager() == null
+                        || !a.getEmployee().getManager().getId().equals(manager.getId())) {
                     throw new BadRequestException("Employee does not report to you.");
                 }
-                
+
                 a.setStatus(AppraisalStatus.DRAFT);
                 a.setUpdatedAt(LocalDateTime.now());
                 Appraisal savedAppraisal = appraisalRepository.save(a);
-                
+
                 recordTimelineEvent(savedAppraisal, AppraisalStatus.DRAFT, "Bulk rejected by manager.", manager);
                 successIds.add(id);
                 itemResult.setStatus("SUCCESS");
@@ -1643,14 +1657,14 @@ public class AppraisalService {
                 failure.put("id", id);
                 failure.put("reason", e.getMessage());
                 failedList.add(failure);
-                
+
                 itemResult.setStatus("FAILED");
                 itemResult.setReason(e.getMessage());
                 savedLog.getResults().add(itemResult);
             }
         }
         bulkActionLogRepository.save(savedLog);
-        
+
         Map<String, Object> resp = new LinkedHashMap<>();
         resp.put("success", successIds);
         resp.put("failed", failedList);
@@ -1658,8 +1672,9 @@ public class AppraisalService {
     }
 
     public List<Map<String, Object>> getTimeline(Long id) {
-        Appraisal a = appraisalRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
+        if (!appraisalRepository.existsById(id)) {
+            throw new BadRequestException("Appraisal not found: " + id);
+        }
         List<AppraisalTimelineEvent> events = timelineEventRepository.findByAppraisalIdOrderByTimestampAsc(id);
         return events.stream().map(e -> {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -1672,8 +1687,9 @@ public class AppraisalService {
     }
 
     public List<Map<String, Object>> getComments(Long id) {
-        Appraisal a = appraisalRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
+        if (!appraisalRepository.existsById(id)) {
+            throw new BadRequestException("Appraisal not found: " + id);
+        }
         List<AppraisalComment> comments = commentRepository.findByAppraisalIdOrderByCreatedAtAsc(id);
         return comments.stream().map(c -> {
             Map<String, Object> m = new LinkedHashMap<>();
@@ -1691,14 +1707,14 @@ public class AppraisalService {
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + id));
         User user = userRepository.findByWorkEmail(email)
                 .orElseThrow(() -> new BadRequestException("User not found: " + email));
-        
+
         AppraisalComment comment = new AppraisalComment();
         comment.setAppraisal(a);
         comment.setUser(user);
         comment.setComment(commentText);
         comment.setCreatedAt(LocalDateTime.now());
         AppraisalComment saved = commentRepository.save(comment);
-        
+
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", saved.getId());
         m.put("comment", saved.getComment());
@@ -1725,15 +1741,16 @@ public class AppraisalService {
         Map<String, List<Appraisal>> grouped = appraisals.stream()
                 .filter(a -> a.getEmployee().getDepartment() != null)
                 .collect(Collectors.groupingBy(a -> a.getEmployee().getDepartment()));
-        
+
         List<Map<String, Object>> summary = new ArrayList<>();
         grouped.forEach((dept, list) -> {
             long total = list.size();
             long processed = list.stream().filter(a -> a.getStatus() == AppraisalStatus.PROCESSED).count();
             double avgRating = list.stream()
-                    .mapToDouble(a -> a.getFinalRating() != null ? a.getFinalRating() : (a.getManagerRating() != null ? a.getManagerRating() : 0.0))
+                    .mapToDouble(a -> a.getFinalRating() != null ? a.getFinalRating()
+                            : (a.getManagerRating() != null ? a.getManagerRating() : 0.0))
                     .average().orElse(0.0);
-            
+
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("department", dept);
             map.put("totalAppraisals", total);
@@ -1748,18 +1765,22 @@ public class AppraisalService {
         List<Increment> increments = incrementRepository.findAll();
         BigDecimal totalRecommended = BigDecimal.ZERO;
         BigDecimal totalApproved = BigDecimal.ZERO;
-        
+
         for (Increment inc : increments) {
             BigDecimal currentSalary = inc.getCurrentSalary() != null ? inc.getCurrentSalary() : BigDecimal.ZERO;
-            BigDecimal hrRecPercentage = calculateRecommendedPercentage(inc.getAppraisal() != null && inc.getAppraisal().getManagerRating() != null ? inc.getAppraisal().getManagerRating() : 3.0);
-            BigDecimal hrRecAmount = currentSalary.multiply(hrRecPercentage).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+            BigDecimal hrRecPercentage = calculateRecommendedPercentage(
+                    inc.getAppraisal() != null && inc.getAppraisal().getManagerRating() != null
+                            ? inc.getAppraisal().getManagerRating()
+                            : 3.0);
+            BigDecimal hrRecAmount = currentSalary.multiply(hrRecPercentage).divide(BigDecimal.valueOf(100), 2,
+                    RoundingMode.HALF_UP);
             totalRecommended = totalRecommended.add(hrRecAmount);
-            
+
             if ("APPROVED".equalsIgnoreCase(inc.getStatus())) {
                 totalApproved = totalApproved.add(inc.getIncrementAmount());
             }
         }
-        
+
         Map<String, Object> gap = new LinkedHashMap<>();
         gap.put("totalHRRecommendedAmount", totalRecommended);
         gap.put("totalFinanceApprovedAmount", totalApproved);
@@ -1772,9 +1793,11 @@ public class AppraisalService {
                 .filter(a -> a.getCycle().getId().equals(cycleId))
                 .collect(Collectors.toList());
         long total = list.size();
-        long completed = list.stream().filter(a -> a.getStatus() == AppraisalStatus.PROCESSED || a.getStatus() == AppraisalStatus.CLOSED).count();
+        long completed = list.stream()
+                .filter(a -> a.getStatus() == AppraisalStatus.PROCESSED || a.getStatus() == AppraisalStatus.CLOSED)
+                .count();
         long pending = total - completed;
-        
+
         Map<String, Object> progress = new LinkedHashMap<>();
         progress.put("cycleId", cycleId);
         progress.put("totalAppraisals", total);
@@ -1805,36 +1828,37 @@ public class AppraisalService {
     public SalaryRevision executePayrollDecoupled(Long appraisalId, String email) {
         Appraisal a = appraisalRepository.findById(appraisalId)
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + appraisalId));
-        
+
         if (a.getStatus() == AppraisalStatus.PROCESSED || a.getStatus() == AppraisalStatus.CLOSED) {
             throw new BadRequestException("Duplicate execution: Appraisal is already processed or closed.");
         }
-        
+
         if (a.getStatus() != AppraisalStatus.FINANCE_APPROVED) {
             throw new BadRequestException("Appraisal status must be FINANCE_APPROVED to execute payroll.");
         }
-        
+
         Employee actionBy = employeeRepository.findByEmail(email).orElse(null);
         StateTransitionValidator.validate(a.getStatus(), AppraisalStatus.PROCESSED);
-        
+
         Increment inc = incrementRepository.findAll().stream()
                 .filter(i -> i.getAppraisal() != null && i.getAppraisal().getId().equals(a.getId()))
                 .findFirst()
-                .orElseThrow(() -> new BadRequestException("Approved increment not found for appraisal: " + appraisalId));
-        
+                .orElseThrow(
+                        () -> new BadRequestException("Approved increment not found for appraisal: " + appraisalId));
+
         if (!"APPROVED".equalsIgnoreCase(inc.getStatus())) {
             throw new BadRequestException("Increment status must be APPROVED by Finance.");
         }
-        
+
         boolean exists = revisionRepository.findAll().stream()
-                .anyMatch(r -> r.getEmployee().getId().equals(a.getEmployee().getId()) 
-                        && r.getPreviousSalary().compareTo(inc.getCurrentSalary()) == 0 
+                .anyMatch(r -> r.getEmployee().getId().equals(a.getEmployee().getId())
+                        && r.getPreviousSalary().compareTo(inc.getCurrentSalary()) == 0
                         && r.getNewSalary().compareTo(inc.getNewSalary()) == 0
                         && r.getEffectiveDate().equals(inc.getEffectiveDate()));
         if (exists) {
             throw new BadRequestException("Duplicate SalaryRevision already exists.");
         }
-        
+
         SalaryRevision rev = new SalaryRevision();
         rev.setEmployee(a.getEmployee());
         rev.setPreviousSalary(inc.getCurrentSalary());
@@ -1844,20 +1868,20 @@ public class AppraisalService {
         rev.setReason(inc.getReason());
         rev.setCreatedAt(LocalDateTime.now());
         SalaryRevision savedRev = revisionRepository.save(rev);
-        
+
         Employee employee = a.getEmployee();
         employee.setAnnualSalary(inc.getNewSalary());
         employeeRepository.save(employee);
-        
+
         a.setStatus(AppraisalStatus.PROCESSED);
         a.setUpdatedAt(LocalDateTime.now());
         appraisalRepository.save(a);
-        
+
         inc.setStatus("APPLIED");
         inc.setAppliedAt(LocalDateTime.now());
         inc.setUpdatedAt(LocalDateTime.now());
         incrementRepository.save(inc);
-        
+
         recordTimelineEvent(a, AppraisalStatus.PROCESSED, "Payroll revision executed. New salary applied.", actionBy);
         return savedRev;
     }
@@ -1866,14 +1890,14 @@ public class AppraisalService {
     public SalaryRevision retryPayroll(Long appraisalId, String email) {
         Appraisal a = appraisalRepository.findById(appraisalId)
                 .orElseThrow(() -> new BadRequestException("Appraisal not found: " + appraisalId));
-        
+
         if (a.getStatus() == AppraisalStatus.PROCESSED) {
             return revisionRepository.findAll().stream()
                     .filter(r -> r.getEmployee().getId().equals(a.getEmployee().getId()))
                     .reduce((first, second) -> second)
                     .orElseThrow(() -> new BadRequestException("No SalaryRevision found to retry/retrieve."));
         }
-        
+
         return executePayrollDecoupled(appraisalId, email);
     }
 }

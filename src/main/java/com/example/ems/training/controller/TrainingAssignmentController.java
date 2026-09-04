@@ -3,12 +3,16 @@ package com.example.ems.training.controller;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
-import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
-import com.example.ems.training.dto.*;
+import com.example.ems.training.dto.EmployeeTrainingDetailResponse;
+import com.example.ems.training.dto.TeamRiskResponse;
+import com.example.ems.training.dto.TeamSummaryResponse;
+import com.example.ems.training.dto.TrainingAssignRequest;
+import com.example.ems.training.dto.TrainingCatalogRequest;
+import com.example.ems.training.dto.TrainingProgressUpdateRequest;
 import com.example.ems.training.entity.TrainingCourse;
 import com.example.ems.training.service.TrainingAssignmentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -64,7 +68,8 @@ public class TrainingAssignmentController {
     }
 
     private Long getEmployeeDbId(User user) {
-        if (user == null || user.getEmployeeId() == null) return null;
+        if (user == null || user.getEmployeeId() == null)
+            return null;
         return employeeRepository.findByEmployeeId(user.getEmployeeId())
                 .map(Employee::getId)
                 .orElse(null);
@@ -189,7 +194,8 @@ public class TrainingAssignmentController {
 
     // ── C. Employee Training APIs ────────────────────────────────────────────
     @GetMapping("/my")
-    public ResponseEntity<?> getMyTrainings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> getMyTrainings(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -231,14 +237,14 @@ public class TrainingAssignmentController {
     public ResponseEntity<?> completeTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assignmentId,
-            @RequestBody Map<String, Long> body) {
+            @RequestBody @Valid com.example.ems.training.dto.CompleteTrainingRequest body) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        Long employeeId = body.get("employeeId");
+        Long employeeId = body != null ? body.employeeId() : null;
         if (employeeId == null) {
             return ResponseEntity.badRequest().body(ErrorResponse.error("Employee ID is required", "VAL_001"));
         }

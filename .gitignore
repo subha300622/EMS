@@ -3,7 +3,19 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 
 !**/src/main/**/target/
-!**/src/test/**/target/
+!.**/src/test/**/target/
+
+### Runtime & Generated Files ###
+*.log
+dump.rdb
+scratch/
+tmp/
+uploads/
+*.pdf
+validate-flyway-local.sh
+.env
+.env.*
+!.env.example
 
 ### STS ###
 .apt_generated
@@ -32,12 +44,3 @@ build/
 
 ### VS Code ###
 .vscode/
-scratch/print_payloads_manager_v2.py
-post_api_payloads.log
-scratch/employee_api_test_req_resp.txt
-scratch/print_payloads_manager.py
-scratch/print_payloads_notifications.py
-scratch/verification_results.md
-scratch/verify_employee_details_apis.py
-scratch/verify_manager_dashboard_v2.py
-scratch/verify_manager_dashboard.py

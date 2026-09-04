@@ -424,7 +424,7 @@ public class DmsController {
     public ResponseEntity<ApiResponse<Object>> signatureRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, Object> body){
+            @RequestBody @Valid com.example.ems.common.dto.DocumentSignatureRequest body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -432,10 +432,10 @@ public class DmsController {
 
         // Dynamically routing:
         // A. If user is manager and requesting a signature
-        if (isManager(currentUser) && body.containsKey("employeeId")) {
+        if (isManager(currentUser) && body != null && body.employeeId() != null) {
             DmsSignatureRequest request = new DmsSignatureRequest();
-            request.setEmployeeId(((Number) body.get("employeeId")).longValue());
-            request.setComments((String) body.get("comments"));
+            request.setEmployeeId(body.employeeId());
+            request.setComments(body.comments());
 
             try {
                 DmsSignatureResponse response = dmsService.submitSignatureRequest(id, request, currentUser.getWorkEmail());
@@ -447,10 +447,10 @@ public class DmsController {
         }
 
         // B. If employee is completing/signing the signature request
-        if (body.containsKey("status")) {
+        if (body != null && body.status() != null && !body.status().isBlank()) {
             DmsSignatureCompleteRequest request = new DmsSignatureCompleteRequest();
-            request.setStatus((String) body.get("status"));
-            request.setComments((String) body.get("comments"));
+            request.setStatus(body.status());
+            request.setComments(body.comments());
 
             try {
                 DmsSignatureResponse response = dmsService.completeSignature(id, request, currentUser.getWorkEmail());

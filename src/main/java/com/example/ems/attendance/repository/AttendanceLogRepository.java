@@ -13,4 +13,5 @@ import java.util.List;
 public interface AttendanceLogRepository extends JpaRepository<AttendanceLog, Long> {
     Page<AttendanceLog> findByEmployeeIdAndDate(Long employeeId, LocalDate date, Pageable pageable);
     List<AttendanceLog> findByEmployeeIdAndDateOrderByTimeAsc(Long employeeId, LocalDate date);
+    List<AttendanceLog> findByEmployeeId(Long employeeId);
 }

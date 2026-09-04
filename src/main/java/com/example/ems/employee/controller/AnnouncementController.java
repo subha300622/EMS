@@ -18,6 +18,7 @@ import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -270,7 +271,7 @@ public class AnnouncementController {
     public ResponseEntity<ApiResponse<AnnouncementCommentDto>> addComment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody @Valid com.example.ems.employee.dto.AddCommentRequest body) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -282,7 +283,7 @@ public class AnnouncementController {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires announcement read permissions.", "AUTH_002"));
         }
-        String content = body != null ? body.get("content") : null;
+        String content = body != null ? body.content() : null;
         if (content == null || content.trim().isEmpty()) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Comment content cannot be empty", "ANC_002"));

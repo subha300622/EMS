@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: ems-backend-test
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:subashinibalu30@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:nqokfqkbsychvhfq}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5432/employee_db}
+    username: ${SPRING_DATASOURCE_USERNAME:ems_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:12345}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    defer-datasource-initialization: false
+  sql:
+    init:
+      mode: never
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 1
+    clean-disabled: false
+    clean-on-validation-error: true
+    out-of-order: true
+    repair-on-migrate: true
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
+resend:
+  api-key: ${RESEND_API_KEY:re_dummy_key}
+  from-email: ${RESEND_FROM_EMAIL:EMS System <noreply@company.com>}
+
+security:
+  jwt:
+    secret: ${JWT_SECRET:jwtSecretKeyForEmsBackendDevelopmentShouldBeLongAndSecure32Bytes!}
+
+encryption:
+  aes-key: ${AES_ENCRYPTION_KEY:RazorpayXSecureKeyOrgConfig2026!}
+
+app:
+  seed:
+    domain: ${APP_SEED_DOMAIN:company.com}
+    admin-password: ${PLATFORM_ADMIN_PASSWORD:pladmin@123}
+  email:
+    sender-address: ${APP_EMAIL_SENDER_ADDRESS:noreply@company.com}
+  base-url: ${APP_BASE_URL:http://localhost:3000}
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  asset-verification-url: ${ASSET_VERIFICATION_URL:http://localhost:8080/api/v1/assets/verify/}
+  dicebear-avatar-url: ${DICEBEAR_AVATAR_URL:https://api.dicebear.com/7.x/initials/svg?seed=}
+  kafka:
+    enabled: false # Disabled in standard tests
+
+integrations:
+  slack-webhook: ${SLACK_WEBHOOK_URL:https://hooks.slack.com/services/test}
+  jira-base-url: ${JIRA_BASE_URL:https://jira.enterprise.com}
+
+springdoc:
+  swagger-ui:
+    disable-swagger-default-url: true
+
+razorpay:
+  enabled: true
+  mode: TEST
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_dummy_key}
+  key-secret: ${RAZORPAY_KEY_SECRET:dummy_secret}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:webhook_secret}
+  currency: INR

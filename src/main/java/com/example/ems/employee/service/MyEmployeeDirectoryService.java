@@ -182,7 +182,7 @@ public class MyEmployeeDirectoryService {
             user.setRequestedRole("EMPLOYEE");
             Role role = roleRepository.findByName("EMPLOYEE").orElse(null);
             user.setRole(role);
-            user.setPassword(passwordEncoder.encode(email.split("@")[0] + "@2"));
+            user.setPassword(passwordEncoder.encode(com.example.ems.common.util.PasswordGeneratorUtil.generateSecurePassword()));
             user.setLocation("Headquarters");
             user = userRepository.save(user);
             user.setUserId("EMP" + String.format("%03d", user.getId()));
@@ -476,29 +476,38 @@ public class MyEmployeeDirectoryService {
 
         EmployeeProfileResponse.ContactProfileDto contactDto = new EmployeeProfileResponse.ContactProfileDto(
                 emp.getEmail(),
-                emp.getPhone());
+                emp.getPhone(),
+                emp.getEmergencyContact());
+
+        EmployeeProfileResponse.PersonalInfoDto personalInfoDto = new EmployeeProfileResponse.PersonalInfoDto(
+                emp.getGender(),
+                emp.getDob() != null ? emp.getDob().toString() : null,
+                emp.getAddress());
 
         EmployeeProfileResponse.WorkInformationDto workDto = new EmployeeProfileResponse.WorkInformationDto(
                 emp.getLocation(),
                 emp.getWorkMode(),
                 emp.getJoiningDate() != null ? emp.getJoiningDate().toString() : null,
+                emp.getEmploymentType(),
                 emp.getStatus());
 
         List<String> skills = skillRepository.findByEmployee(emp).stream()
                 .map(MyEmployeeSkill::getName)
                 .collect(Collectors.toList());
 
-        return new EmployeeProfileResponse(
-                emp.getId(),
-                emp.getEmployeeId(),
-                emp.getFullName(),
-                emp.getProfileImage(),
-                emp.getDesignation(),
-                emp.getDepartment(),
-                managerDto,
-                contactDto,
-                workDto,
-                skills);
+        EmployeeProfileResponse response = new EmployeeProfileResponse();
+        response.setEmployeeId(emp.getId());
+        response.setEmployeeCode(emp.getEmployeeId());
+        response.setFullName(emp.getFullName());
+        response.setProfileImage(emp.getProfileImage());
+        response.setDesignation(emp.getDesignation());
+        response.setDepartment(emp.getDepartment());
+        response.setManager(managerDto);
+        response.setContact(contactDto);
+        response.setPersonalInfo(personalInfoDto);
+        response.setWorkInformation(workDto);
+        response.setSkills(skills);
+        return response;
     }
 
     public EmployeeSearchResponse searchEmployees(String keyword, Integer limit) {

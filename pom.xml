@@ -13,22 +13,12 @@
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ems-backend</name>
 	<description>Employee Management System Backend</description>
-	<!-- Trigger rebuild -->
-	<url/>
-	<licenses>
-		<license/>
-	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
+	<!-- Trigger rebuild: refresh workspace classpath caches -->
+
 	<properties>
 		<java.version>21</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -42,6 +32,18 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-mail</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-prometheus</artifactId>
 		</dependency>
 
 		<dependency>
@@ -85,6 +87,15 @@
 			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
 			<version>2.8.8</version>
 		</dependency>
+		<!-- Flyway for Database Migrations -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
 
 		<!-- Resend Email API SDK -->
 		<dependency>
@@ -93,10 +104,10 @@
 			<version>3.1.0</version>
 		</dependency>
 
-		<!-- BCrypt password hashing -->
+		<!-- Spring Boot Starter Security (includes BCrypt and transitives) -->
 		<dependency>
-			<groupId>org.springframework.security</groupId>
-			<artifactId>spring-security-crypto</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
 
 		<!-- Redis Starter -->
@@ -134,6 +145,46 @@
 			<groupId>org.apache.poi</groupId>
 			<artifactId>poi-ooxml</artifactId>
 			<version>5.3.0</version>
+		</dependency>
+		<!-- ArchUnit for Architecture and Package Boundary Enforcement -->
+		<dependency>
+			<groupId>com.tngtech.archunit</groupId>
+			<artifactId>archunit-junit5</artifactId>
+			<version>1.5.0</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Firebase Admin SDK for Storage integration -->
+		<dependency>
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>9.4.2</version>
+		</dependency>
+
+		<!-- Spring Cache & Caffeine for L1 caching -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-cache</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.ben-manes.caffeine</groupId>
+			<artifactId>caffeine</artifactId>
+		</dependency>
+		<!-- Razorpay SDK -->
+		<dependency>
+			<groupId>com.razorpay</groupId>
+			<artifactId>razorpay-java</artifactId>
+			<version>1.4.8</version>
+		</dependency>
+
+		<!-- Apache Kafka -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-kafka</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.kafka</groupId>
+			<artifactId>spring-kafka-test</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 
@@ -173,6 +224,9 @@
 				<version>3.5.5</version>
 				<configuration>
 					<argLine>-XX:+EnableDynamicAgentLoading</argLine>
+					<systemPropertyVariables>
+						<encryption.aes-key>RazorpayXSecureKeyOrgConfig2026!</encryption.aes-key>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -202,33 +256,47 @@
 				<version>3.6.1</version>
 				<configuration>
 					<ignoreNonCompile>true</ignoreNonCompile>
-					<ignoredDependencies>
-						<ignoredDependency>org.springframework.boot:spring-boot-starter*</ignoredDependency>
-						<ignoredDependency>org.postgresql:postgresql</ignoredDependency>
-						<ignoredDependency>org.projectlombok:lombok</ignoredDependency>
-						<ignoredDependency>com.h2database:h2</ignoredDependency>
-						<ignoredDependency>org.springdoc:springdoc-openapi-starter-webmvc-ui</ignoredDependency>
-						<ignoredDependency>io.jsonwebtoken:jjwt-impl</ignoredDependency>
-						<ignoredDependency>io.jsonwebtoken:jjwt-jackson</ignoredDependency>
-					</ignoredDependencies>
+					<ignoredUnusedDeclaredDependencies>
+						<ignoredUnusedDeclaredDependency>org.springframework.boot:spring-boot-starter*</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>org.postgresql:postgresql</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>org.projectlombok:lombok</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>com.h2database:h2</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>org.springdoc:springdoc-openapi-starter-webmvc-ui</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>io.jsonwebtoken:jjwt-impl</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>io.jsonwebtoken:jjwt-jackson</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>org.flywaydb:flyway-database-postgresql</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>io.micrometer:micrometer-registry-prometheus</ignoredUnusedDeclaredDependency>
+						<ignoredUnusedDeclaredDependency>com.resend:resend-java</ignoredUnusedDeclaredDependency>
+					</ignoredUnusedDeclaredDependencies>
 					<ignoredUsedUndeclaredDependencies>
 						<ignoredUsedUndeclaredDependency>org.springframework:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.springframework.boot:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.springframework.data:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.springframework.security:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>com.fasterxml.jackson.core:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>com.fasterxml.jackson.datatype:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>tools.jackson.core:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>jakarta.persistence:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>jakarta.annotation:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>jakarta.validation:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>jakarta.mail:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>io.swagger.core.v3:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.springdoc:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.hibernate.orm:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.slf4j:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.hamcrest:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.mockito:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.assertj:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.tngtech.archunit:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>commons-logging:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.apache.poi:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.junit.jupiter:*</ignoredUsedUndeclaredDependency>
 						<ignoredUsedUndeclaredDependency>org.apache.tomcat.embed:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.springframework.kafka:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>org.apache.kafka:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.google.auth:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.google.cloud:*</ignoredUsedUndeclaredDependency>
+						<ignoredUsedUndeclaredDependency>com.vaadin.external.google:*</ignoredUsedUndeclaredDependency>
 					</ignoredUsedUndeclaredDependencies>
 				</configuration>
 			</plugin>
@@ -241,6 +309,9 @@
 					<printFailingErrors>true</printFailingErrors>
 					<linkXRef>false</linkXRef>
 					<typeResolution>false</typeResolution>
+					<rulesets>
+						<ruleset>${project.basedir}/pmd-ruleset.xml</ruleset>
+					</rulesets>
 				</configuration>
 				<executions>
 					<execution>
@@ -251,9 +322,31 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<version>11.14.1</version>
+				<configuration>
+					<locations>
+						<location>filesystem:src/main/resources/db/migration</location>
+					</locations>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-database-postgresql</artifactId>
+						<version>11.14.1</version>
+					</dependency>
+					<dependency>
+						<groupId>org.postgresql</groupId>
+						<artifactId>postgresql</artifactId>
+						<version>42.7.5</version>
+					</dependency>
+				</dependencies>
+			</plugin>
 
 		</plugins>
 	</build>
 
-	<!-- Force classpath rebuild to sync IDE language server -->
+	<!-- Force classpath rebuild to sync IDE language server: trigger 3 -->
 </project>

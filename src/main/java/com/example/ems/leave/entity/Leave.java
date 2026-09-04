@@ -1,7 +1,9 @@
 package com.example.ems.leave.entity;
 
 import com.example.ems.employee.entity.Employee;
-
+import com.example.ems.organization.entity.Organization;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -16,11 +18,17 @@ public class Leave {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "employee_id", nullable = false)
+    @JsonIgnoreProperties({"manager", "team", "hibernateLazyInitializer", "handler"})
     private Employee employee;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "leave_type_id", nullable = false)
     private LeaveType leaveType;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    @JsonIgnore
+    private Organization organization;
 
     @Column(nullable = false)
     private LocalDate startDate;
@@ -28,17 +36,27 @@ public class Leave {
     @Column(nullable = false)
     private LocalDate endDate;
 
+    @Column(nullable = false)
+    private String durationType = "FULL_DAY"; // FULL_DAY, FIRST_HALF, SECOND_HALF
+
+    @Column(nullable = false)
+    private Double durationDays = 1.0;
+
     private String reason;
 
     @Column(nullable = false)
     private String status = "PENDING"; // PENDING, APPROVED, REJECTED, CANCELLED
 
+    private String approvalWorkflowInstanceId;
+
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "approved_by_id")
+    @JsonIgnoreProperties({"manager", "team", "hibernateLazyInitializer", "handler"})
     private Employee approvedBy;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "approver_id")
+    @JsonIgnoreProperties({"manager", "team", "hibernateLazyInitializer", "handler"})
     private Employee approver;
 
     @Column(name = "manager_comment")
@@ -69,115 +87,57 @@ public class Leave {
         this.updatedAt = updatedAt;
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public Employee getEmployee() { return employee; }
+    public void setEmployee(Employee employee) { this.employee = employee; }
 
-    public Employee getEmployee() {
-        return employee;
-    }
+    public LeaveType getLeaveType() { return leaveType; }
+    public void setLeaveType(LeaveType leaveType) { this.leaveType = leaveType; }
 
-    public void setEmployee(Employee employee) {
-        this.employee = employee;
-    }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 
-    public LeaveType getLeaveType() {
-        return leaveType;
-    }
+    public LocalDate getStartDate() { return startDate; }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
-    public void setLeaveType(LeaveType leaveType) {
-        this.leaveType = leaveType;
-    }
+    public LocalDate getEndDate() { return endDate; }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
 
-    public LocalDate getStartDate() {
-        return startDate;
-    }
+    public String getDurationType() { return durationType; }
+    public void setDurationType(String durationType) { this.durationType = durationType; }
 
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
+    public Double getDurationDays() { return durationDays; }
+    public void setDurationDays(Double durationDays) { this.durationDays = durationDays; }
 
-    public LocalDate getEndDate() {
-        return endDate;
-    }
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
 
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public String getReason() {
-        return reason;
-    }
+    public String getApprovalWorkflowInstanceId() { return approvalWorkflowInstanceId; }
+    public void setApprovalWorkflowInstanceId(String approvalWorkflowInstanceId) { this.approvalWorkflowInstanceId = approvalWorkflowInstanceId; }
 
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
+    public Employee getApprovedBy() { return approvedBy; }
+    public void setApprovedBy(Employee approvedBy) { this.approvedBy = approvedBy; }
 
-    public String getStatus() {
-        return status;
-    }
+    public Employee getApprover() { return approver; }
+    public void setApprover(Employee approver) { this.approver = approver; }
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public String getManagerComment() { return managerComment; }
+    public void setManagerComment(String managerComment) { this.managerComment = managerComment; }
 
-    public Employee getApprovedBy() {
-        return approvedBy;
-    }
+    public LocalDateTime getApprovedAt() { return approvedAt; }
+    public void setApprovedAt(LocalDateTime approvedAt) { this.approvedAt = approvedAt; }
 
-    public void setApprovedBy(Employee approvedBy) {
-        this.approvedBy = approvedBy;
-    }
+    public LocalDateTime getRejectedAt() { return rejectedAt; }
+    public void setRejectedAt(LocalDateTime rejectedAt) { this.rejectedAt = rejectedAt; }
 
-    public LocalDateTime getAppliedAt() {
-        return appliedAt;
-    }
+    public LocalDateTime getAppliedAt() { return appliedAt; }
+    public void setAppliedAt(LocalDateTime appliedAt) { this.appliedAt = appliedAt; }
 
-    public void setAppliedAt(LocalDateTime appliedAt) {
-        this.appliedAt = appliedAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Employee getApprover() {
-        return approver;
-    }
-
-    public void setApprover(Employee approver) {
-        this.approver = approver;
-    }
-
-    public String getManagerComment() {
-        return managerComment;
-    }
-
-    public void setManagerComment(String managerComment) {
-        this.managerComment = managerComment;
-    }
-
-    public LocalDateTime getApprovedAt() {
-        return approvedAt;
-    }
-
-    public void setApprovedAt(LocalDateTime approvedAt) {
-        this.approvedAt = approvedAt;
-    }
-
-    public LocalDateTime getRejectedAt() {
-        return rejectedAt;
-    }
-
-    public void setRejectedAt(LocalDateTime rejectedAt) {
-        this.rejectedAt = rejectedAt;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

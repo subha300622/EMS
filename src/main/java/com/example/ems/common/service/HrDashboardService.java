@@ -49,7 +49,9 @@ public class HrDashboardService {
             displayNewHires = 24L;
         }
 
-        long displayOpenPositions = jobRepository.findByStatus("ACTIVE").size();
+        long displayOpenPositions = jobRepository.findAll().stream()
+                .filter(j -> j.getStatus() == com.example.ems.recruitment.entity.JobStatus.PUBLISHED)
+                .count();
         if (displayOpenPositions == 0) {
             displayOpenPositions = 18L;
         }
@@ -61,7 +63,7 @@ public class HrDashboardService {
 
         LocalDate today = LocalDate.now();
         long displayApplicationsToday = candidateRepository.findAll().stream()
-                .filter(c -> c.getAppliedAt() != null && c.getAppliedAt().toLocalDate().isEqual(today))
+                .filter(c -> c.getCreatedAt() != null && c.getCreatedAt().toLocalDate().isEqual(today))
                 .count();
         if (displayApplicationsToday == 0) {
             displayApplicationsToday = 8L;
@@ -122,7 +124,9 @@ public class HrDashboardService {
     }
 
     public Map<String, Object> getOpenPositionsStats() {
-        long total = jobRepository.findByStatus("ACTIVE").size();
+        long total = jobRepository.findAll().stream()
+                .filter(j -> j.getStatus() == com.example.ems.recruitment.entity.JobStatus.PUBLISHED)
+                .count();
         if (total == 0) {
             total = 18L;
         }

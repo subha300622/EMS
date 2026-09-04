@@ -1,26 +1,29 @@
 package com.example.ems.leave.dto;
+
 import io.swagger.v3.oas.annotations.media.Schema;
-
-
-
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
 public class LeaveRequest {
 
-    @NotNull(message = "Leave type ID is required")
     @Schema(example = "1")
     private Long leaveTypeId;
 
-    @NotNull(message = "Start date is required")
-    @Schema(example = "2026-06-19")
+    @Schema(example = "2026-09-01")
     private LocalDate startDate;
 
-    @NotNull(message = "End date is required")
-    @Schema(example = "2026-06-19")
+    @Schema(example = "2026-09-03")
     private LocalDate endDate;
 
-    @Schema(example = "Personal business")
+    @Schema(example = "2026-09-01")
+    private LocalDate fromDate;
+
+    @Schema(example = "2026-09-03")
+    private LocalDate toDate;
+
+    @Schema(example = "FULL_DAY")
+    private String durationType = "FULL_DAY";
+
+    @Schema(example = "Personal work")
     private String reason;
 
     public LeaveRequest() {}
@@ -32,35 +35,34 @@ public class LeaveRequest {
         this.reason = reason;
     }
 
-    public Long getLeaveTypeId() {
-        return leaveTypeId;
-    }
-
-    public void setLeaveTypeId(Long leaveTypeId) {
-        this.leaveTypeId = leaveTypeId;
-    }
+    public Long getLeaveTypeId() { return leaveTypeId; }
+    public void setLeaveTypeId(Long leaveTypeId) { this.leaveTypeId = leaveTypeId; }
 
     public LocalDate getStartDate() {
-        return startDate;
+        return startDate != null ? startDate : fromDate;
     }
-
-    public void setStartDate(LocalDate startDate) {
-        this.startDate = startDate;
-    }
+    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
 
     public LocalDate getEndDate() {
-        return endDate;
+        return endDate != null ? endDate : toDate;
+    }
+    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+
+    public LocalDate getFromDate() { return getStartDate(); }
+    public void setFromDate(LocalDate fromDate) {
+        this.fromDate = fromDate;
+        if (this.startDate == null) this.startDate = fromDate;
     }
 
-    public void setEndDate(LocalDate endDate) {
-        this.endDate = endDate;
+    public LocalDate getToDate() { return getEndDate(); }
+    public void setToDate(LocalDate toDate) {
+        this.toDate = toDate;
+        if (this.endDate == null) this.endDate = toDate;
     }
 
-    public String getReason() {
-        return reason;
-    }
+    public String getDurationType() { return durationType != null ? durationType : "FULL_DAY"; }
+    public void setDurationType(String durationType) { this.durationType = durationType; }
 
-    public void setReason(String reason) {
-        this.reason = reason;
-    }
+    public String getReason() { return reason; }
+    public void setReason(String reason) { this.reason = reason; }
 }

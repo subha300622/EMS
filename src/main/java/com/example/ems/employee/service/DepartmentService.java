@@ -7,6 +7,15 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.DepartmentRepository;
 import com.example.ems.employee.repository.DepartmentTransferRepository;
 import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.employee.repository.MyTeamRepository;
+import com.example.ems.employee.entity.MyTeam;
+import com.example.ems.employee.dto.DepartmentCreateRequest;
+import com.example.ems.employee.dto.DepartmentResponseDto;
+import com.example.ems.employee.dto.DepartmentUpdateRequest;
+import com.example.ems.employee.entity.DepartmentAuditLog;
+import com.example.ems.employee.repository.DepartmentAuditLogRepository;
+import com.example.ems.auth.entity.User;
+import com.example.ems.security.context.TenantContext;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -28,6 +37,112 @@ public class DepartmentService {
     @Autowired
     private DepartmentTransferRepository departmentTransferRepository;
 
+    @Autowired
+    private MyTeamRepository myTeamRepository;
+
+    @Autowired
+    private DepartmentAuditLogRepository departmentAuditLogRepository;
+
+    @Autowired
+    private com.example.ems.organization.repository.OrganizationRepository organizationRepository;
+
+    @Transactional
+    public Department createDepartment(DepartmentCreateRequest request, User currentUser) {
+        Long orgId = TenantContext.getOrganizationId();
+        if (orgId == null && currentUser != null && currentUser.getOrganization() != null) {
+            orgId = currentUser.getOrganization().getId();
+        }
+        com.example.ems.organization.entity.Organization userOrg = null;
+        if (orgId != null) {
+            userOrg = organizationRepository.findById(orgId).orElse(null);
+            if (departmentRepository.existsByNameAndOrganizationId(request.getName(), orgId)) {
+                throw new IllegalArgumentException("Department name already exists in your organization");
+            }
+            if (departmentRepository.existsByCodeAndOrganizationId(request.getCode(), orgId)) {
+                throw new IllegalArgumentException("Department code already exists in your organization");
+            }
+        } else {
+            if (departmentRepository.existsByName(request.getName())) {
+                throw new IllegalArgumentException("Department name already exists");
+            }
+            if (departmentRepository.existsByCode(request.getCode())) {
+                throw new IllegalArgumentException("Department code already exists");
+            }
+        }
+
+        Department d = new Department();
+        d.setName(request.getName());
+        d.setCode(request.getCode().trim().toUpperCase());
+        d.setDescription(request.getDescription());
+        d.setOrganization(userOrg);
+
+        // Resolve Parent Department
+        if (request.getParentDepartment() != null && !request.getParentDepartment().isBlank() && !"None".equalsIgnoreCase(request.getParentDepartment())) {
+            Optional<Department> parentOpt = departmentRepository.findByName(request.getParentDepartment());
+            if (parentOpt.isEmpty()) {
+                parentOpt = departmentRepository.findByCode(request.getParentDepartment());
+            }
+            if (parentOpt.isEmpty()) {
+                try {
+                    parentOpt = departmentRepository.findById(Long.parseLong(request.getParentDepartment()));
+                } catch (NumberFormatException ignored) {}
+            }
+            parentOpt.ifPresent(parent -> d.setParentDepartmentId(parent.getId()));
+        }
+
+        // Resolve Head (Manager)
+        if (request.getHead() != null && !request.getHead().isBlank()) {
+            Optional<Employee> headOpt = employeeRepository.findByEmail(request.getHead());
+            if (headOpt.isEmpty()) {
+                headOpt = employeeRepository.findByEmployeeId(request.getHead());
+            }
+            if (headOpt.isEmpty()) {
+                try {
+                    headOpt = employeeRepository.findById(Long.parseLong(request.getHead()));
+                } catch (NumberFormatException ignored) {}
+            }
+            if (headOpt.isEmpty()) {
+                headOpt = employeeRepository.findByFullName(request.getHead());
+            }
+            headOpt.ifPresent(head -> d.setManagerId(head.getId()));
+        }
+
+        d.setBudget(BigDecimal.ZERO);
+        d.setStatus("ACTIVE");
+        d.setUtilizedBudget(BigDecimal.ZERO);
+        Department savedDept = departmentRepository.save(d);
+
+        // Process Teams
+        if (request.getTeams() != null && !request.getTeams().isEmpty()) {
+            for (DepartmentCreateRequest.TeamInput teamInput : request.getTeams()) {
+                MyTeam team = new MyTeam();
+                team.setTeamName(teamInput.getName());
+                team.setDepartment(savedDept.getName());
+
+                // Resolve Team Lead (Manager)
+                if (teamInput.getLead() != null && !teamInput.getLead().isBlank()) {
+                    Optional<Employee> leadOpt = employeeRepository.findByEmail(teamInput.getLead());
+                    if (leadOpt.isEmpty()) {
+                        leadOpt = employeeRepository.findByEmployeeId(teamInput.getLead());
+                    }
+                    if (leadOpt.isEmpty()) {
+                        try {
+                            leadOpt = employeeRepository.findById(Long.parseLong(teamInput.getLead()));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                    if (leadOpt.isEmpty()) {
+                        leadOpt = employeeRepository.findByFullName(teamInput.getLead());
+                    }
+                    leadOpt.ifPresent(team::setManager);
+                }
+
+                myTeamRepository.save(team);
+            }
+        }
+
+        return savedDept;
+    }
+
     @Transactional
     public Department createDepartment(DepartmentRequest request) {
         if (departmentRepository.existsByName(request.getName())) {
@@ -47,6 +162,261 @@ public class DepartmentService {
         d.setCostCenter(request.getCostCenter());
         d.setUtilizedBudget(request.getUtilizedBudget() != null ? request.getUtilizedBudget() : BigDecimal.ZERO);
         return departmentRepository.save(d);
+    }
+
+    @Transactional
+    public DepartmentResponseDto updateDepartment(Long id, DepartmentUpdateRequest request, User currentUser) {
+        Long orgId = TenantContext.getOrganizationId();
+        Department d;
+        if (orgId != null) {
+            d = departmentRepository.findByIdAndOrganizationId(id, orgId)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found in your organization with ID: " + id));
+        } else {
+            d = departmentRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + id));
+        }
+
+        Long auditUserId = currentUser != null ? currentUser.getId() : null;
+        String auditUserName = currentUser != null ? currentUser.getFullName() : "SYSTEM";
+        String auditUserRole = (currentUser != null && currentUser.getRole() != null) ? currentUser.getRole().getName() : "SYSTEM";
+
+        // 1. Audit Name
+        if (request.getName() != null && !request.getName().equals(d.getName())) {
+            departmentAuditLogRepository.save(new DepartmentAuditLog(
+                    id, "name", d.getName(), request.getName(),
+                    auditUserId, auditUserName, auditUserRole,
+                    "Updated department name"
+            ));
+            d.setName(request.getName());
+        }
+
+        // 2. Audit Code
+        if (request.getCode() != null && !request.getCode().equalsIgnoreCase(d.getCode())) {
+            departmentAuditLogRepository.save(new DepartmentAuditLog(
+                    id, "code", d.getCode(), request.getCode(),
+                    auditUserId, auditUserName, auditUserRole,
+                    "Updated department code"
+            ));
+            d.setCode(request.getCode().trim().toUpperCase());
+        }
+
+        // 3. Audit Description
+        if (request.getDescription() != null && !request.getDescription().equals(d.getDescription())) {
+            departmentAuditLogRepository.save(new DepartmentAuditLog(
+                    id, "description", d.getDescription(), request.getDescription(),
+                    auditUserId, auditUserName, auditUserRole,
+                    "Updated department description"
+            ));
+            d.setDescription(request.getDescription());
+        }
+
+        // 4. Audit Parent Department
+        if (request.getParentDepartmentId() != null) {
+            Long parentId = null;
+            if (!"None".equalsIgnoreCase(request.getParentDepartmentId()) && !request.getParentDepartmentId().isBlank()) {
+                Optional<Department> parentOpt = departmentRepository.findById(Long.parseLong(request.getParentDepartmentId()));
+                if (parentOpt.isPresent()) {
+                    parentId = parentOpt.get().getId();
+                }
+            }
+            if (!Objects.equals(parentId, d.getParentDepartmentId())) {
+                String oldParentName = "None";
+                if (d.getParentDepartmentId() != null) {
+                    oldParentName = departmentRepository.findById(d.getParentDepartmentId())
+                            .map(Department::getName).orElse("None");
+                }
+                String newParentName = "None";
+                if (parentId != null) {
+                    newParentName = departmentRepository.findById(parentId)
+                            .map(Department::getName).orElse("None");
+                }
+                departmentAuditLogRepository.save(new DepartmentAuditLog(
+                        id, "parentDepartmentId", oldParentName, newParentName,
+                        auditUserId, auditUserName, auditUserRole,
+                        "Updated parent department"
+                ));
+                d.setParentDepartmentId(parentId);
+            }
+        }
+
+        // 5. Audit Department Head (Manager)
+        if (request.getHeadId() != null) {
+            Long managerId = null;
+            if (!request.getHeadId().isBlank()) {
+                Optional<Employee> headOpt = employeeRepository.findByEmployeeId(request.getHeadId());
+                if (headOpt.isEmpty()) {
+                    try {
+                        headOpt = employeeRepository.findById(Long.parseLong(request.getHeadId()));
+                    } catch (NumberFormatException ignored) {}
+                }
+                if (headOpt.isPresent()) {
+                    managerId = headOpt.get().getId();
+                }
+            }
+            if (!Objects.equals(managerId, d.getManagerId())) {
+                String oldHeadName = "None";
+                if (d.getManagerId() != null) {
+                    oldHeadName = employeeRepository.findById(d.getManagerId())
+                            .map(Employee::getFullName).orElse("None");
+                }
+                String newHeadName = "None";
+                if (managerId != null) {
+                    newHeadName = employeeRepository.findById(managerId)
+                            .map(Employee::getFullName).orElse("None");
+                }
+                departmentAuditLogRepository.save(new DepartmentAuditLog(
+                        id, "Department Head", oldHeadName, newHeadName,
+                        auditUserId, auditUserName, auditUserRole,
+                        "Assigned as new department head"
+                ));
+                d.setManagerId(managerId);
+            }
+        }
+
+        Department savedDept = departmentRepository.save(d);
+
+        // 6. Update Teams
+        if (request.getTeams() != null) {
+            for (DepartmentUpdateRequest.TeamUpdateInput teamInput : request.getTeams()) {
+                MyTeam team = null;
+                if (teamInput.getId() != null) {
+                    try {
+                        team = myTeamRepository.findById(Long.parseLong(teamInput.getId())).orElse(null);
+                    } catch (NumberFormatException ignored) {}
+                }
+                if (team == null) {
+                    team = new MyTeam();
+                }
+                team.setTeamName(teamInput.getName());
+                team.setDepartment(savedDept.getName());
+
+                if (teamInput.getLeadId() != null && !teamInput.getLeadId().isBlank()) {
+                    Optional<Employee> leadOpt = employeeRepository.findByEmployeeId(teamInput.getLeadId());
+                    if (leadOpt.isEmpty()) {
+                        try {
+                            leadOpt = employeeRepository.findById(Long.parseLong(teamInput.getLeadId()));
+                        } catch (NumberFormatException ignored) {}
+                    }
+                    leadOpt.ifPresent(team::setManager);
+                }
+                myTeamRepository.save(team);
+            }
+        }
+
+        return getDepartmentDetails(id).orElseThrow();
+    }
+
+    public List<DepartmentAuditLog> getDepartmentHistory(Long departmentId) {
+        Long orgId = TenantContext.getOrganizationId();
+        if (orgId != null && departmentRepository.findByIdAndOrganizationId(departmentId, orgId).isEmpty()) {
+            return List.of();
+        }
+        return departmentAuditLogRepository.findByDepartmentId(departmentId);
+    }
+
+    public List<DepartmentResponseDto> getDepartmentsList() {
+        Long orgId = TenantContext.getOrganizationId();
+        List<Department> departments;
+        if (orgId != null) {
+            departments = departmentRepository.findByOrganizationId(orgId);
+        } else {
+            departments = departmentRepository.findAll();
+        }
+        List<Employee> allEmployees = employeeRepository.findAll();
+        List<DepartmentResponseDto> dtos = new ArrayList<>();
+
+        for (Department d : departments) {
+            dtos.add(mapToDto(d, allEmployees));
+        }
+
+        return dtos;
+    }
+
+    public Optional<DepartmentResponseDto> getDepartmentDetails(Long id) {
+        Long orgId = TenantContext.getOrganizationId();
+        Optional<Department> deptOpt;
+        if (orgId != null) {
+            deptOpt = departmentRepository.findByIdAndOrganizationId(id, orgId);
+        } else {
+            deptOpt = departmentRepository.findById(id);
+        }
+        return deptOpt.map(d -> {
+            List<Employee> allEmployees = employeeRepository.findAll();
+            DepartmentResponseDto dto = mapToDto(d, allEmployees);
+
+            // Fetch Teams
+            List<MyTeam> teams = myTeamRepository.findByDepartment(d.getName());
+            if (teams != null) {
+                dto.setTeams(teams.stream().map(t -> {
+                    DepartmentResponseDto.TeamDto td = new DepartmentResponseDto.TeamDto();
+                    td.setId(String.valueOf(t.getId()));
+                    td.setName(t.getTeamName());
+                    if (t.getManager() != null) {
+                        td.setLeadId(String.valueOf(t.getManager().getId()));
+                        td.setLeadName(t.getManager().getFullName());
+                    }
+                    return td;
+                }).toList());
+            }
+
+            // Mock Change History
+            DepartmentResponseDto.ChangeRecordDto change = new DepartmentResponseDto.ChangeRecordDto();
+            change.setField("status");
+            change.setOldValue("Inactive");
+            change.setNewValue("Active");
+            change.setChangedBy("System Admin");
+            change.setChangedAt("2026-07-17T00:00:00Z");
+            dto.setChangeHistory(List.of(change));
+
+            return dto;
+        });
+    }
+
+    private DepartmentResponseDto mapToDto(Department d, List<Employee> allEmployees) {
+        DepartmentResponseDto dto = new DepartmentResponseDto();
+        dto.setId(String.valueOf(d.getId()));
+        dto.setName(d.getName());
+        dto.setCode(d.getCode());
+        dto.setDescription(d.getDescription());
+        dto.setStatus("ACTIVE".equalsIgnoreCase(d.getStatus()) ? "Active" : "Inactive");
+        dto.setGrowthPercentage(5.0); // Default placeholder metric
+
+        // JPA auditing simulation
+        dto.setCreatedAt("2026-07-17T00:00:00Z");
+        dto.setUpdatedAt("2026-07-17T00:00:00Z");
+
+        // Resolve manager/head details
+        if (d.getManagerId() != null) {
+            dto.setHeadId(String.valueOf(d.getManagerId()));
+            allEmployees.stream()
+                .filter(e -> e.getId().equals(d.getManagerId()))
+                .findFirst()
+                .ifPresent(e -> dto.setHeadName(e.getFullName()));
+        }
+
+        // Resolve parent department details
+        if (d.getParentDepartmentId() != null) {
+            dto.setParentDepartmentId(String.valueOf(d.getParentDepartmentId()));
+            departmentRepository.findById(d.getParentDepartmentId())
+                .ifPresent(p -> dto.setParentDepartmentName(p.getName()));
+        }
+
+        // Resolve counts
+        long totalCount = allEmployees.stream()
+            .filter(e -> d.getName().equalsIgnoreCase(e.getDepartment()))
+            .count();
+        long activeCount = allEmployees.stream()
+            .filter(e -> d.getName().equalsIgnoreCase(e.getDepartment()) && "ACTIVE".equalsIgnoreCase(e.getStatus()))
+            .count();
+        long onLeaveCount = allEmployees.stream()
+            .filter(e -> d.getName().equalsIgnoreCase(e.getDepartment()) && "ON_LEAVE".equalsIgnoreCase(e.getStatus()))
+            .count();
+
+        dto.setEmployeeCount(totalCount);
+        dto.setActiveEmployeeCount(activeCount);
+        dto.setOnLeaveEmployeeCount(onLeaveCount);
+
+        return dto;
     }
 
     public List<Department> getAllDepartments() {
@@ -94,11 +464,33 @@ public class DepartmentService {
 
     @Transactional
     public boolean deleteDepartment(Long id) {
-        if (departmentRepository.existsById(id)) {
-            departmentRepository.deleteById(id);
+        Long orgId = TenantContext.getOrganizationId();
+        Department d;
+        if (orgId != null) {
+            d = departmentRepository.findByIdAndOrganizationId(id, orgId).orElse(null);
+        } else {
+            d = departmentRepository.findById(id).orElse(null);
+        }
+        if (d != null) {
+            departmentRepository.delete(d);
             return true;
         }
         return false;
+    }
+
+    @Transactional
+    public Department toggleDepartmentStatus(Long id, String status) {
+        Long orgId = TenantContext.getOrganizationId();
+        Department d;
+        if (orgId != null) {
+            d = departmentRepository.findByIdAndOrganizationId(id, orgId)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found in your organization with ID: " + id));
+        } else {
+            d = departmentRepository.findById(id)
+                    .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + id));
+        }
+        d.setStatus(status.equalsIgnoreCase("Active") ? "ACTIVE" : "INACTIVE");
+        return departmentRepository.save(d);
     }
 
     public List<Map<String, Object>> getHierarchy() {

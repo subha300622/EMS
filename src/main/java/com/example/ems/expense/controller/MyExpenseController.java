@@ -309,6 +309,44 @@ public class MyExpenseController {
         }
     }
 
+    // 6b. Resubmit Expense Claim
+    @Operation(summary = "Resubmit Expense Claim", description = "Resubmits an expense claim after making requested changes.")
+    @PostMapping("/{expenseId}/resubmit")
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ResponseEntity<ApiResponse<Object>> resubmitExpense(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable("expenseId") Long expenseId){
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (!checkPermission(currentUser, "expense.self.create")) return (ResponseEntity) forbiddenResponse("expense.self.create");
+
+        Employee employee = resolveEmployee(currentUser);
+        if (employee == null) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+        }
+
+        Optional<Expense> expOpt = expenseRepository.findById(expenseId);
+        if (expOpt.isEmpty()) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ErrorResponse.error("Expense claim not found with ID: " + expenseId, "EXP_404"));
+        }
+
+        if (!isExpenseOwnerOrAdmin(currentUser, employee, expOpt.get())) {
+            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: You do not own this claim.", "EXP_403"));
+        }
+
+        try {
+            CreateExpenseResponse response = expenseService.resubmitExpense(expenseId, employee);
+            return ResponseEntity.ok(ApiResponse.success("Expense claim resubmitted successfully", response));
+        } catch (Exception e) {
+            return (ResponseEntity) ResponseEntity.badRequest()
+                    .body(ErrorResponse.error(e.getMessage(), "EXP_500"));
+        }
+    }
+
     // 7. Upload Expense Receipt
     @Operation(summary = "Upload Receipt", description = "Uploads a receipt document for expense verification.")
     @PostMapping(value = "/receipts", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -10,16 +10,21 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String code;
 
     private String description;
 
     private Long parentDepartmentId;
     private Long managerId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private com.example.ems.organization.entity.Organization organization;
+
     private java.math.BigDecimal budget = java.math.BigDecimal.ZERO;
     private String status = "ACTIVE";
     private String costCenter;
@@ -123,5 +128,13 @@ public class Department {
 
     public void setUtilizedBudget(java.math.BigDecimal utilizedBudget) {
         this.utilizedBudget = utilizedBudget;
+    }
+
+    public com.example.ems.organization.entity.Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(com.example.ems.organization.entity.Organization organization) {
+        this.organization = organization;
     }
 }

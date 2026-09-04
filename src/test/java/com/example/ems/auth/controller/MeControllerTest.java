@@ -11,6 +11,10 @@ import com.example.ems.expense.repository.ExpenseRepository;
 import com.example.ems.asset.repository.MyAssetRepository;
 import com.example.ems.performance.repository.PerformanceReviewRepository;
 import com.example.ems.support.repository.MySupportTicketRepository;
+import com.example.ems.attendance.repository.AttendanceRepository;
+import com.example.ems.leave.service.LeaveService;
+import com.example.ems.common.repository.NotificationRepository;
+import com.example.ems.employee.repository.AnnouncementRepository;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.hamcrest.Matchers.nullValue;
 
 public class MeControllerTest {
 
@@ -63,6 +68,18 @@ public class MeControllerTest {
     @Mock
     private MySupportTicketRepository supportTicketRepository;
 
+    @Mock
+    private AttendanceRepository attendanceRepository;
+
+    @Mock
+    private LeaveService leaveService;
+
+    @Mock
+    private NotificationRepository notificationRepository;
+
+    @Mock
+    private AnnouncementRepository announcementRepository;
+
     @InjectMocks
     private MeController meController;
 
@@ -78,6 +95,7 @@ public class MeControllerTest {
         when(jwtService.validateAccessToken(TOKEN)).thenReturn(true);
         when(jwtService.getEmailFromToken(TOKEN)).thenReturn(EMAIL);
         User user = new User();
+        user.setId(1L);
         user.setWorkEmail(EMAIL);
         when(userRepository.findByWorkEmail(EMAIL)).thenReturn(Optional.of(user));
     }
@@ -99,7 +117,7 @@ public class MeControllerTest {
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.fullName").value("Me Employee"));
+                .andExpect(jsonPath("$.data.employee.fullName").value("Me Employee"));
     }
 
     @Test
@@ -127,6 +145,7 @@ public class MeControllerTest {
         employee.setEmail(EMAIL);
         when(employeeRepository.findByEmail(EMAIL)).thenReturn(Optional.of(employee));
 
+        when(attendanceRepository.findByEmployeeIdAndDate(any(), any())).thenReturn(Optional.empty());
         when(leaveRepository.findByEmployeeIdAndStatus(10L, "PENDING")).thenReturn(java.util.Collections.emptyList());
         when(expenseRepository.findByEmployeeId(10L)).thenReturn(java.util.Collections.emptyList());
         when(assetRepository.findByAssignedToId(10L)).thenReturn(java.util.Collections.emptyList());
@@ -137,10 +156,19 @@ public class MeControllerTest {
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.pendingLeaves").value(0))
-                .andExpect(jsonPath("$.data.pendingExpenses").value(0))
-                .andExpect(jsonPath("$.data.assignedAssets").value(0))
-                .andExpect(jsonPath("$.data.pendingReviews").value(0))
-                .andExpect(jsonPath("$.data.openTickets").value(0));
+                .andExpect(jsonPath("$.data.attendance.todayStatus").value("Absent"))
+                .andExpect(jsonPath("$.data.attendance.checkIn").value(nullValue()))
+                .andExpect(jsonPath("$.data.attendance.checkOut").value(nullValue()))
+                .andExpect(jsonPath("$.data.attendance.workingHours").value(nullValue()))
+                .andExpect(jsonPath("$.data.leave.pending").value(0))
+                .andExpect(jsonPath("$.data.leave.remaining").value(0))
+                .andExpect(jsonPath("$.data.expenses.pending").value(0))
+                .andExpect(jsonPath("$.data.assets.assigned").value(0))
+                .andExpect(jsonPath("$.data.notifications.unread").value(0))
+                .andExpect(jsonPath("$.data.announcements.unread").value(0))
+                .andExpect(jsonPath("$.data.performance.pendingReviews").value(0))
+                .andExpect(jsonPath("$.data.support.openTickets").value(0))
+                .andExpect(jsonPath("$.data.profile.completion").value(0));
     }
 }
+

@@ -38,6 +38,7 @@ public class TrainingFlowIntegrationTest {
     private CertificationRepository certificationRepository;
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testFullLmsProductionFlow() {
         // Setup manager and employee relationship
         Employee manager = new Employee();

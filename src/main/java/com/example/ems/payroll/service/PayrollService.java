@@ -10,6 +10,12 @@ import com.example.ems.payroll.repository.PayrollRepository;
 import com.example.ems.payroll.repository.SalaryStructureRepository;
 import com.example.ems.employee.repository.DepartmentRepository;
 import com.example.ems.employee.entity.Department;
+import com.example.ems.payroll.entity.PayrollSetting;
+import com.example.ems.payroll.entity.SalaryComponent;
+import com.example.ems.payroll.entity.TaxSlab;
+import com.example.ems.payroll.repository.PayrollSettingRepository;
+import com.example.ems.payroll.repository.SalaryComponentRepository;
+import com.example.ems.payroll.repository.TaxSlabRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,6 +26,8 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import com.example.ems.payroll.entity.SalaryComponentType;
 
 @Service
 public class PayrollService {
@@ -36,10 +44,35 @@ public class PayrollService {
     @Autowired
     private SalaryStructureRepository salaryStructureRepository;
 
-
-
     @Autowired
     private DepartmentRepository departmentRepository;
+
+    @Autowired
+    private PayrollSettingRepository payrollSettingRepository;
+
+    @Autowired
+    private SalaryComponentRepository salaryComponentRepository;
+
+    @Autowired
+    private TaxSlabRepository taxSlabRepository;
+
+    @Transactional
+    public void seedCorePayrollData() {
+        if (payrollSettingRepository.count() == 0) {
+            payrollSettingRepository.save(new PayrollSetting("paycycle_start_day", "1", "Start day of pay cycle"));
+            payrollSettingRepository.save(new PayrollSetting("tax_enabled", "true", "Whether income tax calculation is enabled"));
+        }
+        if (salaryComponentRepository.count() == 0) {
+            salaryComponentRepository.save(new SalaryComponent(1L, "Basic Salary", "BASIC_SALARY", "Standard basic salary", SalaryComponentType.EARNING, true, true));
+            salaryComponentRepository.save(new SalaryComponent(1L, "HRA", "HRA", "House Rent Allowance", SalaryComponentType.EARNING, true, true));
+            salaryComponentRepository.save(new SalaryComponent(1L, "Provident Fund", "PROVIDENT_FUND", "Employee Provident Fund contribution", SalaryComponentType.DEDUCTION, false, true));
+        }
+        if (taxSlabRepository.count() == 0) {
+            taxSlabRepository.save(new TaxSlab("NEW", BigDecimal.valueOf(0.0), BigDecimal.valueOf(300000.0), BigDecimal.ZERO));
+            taxSlabRepository.save(new TaxSlab("NEW", BigDecimal.valueOf(300000.0), BigDecimal.valueOf(600000.0), BigDecimal.valueOf(5.0)));
+            taxSlabRepository.save(new TaxSlab("NEW", BigDecimal.valueOf(600000.0), null, BigDecimal.valueOf(10.0)));
+        }
+    }
 
     private final Map<String, Object> taxSettings = new LinkedHashMap<>(Map.of(
             "pfRate", 12.0,

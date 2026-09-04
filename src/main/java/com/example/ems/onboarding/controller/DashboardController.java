@@ -59,12 +59,6 @@ public class DashboardController {
                 || roleService.hasPermission(user.getWorkEmail(), "expense.manage");
     }
 
-    private boolean checkManagerPermission(User user) {
-        if (user == null) return false;
-        return roleService.hasPermission(user.getWorkEmail(), "employee.create")
-                || roleService.hasPermission(user.getWorkEmail(), "employee.update")
-                || roleService.hasPermission(user.getWorkEmail(), "recruitment.manage");
-    }
 
     @GetMapping
     @SuppressWarnings({"unchecked", "rawtypes"})
