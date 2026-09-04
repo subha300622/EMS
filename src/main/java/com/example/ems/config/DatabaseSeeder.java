@@ -280,6 +280,11 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
                 "employee.payslip.read", "employee.payslip.download", "payroll-settings.manage", "fnf.manage"));
         groupDefinitions.put("RECRUITMENT", Arrays.asList(
+                "RECRUITMENT_JOB_VIEW", "RECRUITMENT_JOB_CREATE", "RECRUITMENT_JOB_UPDATE", "RECRUITMENT_JOB_PUBLISH",
+                "RECRUITMENT_APPLICATION_VIEW", "RECRUITMENT_APPLICATION_SHORTLIST", "RECRUITMENT_APPLICATION_REJECT", "RECRUITMENT_APPLICATION_SELECT",
+                "RECRUITMENT_INTERVIEW_SCHEDULE", "RECRUITMENT_INTERVIEW_COMPLETE", "RECRUITMENT_INTERVIEW_FEEDBACK",
+                "RECRUITMENT_OFFER_CREATE", "RECRUITMENT_OFFER_SEND", "RECRUITMENT_EMPLOYEE_CONVERT",
+                "RECRUITMENT_TALENT_POOL_VIEW", "RECRUITMENT_TALENT_POOL_INVITE", "RECRUITMENT_DASHBOARD_VIEW",
                 "recruitment.manage", "employee.training.read", "employee.training.complete"));
         groupDefinitions.put("PERFORMANCE", Arrays.asList(
                 "performance.review", "performance.self.read", "performance.self.goal.update",
@@ -1100,62 +1105,55 @@ public class DatabaseSeeder implements ApplicationRunner {
 
         if (jobRepository.count() == 0) {
             Job engJob = new Job();
+            engJob.setOrganizationId(1L);
             engJob.setTitle("Software Engineer");
             engJob.setDepartment("Engineering");
             engJob.setLocation("Remote");
             engJob.setDescription("Java Spring Boot Developer");
             engJob.setRequirements("Java, Spring Boot, SQL");
             engJob.setSalaryRange("80k-120k");
-            engJob.setStatus("ACTIVE");
+            engJob.setStatus(com.example.ems.recruitment.entity.JobStatus.PUBLISHED);
             jobRepository.save(engJob);
 
             Job salesJob = new Job();
+            salesJob.setOrganizationId(1L);
             salesJob.setTitle("Sales Executive");
             salesJob.setDepartment("Sales");
             salesJob.setLocation("Headquarters");
             salesJob.setDescription("Enterprise B2B Sales");
             salesJob.setRequirements("B2B sales experience");
             salesJob.setSalaryRange("60k-90k");
-            salesJob.setStatus("ACTIVE");
+            salesJob.setStatus(com.example.ems.recruitment.entity.JobStatus.PUBLISHED);
             jobRepository.save(salesJob);
 
             Job hrJob = new Job();
+            hrJob.setOrganizationId(1L);
             hrJob.setTitle("HR Generalist");
             hrJob.setDepartment("HR");
             hrJob.setLocation("Headquarters");
             hrJob.setDescription("Talent acquisition and employee relations");
             hrJob.setRequirements("3+ years in HR");
             hrJob.setSalaryRange("50k-70k");
-            hrJob.setStatus("ACTIVE");
+            hrJob.setStatus(com.example.ems.recruitment.entity.JobStatus.PUBLISHED);
             jobRepository.save(hrJob);
         }
 
         if (candidateRepository.count() == 0) {
-            Job engJob = jobRepository.findAll().stream()
-                    .filter(j -> "Software Engineer".equalsIgnoreCase(j.getTitle()))
-                    .findFirst().orElse(null);
-            if (engJob != null) {
-                Candidate john = new Candidate();
-                john.setFullName("John Doe");
-                john.setEmail("john.doe@gmail.com");
-                john.setPhone("5551234");
-                john.setJob(engJob);
-                john.setStatus("APPLIED");
-                candidateRepository.save(john);
-            }
+            Candidate john = new Candidate();
+            john.setOrganizationId(1L);
+            john.setFullName("John Doe");
+            john.setEmail("john.doe@gmail.com");
+            john.setPhone("5551234");
+            john.setStatus("ACTIVE");
+            candidateRepository.save(john);
 
-            Job salesJob = jobRepository.findAll().stream()
-                    .filter(j -> "Sales Executive".equalsIgnoreCase(j.getTitle()))
-                    .findFirst().orElse(null);
-            if (salesJob != null) {
-                Candidate jane = new Candidate();
-                jane.setFullName("Jane Smith");
-                jane.setEmail("jane.smith@yahoo.com");
-                jane.setPhone("5555678");
-                jane.setJob(salesJob);
-                jane.setStatus("INTERVIEWING");
-                candidateRepository.save(jane);
-            }
+            Candidate jane = new Candidate();
+            jane.setOrganizationId(1L);
+            jane.setFullName("Jane Smith");
+            jane.setEmail("jane.smith@yahoo.com");
+            jane.setPhone("5555678");
+            jane.setStatus("ACTIVE");
+            candidateRepository.save(jane);
         }
 
         if (leaveTypeRepository.count() == 0) {

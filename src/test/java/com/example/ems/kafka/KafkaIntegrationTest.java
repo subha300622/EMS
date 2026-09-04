@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.UUID;
@@ -44,8 +43,13 @@ import static org.junit.jupiter.api.Assertions.*;
                 "listener.security.protocol.map=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT"
 })
 @DirtiesContext
-@ActiveProfiles("kafkatest")
-@TestPropertySource(properties = "spring.kafka.listener.auto-startup=true")
+@TestPropertySource(properties = {
+                "app.kafka.enabled=true",
+                "spring.kafka.listener.auto-startup=true",
+                "spring.kafka.bootstrap-servers=${spring.embedded.kafka.brokers}",
+                "kafka.topics.partitions=1",
+                "kafka.outbox.poll-interval-ms=999999999"
+})
 class KafkaIntegrationTest {
 
         @Autowired

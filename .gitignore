@@ -14,7 +14,8 @@ uploads/
 *.pdf
 validate-flyway-local.sh
 .env
-.env.local
+.env.*
+!.env.example
 
 ### STS ###
 .apt_generated

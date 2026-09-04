@@ -98,6 +98,7 @@ public class SecurityConfig {
                                 "/api/v1/platform-admin/payments/webhook",
                                 "/api/v1/permissions/catalog",
                                 "/api/v1/assets/verify/**",
+                                "/api/v1/public/recruitment/**",
                                 "/v3/api-docs/**",
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

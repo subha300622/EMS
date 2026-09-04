@@ -2,10 +2,10 @@ spring:
   application:
     name: ems-backend
   mail:
-    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
-    port: ${SPRING_MAIL_PORT:587}
-    username: ${SPRING_MAIL_USERNAME:subashinibalu30@gmail.com}
-    password: ${SPRING_MAIL_PASSWORD:nqokfqkbsychvhfq}
+    host: ${SPRING_MAIL_HOST}
+    port: ${SPRING_MAIL_PORT}
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
     properties:
       mail:
         smtp:
@@ -18,9 +18,9 @@ spring:
   profiles:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:emsdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
-    username: ${SPRING_DATASOURCE_USERNAME:sa}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -38,11 +38,11 @@ spring:
     repair-on-migrate: false
   data:
     redis:
-      url: ${REDIS_URL:redis://localhost:6379}
+      url: ${REDIS_URL}
   cache:
     type: simple
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -54,7 +54,7 @@ spring:
       enable-auto-commit: false
 
 server:
-  port: ${PORT:8080}
+  port: ${PORT}
   address: 0.0.0.0
   forward-headers-strategy: framework
   error:
@@ -63,20 +63,21 @@ server:
 
 ems:
   logging:
-    post-api-path: ${POST_API_LOG_FILE:post_api_payloads.log}
+    post-api-path: ${POST_API_LOG_FILE}
 
 resend:
-  api-key: ${RESEND_API_KEY:re_dummy_key}
-  from-email: ${RESEND_FROM_EMAIL:EMS System <noreply@company.com>}
+  api-key: ${RESEND_API_KEY}
+  from-email: ${RESEND_FROM_EMAIL}
 
 app:
   seed:
-    domain: company.com
+    domain: ${APP_SEED_DOMAIN}
   email:
-    sender-address: noreply@company.com
-  base-url: ${APP_BASE_URL:http://localhost:3000}
+    sender-address: ${APP_EMAIL_SENDER_ADDRESS}
+  base-url: ${APP_BASE_URL}
+  frontend-url: ${FRONTEND_URL}
   kafka:
-    enabled: false # Disabled by default
+    enabled: ${KAFKA_ENABLED}
 
 springdoc:
   api-docs:
@@ -90,12 +91,12 @@ springdoc:
     filter: true
 
 razorpay:
-  enabled: true
-  mode: LIVE
-  key-id: ${RAZORPAY_KEY_ID:rzp_live_StUZupmMw4H4yc}
-  key-secret: ${RAZORPAY_KEY_SECRET:uq9yq68G6Dydj3FJXgobDeB0}
-  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:webhook_secret}
-  currency: INR
+  enabled: ${RAZORPAY_ENABLED}
+  mode: ${RAZORPAY_MODE}
+  key-id: ${RAZORPAY_KEY_ID}
+  key-secret: ${RAZORPAY_KEY_SECRET}
+  webhook-secret: ${RAZORPAY_WEBHOOK_SECRET}
+  currency: ${RAZORPAY_CURRENCY}
 
 management:
   endpoints:

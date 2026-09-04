@@ -20,7 +20,6 @@ public class CandidateResponse {
     private String resumeFileName;
     @Schema(example = "string")
     private String resumeUrl;
-    private JobResponse job;
     @Schema(example = "2026-06-19T10:00:00")
     private LocalDateTime appliedAt;
     @Schema(example = "2026-06-19T10:00:00")
@@ -36,11 +35,8 @@ public class CandidateResponse {
         this.status = candidate.getStatus();
         this.resumeFileName = candidate.getResumeFileName();
         this.resumeUrl = candidate.getResumeUrl();
-        this.appliedAt = candidate.getAppliedAt();
+        this.appliedAt = candidate.getCreatedAt();
         this.updatedAt = candidate.getUpdatedAt();
-        if (candidate.getJob() != null) {
-            this.job = new JobResponse(candidate.getJob());
-        }
     }
 
     public Long getId() { return id; }
@@ -63,9 +59,6 @@ public class CandidateResponse {
 
     public String getResumeUrl() { return resumeUrl; }
     public void setResumeUrl(String resumeUrl) { this.resumeUrl = resumeUrl; }
-
-    public JobResponse getJob() { return job; }
-    public void setJob(JobResponse job) { this.job = job; }
 
     public LocalDateTime getAppliedAt() { return appliedAt; }
     public void setAppliedAt(LocalDateTime appliedAt) { this.appliedAt = appliedAt; }

@@ -1,10 +1,15 @@
 spring:
   application:
     name: ems-backend-test
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:subashinibalu30@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:nqokfqkbsychvhfq}
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/employee_db
-    username: ems_user
-    password: 12345
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5432/employee_db}
+    username: ${SPRING_DATASOURCE_USERNAME:ems_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:12345}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -23,23 +28,32 @@ spring:
     repair-on-migrate: true
   data:
     redis:
-      url: ${REDIS_URL:redis://${REDIS_HOST:localhost}:${REDIS_PORT:6379}}
+      url: ${REDIS_URL:redis://localhost:6379}
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
   kafka:
-    listener:
-      auto-startup: false
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      auto-offset-reset: earliest
+      enable-auto-commit: false
 
 resend:
-  api-key: re_Z856fqce_G3oC29ZQke3kzhdzdgWFB73d
-  from-email: EMS System <noreply@company.com>
+  api-key: ${RESEND_API_KEY:re_dummy_key}
+  from-email: ${RESEND_FROM_EMAIL:EMS System <noreply@company.com>}
 
 app:
   seed:
-    domain: company.com
+    domain: ${APP_SEED_DOMAIN:company.com}
   email:
-    sender-address: noreply@company.com
-  base-url: http://localhost:3000
+    sender-address: ${APP_EMAIL_SENDER_ADDRESS:noreply@company.com}
+  base-url: ${APP_BASE_URL:http://localhost:3000}
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
   kafka:
     enabled: false # Disabled in standard tests
 
@@ -50,7 +64,7 @@ springdoc:
 razorpay:
   enabled: true
   mode: TEST
-  key-id: ${RAZORPAY_KEY_ID:rzp_test_StUZupmMw4H4yc}
-  key-secret: ${RAZORPAY_KEY_SECRET:uq9yq68G6Dydj3FJXgobDeB0}
+  key-id: ${RAZORPAY_KEY_ID:rzp_live_StUZupmMw4H4yc}
+  key-secret: ${RAZORPAY_KEY_SECRET:uq9yq68G6Dydj3FJXgobDe0}
   webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:webhook_secret}
   currency: INR
