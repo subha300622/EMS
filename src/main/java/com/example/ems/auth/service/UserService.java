@@ -37,6 +37,9 @@ public class UserService {
     @Autowired
     private RoleService roleService;
 
+    @org.springframework.beans.factory.annotation.Value("${app.dicebear-avatar-url}")
+    private String dicebearAvatarUrl;
+
     // ──────────────────────────────────────────
     // LOGIN — compares BCrypt-hashed password
     // ──────────────────────────────────────────
@@ -285,10 +288,10 @@ public class UserService {
         String profileImage = optEmp.map(Employee::getProfileImage).orElse(null);
         if (profileImage == null || profileImage.isBlank()) {
             try {
-                profileImage = "https://api.dicebear.com/7.x/initials/svg?seed=" + java.net.URLEncoder
+                profileImage = dicebearAvatarUrl + java.net.URLEncoder
                         .encode(user.getFullName(), java.nio.charset.StandardCharsets.UTF_8.toString());
             } catch (Exception e) {
-                profileImage = "https://api.dicebear.com/7.x/initials/svg?seed=" + user.getFullName();
+                profileImage = dicebearAvatarUrl + user.getFullName();
             }
         }
 

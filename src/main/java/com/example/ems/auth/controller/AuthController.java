@@ -663,11 +663,11 @@ public class AuthController {
     @Operation(summary = "Verify Email Token", description = "Verifies email registration token to activate admin account and organization.")
     @PostMapping("/email/verify")
     public ResponseEntity<?> verifyEmail(@RequestParam(required = false) String token,
-            @RequestBody(required = false) Map<String, String> body) {
+            @RequestBody(required = false) @Valid com.example.ems.auth.dto.VerifyEmailRequest body) {
         String verificationToken = token;
         if (verificationToken == null || verificationToken.isBlank()) {
             if (body != null) {
-                verificationToken = body.get("token");
+                verificationToken = body.token();
             }
         }
 
@@ -695,8 +695,8 @@ public class AuthController {
 
     @Operation(summary = "Check Organization Name Availability", description = "Checks if an organization name is unique after normalising it.")
     @PostMapping("/check-organization")
-    public ResponseEntity<?> checkOrganization(@RequestBody Map<String, String> body) {
-        String orgName = body.get("orgName");
+    public ResponseEntity<?> checkOrganization(@RequestBody @Valid com.example.ems.auth.dto.CheckOrganizationRequest body) {
+        String orgName = body != null ? body.orgName() : null;
         if (orgName == null || orgName.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.error("orgName parameter is required", "CHECK_ORG_REQUIRED"));
@@ -715,8 +715,8 @@ public class AuthController {
 
     @Operation(summary = "Check email availability with normalization", description = "Checks if an email is already registered after normalising it.")
     @PostMapping("/check-email")
-    public ResponseEntity<?> checkEmail(@RequestBody Map<String, String> body) {
-        String email = body.get("email");
+    public ResponseEntity<?> checkEmail(@RequestBody @Valid com.example.ems.auth.dto.CheckEmailRequest body) {
+        String email = body != null ? body.email() : null;
         if (email == null || email.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.error("email parameter is required", "CHECK_EMAIL_REQUIRED"));
@@ -735,8 +735,8 @@ public class AuthController {
 
     @Operation(summary = "Check mobile number availability with normalization", description = "Checks if a phone number is already registered after normalising it.")
     @PostMapping("/check-phone")
-    public ResponseEntity<?> checkPhone(@RequestBody Map<String, String> body) {
-        String mobileNumber = body.get("mobileNumber");
+    public ResponseEntity<?> checkPhone(@RequestBody @Valid com.example.ems.auth.dto.CheckPhoneRequest body) {
+        String mobileNumber = body != null ? body.mobileNumber() : null;
         if (mobileNumber == null || mobileNumber.isBlank()) {
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.error("mobileNumber parameter is required", "CHECK_PHONE_REQUIRED"));

@@ -116,7 +116,7 @@ public class FinanceAnalyticsController {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Map<String, Object>>> calculateCtc(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody @jakarta.validation.Valid com.example.ems.finance.dto.CalculateCtcRequest body) {
         User user = resolveUser(authHeader);
         if (user == null) {
             return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -128,10 +128,10 @@ public class FinanceAnalyticsController {
         }
 
         BigDecimal monthlyCtc;
-        if (body.containsKey("monthlyCtc")) {
-            monthlyCtc = new BigDecimal(body.get("monthlyCtc").toString());
-        } else if (body.containsKey("ctc")) {
-            BigDecimal annualCtc = new BigDecimal(body.get("ctc").toString());
+        if (body != null && body.monthlyCtc() != null) {
+            monthlyCtc = body.monthlyCtc();
+        } else if (body != null && body.ctc() != null) {
+            BigDecimal annualCtc = body.ctc();
             monthlyCtc = annualCtc.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
         } else {
             return (ResponseEntity) ResponseEntity.badRequest()

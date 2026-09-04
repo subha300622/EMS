@@ -41,6 +41,26 @@ public class RecruitmentInterviewController {
         return ResponseEntity.ok(ApiResponse.success("Interview feedback submitted successfully", response));
     }
 
+    @GetMapping("/interviews")
+    public ResponseEntity<ApiResponse<List<InterviewResponse>>> getAllInterviews() {
+        List<InterviewResponse> interviews = interviewService.getAllInterviews();
+        return ResponseEntity.ok(ApiResponse.success("Fetched all interviews successfully", interviews));
+    }
+
+    @PatchMapping("/interviews/{interviewId}/cancel")
+    public ResponseEntity<ApiResponse<InterviewResponse>> cancelInterview(@PathVariable Long interviewId) {
+        InterviewResponse response = interviewService.cancelInterview(interviewId);
+        return ResponseEntity.ok(ApiResponse.success("Interview cancelled successfully", response));
+    }
+
+    @PutMapping("/interviews/{interviewId}")
+    public ResponseEntity<ApiResponse<InterviewResponse>> rescheduleInterview(
+            @PathVariable Long interviewId,
+            @Valid @RequestBody InterviewScheduleRequest request) {
+        InterviewResponse response = interviewService.rescheduleInterview(interviewId, request);
+        return ResponseEntity.ok(ApiResponse.success("Interview rescheduled successfully", response));
+    }
+
     @GetMapping("/applications/{applicationId}/interviews")
     public ResponseEntity<ApiResponse<List<InterviewResponse>>> getInterviewsForApplication(@PathVariable Long applicationId) {
         List<InterviewResponse> interviews = interviewService.getInterviewsForApplication(applicationId);

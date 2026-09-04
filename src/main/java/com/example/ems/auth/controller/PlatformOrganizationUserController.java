@@ -169,7 +169,8 @@ public class PlatformOrganizationUserController {
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId,
             @PathVariable Long userId,
-            @RequestBody OverrideUserRoleRequest req) {
+            @RequestBody OverrideUserRoleRequest req,
+            jakarta.servlet.http.HttpServletRequest servletRequest) {
 
         User user = resolveUser(authHeader);
         if (user == null)
@@ -237,7 +238,7 @@ public class PlatformOrganizationUserController {
                 "OVERRIDE_USER_ROLE",
                 "User",
                 String.valueOf(userId),
-                "127.0.0.1",
+                com.example.ems.common.util.ClientIpResolver.getClientIp(servletRequest),
                 "Platform Admin overridden user role for user ID: " + userId + " (email: " + targetUser.getWorkEmail()
                         + ") to role '" + targetRole.getName() + "'. Reason: " + req.getReason());
         auditLogRepository.save(auditLog);

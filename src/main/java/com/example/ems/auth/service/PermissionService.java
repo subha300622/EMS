@@ -44,6 +44,10 @@ public class PermissionService {
         });
     }
 
+    public Permission savePermission(Permission permission) {
+        return permissionRepository.save(permission);
+    }
+
     public boolean deletePermission(Long id) {
         if (permissionRepository.existsById(id)) {
             permissionRepository.deleteById(id);

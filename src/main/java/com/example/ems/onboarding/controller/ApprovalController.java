@@ -73,7 +73,7 @@ public class ApprovalController {
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> handleApproval(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody @Valid com.example.ems.onboarding.dto.ApprovalActionRequest body) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -81,17 +81,15 @@ public class ApprovalController {
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        String entityType = (String) body.get("entityType");
-        Number entityIdNum = (Number) body.get("entityId");
-        String action = (String) body.get("action");
-        String notes = (String) body.getOrDefault("notes", "Action processed by approvals engine");
+        String entityType = body != null ? body.entityType() : null;
+        Long entityId = body != null ? body.entityId() : null;
+        String action = body != null ? body.action() : null;
+        String notes = body != null ? body.getEffectiveNotes() : "Action processed by approvals engine";
 
-        if (entityType == null || entityIdNum == null || action == null) {
+        if (entityType == null || entityId == null || action == null) {
             return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("entityType, entityId, and action are required", "VAL_001"));
         }
-
-        Long entityId = entityIdNum.longValue();
 
         try {
             if ("ONBOARDING".equalsIgnoreCase(entityType)) {

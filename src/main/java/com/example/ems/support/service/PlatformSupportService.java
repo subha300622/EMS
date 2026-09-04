@@ -412,7 +412,7 @@ public class PlatformSupportService {
         // Record Activity & System Audit Logs
         logActivity(ticket, "TICKET_CREATED", SupportTimelineAction.CREATE, null, null, adminEmail, now);
         auditLogService.logAction(adminEmail, adminEmail, "CREATE", "MySupportTicket", ticket.getId().toString(),
-                "127.0.0.1", "Platform Admin created support ticket: " + ticket.getTicketNumber());
+                getCurrentClientIp(), "Platform Admin created support ticket: " + ticket.getTicketNumber());
 
         return ticket;
     }
@@ -464,7 +464,7 @@ public class PlatformSupportService {
         ticketRepository.save(ticket);
 
         auditLogService.logAction(adminEmail, adminEmail, "UPDATE", "MySupportTicket", ticket.getId().toString(),
-                "127.0.0.1", "Updated ticket details for " + ticket.getTicketNumber());
+                getCurrentClientIp(), "Updated ticket details for " + ticket.getTicketNumber());
         return ticket;
     }
 
@@ -510,7 +510,7 @@ public class PlatformSupportService {
         logActivity(ticket, "TICKET_ASSIGNED", SupportTimelineAction.ASSIGN, oldAgent, agentUser.getFullName(),
                 adminEmail, now);
         auditLogService.logAction(adminEmail, adminEmail, "ASSIGN", "MySupportTicket", ticket.getId().toString(),
-                "127.0.0.1", "Assigned ticket " + ticket.getTicketNumber() + " to " + agentUser.getFullName());
+                getCurrentClientIp(), "Assigned ticket " + ticket.getTicketNumber() + " to " + agentUser.getFullName());
 
         return ticket;
     }
@@ -554,7 +554,7 @@ public class PlatformSupportService {
         }
 
         auditLogService.logAction(adminEmail, adminEmail, "COMMENT", "MySupportComment", comment.getId().toString(),
-                "127.0.0.1",
+                getCurrentClientIp(),
                 (req.isInternal() ? "Added internal note" : "Added reply") + " on ticket " + ticket.getTicketNumber());
 
         return comment;
@@ -611,7 +611,7 @@ public class PlatformSupportService {
 
         logActivity(ticket, "ATTACHMENT_UPLOADED", SupportTimelineAction.UPLOAD, null, filename, adminEmail,
                 LocalDateTime.now());
-        auditLogService.logAction(adminEmail, adminEmail, "UPLOAD", "MySupportAttachment", fileId, "127.0.0.1",
+        auditLogService.logAction(adminEmail, adminEmail, "UPLOAD", "MySupportAttachment", fileId, getCurrentClientIp(),
                 "Uploaded file " + filename + " to ticket " + ticket.getTicketNumber());
 
         return att;
@@ -643,7 +643,7 @@ public class PlatformSupportService {
         ticketRepository.save(ticket);
 
         logActivity(ticket, "TICKET_DELETED", SupportTimelineAction.DELETE, null, null, adminEmail, now);
-        auditLogService.logAction(adminEmail, adminEmail, "DELETE", "MySupportTicket", ticketId.toString(), "127.0.0.1",
+        auditLogService.logAction(adminEmail, adminEmail, "DELETE", "MySupportTicket", ticketId.toString(), getCurrentClientIp(),
                 "Soft deleted ticket: " + ticket.getTicketNumber());
     }
 
@@ -671,8 +671,8 @@ public class PlatformSupportService {
                 }
             });
         }
-        auditLogService.logAction(adminEmail, adminEmail, "BULK_UPDATE", "MySupportTicket", ticketIds.toString(),
-                "127.0.0.1", "Bulk status update to " + status);
+        auditLogService.logAction(adminEmail, adminEmail, "BULK_UPDATE_STATUS", "MySupportTicket", "MULTIPLE",
+                getCurrentClientIp(), "Bulk status update to " + status);
     }
 
     @Transactional
@@ -691,8 +691,8 @@ public class PlatformSupportService {
                 }
             });
         }
-        auditLogService.logAction(adminEmail, adminEmail, "BULK_UPDATE", "MySupportTicket", ticketIds.toString(),
-                "127.0.0.1", "Bulk priority update to " + priority);
+        auditLogService.logAction(adminEmail, adminEmail, "BULK_UPDATE_PRIORITY", "MySupportTicket", "MULTIPLE",
+                getCurrentClientIp(), "Bulk priority update to " + priority);
     }
 
     @Transactional
@@ -728,8 +728,8 @@ public class PlatformSupportService {
                 }
             });
         }
-        auditLogService.logAction(adminEmail, adminEmail, "BULK_ASSIGN", "MySupportTicket", ticketIds.toString(),
-                "127.0.0.1", "Bulk assigned tickets to " + agentUser.getFullName());
+        auditLogService.logAction(adminEmail, adminEmail, "BULK_ASSIGN", "MySupportTicket", "MULTIPLE",
+                getCurrentClientIp(), "Bulk assigned tickets to " + agentUser.getFullName());
     }
 
     @Transactional
@@ -969,7 +969,7 @@ public class PlatformSupportService {
         ticketRepository.save(primary);
 
         auditLogService.logAction(adminEmail, adminEmail, "MERGE", "MySupportTicket", primary.getId().toString(),
-                "127.0.0.1",
+                getCurrentClientIp(),
                 "Merged tickets " + req.getMergeTicketIds() + " into " + primary.getTicketNumber());
 
         return primary;
@@ -1124,5 +1124,16 @@ public class PlatformSupportService {
         n.setCreatedAt(LocalDateTime.now());
         n.setRead(false);
         notificationRepository.save(n);
+    }
+
+    private String getCurrentClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs =
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+            }
+        } catch (Exception ignored) {}
+        return "0.0.0.0";
     }
 }

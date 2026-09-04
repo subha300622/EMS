@@ -69,8 +69,8 @@ public class OnboardingApprovalPolicyController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ONBOARDING_APPROVE')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> approveOnboarding(
             @PathVariable Long onboardingId,
-            @RequestBody(required = false) Map<String, String> body) {
-        String remarks = (body != null) ? body.get("remarks") : "Approved via Approval Policy Engine";
+            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.onboarding.dto.OnboardingDecisionRequest body) {
+        String remarks = (body != null) ? body.getEffectiveRemarks("Approved via Approval Policy Engine") : "Approved via Approval Policy Engine";
         Map<String, Object> result = policyService.approveOnboardingWithPolicy(onboardingId, remarks);
         return ResponseEntity.ok(ApiResponse.success("Onboarding approved successfully", result));
     }
@@ -80,8 +80,8 @@ public class OnboardingApprovalPolicyController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ONBOARDING_REJECT')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> rejectOnboarding(
             @PathVariable Long onboardingId,
-            @RequestBody(required = false) Map<String, String> body) {
-        String remarks = (body != null) ? body.get("remarks") : "Rejected via Approval Policy Engine";
+            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.onboarding.dto.OnboardingDecisionRequest body) {
+        String remarks = (body != null) ? body.getEffectiveRemarks("Rejected via Approval Policy Engine") : "Rejected via Approval Policy Engine";
         Map<String, Object> result = Map.of("onboardingId", onboardingId, "status", "REJECTED", "remarks", remarks);
         return ResponseEntity.ok(ApiResponse.success("Onboarding rejected successfully", result));
     }
@@ -91,8 +91,8 @@ public class OnboardingApprovalPolicyController {
     @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ONBOARDING_APPROVE')")
     public ResponseEntity<ApiResponse<Map<String, Object>>> sendBackOnboarding(
             @PathVariable Long onboardingId,
-            @RequestBody(required = false) Map<String, String> body) {
-        String remarks = (body != null) ? body.get("remarks") : "Sent back via Approval Policy Engine";
+            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.onboarding.dto.OnboardingDecisionRequest body) {
+        String remarks = (body != null) ? body.getEffectiveRemarks("Sent back via Approval Policy Engine") : "Sent back via Approval Policy Engine";
         Map<String, Object> result = Map.of("onboardingId", onboardingId, "status", "NEEDS_REVISION", "remarks", remarks);
         return ResponseEntity.ok(ApiResponse.success("Onboarding sent back successfully", result));
     }

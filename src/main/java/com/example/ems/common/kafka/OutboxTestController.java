@@ -45,17 +45,16 @@ public class OutboxTestController {
      */
     @PostMapping("/outbox")
     @Transactional
-    public ResponseEntity<Object> publishTestEvent(@RequestBody Map<String, Object> body) {
+    public ResponseEntity<Object> publishTestEvent(@RequestBody(required = false) @jakarta.validation.Valid PublishTestEventRequest body) {
         String email = securityContextFacade.getEmail();
         if (email == null || !roleService.isSuperAdmin(email)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access denied: SUPER_ADMIN role required", "AUTH_003"));
         }
 
-        String title = (String) body.getOrDefault("title", "Kafka Outbox Verification");
-        String message = (String) body.getOrDefault("message", "Integration pipeline test successful.");
-        Number userIdNum = (Number) body.get("userId");
-        Long userId = userIdNum != null ? userIdNum.longValue() : 1L;
+        String title = body != null ? body.getEffectiveTitle() : "Kafka Outbox Verification";
+        String message = body != null ? body.getEffectiveMessage() : "Integration pipeline test successful.";
+        Long userId = body != null ? body.getEffectiveUserId() : 1L;
 
         NotificationCreatedEvent payload = new NotificationCreatedEvent(
                 userId,

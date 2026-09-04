@@ -5,5 +5,6 @@ public enum OfferStatus {
     SENT,
     ACCEPTED,
     REJECTED,
-    EXPIRED
+    EXPIRED,
+    WITHDRAWN
 }

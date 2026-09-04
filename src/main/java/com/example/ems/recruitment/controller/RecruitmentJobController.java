@@ -41,6 +41,31 @@ public class RecruitmentJobController {
         return ResponseEntity.ok(ApiResponse.success("Job published successfully", response));
     }
 
+    @PatchMapping("/{jobId}/close")
+    public ResponseEntity<ApiResponse<JobResponse>> closeJob(@PathVariable Long jobId) {
+        JobResponse response = jobService.closeJob(jobId);
+        return ResponseEntity.ok(ApiResponse.success("Job closed successfully", response));
+    }
+
+    @PatchMapping("/{jobId}/reopen")
+    public ResponseEntity<ApiResponse<JobResponse>> reopenJob(@PathVariable Long jobId) {
+        JobResponse response = jobService.reopenJob(jobId);
+        return ResponseEntity.ok(ApiResponse.success("Job reopened successfully", response));
+    }
+
+    @DeleteMapping("/{jobId}")
+    public ResponseEntity<ApiResponse<Void>> deleteJob(@PathVariable Long jobId) {
+        jobService.deleteJob(jobId);
+        return ResponseEntity.ok(ApiResponse.success("Job deleted successfully", null));
+    }
+
+    @PostMapping("/{jobId}/duplicate")
+    public ResponseEntity<ApiResponse<JobResponse>> duplicateJob(@PathVariable Long jobId) {
+        JobResponse response = jobService.duplicateJob(jobId);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Job duplicated successfully", response));
+    }
+
     @GetMapping
     public ResponseEntity<ApiResponse<List<JobResponse>>> getHRJobs() {
         List<JobResponse> jobs = jobService.getHRJobs();

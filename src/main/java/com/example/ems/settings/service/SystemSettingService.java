@@ -23,6 +23,12 @@ public class SystemSettingService {
     @org.springframework.beans.factory.annotation.Value("${app.email.sender-address:noreply@company.com}")
     private String defaultSenderAddress;
 
+    @org.springframework.beans.factory.annotation.Value("${integrations.slack-webhook:}")
+    private String slackWebhook;
+
+    @org.springframework.beans.factory.annotation.Value("${integrations.jira-base-url:}")
+    private String jiraBaseUrl;
+
     public void initDefaultSettings() {
         // Seed default system configurations if they do not exist
         Map<String, String[]> defaults = new HashMap<>();
@@ -42,8 +48,8 @@ public class SystemSettingService {
             }
         }
         defaults.put("email.sender_address", new String[]{senderEmail, "email"});
-        defaults.put("integrations.slack_webhook", new String[]{"https://hooks.slack.com/services/...", "integrations"});
-        defaults.put("integrations.jira_base_url", new String[]{"https://jira.enterprise.com", "integrations"});
+        defaults.put("integrations.slack_webhook", new String[]{slackWebhook != null ? slackWebhook : "", "integrations"});
+        defaults.put("integrations.jira_base_url", new String[]{jiraBaseUrl != null ? jiraBaseUrl : "", "integrations"});
         defaults.put("password-policy.min_length", new String[]{"8", "password-policy"});
         defaults.put("password-policy.require_special_char", new String[]{"true", "password-policy"});
 

@@ -71,13 +71,21 @@ public class PlatformRevenueDashboardController {
     private void logAuditEvent(String authHeader, String action, String details) {
         User user = resolveUser(authHeader);
         if (user != null) {
+            String clientIp = "0.0.0.0";
+            try {
+                org.springframework.web.context.request.ServletRequestAttributes attrs =
+                        (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+                if (attrs != null) {
+                    clientIp = com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+                }
+            } catch (Exception ignored) {}
             auditLogService.logAction(
                     user.getEmployeeId(), 
                     user.getWorkEmail(), 
                     action, 
                     "Revenue Dashboard", 
                     "REVENUE", 
-                    "127.0.0.1", 
+                    clientIp, 
                     details
             );
         }

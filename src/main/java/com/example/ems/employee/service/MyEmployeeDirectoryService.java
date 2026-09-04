@@ -182,7 +182,7 @@ public class MyEmployeeDirectoryService {
             user.setRequestedRole("EMPLOYEE");
             Role role = roleRepository.findByName("EMPLOYEE").orElse(null);
             user.setRole(role);
-            user.setPassword(passwordEncoder.encode(email.split("@")[0] + "@2"));
+            user.setPassword(passwordEncoder.encode(com.example.ems.common.util.PasswordGeneratorUtil.generateSecurePassword()));
             user.setLocation("Headquarters");
             user = userRepository.save(user);
             user.setUserId("EMP" + String.format("%03d", user.getId()));

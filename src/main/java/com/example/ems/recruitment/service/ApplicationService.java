@@ -107,8 +107,8 @@ public class ApplicationService {
 
         recordStatusHistory(savedApp, null, ApplicationStatus.APPLIED, "CANDIDATE", "Candidate submitted application");
 
-        auditLogService.logAction("PUBLIC_USER", request.getEmail(), "APPLY_JOB", "Application",
-                savedApp.getId().toString(), "127.0.0.1", "Candidate " + candidate.getFullName() + " applied for job " + job.getTitle());
+        auditLogService.logAction("CANDIDATE", candidate.getEmail(), "APPLY_JOB", "Application",
+                savedApp.getId().toString(), getCurrentClientIp(), "Candidate " + candidate.getFullName() + " applied for job " + job.getTitle());
 
         return new ApplicationResponse(savedApp);
     }
@@ -180,8 +180,8 @@ public class ApplicationService {
 
         recordStatusHistory(updated, oldStatus, ApplicationStatus.SHORTLISTED, "HR", "Shortlisted for interview process");
 
-        auditLogService.logAction("HR", "hr@company.com", "SHORTLIST_CANDIDATE", "Application",
-                updated.getId().toString(), "127.0.0.1", "Application " + updated.getApplicationNumber() + " shortlisted");
+        auditLogService.logAction("HR", "hr@company.com", "SHORTLIST_APPLICATION", "Application",
+                updated.getId().toString(), getCurrentClientIp(), "Application " + updated.getApplicationNumber() + " shortlisted");
 
         return new ApplicationResponse(updated);
     }
@@ -208,8 +208,8 @@ public class ApplicationService {
 
         recordStatusHistory(updated, oldStatus, ApplicationStatus.REJECTED, "HR", reason);
 
-        auditLogService.logAction("HR", "hr@company.com", "REJECT_CANDIDATE", "Application",
-                updated.getId().toString(), "127.0.0.1", "Application " + updated.getApplicationNumber() + " rejected. Reason: " + reason);
+        auditLogService.logAction("HR", "hr@company.com", "REJECT_APPLICATION", "Application",
+                updated.getId().toString(), getCurrentClientIp(), "Application " + updated.getApplicationNumber() + " rejected. Reason: " + reason);
 
         return new ApplicationResponse(updated);
     }
@@ -240,7 +240,7 @@ public class ApplicationService {
         recordStatusHistory(updated, oldStatus, ApplicationStatus.SELECTED, "HR", "Candidate selected after interview evaluation");
 
         auditLogService.logAction("HR", "hr@company.com", "SELECT_CANDIDATE", "Application",
-                updated.getId().toString(), "127.0.0.1", "Candidate selected for application " + updated.getApplicationNumber());
+                updated.getId().toString(), getCurrentClientIp(), "Candidate selected for application " + updated.getApplicationNumber());
 
         return new ApplicationResponse(updated);
     }
@@ -264,5 +264,16 @@ public class ApplicationService {
         history.setChangedBy(changedBy);
         history.setReason(reason);
         statusHistoryRepository.save(history);
+    }
+
+    private String getCurrentClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs =
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+            }
+        } catch (Exception ignored) {}
+        return "0.0.0.0";
     }
 }

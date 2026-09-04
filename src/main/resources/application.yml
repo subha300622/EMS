@@ -69,15 +69,29 @@ resend:
   api-key: ${RESEND_API_KEY}
   from-email: ${RESEND_FROM_EMAIL}
 
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+
+encryption:
+  aes-key: ${AES_ENCRYPTION_KEY}
+
 app:
   seed:
     domain: ${APP_SEED_DOMAIN}
+    admin-password: ${PLATFORM_ADMIN_PASSWORD}
   email:
     sender-address: ${APP_EMAIL_SENDER_ADDRESS}
   base-url: ${APP_BASE_URL}
   frontend-url: ${FRONTEND_URL}
+  asset-verification-url: ${ASSET_VERIFICATION_URL}
+  dicebear-avatar-url: ${DICEBEAR_AVATAR_URL}
   kafka:
     enabled: ${KAFKA_ENABLED}
+
+integrations:
+  slack-webhook: ${SLACK_WEBHOOK_URL}
+  jira-base-url: ${JIRA_BASE_URL}
 
 springdoc:
   api-docs:

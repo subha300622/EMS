@@ -77,9 +77,21 @@ public class PlatformRevenueReportController {
         return null;
     }
 
+    private String getCurrentClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs =
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+            }
+        } catch (Exception ignored) {}
+        return "0.0.0.0";
+    }
+
     private void logStructuredAuditFilter(String authHeader, String eventName, String reportType, RevenueFilterRequest filters) {
         User user = resolveUser(authHeader);
         if (user != null) {
+            String clientIp = getCurrentClientIp();
             try {
                 Map<String, Object> payload = new HashMap<>();
                 payload.put("event", eventName);
@@ -109,7 +121,7 @@ public class PlatformRevenueReportController {
                         eventName, 
                         "Revenue Reports", 
                         "REVENUE", 
-                        "127.0.0.1", 
+                        clientIp, 
                         detailsJson
                 );
             } catch (Exception e) {
@@ -120,7 +132,7 @@ public class PlatformRevenueReportController {
                         eventName, 
                         "Revenue Reports", 
                         "REVENUE", 
-                        "127.0.0.1", 
+                        clientIp, 
                         "Failed to map structured payload, fallback logged. Filters: " + filters
                 );
             }
@@ -136,7 +148,7 @@ public class PlatformRevenueReportController {
                     action, 
                     "Revenue Reports", 
                     "REVENUE", 
-                    "127.0.0.1", 
+                    getCurrentClientIp(), 
                     details
             );
         }

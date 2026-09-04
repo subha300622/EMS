@@ -4,6 +4,7 @@ import com.example.ems.audit.service.AuditLogService;
 import com.example.ems.common.exception.BadRequestException;
 import com.example.ems.common.exception.ConflictException;
 import com.example.ems.common.exception.ResourceNotFoundException;
+import com.example.ems.recruitment.dto.CandidateCreateRequest;
 import com.example.ems.recruitment.dto.TalentPoolCandidateResponse;
 import com.example.ems.recruitment.dto.TalentPoolInviteRequest;
 import com.example.ems.recruitment.entity.*;
@@ -76,6 +77,50 @@ public class TalentPoolService {
         return candidateRepository.findAll(spec, pageable).map(TalentPoolCandidateResponse::new);
     }
 
+    public TalentPoolCandidateResponse addCandidate(CandidateCreateRequest request) {
+        Long orgId = TenantContext.requireOrganizationId();
+
+        candidateRepository.findByOrganizationIdAndEmail(orgId, request.getEmail())
+                .ifPresent(existing -> {
+                    throw new ConflictException("Candidate with email " + request.getEmail() + " already exists in your organization");
+                });
+
+        Candidate candidate = new Candidate();
+        candidate.setOrganizationId(orgId);
+        candidate.setFullName(request.getFullName());
+        candidate.setEmail(request.getEmail());
+        candidate.setPhone(request.getPhone());
+        candidate.setExperienceYears(request.getExperienceYears() != null ? request.getExperienceYears() : 0.0);
+        candidate.setCurrentCompany(request.getCurrentCompany());
+        candidate.setCurrentDesignation(request.getCurrentDesignation());
+        candidate.setExpectedSalary(request.getExpectedSalary());
+        candidate.setResumeUrl(request.getResumeUrl());
+        candidate.setCoverLetter(request.getCoverLetter());
+        candidate.setTalentPoolStatus(TalentPoolStatus.AVAILABLE);
+
+        Candidate saved = candidateRepository.save(candidate);
+
+        auditLogService.logAction("HR", "hr@company.com", "ADD_TALENT_POOL_CANDIDATE", "Candidate",
+                saved.getId().toString(), getCurrentClientIp(), "Manually added candidate " + saved.getFullName() + " to talent pool");
+
+        return new TalentPoolCandidateResponse(saved);
+    }
+
+    public void deleteCandidate(Long candidateId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Candidate candidate = candidateRepository.findByOrganizationIdAndId(orgId, candidateId)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidate not found with ID: " + candidateId));
+
+        if (!applicationRepository.findByOrganizationIdAndCandidateId(orgId, candidateId).isEmpty()) {
+            throw new BadRequestException("Cannot delete candidate with active application records");
+        }
+
+        candidateRepository.delete(candidate);
+
+        auditLogService.logAction("HR", "hr@company.com", "DELETE_TALENT_POOL_CANDIDATE", "Candidate",
+                candidateId.toString(), getCurrentClientIp(), "Deleted candidate ID: " + candidateId + " from talent pool");
+    }
+
     public void inviteCandidate(Long candidateId, TalentPoolInviteRequest request) {
         Long orgId = TenantContext.requireOrganizationId();
 
@@ -113,6 +158,17 @@ public class TalentPoolService {
         invitationRepository.save(invitation);
 
         auditLogService.logAction("HR", "hr@company.com", "INVITE_TALENT_POOL_CANDIDATE", "Candidate",
-                candidate.getId().toString(), "127.0.0.1", "Invited candidate " + candidate.getFullName() + " for job " + job.getTitle());
+                candidate.getId().toString(), getCurrentClientIp(), "Invited candidate " + candidate.getFullName() + " for job " + job.getTitle());
+    }
+
+    private String getCurrentClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs =
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+            }
+        } catch (Exception ignored) {}
+        return "0.0.0.0";
     }
 }

@@ -175,6 +175,9 @@ public class DatabaseSeeder implements ApplicationRunner {
     @Value("${app.seed.domain:company.com}")
     private String seedDomain;
 
+    @Value("${app.seed.admin-password}")
+    private String platformAdminPassword;
+
     @Value("${app.seed.mock-data.enabled:true}")
     private boolean mockDataEnabled;
 
@@ -434,7 +437,7 @@ public class DatabaseSeeder implements ApplicationRunner {
         if (platformAdminRole != null) {
             String email = "platform_admin@gmail.com";
             String legacyEmail = "super_admin@" + seedDomain;
-            String password = "pladmin@123";
+            String password = (platformAdminPassword != null && !platformAdminPassword.isBlank()) ? platformAdminPassword : com.example.ems.common.util.PasswordGeneratorUtil.generateSecurePassword();
             String displayName = "Platform Admin";
 
             User platformAdminUser;
@@ -637,7 +640,7 @@ public class DatabaseSeeder implements ApplicationRunner {
 
             String roleCleanName = roleName.toLowerCase();
             String email = roleCleanName + "@" + seedDomain;
-            String password = roleCleanName + "@" + role.getId();
+            String password = com.example.ems.common.util.PasswordGeneratorUtil.generateSecurePassword();
             String displayName = roleName.charAt(0) + roleName.substring(1).toLowerCase().replace("_", " ");
 
             if (userRepository.findByWorkEmail(email).isEmpty()) {

@@ -128,7 +128,7 @@ public class EmployeeConversionService {
                 "Converted candidate to Employee. Assigned Employee ID: " + savedEmployee.getEmployeeId());
 
         auditLogService.logAction("HR", "hr@company.com", "CONVERT_TO_EMPLOYEE", "Employee",
-                savedEmployee.getId().toString(), "127.0.0.1", "Converted candidate " + candidate.getFullName() + " to Employee " + savedEmployee.getEmployeeId());
+                savedEmployee.getId().toString(), getCurrentClientIp(), "Converted candidate " + candidate.getFullName() + " to Employee " + savedEmployee.getEmployeeId());
 
         return new ApplicationResponse(updatedApp);
     }
@@ -141,5 +141,16 @@ public class EmployeeConversionService {
             candidateId = prefix + counter++;
         } while (employeeRepository.existsByEmployeeIdAndOrganizationId(candidateId, orgId));
         return candidateId;
+    }
+
+    private String getCurrentClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs =
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+            }
+        } catch (Exception ignored) {}
+        return "0.0.0.0";
     }
 }

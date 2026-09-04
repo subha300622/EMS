@@ -116,7 +116,7 @@ public class TeamTrainingController {
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId,
             @PathVariable Long trainingId,
-            @RequestBody(required = false) Map<String, Object> body) {
+            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.training.dto.TrainingAssignmentOptionsRequest body) {
         User user = resolveUser(authHeader);
         if (user == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
@@ -125,8 +125,7 @@ public class TeamTrainingController {
             TrainingUnifiedAssignmentRequest req = new TrainingUnifiedAssignmentRequest();
             req.setAssignmentType(AssignmentTargetType.TEAM);
             req.setTargetIds(List.of(teamId.toString()));
-            req.setMandatory(
-                    body != null && body.containsKey("mandatory") ? Boolean.TRUE.equals(body.get("mandatory")) : true);
+            req.setMandatory(body != null ? body.isMandatory() : true);
 
             List<TrainingParticipant> assigned = trainingService.assignUnified(trainingId, req, user);
             return ResponseEntity.status(HttpStatus.CREATED).body(assigned);

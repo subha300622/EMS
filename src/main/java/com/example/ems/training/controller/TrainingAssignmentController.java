@@ -237,14 +237,14 @@ public class TrainingAssignmentController {
     public ResponseEntity<?> completeTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assignmentId,
-            @RequestBody Map<String, Long> body) {
+            @RequestBody @Valid com.example.ems.training.dto.CompleteTrainingRequest body) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        Long employeeId = body.get("employeeId");
+        Long employeeId = body != null ? body.employeeId() : null;
         if (employeeId == null) {
             return ResponseEntity.badRequest().body(ErrorResponse.error("Employee ID is required", "VAL_001"));
         }

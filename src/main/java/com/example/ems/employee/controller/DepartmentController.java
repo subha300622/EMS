@@ -200,7 +200,7 @@ public class DepartmentController {
         public ResponseEntity<ApiResponse<Map<String, String>>> toggleStatus(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
                         @PathVariable("id") Long id,
-                        @RequestBody Map<String, String> statusMap) {
+                        @RequestBody @jakarta.validation.Valid com.example.ems.employee.dto.UpdateDepartmentStatusRequest statusMap) {
 
                 User currentUser = resolveUser(authHeader);
                 if (currentUser == null) {
@@ -213,7 +213,7 @@ public class DepartmentController {
                 }
 
 
-                String status = statusMap.get("status");
+                String status = statusMap != null ? statusMap.status() : null;
                 if (status == null || (!status.equalsIgnoreCase("Active") && !status.equalsIgnoreCase("Inactive"))) {
                         return (ResponseEntity) ResponseEntity.badRequest()
                                         .body(ErrorResponse.error("Invalid status value", "DEP_400"));

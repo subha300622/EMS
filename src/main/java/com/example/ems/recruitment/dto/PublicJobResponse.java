@@ -26,15 +26,15 @@ public class PublicJobResponse {
     public PublicJobResponse() {}
 
     public PublicJobResponse(Job job) {
-        this(job, "http://localhost:3000");
+        this(job, null);
     }
 
     public PublicJobResponse(Job job, String baseUrl) {
         this.jobId = job.getId();
         this.title = job.getTitle();
         this.slug = job.getSlug();
-        String base = (baseUrl != null && !baseUrl.isBlank()) ? baseUrl : "http://localhost:3000";
-        this.publicUrl = base + "/jobs/" + (job.getSlug() != null ? job.getSlug() : "");
+        String base = (baseUrl != null && !baseUrl.isBlank()) ? baseUrl : "";
+        this.publicUrl = (!base.isBlank()) ? base + "/jobs/" + (job.getSlug() != null ? job.getSlug() : "") : "/jobs/" + (job.getSlug() != null ? job.getSlug() : "");
         this.department = job.getDepartment();
         this.location = job.getLocation();
         this.employmentType = job.getEmploymentType();

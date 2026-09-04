@@ -3,6 +3,7 @@ package com.example.ems.asset.service;
 import com.example.ems.asset.entity.Asset;
 import com.example.ems.asset.repository.AssetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -19,11 +20,16 @@ public class AssetQrCodeService {
     @Autowired
     private AssetRepository assetRepository;
 
+    @Value("${app.asset-verification-url}")
+    private String assetVerificationUrl;
+
     public byte[] generateAssetQrCodePng(Long organizationId, Long assetId) {
         Asset asset = assetRepository.findByIdAndOrganizationIdAndDeletedFalse(assetId, organizationId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset not found with ID: " + assetId));
+                .orElseThrow(
+                        () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Asset not found with ID: " + assetId));
 
-        String verificationUrl = "https://ems.example.com/api/v1/assets/verify/" + asset.getAssetCode();
+        String baseUrl = assetVerificationUrl.endsWith("/") ? assetVerificationUrl : assetVerificationUrl + "/";
+        String verificationUrl = baseUrl + asset.getAssetCode();
         return createDynamicQrPngImage(verificationUrl, asset.getAssetCode(), asset.getAssetName());
     }
 

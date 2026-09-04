@@ -38,7 +38,7 @@ public class JobResponse {
     public JobResponse() {}
 
     public JobResponse(Job job) {
-        this(job, "http://localhost:3000");
+        this(job, null);
     }
 
     public JobResponse(Job job, String baseUrl) {
@@ -48,8 +48,8 @@ public class JobResponse {
         this.department = job.getDepartment();
         this.title = job.getTitle();
         this.slug = job.getSlug();
-        String base = (baseUrl != null && !baseUrl.isBlank()) ? baseUrl : "http://localhost:3000";
-        this.publicUrl = base + "/jobs/" + (job.getSlug() != null ? job.getSlug() : "");
+        String base = (baseUrl != null && !baseUrl.isBlank()) ? baseUrl : "";
+        this.publicUrl = (!base.isBlank()) ? base + "/jobs/" + (job.getSlug() != null ? job.getSlug() : "") : "/jobs/" + (job.getSlug() != null ? job.getSlug() : "");
         this.location = job.getLocation();
         this.employmentType = job.getEmploymentType();
         this.experienceMin = job.getExperienceMin();

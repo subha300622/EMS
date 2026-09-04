@@ -13,6 +13,7 @@ import com.example.ems.recruitment.dto.JobUpdateRequest;
 import com.example.ems.recruitment.dto.PublicJobResponse;
 import com.example.ems.recruitment.entity.Job;
 import com.example.ems.recruitment.entity.JobStatus;
+import com.example.ems.recruitment.repository.ApplicationRepository;
 import com.example.ems.recruitment.repository.JobRepository;
 import com.example.ems.security.context.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ public class JobService {
 
     @Autowired
     private JobRepository jobRepository;
+
+    @Autowired
+    private ApplicationRepository applicationRepository;
 
     @Autowired
     private DepartmentRepository departmentRepository;
@@ -108,7 +112,7 @@ public class JobService {
         saved = jobRepository.save(saved);
 
         auditLogService.logAction("HR", "hr@company.com", "CREATE_JOB", "Job", saved.getId().toString(),
-                "127.0.0.1", "Job created with ID: " + saved.getId() + ", title: " + saved.getTitle());
+                getCurrentClientIp(), "Job created with ID: " + saved.getId() + ", title: " + saved.getTitle());
 
         return new JobResponse(saved, frontendUrl);
     }
@@ -175,7 +179,7 @@ public class JobService {
         Job updated = jobRepository.save(job);
 
         auditLogService.logAction("HR", "hr@company.com", "UPDATE_JOB", "Job", updated.getId().toString(),
-                "127.0.0.1", "Job updated with ID: " + updated.getId());
+                getCurrentClientIp(), "Job updated with ID: " + updated.getId());
 
         return new JobResponse(updated, frontendUrl);
     }
@@ -200,7 +204,7 @@ public class JobService {
         Job published = jobRepository.save(job);
 
         auditLogService.logAction("HR", "hr@company.com", "PUBLISH_JOB", "Job", published.getId().toString(),
-                "127.0.0.1", "Job published with ID: " + published.getId());
+                getCurrentClientIp(), "Job published with ID: " + published.getId());
 
         return new JobResponse(published, frontendUrl);
     }
@@ -262,6 +266,95 @@ public class JobService {
         return getPublicJob(jobSlug);
     }
 
+    public JobResponse closeJob(Long jobId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Job job = jobRepository.findByOrganizationIdAndId(orgId, jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
+
+        if (job.getStatus() == JobStatus.CLOSED) {
+            throw new BadRequestException("Job is already CLOSED");
+        }
+
+        job.setStatus(JobStatus.CLOSED);
+        Job closed = jobRepository.save(job);
+
+        auditLogService.logAction("HR", "hr@company.com", "CLOSE_JOB", "Job", closed.getId().toString(),
+                getCurrentClientIp(), "Job closed with ID: " + closed.getId());
+
+        return new JobResponse(closed, frontendUrl);
+    }
+
+    public JobResponse reopenJob(Long jobId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Job job = jobRepository.findByOrganizationIdAndId(orgId, jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
+
+        if (job.getStatus() != JobStatus.CLOSED) {
+            throw new BadRequestException("Only CLOSED jobs can be reopened");
+        }
+
+        if (job.getApplicationDeadline() != null && job.getApplicationDeadline().isBefore(LocalDate.now())) {
+            job.setStatus(JobStatus.DRAFT);
+        } else {
+            job.setStatus(JobStatus.PUBLISHED);
+            job.setPublishedAt(LocalDateTime.now());
+        }
+
+        Job reopened = jobRepository.save(job);
+
+        auditLogService.logAction("HR", "hr@company.com", "REOPEN_JOB", "Job", reopened.getId().toString(),
+                getCurrentClientIp(), "Job reopened with ID: " + reopened.getId() + ", status set to: " + reopened.getStatus());
+
+        return new JobResponse(reopened, frontendUrl);
+    }
+
+    public void deleteJob(Long jobId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Job job = jobRepository.findByOrganizationIdAndId(orgId, jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
+
+        if (applicationRepository.existsByOrganizationIdAndJobId(orgId, jobId)) {
+            throw new BadRequestException("Cannot delete job with existing candidate applications. Consider closing the job instead.");
+        }
+
+        jobRepository.delete(job);
+
+        auditLogService.logAction("HR", "hr@company.com", "DELETE_JOB", "Job", jobId.toString(),
+                getCurrentClientIp(), "Deleted job ID: " + jobId);
+    }
+
+    public JobResponse duplicateJob(Long jobId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Job original = jobRepository.findByOrganizationIdAndId(orgId, jobId)
+                .orElseThrow(() -> new ResourceNotFoundException("Job not found with ID: " + jobId));
+
+        Job duplicate = new Job();
+        duplicate.setOrganizationId(orgId);
+        duplicate.setDepartmentId(original.getDepartmentId());
+        duplicate.setDepartment(original.getDepartment());
+        duplicate.setTitle("Copy of " + original.getTitle());
+        duplicate.setLocation(original.getLocation());
+        duplicate.setEmploymentType(original.getEmploymentType());
+        duplicate.setExperienceMin(original.getExperienceMin());
+        duplicate.setExperienceMax(original.getExperienceMax());
+        duplicate.setOpenings(original.getOpenings());
+        duplicate.setSalaryMin(original.getSalaryMin());
+        duplicate.setSalaryMax(original.getSalaryMax());
+        duplicate.setSalaryRange(original.getSalaryRange());
+        duplicate.setDescription(original.getDescription());
+        duplicate.setRequirements(original.getRequirements());
+        duplicate.setStatus(JobStatus.DRAFT);
+
+        Job saved = jobRepository.save(duplicate);
+        saved.setSlug(generateSlug(saved.getTitle(), saved.getId()));
+        saved = jobRepository.save(saved);
+
+        auditLogService.logAction("HR", "hr@company.com", "DUPLICATE_JOB", "Job", saved.getId().toString(),
+                getCurrentClientIp(), "Duplicated job ID " + jobId + " to new job ID " + saved.getId());
+
+        return new JobResponse(saved, frontendUrl);
+    }
+
     private void validateJobForPublishing(Job job) {
         List<String> missingFields = new ArrayList<>();
         if (job.getTitle() == null || job.getTitle().isBlank()) missingFields.add("title");
@@ -286,5 +379,16 @@ public class JobService {
                 .replaceAll("(^-|-$)", "");
 
         return titleSlug + "-" + jobId;
+    }
+
+    private String getCurrentClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs =
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+            }
+        } catch (Exception ignored) {}
+        return "0.0.0.0";
     }
 }

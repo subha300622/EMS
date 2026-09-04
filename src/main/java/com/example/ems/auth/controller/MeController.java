@@ -42,7 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/me")
+@RequestMapping({"/api/v1/me", "/api/v1/auth/me"})
 @CrossOrigin("*")
 @Tag(name = "Employee Self Service - Profile")
 public class MeController {
@@ -58,6 +58,9 @@ public class MeController {
 
     @Autowired
     private JwtService jwtService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.dicebear-avatar-url}")
+    private String dicebearAvatarUrl;
 
     @Autowired
     private LeaveRepository leaveRepository;
@@ -397,10 +400,10 @@ public class MeController {
         String profileImage = employee.getProfileImage();
         if (profileImage == null || profileImage.isBlank()) {
             try {
-                profileImage = "https://api.dicebear.com/7.x/initials/svg?seed="
+                profileImage = dicebearAvatarUrl
                         + java.net.URLEncoder.encode(employee.getFullName(), "UTF-8");
             } catch (Exception e) {
-                profileImage = "https://api.dicebear.com/7.x/initials/svg?seed=" + employee.getFullName();
+                profileImage = dicebearAvatarUrl + employee.getFullName();
             }
         }
         emp.setProfileImage(profileImage);
@@ -608,5 +611,33 @@ public class MeController {
         if (employee.getProfileImage() != null && !employee.getProfileImage().isBlank()) filledFields++;
         
         return (filledFields * 100) / totalFields;
+    }
+
+    @Operation(summary = "Get Current User Roles and Effective Permissions", description = "Returns the authenticated user's assigned roles and effective permission strings.")
+    @GetMapping("/permissions")
+    public ResponseEntity<?> getMyPermissions(
+            @RequestHeader(value = org.springframework.http.HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        List<Map<String, Object>> roles = new java.util.ArrayList<>();
+        if (currentUser.getRole() != null) {
+            roles.add(Map.of(
+                    "id", currentUser.getRole().getId(),
+                    "name", currentUser.getRole().getName()
+            ));
+        }
+
+        List<String> effectivePermissions = roleService.getPermissionsForUserId(currentUser.getUserId());
+
+        Map<String, Object> responseData = Map.of(
+                "roles", roles,
+                "permissions", effectivePermissions
+        );
+
+        return ResponseEntity.ok(ApiResponse.success("User permissions retrieved successfully", responseData));
     }
 }

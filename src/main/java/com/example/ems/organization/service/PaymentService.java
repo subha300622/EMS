@@ -96,7 +96,7 @@ public class PaymentService {
 
                 PaymentOrderResponse.GatewayDto gatewayDto = new PaymentOrderResponse.GatewayDto(
                                 razorpayProperties.getKeyId() != null ? razorpayProperties.getKeyId()
-                                                : "rzp_live_StUZupmMw4H4yc",
+                                                : "rzp_test_dummy_key_id",
                                 Instant.now().plusSeconds(1800).toString() // Expires in 30 minutes
                 );
 

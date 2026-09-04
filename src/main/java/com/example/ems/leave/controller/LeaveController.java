@@ -274,7 +274,7 @@ public class LeaveController {
     public ResponseEntity<ApiResponse<Object>> assignPolicy(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long policyId,
-            @RequestBody Map<String, Object> payload) {
+            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.leave.dto.AssignLeavePolicyRequest payload) {
         User user = resolveUser(authHeader);
         if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 

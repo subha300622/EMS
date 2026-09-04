@@ -105,7 +105,7 @@ public class InterviewService {
                 "Scheduled " + request.getInterviewType() + " interview on " + request.getScheduledDate() + " at " + request.getStartTime());
 
         auditLogService.logAction("HR", "hr@company.com", "SCHEDULE_INTERVIEW", "Interview",
-                saved.getId().toString(), "127.0.0.1", "Scheduled interview for application " + app.getApplicationNumber());
+                saved.getId().toString(), getCurrentClientIp(), "Scheduled interview for application " + app.getApplicationNumber());
 
         return new InterviewResponse(saved);
     }
@@ -131,7 +131,7 @@ public class InterviewService {
         }
 
         auditLogService.logAction("HR", "hr@company.com", "COMPLETE_INTERVIEW", "Interview",
-                saved.getId().toString(), "127.0.0.1", "Completed interview ID: " + saved.getId());
+                saved.getId().toString(), getCurrentClientIp(), "Completed interview ID: " + saved.getId());
 
         return new InterviewResponse(saved);
     }
@@ -169,8 +169,8 @@ public class InterviewService {
                     "Feedback submitted. Recommendation: " + request.getRecommendation());
         }
 
-        auditLogService.logAction("HR", "hr@company.com", "SUBMIT_INTERVIEW_FEEDBACK", "Interview",
-                saved.getId().toString(), "127.0.0.1", "Submitted feedback for interview ID: " + saved.getId());
+        auditLogService.logAction("INTERVIEWER", "interviewer@company.com", "SUBMIT_INTERVIEW_FEEDBACK", "Interview",
+                saved.getId().toString(), getCurrentClientIp(), "Submitted feedback for interview ID: " + saved.getId());
 
         return new InterviewResponse(saved);
     }
@@ -181,5 +181,107 @@ public class InterviewService {
         return interviewRepository.findByOrganizationIdAndApplicationId(orgId, applicationId).stream()
                 .map(InterviewResponse::new)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<InterviewResponse> getAllInterviews() {
+        Long orgId = TenantContext.requireOrganizationId();
+        return interviewRepository.findByOrganizationId(orgId).stream()
+                .map(InterviewResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    public InterviewResponse cancelInterview(Long interviewId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Interview interview = interviewRepository.findByOrganizationIdAndId(orgId, interviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Interview not found with ID: " + interviewId));
+
+        if (interview.getStatus() == InterviewStatus.CANCELLED) {
+            throw new BadRequestException("Interview is already CANCELLED");
+        }
+
+        interview.setStatus(InterviewStatus.CANCELLED);
+        Interview saved = interviewRepository.save(interview);
+
+        auditLogService.logAction("HR", "hr@company.com", "CANCEL_INTERVIEW", "Interview",
+                saved.getId().toString(), getCurrentClientIp(), "Cancelled interview ID: " + saved.getId());
+
+        return new InterviewResponse(saved);
+    }
+
+    public InterviewResponse rescheduleInterview(Long interviewId, InterviewScheduleRequest request) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Interview interview = interviewRepository.findByOrganizationIdAndId(orgId, interviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Interview not found with ID: " + interviewId));
+
+        if (interview.getStatus() != InterviewStatus.SCHEDULED) {
+            throw new BadRequestException("Only SCHEDULED interviews can be rescheduled");
+        }
+
+        if (request.getScheduledDate().isBefore(LocalDate.now())) {
+            throw new BadRequestException("Interview date cannot be in the past");
+        }
+
+        if (request.getStartTime().isAfter(request.getEndTime()) || request.getStartTime().equals(request.getEndTime())) {
+            throw new BadRequestException("Start time must be before end time");
+        }
+
+        Employee interviewer = null;
+        if (request.getInterviewerId() != null) {
+            interviewer = employeeRepository.findById(request.getInterviewerId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Interviewer employee not found with ID: " + request.getInterviewerId()));
+
+            if (interviewer.getOrganization() != null && !orgId.equals(interviewer.getOrganization().getId())) {
+                throw new BadRequestException("Interviewer does not belong to your organization");
+            }
+
+            List<Interview> interviewerConflicts = interviewRepository.findConflictingInterviewerScheduleExcludingSelf(
+                    orgId, interviewer.getId(), interviewId, request.getScheduledDate(), request.getStartTime(), request.getEndTime());
+
+            if (!interviewerConflicts.isEmpty()) {
+                throw new ConflictException("Interviewer already has another interview scheduled at this time");
+            }
+        }
+
+        List<Interview> candidateConflicts = interviewRepository.findConflictingCandidateScheduleExcludingSelf(
+                orgId, interview.getApplication().getId(), interviewId, request.getScheduledDate(), request.getStartTime(), request.getEndTime());
+
+        if (!candidateConflicts.isEmpty()) {
+            throw new ConflictException("Candidate already has another interview scheduled at this time");
+        }
+
+        interview.setInterviewer(interviewer);
+        if (interviewer != null) {
+            interview.setInterviewerName(interviewer.getFirstName() + " " + interviewer.getLastName());
+        } else if (request.getInterviewerName() != null) {
+            interview.setInterviewerName(request.getInterviewerName());
+        }
+        if (request.getInterviewType() != null) {
+            interview.setInterviewType(request.getInterviewType());
+        }
+        interview.setScheduledDate(request.getScheduledDate());
+        interview.setStartTime(request.getStartTime());
+        interview.setEndTime(request.getEndTime());
+        if (request.getMeetingLink() != null) {
+            interview.setMeetingLink(request.getMeetingLink());
+        }
+
+        Interview saved = interviewRepository.save(interview);
+
+        auditLogService.logAction("HR", "hr@company.com", "RESCHEDULE_INTERVIEW", "Interview",
+                saved.getId().toString(), getCurrentClientIp(), "Rescheduled interview ID: " + saved.getId() + " to " + saved.getScheduledDate());
+
+        return new InterviewResponse(saved);
+    }
+
+    private String getCurrentClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs =
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+            }
+        } catch (Exception ignored) {}
+        return "0.0.0.0";
     }
 }

@@ -32,6 +32,12 @@ public class RecruitmentOfferController {
         return ResponseEntity.ok(ApiResponse.success("Offer sent to candidate successfully", response));
     }
 
+    @PostMapping("/offers/{offerId}/withdraw")
+    public ResponseEntity<ApiResponse<OfferResponse>> withdrawOffer(@PathVariable Long offerId) {
+        OfferResponse response = offerService.withdrawOffer(offerId);
+        return ResponseEntity.ok(ApiResponse.success("Offer withdrawn successfully", response));
+    }
+
     @GetMapping("/applications/{applicationId}/offers")
     public ResponseEntity<ApiResponse<OfferResponse>> getOfferByApplicationId(@PathVariable Long applicationId) {
         OfferResponse response = offerService.getOfferByApplicationId(applicationId);

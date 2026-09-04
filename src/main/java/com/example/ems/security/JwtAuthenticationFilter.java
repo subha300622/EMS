@@ -101,19 +101,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 String method = request.getMethod();
-                boolean isWriteMethod = "POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method) 
+                boolean isWriteMethod = "POST".equalsIgnoreCase(method) || "PUT".equalsIgnoreCase(method)
                                      || "DELETE".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method);
                 String path = request.getRequestURI();
 
-                if (isWriteMethod && headerOrgId == null && !path.startsWith("/api/v1/auth") 
+                boolean isPlatformAdmin = "PLATFORM_ADMIN".equalsIgnoreCase(role);
+
+                // PLATFORM_ADMIN performs global (platform-scoped) writes with no org context —
+                // they are exempt from the mandatory X-Organization-Id header check.
+                if (isWriteMethod && headerOrgId == null && !isPlatformAdmin
+                        && !path.startsWith("/api/v1/auth")
                         && !path.startsWith("/v3/api-docs") && !path.startsWith("/swagger-ui")) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     response.setContentType("application/json");
                     response.getWriter().write("{\"success\":false,\"errorCode\":\"BAD_REQUEST\",\"message\":\"Missing required header 'X-Organization-Id' for " + method + " operation.\"}");
                     return;
                 }
-
-                boolean isPlatformAdmin = "PLATFORM_ADMIN".equalsIgnoreCase(role);
 
                 if (isPlatformAdmin) {
                     // Platform Admin: Platform-level scope. Can explicitly target a tenant context via header.

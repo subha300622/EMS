@@ -47,15 +47,29 @@ resend:
   api-key: ${RESEND_API_KEY:re_dummy_key}
   from-email: ${RESEND_FROM_EMAIL:EMS System <noreply@company.com>}
 
+security:
+  jwt:
+    secret: ${JWT_SECRET:jwtSecretKeyForEmsBackendDevelopmentShouldBeLongAndSecure32Bytes!}
+
+encryption:
+  aes-key: ${AES_ENCRYPTION_KEY:RazorpayXSecureKeyOrgConfig2026!}
+
 app:
   seed:
     domain: ${APP_SEED_DOMAIN:company.com}
+    admin-password: ${PLATFORM_ADMIN_PASSWORD:pladmin@123}
   email:
     sender-address: ${APP_EMAIL_SENDER_ADDRESS:noreply@company.com}
   base-url: ${APP_BASE_URL:http://localhost:3000}
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  asset-verification-url: ${ASSET_VERIFICATION_URL:http://localhost:8080/api/v1/assets/verify/}
+  dicebear-avatar-url: ${DICEBEAR_AVATAR_URL:https://api.dicebear.com/7.x/initials/svg?seed=}
   kafka:
     enabled: false # Disabled in standard tests
+
+integrations:
+  slack-webhook: ${SLACK_WEBHOOK_URL:https://hooks.slack.com/services/test}
+  jira-base-url: ${JIRA_BASE_URL:https://jira.enterprise.com}
 
 springdoc:
   swagger-ui:
@@ -64,7 +78,7 @@ springdoc:
 razorpay:
   enabled: true
   mode: TEST
-  key-id: ${RAZORPAY_KEY_ID:rzp_live_StUZupmMw4H4yc}
-  key-secret: ${RAZORPAY_KEY_SECRET:uq9yq68G6Dydj3FJXgobDe0}
+  key-id: ${RAZORPAY_KEY_ID:rzp_test_dummy_key}
+  key-secret: ${RAZORPAY_KEY_SECRET:dummy_secret}
   webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:webhook_secret}
   currency: INR

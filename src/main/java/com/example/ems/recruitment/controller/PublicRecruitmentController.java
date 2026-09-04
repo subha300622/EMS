@@ -56,4 +56,10 @@ public class PublicRecruitmentController {
         OfferResponse response = offerService.acceptOfferPublic(token);
         return ResponseEntity.ok(ApiResponse.success("Offer accepted successfully", response));
     }
+
+    @PostMapping("/offers/{token}/decline")
+    public ResponseEntity<ApiResponse<OfferResponse>> declineOffer(@PathVariable String token) {
+        OfferResponse response = offerService.declineOfferPublic(token);
+        return ResponseEntity.ok(ApiResponse.success("Offer declined successfully", response));
+    }
 }

@@ -192,12 +192,12 @@ public class PlatformAdminOrganizationController {
     public ResponseEntity<?> updateStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody @Valid com.example.ems.organization.dto.UpdateOrganizationStatusRequest body) {
 
         ResponseEntity<?> accessError = validateAccess(authHeader, "organization.update");
         if (accessError != null) return accessError;
 
-        String status = body.get("status");
+        String status = body != null ? body.status() : null;
         if (status == null || status.trim().isEmpty()) {
             return ResponseEntity.badRequest().body(ErrorResponse.error("Status is required", "ORG_002"));
         }
@@ -205,7 +205,7 @@ public class PlatformAdminOrganizationController {
         User user = resolveUser(authHeader);
         try {
             if ("SUSPENDED".equalsIgnoreCase(status)) {
-                String reason = body.getOrDefault("reason", "No reason provided");
+                String reason = body.getEffectiveReason();
                 organizationService.suspendOrganization(id, reason, user.getWorkEmail());
             } else if ("ACTIVE".equalsIgnoreCase(status)) {
                 organizationService.activateOrganization(id, user.getWorkEmail());

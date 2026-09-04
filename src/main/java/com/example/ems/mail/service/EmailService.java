@@ -25,20 +25,20 @@ public class EmailService {
     @Autowired(required = false)
     private JavaMailSender mailSender;
 
-    @Value("${spring.mail.host:smtp.gmail.com}")
+    @Value("${spring.mail.host}")
     private String smtpHost;
 
-    @Value("${spring.mail.port:587}")
+    @Value("${spring.mail.port}")
     private String smtpPort;
 
-    @Value("${spring.mail.username:subashinibalu30@gmail.com}")
+    @Value("${spring.mail.username}")
     private String smtpUsername;
 
-    @Value("${spring.mail.password:nqokfqkbsychvhfq}")
+    @Value("${spring.mail.password}")
     private String smtpPassword;
 
-    @Value("${app.base-url:http://localhost:3000}")
-    private String baseUrl;
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     /**
      * Sends a 6-digit OTP email for password reset.
@@ -97,7 +97,7 @@ public class EmailService {
             String designation,
             String joiningDate) {
 
-        String invitationUrl = "http://localhost:3000/register?token=" + token;
+        String invitationUrl = frontendUrl + "/register?token=" + token;
         String resolvedOrgName = (orgName != null && !orgName.isBlank()) ? orgName : "our company";
 
         String html = """
@@ -166,7 +166,7 @@ public class EmailService {
      * Sends verification email to a newly signed up administrator.
      */
     public void sendVerificationEmail(String toEmail, String name, String token) {
-        String verificationUrl = baseUrl + "/verify-email?token=" + token;
+        String verificationUrl = frontendUrl + "/verify-email?token=" + token;
         String html = """
                 <div style="font-family: Arial, sans-serif; max-width: 520px; margin: auto;
                             padding: 32px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff;">
@@ -232,7 +232,7 @@ public class EmailService {
     public void sendActivationEmailJavaMail(String toEmail, String name, String ccEmail, String token) {
         String from = smtpUsername; // Uses configured username from properties
         String subject = "Activate Your EMS Account";
-        String activationLink = "https://ems.company.com/activate?token=" + token;
+        String activationLink = frontendUrl + "/activate?token=" + token;
 
         String body = "Hello " + name + ",\n\n"
                 + "Your EMS account has been created successfully.\n\n"

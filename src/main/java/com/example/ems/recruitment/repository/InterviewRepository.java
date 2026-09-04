@@ -15,6 +15,8 @@ import java.util.Optional;
 @Repository
 public interface InterviewRepository extends JpaRepository<Interview, Long> {
 
+    List<Interview> findByOrganizationId(Long organizationId);
+
     Optional<Interview> findByOrganizationIdAndId(Long organizationId, Long id);
 
     List<Interview> findByOrganizationIdAndApplicationId(Long organizationId, Long applicationId);
@@ -31,12 +33,34 @@ public interface InterviewRepository extends JpaRepository<Interview, Long> {
             @Param("startTime") LocalTime startTime,
             @Param("endTime") LocalTime endTime);
 
+    @Query("SELECT i FROM Interview i WHERE i.organizationId = :orgId AND i.interviewer.id = :interviewerId " +
+           "AND i.id != :interviewId AND i.scheduledDate = :date AND i.status = 'SCHEDULED' " +
+           "AND ((i.startTime < :endTime AND i.endTime > :startTime))")
+    List<Interview> findConflictingInterviewerScheduleExcludingSelf(
+            @Param("orgId") Long orgId,
+            @Param("interviewerId") Long interviewerId,
+            @Param("interviewId") Long interviewId,
+            @Param("date") LocalDate date,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime);
+
     @Query("SELECT i FROM Interview i WHERE i.organizationId = :orgId AND i.application.id = :appId " +
            "AND i.scheduledDate = :date AND i.status = 'SCHEDULED' " +
            "AND ((i.startTime < :endTime AND i.endTime > :startTime))")
     List<Interview> findConflictingCandidateSchedule(
             @Param("orgId") Long orgId,
             @Param("appId") Long appId,
+            @Param("date") LocalDate date,
+            @Param("startTime") LocalTime startTime,
+            @Param("endTime") LocalTime endTime);
+
+    @Query("SELECT i FROM Interview i WHERE i.organizationId = :orgId AND i.application.id = :appId " +
+           "AND i.id != :interviewId AND i.scheduledDate = :date AND i.status = 'SCHEDULED' " +
+           "AND ((i.startTime < :endTime AND i.endTime > :startTime))")
+    List<Interview> findConflictingCandidateScheduleExcludingSelf(
+            @Param("orgId") Long orgId,
+            @Param("appId") Long appId,
+            @Param("interviewId") Long interviewId,
             @Param("date") LocalDate date,
             @Param("startTime") LocalTime startTime,
             @Param("endTime") LocalTime endTime);

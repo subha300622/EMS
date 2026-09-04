@@ -1,6 +1,7 @@
 package com.example.ems.recruitment.controller;
 
 import com.example.ems.common.dto.ApiResponse;
+import com.example.ems.recruitment.dto.CandidateCreateRequest;
 import com.example.ems.recruitment.dto.TalentPoolCandidateResponse;
 import com.example.ems.recruitment.dto.TalentPoolInviteRequest;
 import com.example.ems.recruitment.service.TalentPoolService;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,6 +38,20 @@ public class RecruitmentTalentPoolController {
                 skill, experienceMin, experienceMax, location, search, PageRequest.of(page, size, sort));
 
         return ResponseEntity.ok(ApiResponse.success("Fetched talent pool candidates successfully", candidates));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<TalentPoolCandidateResponse>> addCandidate(
+            @Valid @RequestBody CandidateCreateRequest request) {
+        TalentPoolCandidateResponse response = talentPoolService.addCandidate(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Candidate added to talent pool successfully", response));
+    }
+
+    @DeleteMapping("/{candidateId}")
+    public ResponseEntity<ApiResponse<Void>> deleteCandidate(@PathVariable Long candidateId) {
+        talentPoolService.deleteCandidate(candidateId);
+        return ResponseEntity.ok(ApiResponse.success("Candidate deleted from talent pool successfully", null));
     }
 
     @PostMapping("/{candidateId}/invite")

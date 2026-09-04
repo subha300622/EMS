@@ -78,7 +78,7 @@ public class PaymentControllerTest {
         PaymentOrderResponse response = new PaymentOrderResponse(
                 new PaymentOrderResponse.PaymentDto(1L, "CREATED", "RAZORPAY", "order_123", "INR", new BigDecimal(5700000), new BigDecimal(57000), "EMS-2026-000001"),
                 new PaymentOrderResponse.InvoiceDto(1L, "EMS-2026-000001", "PENDING"),
-                new PaymentOrderResponse.GatewayDto("rzp_live_123", "2026-07-01T11:30:10Z")
+                new PaymentOrderResponse.GatewayDto("rzp_test_123", "2026-07-01T11:30:10Z")
         );
 
         when(paymentService.createPaymentOrder(any(), any())).thenReturn(response);

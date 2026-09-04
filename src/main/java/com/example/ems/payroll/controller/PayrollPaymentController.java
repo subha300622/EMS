@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 public class PayrollPaymentController {
@@ -24,17 +23,13 @@ public class PayrollPaymentController {
             @PathVariable Long runId,
             @RequestParam(required = false) String mode,
             @RequestParam(required = false) String simulation,
-            @RequestBody(required = false) Map<String, String> body) {
+            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.payroll.dto.ExecutePayrollPaymentRequest body) {
 
         String selectedMode = mode;
         String sim = simulation;
         if (body != null) {
-            if (selectedMode == null || selectedMode.isBlank()) {
-                selectedMode = body.getOrDefault("paymentMode", body.getOrDefault("mode", "NEFT"));
-            }
-            if (sim == null || sim.isBlank()) {
-                sim = body.get("simulation");
-            }
+            selectedMode = body.getEffectiveMode(selectedMode);
+            sim = body.getEffectiveSimulation(sim);
         }
         if (selectedMode == null || selectedMode.isBlank()) {
             selectedMode = "NEFT";

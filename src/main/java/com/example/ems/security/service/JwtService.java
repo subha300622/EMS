@@ -4,7 +4,9 @@ import com.example.ems.auth.service.SessionService;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
@@ -21,12 +23,32 @@ public class JwtService {
     @Lazy
     private SessionService sessionService;
 
-    // A secure 256-bit key for HMAC-SHA
-    private static final String SECRET_STRING = "jwtSecretKeyForEmsBackendDevelopmentShouldBeLongAndSecure32Bytes!";
-    private final SecretKey key = Keys.hmacShaKeyFor(SECRET_STRING.getBytes(StandardCharsets.UTF_8));
+    @Value("${security.jwt.secret}")
+    private String jwtSecret;
+
+    private SecretKey key;
 
     // Access Token validity: 24 hours
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 24 * 60 * 60 * 1000L;
+
+    @PostConstruct
+    public void validateSecret() {
+        if (jwtSecret == null || jwtSecret.isBlank() || jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET must be configured and at least 32 bytes (256 bits) long.");
+        }
+        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private SecretKey getSigningKey() {
+        if (this.key == null) {
+            if (jwtSecret != null && !jwtSecret.isBlank()) {
+                this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+            } else {
+                throw new IllegalStateException("JWT_SECRET is not configured");
+            }
+        }
+        return this.key;
+    }
 
     public String generateAccessToken(String userId, String email, String role) {
         return generateAccessToken(userId, email, role, null, null, 1, 1L);
@@ -60,14 +82,14 @@ public class JwtService {
                 .subject(email)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_MS))
-                .signWith(key)
+                .signWith(getSigningKey())
                 .compact();
     }
 
     public boolean validateAccessToken(String token) {
         try {
             Claims claims = Jwts.parser()
-                .verifyWith(key)
+                .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
@@ -92,7 +114,7 @@ public class JwtService {
 
     public Claims getClaims(String token) {
         return Jwts.parser()
-                .verifyWith(key)
+                .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();

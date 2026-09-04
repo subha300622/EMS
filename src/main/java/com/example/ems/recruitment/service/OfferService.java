@@ -72,8 +72,8 @@ public class OfferService {
 
         Offer saved = offerRepository.save(offer);
 
-        auditLogService.logAction("HR", "hr@company.com", "GENERATE_OFFER", "Offer",
-                saved.getId().toString(), "127.0.0.1", "Generated offer " + saved.getOfferNumber() + " for application " + app.getApplicationNumber());
+        auditLogService.logAction("HR", "hr@company.com", "CREATE_OFFER", "Offer",
+                saved.getId().toString(), getCurrentClientIp(), "Generated offer " + saved.getOfferNumber() + " for application " + app.getApplicationNumber());
 
         return new OfferResponse(saved);
     }
@@ -107,7 +107,7 @@ public class OfferService {
         }
 
         auditLogService.logAction("HR", "hr@company.com", "SEND_OFFER", "Offer",
-                saved.getId().toString(), "127.0.0.1", "Sent offer " + saved.getOfferNumber() + " with acceptance token");
+                saved.getId().toString(), getCurrentClientIp(), "Sent offer " + saved.getOfferNumber() + " with acceptance token");
 
         return new OfferResponse(saved);
     }
@@ -133,8 +133,51 @@ public class OfferService {
             applicationService.recordStatusHistory(app, oldStatus, ApplicationStatus.OFFER_ACCEPTED, "CANDIDATE", "Candidate accepted offer online");
         }
 
-        auditLogService.logAction("PUBLIC_USER", app.getCandidate().getEmail(), "ACCEPT_OFFER", "Offer",
-                saved.getId().toString(), "127.0.0.1", "Candidate accepted offer " + saved.getOfferNumber());
+        auditLogService.logAction("CANDIDATE", app.getCandidate().getEmail(), "ACCEPT_OFFER", "Offer",
+                saved.getId().toString(), getCurrentClientIp(), "Candidate accepted offer " + saved.getOfferNumber());
+
+        return new OfferResponse(saved);
+    }
+
+    public OfferResponse declineOfferPublic(String token) {
+        Offer offer = offerRepository.findByAcceptanceToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException("Invalid or expired offer token"));
+
+        if (offer.getStatus() != OfferStatus.SENT) {
+            throw new BadRequestException("Offer is not in SENT status or has already been processed");
+        }
+
+        offer.setStatus(OfferStatus.REJECTED);
+        Offer saved = offerRepository.save(offer);
+
+        Application app = offer.getApplication();
+        if (app != null) {
+            ApplicationStatus oldStatus = app.getStatus();
+            app.setStatus(ApplicationStatus.REJECTED);
+            applicationRepository.save(app);
+            applicationService.recordStatusHistory(app, oldStatus, ApplicationStatus.REJECTED, "CANDIDATE", "Candidate declined offer online");
+        }
+
+        auditLogService.logAction("PUBLIC_USER", app != null && app.getCandidate() != null ? app.getCandidate().getEmail() : "candidate",
+                "DECLINE_OFFER", "Offer", saved.getId().toString(), getCurrentClientIp(), "Candidate declined offer " + saved.getOfferNumber());
+
+        return new OfferResponse(saved);
+    }
+
+    public OfferResponse withdrawOffer(Long offerId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Offer offer = offerRepository.findByOrganizationIdAndId(orgId, offerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Offer not found with ID: " + offerId));
+
+        if (offer.getStatus() != OfferStatus.DRAFT && offer.getStatus() != OfferStatus.SENT) {
+            throw new BadRequestException("Only DRAFT or SENT offers can be withdrawn");
+        }
+
+        offer.setStatus(OfferStatus.WITHDRAWN);
+        Offer saved = offerRepository.save(offer);
+
+        auditLogService.logAction("HR", "hr@company.com", "WITHDRAW_OFFER", "Offer",
+                saved.getId().toString(), getCurrentClientIp(), "Withdrew offer " + saved.getOfferNumber());
 
         return new OfferResponse(saved);
     }
@@ -145,5 +188,16 @@ public class OfferService {
         Offer offer = offerRepository.findByOrganizationIdAndApplicationId(orgId, applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("No offer found for application ID: " + applicationId));
         return new OfferResponse(offer);
+    }
+
+    private String getCurrentClientIp() {
+        try {
+            org.springframework.web.context.request.ServletRequestAttributes attrs =
+                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+            }
+        } catch (Exception ignored) {}
+        return "0.0.0.0";
     }
 }

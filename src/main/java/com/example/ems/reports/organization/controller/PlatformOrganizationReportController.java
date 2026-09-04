@@ -166,7 +166,7 @@ public class PlatformOrganizationReportController {
     @PostMapping("/export")
     public ResponseEntity<?> export(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, String> body) {
+            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.reports.organization.dto.OrganizationReportExportRequest body) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
@@ -178,7 +178,7 @@ public class PlatformOrganizationReportController {
                     .body(ErrorResponse.error("Access Denied: Requires platform reports view permission.", "AUTH_002"));
         }
 
-        String formatStr = body.getOrDefault("format", "CSV").toUpperCase();
+        String formatStr = body != null ? body.getEffectiveFormat() : "CSV";
         ExportFormat format;
         try {
             format = ExportFormat.valueOf(formatStr);
@@ -187,9 +187,9 @@ public class PlatformOrganizationReportController {
                     .body(ErrorResponse.error("Invalid export format. Must be CSV, EXCEL, or PDF.", "REP_001"));
         }
 
-        String search = body.get("search");
-        String status = body.get("status");
-        String plan = body.get("plan");
+        String search = body != null ? body.search() : null;
+        String status = body != null ? body.status() : null;
+        String plan = body != null ? body.plan() : null;
 
         ReportExportHistory history = reportFacade.exportReport(format, search, status, plan, user.getWorkEmail());
         return ResponseEntity.ok(ApiResponse.success("Report export started successfully", Map.of(

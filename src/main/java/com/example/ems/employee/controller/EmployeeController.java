@@ -297,7 +297,7 @@ public class EmployeeController {
     public ResponseEntity<ApiResponse<Object>> updateEmployeeStatusPatch(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String employeeId,
-            @RequestBody Map<String, String> body) {
+            @RequestBody @Valid com.example.ems.employee.dto.UpdateEmployeeStatusRequest body) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -310,8 +310,8 @@ public class EmployeeController {
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.update' permission.", "AUTH_002"));
         }
 
-        String newStatus = body != null ? body.get("status") : null;
-        String reason = body != null ? body.get("reason") : null;
+        String newStatus = body != null ? body.status() : null;
+        String reason = body != null ? body.reason() : null;
         if (newStatus == null || newStatus.isBlank()) {
             return (ResponseEntity) ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Status field is required", "VAL_001"));

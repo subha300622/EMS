@@ -11,6 +11,7 @@ import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.organization.entity.Organization;
 import com.example.ems.organization.repository.OrganizationRepository;
+import com.example.ems.security.context.TenantContext;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -87,6 +88,27 @@ public class RoleService {
         }
     }
 
+    public void evictAllUserPermissionsCache() {
+        if (cacheManager != null) {
+            try {
+                Cache permCache = cacheManager.getCache("userPermissions");
+                if (permCache != null) {
+                    permCache.clear();
+                }
+            } catch (Exception e) {
+                // Log and ignore to prevent crashes when Redis is down
+            }
+            try {
+                Cache bootCache = cacheManager.getCache("userBootstrap");
+                if (bootCache != null) {
+                    bootCache.clear();
+                }
+            } catch (Exception e) {
+                // Log and ignore
+            }
+        }
+    }
+
     public Set<Permission> getEffectivePermissions(User user) {
         if (user == null || user.getRole() == null) {
             return new HashSet<>();
@@ -102,9 +124,11 @@ public class RoleService {
             if (fallbackRole.isEmpty()) {
                 fallbackRole = roleRepository.findByNameAndIsPlatformTemplateTrue("EMPLOYEE");
             }
-            return fallbackRole.map(Role::getPermissions).orElse(new HashSet<>());
+            perms = fallbackRole.map(Role::getPermissions).orElse(new HashSet<>());
         }
-        return perms;
+        return perms.stream()
+                .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                .collect(Collectors.toSet());
     }
 
     @Transactional(readOnly = true)
@@ -193,7 +217,11 @@ public class RoleService {
             for (com.example.ems.auth.entity.PermissionGroup group : groups) {
                 permissionGroups.add(group);
                 if (group.getPermissions() != null) {
-                    effectivePermissions.addAll(group.getPermissions());
+                    for (Permission p : group.getPermissions()) {
+                        if (Boolean.TRUE.equals(p.getActive())) {
+                            effectivePermissions.add(p);
+                        }
+                    }
                 }
             }
         }
@@ -203,6 +231,9 @@ public class RoleService {
             for (Long pId : request.getPermissionIds()) {
                 Permission p = permissionRepository.findById(pId)
                         .orElseThrow(() -> new IllegalArgumentException("Permission with ID '" + pId + "' does not exist"));
+                if (!Boolean.TRUE.equals(p.getActive())) {
+                    throw new IllegalArgumentException("Cannot assign inactive permission with ID '" + pId + "'");
+                }
                 directPermissions.add(p);
                 effectivePermissions.add(p);
             }
@@ -211,6 +242,9 @@ public class RoleService {
             for (String pName : request.getPermissionNames()) {
                 Permission p = permissionRepository.findByName(pName.trim())
                         .orElseThrow(() -> new IllegalArgumentException("Permission with name '" + pName + "' does not exist"));
+                if (!Boolean.TRUE.equals(p.getActive())) {
+                    throw new IllegalArgumentException("Cannot assign inactive permission '" + pName + "'");
+                }
                 directPermissions.add(p);
                 effectivePermissions.add(p);
             }
@@ -347,6 +381,50 @@ public class RoleService {
 
         evictRolePermissionsCache(id);
         roleRepository.delete(role);
+    }
+
+    // ── Tenant-scoped convenience methods (resolve orgId from TenantContext) ──────
+
+    /**
+     * Returns the current tenant's organization ID from the security context.
+     * Controllers MUST use this instead of calling TenantContext directly.
+     */
+    public Long currentOrganizationId() {
+        return TenantContext.requireOrganizationId();
+    }
+
+    /** List roles for the current tenant. */
+    public List<Role> getTenantRoles() {
+        return getTenantRoles(currentOrganizationId());
+    }
+
+    /** Create a role scoped to the current tenant. */
+    @Transactional
+    public Role createTenantRole(RoleRequest request) {
+        return createTenantRole(currentOrganizationId(), request);
+    }
+
+    /** Update a role that must belong to the current tenant. */
+    @Transactional
+    public Role updateTenantRole(Long id, RoleRequest request) {
+        return updateTenantRole(id, currentOrganizationId(), request);
+    }
+
+    /** Delete a role that must belong to the current tenant. */
+    @Transactional
+    public void deleteTenantRole(Long id) {
+        deleteTenantRole(id, currentOrganizationId());
+    }
+
+    /**
+     * Finds the role by ID, verifying it belongs to the current tenant
+     * (or is a platform template, which is visible to all tenants).
+     */
+    public Role requireRoleOwnedByCurrentTenant(Long roleId) {
+        Long orgId = currentOrganizationId();
+        return getRoleById(roleId)
+                .filter(r -> r.isPlatformTemplate() || (r.getOrganization() != null && orgId.equals(r.getOrganization().getId())))
+                .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
     }
 
     // ── Legacy Compatibility / Shared Mappings CRUD ─────────────────────────────
@@ -498,6 +576,9 @@ public class RoleService {
         Permission permission = permissionRepository.findById(permissionId)
                 .orElseThrow(() -> new IllegalArgumentException("Permission not found"));
 
+        if (role.getDirectPermissions() != null) {
+            role.getDirectPermissions().remove(permission);
+        }
         boolean removed = role.getPermissions().remove(permission);
         if (removed) {
             roleRepository.save(role);
@@ -505,6 +586,38 @@ public class RoleService {
             return true;
         }
         return false;
+    }
+
+    @Transactional
+    public void removePermissionGroupFromRole(Long roleId, Long groupId) {
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+        com.example.ems.auth.entity.PermissionGroup group = permissionGroupRepository.findById(groupId)
+                .orElseThrow(() -> new IllegalArgumentException("Permission group not found with ID: " + groupId));
+
+        if (role.getPermissionGroups() != null) {
+            role.getPermissionGroups().remove(group);
+            Set<Permission> newEffective = new HashSet<>();
+            if (role.getDirectPermissions() != null) {
+                for (Permission p : role.getDirectPermissions()) {
+                    if (Boolean.TRUE.equals(p.getActive())) {
+                        newEffective.add(p);
+                    }
+                }
+            }
+            for (com.example.ems.auth.entity.PermissionGroup g : role.getPermissionGroups()) {
+                if (g.getPermissions() != null) {
+                    for (Permission p : g.getPermissions()) {
+                        if (Boolean.TRUE.equals(p.getActive())) {
+                            newEffective.add(p);
+                        }
+                    }
+                }
+            }
+            role.setPermissions(newEffective);
+            roleRepository.save(role);
+            evictRolePermissionsCache(roleId);
+        }
     }
 
     public Long getRoleIdByName(String roleName) {

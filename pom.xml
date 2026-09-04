@@ -224,6 +224,9 @@
 				<version>3.5.5</version>
 				<configuration>
 					<argLine>-XX:+EnableDynamicAgentLoading</argLine>
+					<systemPropertyVariables>
+						<encryption.aes-key>RazorpayXSecureKeyOrgConfig2026!</encryption.aes-key>
+					</systemPropertyVariables>
 				</configuration>
 			</plugin>
 			<plugin>
