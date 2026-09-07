@@ -1,8 +1,7 @@
 package com.example.ems.appraisal.service;
 
-import com.example.ems.appraisal.dto.AppraisalCycleResponseDto;
-import com.example.ems.appraisal.dto.CreateAppraisalCycleDto;
-import com.example.ems.appraisal.dto.CycleEligibilityCriteriaDto;
+import com.example.ems.appraisal.dto.*;
+
 import com.example.ems.appraisal.entity.Appraisal;
 import com.example.ems.appraisal.entity.AppraisalCycle;
 import com.example.ems.appraisal.entity.AppraisalStatus;
@@ -41,6 +40,12 @@ public class AppraisalCycleService {
     @Autowired
     private com.example.ems.appraisal.repository.AppraisalConfigurationRepository configRepository;
 
+    @Autowired
+    private AppraisalConfigurationExtendedService configExtendedService;
+
+    @Autowired
+    private com.example.ems.appraisal.repository.AppraisalConfigurationVersionRepository versionRepository;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Transactional
@@ -77,6 +82,60 @@ public class AppraisalCycleService {
         return mapToDto(cycleRepository.save(cycle));
     }
 
+    @Transactional
+    public AppraisalCycleResponseDto updateCycle(Long cycleId, UpdateAppraisalCycleDto dto) {
+        Long orgId = TenantContext.requireOrganizationId();
+        AppraisalCycle cycle = cycleRepository.findByIdAndOrganizationId(cycleId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Appraisal cycle not found with ID: " + cycleId));
+
+        if (!"DRAFT".equalsIgnoreCase(cycle.getStatus())) {
+            throw new IllegalStateException("Cannot update appraisal cycle with status '" + cycle.getStatus() + "'. Only DRAFT cycles can be updated.");
+        }
+
+        if (dto.getStartDate() != null && dto.getEndDate() != null && dto.getEndDate().isBefore(dto.getStartDate())) {
+            throw new IllegalArgumentException("Cycle endDate cannot be before startDate");
+        }
+
+        if (dto.getName() != null && !dto.getName().trim().equalsIgnoreCase(cycle.getName())) {
+            if (cycleRepository.findByOrganizationId(orgId).stream()
+                    .anyMatch(c -> !c.getId().equals(cycleId) && c.getName().equalsIgnoreCase(dto.getName().trim()))) {
+                throw new com.example.ems.common.exception.ConflictException("An appraisal cycle with name '" + dto.getName().trim() + "' already exists.");
+            }
+            cycle.setName(dto.getName().trim());
+        }
+
+        if (dto.getType() != null) {
+            cycle.setType(dto.getType().toUpperCase());
+        }
+        if (dto.getStartDate() != null) {
+            cycle.setStartDate(dto.getStartDate());
+        }
+        if (dto.getEndDate() != null) {
+            cycle.setEndDate(dto.getEndDate());
+        }
+        if (dto.getEligibleEmployeeCriteria() != null) {
+            try {
+                cycle.setEligibleCriteriaJson(objectMapper.writeValueAsString(dto.getEligibleEmployeeCriteria()));
+            } catch (Exception ignored) {}
+        }
+
+        cycle.setUpdatedAt(LocalDateTime.now());
+        return mapToDto(cycleRepository.save(cycle));
+    }
+
+    @Transactional
+    public void deleteCycle(Long cycleId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        AppraisalCycle cycle = cycleRepository.findByIdAndOrganizationId(cycleId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Appraisal cycle not found with ID: " + cycleId));
+
+        if (!"DRAFT".equalsIgnoreCase(cycle.getStatus())) {
+            throw new IllegalStateException("Cannot delete appraisal cycle with status '" + cycle.getStatus() + "'. Only DRAFT cycles can be deleted.");
+        }
+
+        cycleRepository.delete(cycle);
+    }
+
     public List<AppraisalCycleResponseDto> getCycles() {
         Long orgId = TenantContext.requireOrganizationId();
         return cycleRepository.findByOrganizationId(orgId)
@@ -98,6 +157,28 @@ public class AppraisalCycleService {
         AppraisalCycle cycle = cycleRepository.findByIdAndOrganizationId(cycleId, orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal cycle not found with ID: " + cycleId));
 
+        if ("OPEN".equalsIgnoreCase(cycle.getStatus()) || "IN_PROGRESS".equalsIgnoreCase(cycle.getStatus())) {
+            return mapToDto(cycle);
+        }
+
+        // Bind or snapshot configuration version if not present
+        if (cycle.getConfigurationVersion() == null) {
+            com.example.ems.appraisal.entity.AppraisalConfigurationVersion latestVer = versionRepository
+                    .findFirstByOrganizationIdOrderByVersionNumberDesc(orgId)
+                    .orElseGet(() -> {
+                        // Create initial snapshot if none exists
+                        try {
+                            configExtendedService.createSnapshot(cycle.getCreatedBy(), "Auto-snapshot upon activating cycle: " + cycle.getName());
+                            return versionRepository.findFirstByOrganizationIdOrderByVersionNumberDesc(orgId).orElse(null);
+                        } catch (Exception e) {
+                            return null;
+                        }
+                    });
+            if (latestVer != null) {
+                cycle.setConfigurationVersion(latestVer);
+            }
+        }
+
         cycle.setStatus("OPEN");
         cycle.setUpdatedAt(LocalDateTime.now());
         return mapToDto(cycleRepository.save(cycle));
@@ -112,6 +193,130 @@ public class AppraisalCycleService {
         cycle.setStatus("CLOSED");
         cycle.setUpdatedAt(LocalDateTime.now());
         return mapToDto(cycleRepository.save(cycle));
+    }
+
+    @Transactional(readOnly = true)
+    public AppraisalConfigurationSnapshotDto getCycleConfiguration(Long cycleId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        AppraisalCycle cycle = cycleRepository.findByIdAndOrganizationId(cycleId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Appraisal cycle not found with ID: " + cycleId));
+
+        if (cycle.getConfigurationVersion() != null && cycle.getConfigurationVersion().getSnapshotJson() != null) {
+            try {
+                return objectMapper.readValue(cycle.getConfigurationVersion().getSnapshotJson(), AppraisalConfigurationSnapshotDto.class);
+            } catch (Exception ignored) {}
+        }
+
+        return configExtendedService.buildLiveSnapshot(1);
+    }
+
+    @Transactional(readOnly = true)
+    public CycleEligibilityPreviewResponseDto getEligibilityPreview(Long cycleId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        AppraisalCycle cycle = cycleRepository.findByIdAndOrganizationId(cycleId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Appraisal cycle not found with ID: " + cycleId));
+
+        CycleEligibilityCriteriaDto criteria = null;
+        if (cycle.getEligibleCriteriaJson() != null) {
+            try {
+                criteria = objectMapper.readValue(cycle.getEligibleCriteriaJson(), CycleEligibilityCriteriaDto.class);
+            } catch (Exception ignored) {}
+        }
+
+        int minMonths = (criteria != null && criteria.getMinimumServiceMonths() != null) ? criteria.getMinimumServiceMonths() : 0;
+        List<Employee> allEmployees = employeeRepository.findByOrganizationId(orgId);
+        List<Appraisal> existingAppraisals = appraisalRepository.findByCycleId(cycleId);
+        Set<Long> existingEmployeeIds = existingAppraisals.stream()
+                .map(a -> a.getEmployee().getId())
+                .collect(Collectors.toSet());
+
+        List<EmployeeEligibilityDetailDto> eligible = new ArrayList<>();
+        List<EmployeeEligibilityDetailDto> ineligible = new ArrayList<>();
+
+        for (Employee emp : allEmployees) {
+            EmployeeEligibilityDetailDto detail = new EmployeeEligibilityDetailDto();
+            detail.setEmployeeId(emp.getId());
+            detail.setEmployeeName(emp.getFullName());
+            detail.setDepartment(emp.getDepartment());
+            detail.setDesignation(emp.getDesignation());
+            detail.setJoiningDate(emp.getJoiningDate());
+
+            if (emp.getJoiningDate() != null && cycle.getStartDate() != null) {
+                long months = ChronoUnit.MONTHS.between(emp.getJoiningDate(), cycle.getStartDate());
+                detail.setServiceMonths((int) Math.max(0, months));
+            } else {
+                detail.setServiceMonths(0);
+            }
+
+            if (existingEmployeeIds.contains(emp.getId())) {
+                detail.setEligible(false);
+                detail.setIneligibilityReason("Already has an appraisal in this cycle");
+                ineligible.add(detail);
+                continue;
+            }
+
+            if (minMonths > 0 && emp.getJoiningDate() != null) {
+                long months = ChronoUnit.MONTHS.between(emp.getJoiningDate(), cycle.getStartDate());
+                if (months < minMonths) {
+                    detail.setEligible(false);
+                    detail.setIneligibilityReason("Service duration (" + months + " months) is less than required (" + minMonths + " months)");
+                    ineligible.add(detail);
+                    continue;
+                }
+            }
+
+            if (criteria != null && criteria.getDepartment() != null && !criteria.getDepartment().isBlank()) {
+                if (emp.getDepartment() == null || !criteria.getDepartment().equalsIgnoreCase(emp.getDepartment())) {
+                    detail.setEligible(false);
+                    detail.setIneligibilityReason("Department '" + emp.getDepartment() + "' does not match criteria '" + criteria.getDepartment() + "'");
+                    ineligible.add(detail);
+                    continue;
+                }
+            }
+
+            if (criteria != null && criteria.getDesignation() != null && !criteria.getDesignation().isBlank()) {
+                if (emp.getDesignation() == null || !criteria.getDesignation().equalsIgnoreCase(emp.getDesignation())) {
+                    detail.setEligible(false);
+                    detail.setIneligibilityReason("Designation '" + emp.getDesignation() + "' does not match criteria '" + criteria.getDesignation() + "'");
+                    ineligible.add(detail);
+                    continue;
+                }
+            }
+
+            detail.setEligible(true);
+            eligible.add(detail);
+        }
+
+        CycleEligibilityPreviewResponseDto preview = new CycleEligibilityPreviewResponseDto();
+        preview.setCycleId(cycle.getId());
+        preview.setCycleName(cycle.getName());
+        preview.setTotalEmployees(allEmployees.size());
+        preview.setEligibleCount(eligible.size());
+        preview.setIneligibleCount(ineligible.size());
+        preview.setEligibleEmployees(eligible);
+        preview.setIneligibleEmployees(ineligible);
+        return preview;
+    }
+
+    @Transactional(readOnly = true)
+    public CycleGenerationStatusResponseDto getGenerationStatus(Long cycleId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        AppraisalCycle cycle = cycleRepository.findByIdAndOrganizationId(cycleId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Appraisal cycle not found with ID: " + cycleId));
+
+        CycleEligibilityPreviewResponseDto preview = getEligibilityPreview(cycleId);
+        List<Appraisal> existing = appraisalRepository.findByCycleId(cycleId);
+
+        CycleGenerationStatusResponseDto status = new CycleGenerationStatusResponseDto();
+        status.setCycleId(cycle.getId());
+        status.setCycleName(cycle.getName());
+        status.setCycleStatus(cycle.getStatus());
+        status.setTotalEligibleEmployees(preview.getEligibleCount() + existing.size());
+        status.setTotalGeneratedAppraisals(existing.size());
+        status.setTotalPendingGeneration(preview.getEligibleCount());
+        status.setGenerationComplete(preview.getEligibleCount() == 0);
+        status.setCheckedAt(LocalDateTime.now());
+        return status;
     }
 
     /**
@@ -232,3 +437,4 @@ public class AppraisalCycleService {
         return dto;
     }
 }
+

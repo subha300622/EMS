@@ -346,6 +346,113 @@ public class AppraisalEvaluationService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
+    public SelfAssessmentDto getSelfAssessment(Long appraisalId) {
+        Long orgId = TenantContext.requireOrganizationId();
+        appraisalRepository.findByIdAndOrganizationId(appraisalId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Appraisal not found with ID: " + appraisalId));
+
+        return assessmentRepository.findByAppraisalId(appraisalId)
+                .map(this::mapToAssessmentDto)
+                .orElse(new SelfAssessmentDto());
+    }
+
+    @Transactional(readOnly = true)
+    public com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto getCurrentStage(Long appraisalId, User currentUser) {
+        Long orgId = TenantContext.requireOrganizationId();
+        Appraisal appraisal = appraisalRepository.findByIdAndOrganizationId(appraisalId, orgId)
+                .orElseThrow(() -> new IllegalArgumentException("Appraisal not found with ID: " + appraisalId));
+
+        List<AppraisalReviewStage> stages = reviewStageRepository.findByOrganizationIdOrderByStageOrderAsc(orgId);
+        int currentOrder = appraisal.getCurrentStageOrder() != null ? appraisal.getCurrentStageOrder() : 1;
+
+        Optional<AppraisalReviewStage> currentStageOpt = stages.stream()
+                .filter(s -> s.getStageOrder().equals(currentOrder))
+                .findFirst();
+
+        String stageName = currentStageOpt.map(AppraisalReviewStage::getStageName).orElse("Stage " + currentOrder + " Review");
+        String requiredPerm = currentStageOpt.map(AppraisalReviewStage::getRequiredPermission).orElse("APPRAISAL_REVIEW");
+        boolean isRequired = currentStageOpt.map(AppraisalReviewStage::isRequired).orElse(true);
+        Double weightage = currentStageOpt.map(AppraisalReviewStage::getWeightage).orElse(null);
+
+        boolean isCompleted = appraisal.getStatus() == AppraisalStatus.COMPLETED || appraisal.getStatus() == AppraisalStatus.PUBLISHED;
+
+        boolean canReview = false;
+        if (!isCompleted && currentUser != null && appraisal.getEmployee() != null && !appraisal.getEmployee().getId().equals(currentUser.getId())) {
+            boolean isPlatformAdmin = currentUser.getRole() != null &&
+                    ("PLATFORM_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()) || "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()));
+            if (isPlatformAdmin) {
+                canReview = true;
+            } else {
+                canReview = roleService.hasPermission(currentUser.getWorkEmail(), requiredPerm)
+                        || roleService.hasPermission(currentUser.getWorkEmail(), "APPRAISAL_REVIEW")
+                        || roleService.hasPermission(currentUser.getWorkEmail(), "APPRAISAL_APPROVE");
+            }
+        }
+
+        List<ReviewStageDto> completedReviews = reviewRepository.findByAppraisalIdOrderByStageOrderAsc(appraisalId)
+                .stream()
+                .map(this::mapToReviewDto)
+                .collect(Collectors.toList());
+
+        com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto response = new com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto();
+        response.setAppraisalId(appraisal.getId());
+        if (appraisal.getEmployee() != null) {
+            response.setEmployeeId(appraisal.getEmployee().getId());
+            response.setEmployeeName(appraisal.getEmployee().getFullName());
+        }
+        if (appraisal.getCycle() != null) {
+            response.setCycleId(appraisal.getCycle().getId());
+            response.setCycleName(appraisal.getCycle().getName());
+        }
+        response.setAppraisalStatus(appraisal.getStatus() != null ? appraisal.getStatus().name() : "UNKNOWN");
+        response.setCurrentStageOrder(currentOrder);
+        response.setCurrentStageName(stageName);
+        response.setRequiredPermission(requiredPerm);
+        response.setRequired(isRequired);
+        response.setWeightage(weightage);
+        response.setCanReview(canReview);
+        response.setCompleted(isCompleted);
+        response.setCompletedReviews(completedReviews);
+        return response;
+    }
+
+    @Transactional(readOnly = true)
+    public List<AppraisalResultResponseDto> getPendingReviews(User currentUser) {
+        Long orgId = TenantContext.requireOrganizationId();
+        List<Appraisal> activeAppraisals = appraisalRepository.findByOrganizationId(orgId).stream()
+                .filter(a -> a.getStatus() == AppraisalStatus.STAGE_REVIEW || a.getStatus() == AppraisalStatus.CREATED || a.getStatus() == AppraisalStatus.SELF_ASSESSMENT)
+                .collect(Collectors.toList());
+
+        List<AppraisalReviewStage> stages = reviewStageRepository.findByOrganizationIdOrderByStageOrderAsc(orgId);
+
+        boolean isPlatformAdmin = currentUser != null && currentUser.getRole() != null &&
+                ("PLATFORM_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()) || "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()));
+
+        return activeAppraisals.stream()
+                .filter(a -> {
+                    if (currentUser != null && a.getEmployee() != null && a.getEmployee().getEmail() != null
+                            && a.getEmployee().getEmail().equalsIgnoreCase(currentUser.getWorkEmail())) {
+                        return false; // Cannot review own appraisal
+                    }
+                    if (isPlatformAdmin) {
+                        return true;
+                    }
+                    int curOrder = a.getCurrentStageOrder() != null ? a.getCurrentStageOrder() : 1;
+                    String reqPerm = stages.stream()
+                            .filter(s -> s.getStageOrder().equals(curOrder))
+                            .map(AppraisalReviewStage::getRequiredPermission)
+                            .findFirst()
+                            .orElse("APPRAISAL_REVIEW");
+
+                    return roleService.hasPermission(currentUser.getWorkEmail(), reqPerm)
+                            || roleService.hasPermission(currentUser.getWorkEmail(), "APPRAISAL_REVIEW")
+                            || roleService.hasPermission(currentUser.getWorkEmail(), "APPRAISAL_APPROVE");
+                })
+                .map(a -> getAppraisalResult(a.getId()))
+                .collect(Collectors.toList());
+    }
+
     private String determineCategory(Double rating) {
         if (rating == null) return "NOT_RATED";
         if (rating >= 4.5) return "OUTSTANDING";
@@ -381,3 +488,4 @@ public class AppraisalEvaluationService {
         return dto;
     }
 }
+

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/appraisal/requests")
+@RequestMapping({"/api/v1/appraisals/requests", "/api/v1/appraisal/requests"})
 @CrossOrigin("*")
 @Tag(name = "Employee Appraisal Request APIs")
 public class AppraisalRequestController {

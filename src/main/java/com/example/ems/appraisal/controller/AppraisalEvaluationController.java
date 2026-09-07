@@ -257,6 +257,47 @@ public class AppraisalEvaluationController {
         return ResponseEntity.ok(ApiResponse.success("Employee appraisal history retrieved successfully", history));
     }
 
+    @Operation(summary = "Get Pending Review Work Queue")
+    @GetMapping("/reviews/pending")
+    public ResponseEntity<?> getPendingReviews(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        List<AppraisalResultResponseDto> list = evaluationService.getPendingReviews(user);
+        return ResponseEntity.ok(ApiResponse.success("Pending reviews retrieved successfully", list));
+    }
+
+    @Operation(summary = "Get Appraisal Current Stage and Review Permission Status")
+    @GetMapping("/{appraisalId}/current-stage")
+    public ResponseEntity<?> getCurrentStage(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long appraisalId) {
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto stage = evaluationService.getCurrentStage(appraisalId, user);
+        return ResponseEntity.ok(ApiResponse.success("Current stage retrieved successfully", stage));
+    }
+
+    @Operation(summary = "Get Employee Self-Assessment")
+    @GetMapping("/{appraisalId}/self-assessment")
+    public ResponseEntity<?> getSelfAssessment(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long appraisalId) {
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        SelfAssessmentDto dto = evaluationService.getSelfAssessment(appraisalId);
+        return ResponseEntity.ok(ApiResponse.success("Self assessment retrieved successfully", dto));
+    }
+
     @Operation(summary = "Get Appraisal Audit History by Appraisal ID")
     @GetMapping("/{appraisalId}/history")
     public ResponseEntity<?> getAppraisalHistory(
@@ -271,3 +312,4 @@ public class AppraisalEvaluationController {
         return ResponseEntity.ok(ApiResponse.success("Appraisal history retrieved successfully", history));
     }
 }
+

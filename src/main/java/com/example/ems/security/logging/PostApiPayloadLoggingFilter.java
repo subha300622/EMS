@@ -74,12 +74,16 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
         String reqBody = getPayLoad(request.getContentAsByteArray(), request.getCharacterEncoding());
         if (reqBody.isBlank()) {
             reqBody = "[Empty]";
+        } else {
+            reqBody = com.example.ems.common.logging.MaskingMessageConverter.mask(reqBody);
         }
 
         // Extract response payload
         String respBody = getPayLoad(response.getContentAsByteArray(), response.getCharacterEncoding());
         if (respBody.isBlank()) {
             respBody = "[Empty]";
+        } else {
+            respBody = com.example.ems.common.logging.MaskingMessageConverter.mask(respBody);
         }
 
         // Extract authenticated user if available

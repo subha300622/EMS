@@ -310,4 +310,14 @@ public class LeaveControllerTest {
                 .andExpect(jsonPath("$.data.leaveId").value(101))
                 .andExpect(jsonPath("$.data.status").value("REJECTED"));
     }
+
+    @Test
+    public void testPluralLeavesPathReturnsNotFound() throws Exception {
+        mockMvc.perform(get("/api/v1/leaves/requests"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/leaves/types"))
+                .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/v1/leaves/dashboard"))
+                .andExpect(status().isNotFound());
+    }
 }

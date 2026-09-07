@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping({"/api/v1/leaves", "/api/v1/leave"})
+@RequestMapping("/api/v1/leave")
 @CrossOrigin("*")
 @Tag(name = "Leave Management", description = "Canonical Leave Management APIs")
 public class LeaveController {
@@ -410,7 +410,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Cancel Leave Request")
-    @PostMapping({"requests/{leaveRequestId}/cancel", "/requests/{leaveRequestId}/cancel"})
+    @PostMapping("/requests/{leaveRequestId}/cancel")
     @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<Object>> cancelLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

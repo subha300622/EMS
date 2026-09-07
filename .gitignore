@@ -6,7 +6,9 @@ target/
 !.**/src/test/**/target/
 
 ### Runtime & Generated Files ###
+logs/
 *.log
+*.log.gz
 dump.rdb
 scratch/
 tmp/

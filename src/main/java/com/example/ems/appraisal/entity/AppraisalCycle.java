@@ -40,6 +40,10 @@ public class AppraisalCycle {
     @JoinColumn(name = "created_by")
     private Employee createdBy;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "configuration_version_id")
+    private AppraisalConfigurationVersion configurationVersion;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -72,6 +76,9 @@ public class AppraisalCycle {
 
     public Employee getCreatedBy() { return createdBy; }
     public void setCreatedBy(Employee createdBy) { this.createdBy = createdBy; }
+
+    public AppraisalConfigurationVersion getConfigurationVersion() { return configurationVersion; }
+    public void setConfigurationVersion(AppraisalConfigurationVersion configurationVersion) { this.configurationVersion = configurationVersion; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

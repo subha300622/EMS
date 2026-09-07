@@ -13,9 +13,16 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class EmsBackendApplication {
 
     public static void main(String[] args) {
+        loadDotEnv();
         String rawUrl = System.getenv("SPRING_DATASOURCE_URL");
         if (rawUrl == null || rawUrl.isBlank()) {
+            rawUrl = System.getProperty("SPRING_DATASOURCE_URL");
+        }
+        if (rawUrl == null || rawUrl.isBlank()) {
             rawUrl = System.getenv("DATABASE_URL");
+        }
+        if (rawUrl == null || rawUrl.isBlank()) {
+            rawUrl = System.getProperty("DATABASE_URL");
         }
         if (rawUrl != null && !rawUrl.isBlank()) {
             try {
@@ -104,5 +111,30 @@ public class EmsBackendApplication {
             }
         }
         return host;
+    }
+
+    private static void loadDotEnv() {
+        try {
+            java.nio.file.Path envPath = java.nio.file.Paths.get(".env");
+            if (java.nio.file.Files.exists(envPath)) {
+                for (String line : java.nio.file.Files.readAllLines(envPath)) {
+                    line = line.trim();
+                    if (line.isEmpty() || line.startsWith("#") || !line.contains("=")) {
+                        continue;
+                    }
+                    int eqIdx = line.indexOf('=');
+                    String key = line.substring(0, eqIdx).trim();
+                    String val = line.substring(eqIdx + 1).trim();
+                    if ((val.startsWith("\"") && val.endsWith("\"")) || (val.startsWith("'") && val.endsWith("'"))) {
+                        val = val.substring(1, val.length() - 1);
+                    }
+                    if (System.getProperty(key) == null && System.getenv(key) == null) {
+                        System.setProperty(key, val);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Ignore if .env cannot be read
+        }
     }
 }
