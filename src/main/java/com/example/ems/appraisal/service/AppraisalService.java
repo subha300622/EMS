@@ -1,6 +1,7 @@
 package com.example.ems.appraisal.service;
 
 import com.example.ems.appraisal.dto.*;
+import com.example.ems.appraisal.dto.AppraisalRequest;
 import com.example.ems.appraisal.entity.*;
 import com.example.ems.appraisal.repository.AppraisalCycleRepository;
 import com.example.ems.appraisal.repository.AppraisalRepository;

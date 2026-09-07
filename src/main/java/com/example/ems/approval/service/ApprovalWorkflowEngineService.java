@@ -121,14 +121,14 @@ public class ApprovalWorkflowEngineService {
 
         Long orgId = requester != null && requester.getOrganization() != null 
                 ? requester.getOrganization().getId() 
-                : 1L;
+                : (com.example.ems.security.context.TenantContext.getOrganizationId() != null ? com.example.ems.security.context.TenantContext.getOrganizationId() : 1L);
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseGet(() -> {
                     Organization o = new Organization();
-                    o.setId(orgId);
                     o.setName("Default Organization");
-                    return o;
+                    o.setOrganizationCode("DEF-ORG-" + System.currentTimeMillis());
+                    return organizationRepository.save(o);
                 });
 
         ApprovalWorkflowDefinition definition = definitionRepository.findActiveByWorkflowTypeAndOrganization(workflowType, orgId)
@@ -613,6 +613,18 @@ public class ApprovalWorkflowEngineService {
         }
         ApprovalTask currentTask = tasks.get(0);
         return rejectTask(currentUser, currentTask.getApprovalTaskId(), comment);
+    }
+
+    @Transactional
+    public ApprovalTaskDto requestChangesInstanceTask(User currentUser, String approvalId, String comment) {
+        ApprovalWorkflowInstance instance = getInstance(currentUser, approvalId);
+
+        List<ApprovalTask> tasks = taskRepository.findByWorkflowInstanceIdAndStepOrder(instance.getId(), instance.getCurrentStep());
+        if (tasks.isEmpty()) {
+            throw new IllegalStateException("No pending task found for approval instance: " + approvalId);
+        }
+        ApprovalTask currentTask = tasks.get(0);
+        return requestChanges(currentUser, currentTask.getApprovalTaskId(), comment);
     }
 }
 

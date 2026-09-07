@@ -1,7 +1,7 @@
 package com.example.ems.appraisal.entity;
 
 import com.example.ems.employee.entity.Employee;
-
+import com.example.ems.organization.entity.Organization;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -13,13 +13,28 @@ public class Appraisal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "cycle_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cycle_id")
     private AppraisalCycle cycle;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id")
+    private AppraisalRequest request;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AppraisalStatus status = AppraisalStatus.CREATED;
+
+    @Column(name = "current_stage_order")
+    private Integer currentStageOrder = 1;
 
     private Double selfRating;
 
@@ -41,9 +56,14 @@ public class Appraisal {
 
     private Double finalRating;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AppraisalStatus status = AppraisalStatus.ELIGIBLE;
+    @Column(name = "performance_category", length = 100)
+    private String performanceCategory;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
 
     private boolean attendanceJustified;
 
@@ -79,6 +99,9 @@ public class Appraisal {
 
     private java.time.LocalDate selfReviewDueDate = java.time.LocalDate.of(2026, 4, 25);
 
+    private boolean financeStageStarted = false;
+    private boolean compensationFrozen = false;
+
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -91,6 +114,14 @@ public class Appraisal {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
 
     public Employee getEmployee() {
@@ -107,6 +138,30 @@ public class Appraisal {
 
     public void setCycle(AppraisalCycle cycle) {
         this.cycle = cycle;
+    }
+
+    public AppraisalRequest getRequest() {
+        return request;
+    }
+
+    public void setRequest(AppraisalRequest request) {
+        this.request = request;
+    }
+
+    public AppraisalStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AppraisalStatus status) {
+        this.status = status;
+    }
+
+    public Integer getCurrentStageOrder() {
+        return currentStageOrder;
+    }
+
+    public void setCurrentStageOrder(Integer currentStageOrder) {
+        this.currentStageOrder = currentStageOrder;
     }
 
     public Double getSelfRating() {
@@ -173,12 +228,28 @@ public class Appraisal {
         this.finalRating = finalRating;
     }
 
-    public AppraisalStatus getStatus() {
-        return status;
+    public String getPerformanceCategory() {
+        return performanceCategory;
     }
 
-    public void setStatus(AppraisalStatus status) {
-        this.status = status;
+    public void setPerformanceCategory(String performanceCategory) {
+        this.performanceCategory = performanceCategory;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    public LocalDateTime getPublishedAt() {
+        return publishedAt;
+    }
+
+    public void setPublishedAt(LocalDateTime publishedAt) {
+        this.publishedAt = publishedAt;
     }
 
     public boolean isAttendanceJustified() {
@@ -211,22 +282,6 @@ public class Appraisal {
 
     public void setAttendanceJustifiedBy(Long attendanceJustifiedBy) {
         this.attendanceJustifiedBy = attendanceJustifiedBy;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public java.util.List<String> getAchievements() {
@@ -277,12 +332,25 @@ public class Appraisal {
     public java.time.LocalDate getSelfReviewDueDate() { return selfReviewDueDate; }
     public void setSelfReviewDueDate(java.time.LocalDate selfReviewDueDate) { this.selfReviewDueDate = selfReviewDueDate; }
 
-    private boolean financeStageStarted = false;
-    private boolean compensationFrozen = false;
-
     public boolean isFinanceStageStarted() { return financeStageStarted; }
     public void setFinanceStageStarted(boolean financeStageStarted) { this.financeStageStarted = financeStageStarted; }
 
     public boolean isCompensationFrozen() { return compensationFrozen; }
     public void setCompensationFrozen(boolean compensationFrozen) { this.compensationFrozen = compensationFrozen; }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

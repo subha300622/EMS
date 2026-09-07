@@ -34,6 +34,12 @@ public class ApprovalFacade {
         Employee requester = null;
         if (context.getEmployeeId() != null) {
             requester = employeeRepository.findByEmployeeId(context.getEmployeeId()).orElse(null);
+            if (requester == null) {
+                try {
+                    Long id = Long.valueOf(context.getEmployeeId());
+                    requester = employeeRepository.findById(id).orElse(null);
+                } catch (Exception ignored) {}
+            }
         }
 
         WorkflowType workflowType = WorkflowType.LEAVE_APPROVAL;
@@ -79,5 +85,9 @@ public class ApprovalFacade {
 
     public void cancel(WorkflowType workflowType, String businessReferenceType, String businessReferenceId, String reason) {
         workflowEngineService.cancelWorkflowByBusinessRef(workflowType, businessReferenceType, businessReferenceId, reason);
+    }
+
+    public void resubmit(WorkflowType workflowType, String businessReferenceType, String businessReferenceId, Employee requester, Map<String, Object> context) {
+        workflowEngineService.resubmitWorkflowByBusinessRef(workflowType, businessReferenceType, businessReferenceId, requester, context);
     }
 }

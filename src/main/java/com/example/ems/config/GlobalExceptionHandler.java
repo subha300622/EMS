@@ -86,6 +86,18 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(ex.getMessage(), "CONFLICT"));
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<ErrorResponse> handleSecurityException(SecurityException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.error(ex.getMessage(), "AUTH_002"));
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(ErrorResponse.error(ex.getMessage(), "AUTH_002"));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) throws Exception {
         if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
