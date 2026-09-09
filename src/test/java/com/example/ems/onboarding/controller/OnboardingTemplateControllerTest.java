@@ -22,6 +22,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class OnboardingTemplateControllerTest {
 
@@ -46,8 +47,8 @@ public class OnboardingTemplateControllerTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-        org.springframework.test.util.ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
-        org.springframework.test.util.ReflectionTestUtils.setField(controller, "templateService", service);
+        ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
+        ReflectionTestUtils.setField(controller, "templateService", service);
     }
 
     @Test

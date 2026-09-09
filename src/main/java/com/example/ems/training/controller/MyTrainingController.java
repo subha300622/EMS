@@ -50,7 +50,7 @@ public class MyTrainingController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getMyTrainings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+public ResponseEntity<?> getMyTrainings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         MyTrainingsResponse response = trainingService.getMyTrainings(user);
@@ -58,7 +58,7 @@ public class MyTrainingController {
     }
 
     @GetMapping("/{trainingId}")
-    public ResponseEntity<?> getMyTrainingDetail(
+public ResponseEntity<?> getMyTrainingDetail(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -72,7 +72,7 @@ public class MyTrainingController {
     }
 
     @PostMapping("/{trainingId}/accept")
-    public ResponseEntity<?> acceptTraining(
+public ResponseEntity<?> acceptTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @RequestBody(required = false) ParticipantResponseRequest request) {
@@ -88,7 +88,7 @@ public class MyTrainingController {
     }
 
     @PostMapping("/{trainingId}/decline")
-    public ResponseEntity<?> declineTraining(
+public ResponseEntity<?> declineTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @RequestBody(required = false) ParticipantResponseRequest request) {

@@ -23,6 +23,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Map;
 import java.util.HashMap;
+import java.time.Duration;
+import java.time.Instant;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 @Service
 public class AttendanceService {
@@ -221,7 +228,7 @@ public class AttendanceService {
         if (now.isAfter(officeStartTime)) {
             status = AttendanceStatus.LATE;
             isLate = true;
-            java.time.Duration duration = java.time.Duration.between(officeStartTime, now);
+            Duration duration = Duration.between(officeStartTime, now);
             long hours = duration.toHours();
             long minutes = duration.toMinutesPart();
             lateBy = String.format("%02d:%02d", hours, minutes);
@@ -251,11 +258,11 @@ public class AttendanceService {
             }
         }
         attendance.setLocation(location);
-        attendance.setServerTime(java.time.Instant.now());
+        attendance.setServerTime(Instant.now());
 
         try {
             return attendanceRepository.save(attendance);
-        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+        } catch (DataIntegrityViolationException e) {
             log.warn("Duplicate check-in attempt detected for employeeId={}", employee.getId());
             throw new DuplicateCheckInException("Already checked in today");
         }
@@ -294,8 +301,8 @@ public class AttendanceService {
         return attendanceRepository.findByDate(LocalDate.now());
     }
 
-    public org.springframework.data.domain.Page<Attendance> getAttendanceByEmployeeIdPaginated(Long employeeId, int page, int size) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "date"));
+    public Page<Attendance> getAttendanceByEmployeeIdPaginated(Long employeeId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
         return attendanceRepository.findByEmployeeId(employeeId, pageable);
     }
 

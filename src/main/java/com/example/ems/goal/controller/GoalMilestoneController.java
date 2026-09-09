@@ -24,7 +24,7 @@ public class GoalMilestoneController {
 
     @Operation(summary = "Add Milestone", description = "Adds a new milestone to a goal")
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> addMilestone(
+    public ResponseEntity<ApiResponse<GoalMilestone>> addMilestone(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalMilestoneRequest request) {
         GoalMilestone milestone = milestoneService.addMilestone(goalId, request, 1L, "User", "EMPLOYEE");
@@ -33,14 +33,14 @@ public class GoalMilestoneController {
 
     @Operation(summary = "Get Milestones", description = "Lists milestones for a goal")
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getMilestones(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<List<GoalMilestone>>> getMilestones(@PathVariable("goalId") Long goalId) {
         List<GoalMilestone> milestones = milestoneService.getMilestones(goalId);
         return ResponseEntity.ok(ApiResponse.success("Milestones retrieved successfully", milestones));
     }
 
     @Operation(summary = "Get Milestone by ID", description = "Retrieves details of a specific milestone")
     @GetMapping("/{milestoneId}")
-    public ResponseEntity<ApiResponse<Object>> getMilestoneById(
+    public ResponseEntity<ApiResponse<GoalMilestone>> getMilestoneById(
             @PathVariable("goalId") Long goalId,
             @PathVariable("milestoneId") Long milestoneId) {
         GoalMilestone milestone = milestoneService.getMilestoneById(milestoneId);
@@ -49,7 +49,7 @@ public class GoalMilestoneController {
 
     @Operation(summary = "Update Milestone", description = "Updates details of a milestone")
     @PutMapping("/{milestoneId}")
-    public ResponseEntity<ApiResponse<Object>> updateMilestone(
+    public ResponseEntity<ApiResponse<GoalMilestone>> updateMilestone(
             @PathVariable("goalId") Long goalId,
             @PathVariable("milestoneId") Long milestoneId,
             @RequestBody GoalMilestoneRequest request) {
@@ -59,7 +59,7 @@ public class GoalMilestoneController {
 
     @Operation(summary = "Delete Milestone", description = "Deletes a milestone")
     @DeleteMapping("/{milestoneId}")
-    public ResponseEntity<ApiResponse<Object>> deleteMilestone(
+    public ResponseEntity<ApiResponse<Void>> deleteMilestone(
             @PathVariable("goalId") Long goalId,
             @PathVariable("milestoneId") Long milestoneId) {
         milestoneService.deleteMilestone(milestoneId, 1L, "User", "EMPLOYEE");
@@ -68,7 +68,7 @@ public class GoalMilestoneController {
 
     @Operation(summary = "Complete Milestone", description = "Marks a milestone as COMPLETED")
     @PostMapping("/{milestoneId}/complete")
-    public ResponseEntity<ApiResponse<Object>> completeMilestone(
+    public ResponseEntity<ApiResponse<GoalMilestone>> completeMilestone(
             @PathVariable("goalId") Long goalId,
             @PathVariable("milestoneId") Long milestoneId) {
         GoalMilestone milestone = milestoneService.completeMilestone(milestoneId, 1L, "User", "EMPLOYEE");

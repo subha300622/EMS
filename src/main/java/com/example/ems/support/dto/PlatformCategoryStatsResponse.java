@@ -1,9 +1,16 @@
 package com.example.ems.support.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Platform Category Statistics Response")
 public class PlatformCategoryStatsResponse {
+    @Schema(description = "Total number of categories", example = "10")
     private long totalCategories;
+    @Schema(description = "Number of active categories", example = "8")
     private long activeCategories;
+    @Schema(description = "Number of inactive categories", example = "2")
     private long inactiveCategories;
+    @Schema(description = "Details about the most frequently used category")
     private MostUsedCategory mostUsedCategory;
 
     public PlatformCategoryStatsResponse() {}

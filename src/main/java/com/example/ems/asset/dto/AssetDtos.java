@@ -15,6 +15,7 @@ import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class AssetDtos {
 
@@ -743,13 +744,13 @@ public class AssetDtos {
     }
 
     public static class PaginatedAssetResponse {
-        private java.util.List<AssetResponse> content;
+        private List<AssetResponse> content;
         private int page;
         private int size;
         private long totalElements;
         private int totalPages;
 
-        public PaginatedAssetResponse(java.util.List<AssetResponse> content, int page, int size, long totalElements, int totalPages) {
+        public PaginatedAssetResponse(List<AssetResponse> content, int page, int size, long totalElements, int totalPages) {
             this.content = content;
             this.page = page;
             this.size = size;
@@ -757,7 +758,7 @@ public class AssetDtos {
             this.totalPages = totalPages;
         }
 
-        public java.util.List<AssetResponse> getContent() { return content; }
+        public List<AssetResponse> getContent() { return content; }
         public int getPage() { return page; }
         public int getSize() { return size; }
         public long getTotalElements() { return totalElements; }

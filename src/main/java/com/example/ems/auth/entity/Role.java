@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashSet;
 import java.util.Set;
+import com.example.ems.organization.entity.Organization;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Table(name = "roles")
@@ -20,17 +23,17 @@ public class Role {
     private String description;
 
     @Column(name = "created_at", updatable = false)
-    private java.time.Instant createdAt;
+    private Instant createdAt;
 
     @Column(name = "updated_at")
-    private java.time.Instant updatedAt;
+    private Instant updatedAt;
 
     @Column(name = "status", nullable = false)
     private String status = "ACTIVE";
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
-    private com.example.ems.organization.entity.Organization organization;
+    private Organization organization;
 
     @Column(name = "is_platform_template", nullable = false)
     private boolean isPlatformTemplate = false;
@@ -44,7 +47,7 @@ public class Role {
     @PrePersist
     public void prePersist() {
         if (this.createdAt == null) {
-            this.createdAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+            this.createdAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         }
         if (this.updatedAt == null) {
             this.updatedAt = this.createdAt;
@@ -56,7 +59,7 @@ public class Role {
 
     @PreUpdate
     public void preUpdate() {
-        this.updatedAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+        this.updatedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
     }
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -116,19 +119,19 @@ public class Role {
         this.description = description;
     }
 
-    public java.time.Instant getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(java.time.Instant createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    public com.example.ems.organization.entity.Organization getOrganization() {
+    public Organization getOrganization() {
         return organization;
     }
 
-    public void setOrganization(com.example.ems.organization.entity.Organization organization) {
+    public void setOrganization(Organization organization) {
         this.organization = organization;
     }
 
@@ -188,11 +191,11 @@ public class Role {
         this.status = status;
     }
 
-    public java.time.Instant getUpdatedAt() {
+    public Instant getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(java.time.Instant updatedAt) {
+    public void setUpdatedAt(Instant updatedAt) {
         this.updatedAt = updatedAt;
     }
 }

@@ -17,6 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import com.example.ems.onboarding.repository.OnboardingRepository;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class OnboardingTemplateService {
@@ -25,7 +30,7 @@ public class OnboardingTemplateService {
     private OnboardingTemplateRepository templateRepository;
 
     @Autowired
-    private com.example.ems.onboarding.repository.OnboardingRepository onboardingRepository;
+    private OnboardingRepository onboardingRepository;
 
     @Autowired
     private DepartmentRepository departmentRepository;
@@ -131,7 +136,7 @@ public class OnboardingTemplateService {
         return mapToResponse(template);
     }
 
-    public java.util.Map<String, Object> getTemplatesList(String department, String status, int page, int limit,
+    public Map<String, Object> getTemplatesList(String department, String status, int page, int limit,
             String search) {
         List<OnboardingTemplate> all = templateRepository.findAll();
 
@@ -147,7 +152,7 @@ public class OnboardingTemplateService {
 
         final String finalDeptId = targetDeptId;
 
-        java.util.stream.Stream<OnboardingTemplate> stream = all.stream();
+        Stream<OnboardingTemplate> stream = all.stream();
 
         if (finalDeptId != null) {
             stream = stream.filter(t -> finalDeptId.equalsIgnoreCase(t.getDepartmentId()));
@@ -161,7 +166,7 @@ public class OnboardingTemplateService {
                     (t.getDescription() != null && t.getDescription().toLowerCase().contains(lowerSearch)));
         }
 
-        List<OnboardingTemplate> filtered = stream.collect(java.util.stream.Collectors.toList());
+        List<OnboardingTemplate> filtered = stream.collect(Collectors.toList());
 
         int total = filtered.size();
         int totalPages = (int) Math.ceil((double) total / limit);
@@ -177,12 +182,12 @@ public class OnboardingTemplateService {
 
         List<OnboardingTemplateResponse> items = pageItems.stream()
                 .map(this::mapToResponse)
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
 
-        java.util.Map<String, Object> data = new java.util.HashMap<>();
+        Map<String, Object> data = new HashMap<>();
         data.put("items", items);
 
-        java.util.Map<String, Object> pagination = new java.util.HashMap<>();
+        Map<String, Object> pagination = new HashMap<>();
         pagination.put("page", page);
         pagination.put("limit", limit);
         pagination.put("total", total);
@@ -285,11 +290,11 @@ public class OnboardingTemplateService {
     }
 
     @Transactional
-    public java.util.Map<String, Object> deleteTemplate(String templateId) {
+    public Map<String, Object> deleteTemplate(String templateId) {
         OnboardingTemplate template = templateRepository.findByTemplateCode(templateId)
                 .orElseThrow(() -> new IllegalArgumentException("Template not found with ID: " + templateId));
 
-        java.util.Map<String, Object> result = new java.util.HashMap<>();
+        Map<String, Object> result = new HashMap<>();
         result.put("id", templateId);
 
         boolean isInUse = template.getUsageCount() > 0
@@ -362,7 +367,7 @@ public class OnboardingTemplateService {
         resp.setTasks(totalTasks);
 
         int maxDueDays = sections.stream()
-                .flatMap(s -> s.getTasks() != null ? s.getTasks().stream() : java.util.stream.Stream.empty())
+                .flatMap(s -> s.getTasks() != null ? s.getTasks().stream() : Stream.empty())
                 .mapToInt(OnboardingTemplateCreateRequest.TaskRequest::getDueDays)
                 .max()
                 .orElse(0);

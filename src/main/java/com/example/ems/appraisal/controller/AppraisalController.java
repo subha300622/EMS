@@ -6,7 +6,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -17,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.example.ems.appraisal.dto.IncrementsReportSummaryDto;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/v1/performance")
@@ -74,13 +76,12 @@ public class AppraisalController {
 
     @Operation(summary = "Get Increment Policies", tags = { "Increment Policies" })
     @GetMapping("/increment-policies")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getIncrementPolicies(
+    public ResponseEntity<ApiResponse<List<IncrementPolicyResponse>>> getIncrementPolicies(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         List<IncrementPolicyResponse> list = appraisalService.getIncrementPolicies();
@@ -89,19 +90,26 @@ public class AppraisalController {
 
     @Operation(summary = "Get Increments Report", tags = { "Increment Policies" })
     @GetMapping("/increments/reports/{reportType}")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getIncrementsReport(
+    public ResponseEntity<ApiResponse<IncrementsReportSummaryDto>> getIncrementsReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String reportType) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         if (!isFinanceOrManager(currentUser))
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires HR/Manager/Finance permissions.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires HR/Manager/Finance permissions.", "AUTH_002"));
 
         Map<String, Object> data = appraisalService.getIncrementsReport(reportType);
-        return ResponseEntity.ok(ApiResponse.success("Increments report generated successfully", data));
+        IncrementsReportSummaryDto dto = new IncrementsReportSummaryDto(
+                (String) data.get("reportType"),
+                (String) data.get("module"),
+                (LocalDateTime) data.get("generatedAt"),
+                (Integer) data.get("totalAppliedIncrementsCount"),
+                (BigDecimal) data.get("totalIncrementBudgetAmount"),
+                (Double) data.get("averageIncrementPercentage")
+        );
+        return ResponseEntity.ok(ApiResponse.success("Increments report generated successfully", dto));
     }
 }

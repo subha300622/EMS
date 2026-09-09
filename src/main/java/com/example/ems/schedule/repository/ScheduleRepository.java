@@ -43,7 +43,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long>, JpaSp
            "WHERE s.organization.id = :organizationId " +
            "AND s.employee.id = :employeeId " +
            "AND s.date = :date " +
-           "AND s.status <> com.example.ems.schedule.entity.ScheduleStatus.CANCELLED " +
+           "AND s.status <> ScheduleStatus.CANCELLED " +
            "AND s.startTime < :endTime " +
            "AND s.endTime > :startTime")
     boolean existsOverlappingForCreate(
@@ -59,7 +59,7 @@ public interface ScheduleRepository extends JpaRepository<Schedule, Long>, JpaSp
            "AND s.employee.id = :employeeId " +
            "AND s.date = :date " +
            "AND s.id <> :excludeId " +
-           "AND s.status <> com.example.ems.schedule.entity.ScheduleStatus.CANCELLED " +
+           "AND s.status <> ScheduleStatus.CANCELLED " +
            "AND s.startTime < :endTime " +
            "AND s.endTime > :startTime")
     boolean existsOverlappingForUpdate(

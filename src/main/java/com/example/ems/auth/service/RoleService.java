@@ -21,6 +21,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.auth.dto.PermissionGroupDto;
+import com.example.ems.auth.dto.PermissionResponse;
+import com.example.ems.auth.dto.RoleResponse;
+import com.example.ems.auth.entity.PermissionGroup;
+import com.example.ems.auth.repository.PermissionGroupRepository;
 
 @Service
 public class RoleService {
@@ -38,7 +43,7 @@ public class RoleService {
     private OrganizationRepository organizationRepository;
 
     @Autowired
-    private com.example.ems.auth.repository.PermissionGroupRepository permissionGroupRepository;
+    private PermissionGroupRepository permissionGroupRepository;
 
     @Autowired
     private CacheManager cacheManager;
@@ -207,14 +212,14 @@ public class RoleService {
     private void processAndCalculateEffectivePermissions(Role role, RoleRequest request) {
         if (request == null) return;
 
-        Set<com.example.ems.auth.entity.PermissionGroup> permissionGroups = new HashSet<>();
+        Set<PermissionGroup> permissionGroups = new HashSet<>();
         Set<Permission> directPermissions = new HashSet<>();
         Set<Permission> effectivePermissions = new HashSet<>();
 
         // 1. Process Permission Groups if provided
         if (request.getPermissionGroupIds() != null && !request.getPermissionGroupIds().isEmpty()) {
-            List<com.example.ems.auth.entity.PermissionGroup> groups = permissionGroupRepository.findByIdIn(request.getPermissionGroupIds());
-            for (com.example.ems.auth.entity.PermissionGroup group : groups) {
+            List<PermissionGroup> groups = permissionGroupRepository.findByIdIn(request.getPermissionGroupIds());
+            for (PermissionGroup group : groups) {
                 permissionGroups.add(group);
                 if (group.getPermissions() != null) {
                     for (Permission p : group.getPermissions()) {
@@ -592,7 +597,7 @@ public class RoleService {
     public void removePermissionGroupFromRole(Long roleId, Long groupId) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
-        com.example.ems.auth.entity.PermissionGroup group = permissionGroupRepository.findById(groupId)
+        PermissionGroup group = permissionGroupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("Permission group not found with ID: " + groupId));
 
         if (role.getPermissionGroups() != null) {
@@ -605,7 +610,7 @@ public class RoleService {
                     }
                 }
             }
-            for (com.example.ems.auth.entity.PermissionGroup g : role.getPermissionGroups()) {
+            for (PermissionGroup g : role.getPermissionGroups()) {
                 if (g.getPermissions() != null) {
                     for (Permission p : g.getPermissions()) {
                         if (Boolean.TRUE.equals(p.getActive())) {
@@ -762,39 +767,39 @@ public class RoleService {
                 .collect(Collectors.toList());
     }
 
-    public com.example.ems.auth.dto.RoleResponse mapRoleToResponse(Role role) {
+    public RoleResponse mapRoleToResponse(Role role) {
         if (role == null) return null;
 
-        List<com.example.ems.auth.dto.PermissionGroupDto> groupDtos = new ArrayList<>();
+        List<PermissionGroupDto> groupDtos = new ArrayList<>();
         if (role.getPermissionGroups() != null) {
-            for (com.example.ems.auth.entity.PermissionGroup pg : role.getPermissionGroups()) {
-                List<com.example.ems.auth.dto.PermissionResponse> groupPermDtos = new ArrayList<>();
+            for (PermissionGroup pg : role.getPermissionGroups()) {
+                List<PermissionResponse> groupPermDtos = new ArrayList<>();
                 if (pg.getPermissions() != null) {
                     for (Permission p : pg.getPermissions()) {
-                        groupPermDtos.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+                        groupPermDtos.add(new PermissionResponse(p.getId(), p.getName(), p.getDescription()));
                     }
                 }
-                groupDtos.add(new com.example.ems.auth.dto.PermissionGroupDto(pg.getId(), pg.getCode(), pg.getName(), pg.getDescription(), groupPermDtos));
+                groupDtos.add(new PermissionGroupDto(pg.getId(), pg.getCode(), pg.getName(), pg.getDescription(), groupPermDtos));
             }
         }
 
-        List<com.example.ems.auth.dto.PermissionResponse> directPermDtos = new ArrayList<>();
+        List<PermissionResponse> directPermDtos = new ArrayList<>();
         if (role.getDirectPermissions() != null) {
             for (Permission p : role.getDirectPermissions()) {
-                directPermDtos.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+                directPermDtos.add(new PermissionResponse(p.getId(), p.getName(), p.getDescription()));
             }
         }
 
-        List<com.example.ems.auth.dto.PermissionResponse> effectivePermDtos = new ArrayList<>();
+        List<PermissionResponse> effectivePermDtos = new ArrayList<>();
         if (role.getPermissions() != null) {
             for (Permission p : role.getPermissions()) {
-                effectivePermDtos.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+                effectivePermDtos.add(new PermissionResponse(p.getId(), p.getName(), p.getDescription()));
             }
         }
 
         String createdAtStr = role.getCreatedAt() != null ? role.getCreatedAt().toString() : null;
 
-        return new com.example.ems.auth.dto.RoleResponse(
+        return new RoleResponse(
             role.getId(),
             role.getName(),
             role.getDescription(),

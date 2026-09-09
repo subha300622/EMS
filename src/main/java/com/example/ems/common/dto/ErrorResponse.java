@@ -4,6 +4,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
 
 public class ErrorResponse {
     @Schema(example = "false")
@@ -20,7 +22,7 @@ public class ErrorResponse {
     private String errorCode;
 
     public ErrorResponse() {
-        this.timestamp = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString();
+        this.timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
         this.requestId = getCorrelationId();
     }
 
@@ -28,7 +30,7 @@ public class ErrorResponse {
         this.success = success;
         this.message = message;
         this.errorCode = errorCode;
-        this.timestamp = timestamp != null ? timestamp : Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString();
+        this.timestamp = timestamp != null ? timestamp : Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
         this.requestId = getCorrelationId();
         this.error = new ErrorDetails(errorCode, message, new ArrayList<>());
     }
@@ -36,7 +38,7 @@ public class ErrorResponse {
     private static String getCorrelationId() {
         String cid = org.slf4j.MDC.get("correlationId");
         if (cid == null) {
-            return "REQ-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            return "REQ-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         }
         if (cid.length() > 8) {
             return "REQ-" + cid.substring(0, 8).toUpperCase();
@@ -105,8 +107,11 @@ public class ErrorResponse {
 
     // Inner classes for details structure
     public static class ErrorDetails {
+        @Schema(description = "Error code identifier", example = "VAL_001")
         private String code;
+        @Schema(description = "Error summary message", example = "Validation failed")
         private String message;
+        @Schema(description = "Detailed list of field validation errors")
         private List<Detail> details;
 
         public ErrorDetails() {}
@@ -142,7 +147,10 @@ public class ErrorResponse {
         }
 
         public static class Detail {
+            @Schema(description = "Target field name that failed validation", example = "holidayDate")
             private String field;
+
+            @Schema(description = "Rejected field value or explanation", example = "2026-12-25")
             private Object value;
 
             public Detail() {}

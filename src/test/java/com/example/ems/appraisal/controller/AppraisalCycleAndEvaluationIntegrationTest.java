@@ -36,6 +36,10 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.example.ems.appraisal.dto.ReviewStageConfigurationDto;
+import com.example.ems.appraisal.dto.SaveAppraisalConfigurationRequest;
+import com.example.ems.appraisal.entity.AppraisalInitiationMode;
+import com.example.ems.appraisal.service.AppraisalConfigurationService;
 
 @SpringBootTest
 @Transactional
@@ -51,7 +55,7 @@ public class AppraisalCycleAndEvaluationIntegrationTest {
     private AppraisalEvaluationController evaluationController;
 
     @Autowired
-    private com.example.ems.appraisal.service.AppraisalConfigurationService appraisalConfigurationService;
+    private AppraisalConfigurationService appraisalConfigurationService;
 
     @Autowired
     private OrganizationRepository organizationRepository;
@@ -172,10 +176,10 @@ public class AppraisalCycleAndEvaluationIntegrationTest {
     @DisplayName("Should execute Flow B: Create regular HR cycle, batch generate appraisals, evaluate, review, and publish")
     public void testFlowBEndToEndLifecycle() throws Exception {
         // Step 0: Save Custom 1-stage Appraisal Configuration
-        com.example.ems.appraisal.dto.SaveAppraisalConfigurationRequest configReq = new com.example.ems.appraisal.dto.SaveAppraisalConfigurationRequest();
-        configReq.setInitiationMode(com.example.ems.appraisal.entity.AppraisalInitiationMode.HR_AND_EMPLOYEE);
+        SaveAppraisalConfigurationRequest configReq = new SaveAppraisalConfigurationRequest();
+        configReq.setInitiationMode(AppraisalInitiationMode.HR_AND_EMPLOYEE);
         configReq.setEmployeeRequestEnabled(true);
-        com.example.ems.appraisal.dto.ReviewStageConfigurationDto stage1 = new com.example.ems.appraisal.dto.ReviewStageConfigurationDto();
+        ReviewStageConfigurationDto stage1 = new ReviewStageConfigurationDto();
         stage1.setStageOrder(1);
         stage1.setStageName("Team Lead Review");
         stage1.setRequiredPermission("APPRAISAL_REVIEW");

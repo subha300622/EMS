@@ -1,18 +1,41 @@
 package com.example.ems.reports.revenue.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
+@Schema(description = "Revenue invoice detail record response")
 public class RevenueInvoiceResponse {
+    @Schema(description = "Invoice Number", example = "INV-001")
     private String invoiceNumber;
+
+    @Schema(description = "Organization ID", example = "10")
     private Long organizationId;
+
+    @Schema(description = "Organization Name", example = "Acme Corp")
     private String organizationName;
+
+    @Schema(description = "Subscription Plan", example = "ENTERPRISE")
     private String plan;
+
+    @Schema(description = "Issue Date", example = "2026-07-03")
     private String issueDate;
+
+    @Schema(description = "Due Date", example = "2026-08-03")
     private String dueDate;
+
+    @Schema(description = "Invoice Status", example = "PAID")
     private String status;
+
+    @Schema(description = "Subtotal Amount", example = "100.00")
     private BigDecimal subtotal;
+
+    @Schema(description = "Tax Amount", example = "0.00")
     private BigDecimal tax;
+
+    @Schema(description = "Discount Amount", example = "0.00")
     private BigDecimal discount;
+
+    @Schema(description = "Grand Total Amount", example = "100.00")
     private BigDecimal grandTotal;
 
     public RevenueInvoiceResponse() {}

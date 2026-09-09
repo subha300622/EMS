@@ -1,32 +1,54 @@
 package com.example.ems.common.dto;
-import io.swagger.v3.oas.annotations.media.Schema;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
+import org.slf4j.MDC;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+import com.example.ems.security.context.TenantContext;
 
 public class ApiResponse<T> {
-    @Schema(example = "true")
+    @Schema(description = "Indicates whether the API request succeeded", example = "true")
     private boolean success;
-    @Schema(example = "string")
+
+    @Schema(description = "Business or status code", example = "SUCCESS")
     private String code;
-    @Schema(example = "string")
+
+    @Schema(description = "Human-readable response message", example = "Operation completed successfully")
     private String message;
-    @Schema(example = "string")
+
+    @Schema(description = "ISO-8601 UTC timestamp of response generation", example = "2026-09-09T14:30:00Z")
     private String timestamp;
+
+    @Schema(description = "Unique correlation request ID", example = "REQ-A1B2C3D4")
     private String requestId;
+
+    @Schema(description = "Response data payload")
     private T data;
+
+    @Schema(description = "Tenant Organization Identifier", example = "9645")
     private Long organizationId;
+
+    @Schema(description = "HATEOAS Navigation Links", example = "{}")
     private Map<String, String> links = new HashMap<>();
+
+    @Schema(description = "Response Metadata", example = "{\"version\": \"v1\", \"executionTimeMs\": 12}")
     private Map<String, Object> metadata = new HashMap<>();
 
+    @Schema(description = "Error details for failure responses")
+    private ErrorResponse.ErrorDetails error;
+
     public ApiResponse() {
-        this.timestamp = Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString();
+        this.timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
         this.requestId = getCorrelationId();
         this.metadata.put("version", "v1");
         this.metadata.put("executionTimeMs", getExecutionTime());
-        Long currentOrgId = com.example.ems.security.context.TenantContext.getOrganizationId();
+        Long currentOrgId = TenantContext.getOrganizationId();
         if (currentOrgId != null) {
             this.organizationId = currentOrgId;
             this.metadata.put("organizationId", currentOrgId);
@@ -41,15 +63,18 @@ public class ApiResponse<T> {
         this.success = success;
         this.code = code;
         this.message = message;
-        this.timestamp = timestamp != null ? timestamp : Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString();
+        this.timestamp = timestamp != null ? timestamp : Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
         this.requestId = getCorrelationId();
         this.data = data;
         this.metadata.put("version", "v1");
         this.metadata.put("executionTimeMs", getExecutionTime());
-        Long currentOrgId = com.example.ems.security.context.TenantContext.getOrganizationId();
+        Long currentOrgId = TenantContext.getOrganizationId();
         if (currentOrgId != null) {
             this.organizationId = currentOrgId;
             this.metadata.put("organizationId", currentOrgId);
+        }
+        if (!success && (code != null || message != null)) {
+            this.error = new ErrorResponse.ErrorDetails(code, message, Collections.emptyList());
         }
     }
 
@@ -64,9 +89,9 @@ public class ApiResponse<T> {
     }
 
     private static String getCorrelationId() {
-        String cid = org.slf4j.MDC.get("correlationId");
+        String cid = MDC.get("correlationId");
         if (cid == null) {
-            return "REQ-" + java.util.UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            return "REQ-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         }
         if (cid.length() > 8) {
             return "REQ-" + cid.substring(0, 8).toUpperCase();
@@ -76,8 +101,8 @@ public class ApiResponse<T> {
 
     private static long getExecutionTime() {
         try {
-            org.springframework.web.context.request.ServletRequestAttributes attributes =
-                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes attributes =
+                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attributes != null) {
                 Long startTime = (Long) attributes.getRequest().getAttribute("startTime");
                 if (startTime != null) {
@@ -107,6 +132,25 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, message, null, (T) Collections.emptyMap());
     }
 
+    public static <T> ApiResponse<T> error(String message, String code) {
+        return new ApiResponse<>(false, code, message, null, null);
+    }
+
+    public static <T> ApiResponse<T> error(String message) {
+        return new ApiResponse<>(false, null, message, null, null);
+    }
+
+    public ErrorResponse.ErrorDetails getError() {
+        if (this.error == null && !this.success && (this.code != null || this.message != null)) {
+            return new ErrorResponse.ErrorDetails(this.code, this.message, Collections.emptyList());
+        }
+        return this.error;
+    }
+
+    public void setError(ErrorResponse.ErrorDetails error) {
+        this.error = error;
+    }
+
     public boolean isSuccess() {
         return success;
     }
@@ -121,6 +165,14 @@ public class ApiResponse<T> {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getErrorCode() {
+        return code;
+    }
+
+    public void setErrorCode(String errorCode) {
+        this.code = errorCode;
     }
 
     public String getMessage() {

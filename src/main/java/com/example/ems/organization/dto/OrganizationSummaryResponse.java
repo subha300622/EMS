@@ -1,11 +1,25 @@
 package com.example.ems.organization.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Platform-wide organizations summary response")
 public class OrganizationSummaryResponse {
+    @Schema(description = "Total Organizations Count", example = "50")
     private long totalOrganizations;
+
+    @Schema(description = "Active Organizations Count", example = "42")
     private long activeOrganizations;
+
+    @Schema(description = "Suspended Organizations Count", example = "3")
     private long suspendedOrganizations;
+
+    @Schema(description = "Trial Organizations Count", example = "5")
     private long trialOrganizations;
+
+    @Schema(description = "Premium Tier Organizations Count", example = "25")
     private long premiumOrganizations;
+
+    @Schema(description = "Enterprise Tier Organizations Count", example = "17")
     private long enterpriseOrganizations;
 
     public OrganizationSummaryResponse() {}

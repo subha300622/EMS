@@ -65,6 +65,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import com.example.ems.asset.service.MyAssetService;
+import com.example.ems.audit.service.AuditLogService;
+import com.example.ems.common.util.PasswordGeneratorUtil;
+import com.example.ems.expense.entity.MyExpenseTimelineEvent;
+import com.example.ems.payroll.entity.FnfSettlementAudit;
+import com.example.ems.payroll.entity.FnfSettlementStatus;
+import com.example.ems.recruitment.entity.JobStatus;
+import com.example.ems.schedule.service.MyScheduleService;
+import com.example.ems.support.service.MySupportService;
 
 @Component
 @Order(2)
@@ -95,10 +104,10 @@ public class DatabaseSeeder implements ApplicationRunner {
     private SystemSettingRepository systemSettingRepository;
 
     @Autowired
-    private com.example.ems.support.service.MySupportService mySupportService;
+    private MySupportService mySupportService;
 
     @Autowired
-    private com.example.ems.asset.service.MyAssetService myAssetService;
+    private MyAssetService myAssetService;
 
     @Autowired
     private FnfSettlementRepository fnfSettlementRepository;
@@ -149,10 +158,10 @@ public class DatabaseSeeder implements ApplicationRunner {
     private PayrollRepository payrollRepository;
 
     @Autowired
-    private com.example.ems.audit.service.AuditLogService auditLogService;
+    private AuditLogService auditLogService;
 
     @Autowired
-    private com.example.ems.schedule.service.MyScheduleService myScheduleService;
+    private MyScheduleService myScheduleService;
 
     @Autowired
     private Environment environment;
@@ -437,7 +446,7 @@ public class DatabaseSeeder implements ApplicationRunner {
         if (platformAdminRole != null) {
             String email = "platform_admin@gmail.com";
             String legacyEmail = "super_admin@" + seedDomain;
-            String password = (platformAdminPassword != null && !platformAdminPassword.isBlank()) ? platformAdminPassword : com.example.ems.common.util.PasswordGeneratorUtil.generateSecurePassword();
+            String password = (platformAdminPassword != null && !platformAdminPassword.isBlank()) ? platformAdminPassword : PasswordGeneratorUtil.generateSecurePassword();
             String displayName = "Platform Admin";
 
             User platformAdminUser;
@@ -640,7 +649,7 @@ public class DatabaseSeeder implements ApplicationRunner {
 
             String roleCleanName = roleName.toLowerCase();
             String email = roleCleanName + "@" + seedDomain;
-            String password = com.example.ems.common.util.PasswordGeneratorUtil.generateSecurePassword();
+            String password = PasswordGeneratorUtil.generateSecurePassword();
             String displayName = roleName.charAt(0) + roleName.substring(1).toLowerCase().replace("_", " ");
 
             if (userRepository.findByWorkEmail(email).isEmpty()) {
@@ -781,14 +790,14 @@ public class DatabaseSeeder implements ApplicationRunner {
         raviSett.setNoticePay(BigDecimal.valueOf(44000));
         raviSett.setOtherDeductions(BigDecimal.valueOf(15000));
         raviSett.setNetAmount(BigDecimal.valueOf(225000));
-        raviSett.setStatus(com.example.ems.payroll.entity.FnfSettlementStatus.PENDING);
+        raviSett.setStatus(FnfSettlementStatus.PENDING);
         raviSett.setNotes("Full & Final Settlement for Ravi Kumar");
         raviSett = fnfSettlementRepository.save(raviSett);
 
         // Seed Audit log for Ravi
-        fnfSettlementAuditRepository.save(new com.example.ems.payroll.entity.FnfSettlementAudit(
+        fnfSettlementAuditRepository.save(new FnfSettlementAudit(
                 raviSett.getId(),
-                com.example.ems.payroll.entity.FnfSettlementStatus.PENDING,
+                FnfSettlementStatus.PENDING,
                 "HR Admin",
                 "Settlement created automatically during offboarding approval."));
 
@@ -868,13 +877,13 @@ public class DatabaseSeeder implements ApplicationRunner {
         priyaSett.setNoticePay(BigDecimal.valueOf(0));
         priyaSett.setOtherDeductions(BigDecimal.valueOf(5000));
         priyaSett.setNetAmount(BigDecimal.valueOf(100000));
-        priyaSett.setStatus(com.example.ems.payroll.entity.FnfSettlementStatus.PENDING);
+        priyaSett.setStatus(FnfSettlementStatus.PENDING);
         priyaSett.setNotes("Full & Final Settlement for Priya Sharma");
         priyaSett = fnfSettlementRepository.save(priyaSett);
 
-        fnfSettlementAuditRepository.save(new com.example.ems.payroll.entity.FnfSettlementAudit(
+        fnfSettlementAuditRepository.save(new FnfSettlementAudit(
                 priyaSett.getId(),
-                com.example.ems.payroll.entity.FnfSettlementStatus.PENDING,
+                FnfSettlementStatus.PENDING,
                 "HR Admin",
                 "Settlement created automatically during offboarding approval."));
     }
@@ -949,7 +958,7 @@ public class DatabaseSeeder implements ApplicationRunner {
         mainExp = expenseRepository.save(mainExp);
 
         timelineEventRepository.save(
-                new com.example.ems.expense.entity.MyExpenseTimelineEvent(mainExp, "SUBMITTED", robert.getFullName()));
+                new MyExpenseTimelineEvent(mainExp, "SUBMITTED", robert.getFullName()));
         expenseAuditLogRepository
                 .save(new ExpenseAuditLog(mainExp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName()));
 
@@ -973,7 +982,7 @@ public class DatabaseSeeder implements ApplicationRunner {
             exp = expenseRepository.save(exp);
 
             timelineEventRepository.save(
-                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
+                    new MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
             expenseAuditLogRepository
                     .save(new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted", robert.getFullName()));
         }
@@ -1000,9 +1009,9 @@ public class DatabaseSeeder implements ApplicationRunner {
             exp = expenseRepository.save(exp);
 
             timelineEventRepository.save(
-                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
+                    new MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
             timelineEventRepository
-                    .save(new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "APPROVED", "Eran"));
+                    .save(new MyExpenseTimelineEvent(exp, "APPROVED", "Eran"));
 
             ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted",
                     robert.getFullName());
@@ -1036,9 +1045,9 @@ public class DatabaseSeeder implements ApplicationRunner {
             exp = expenseRepository.save(exp);
 
             timelineEventRepository.save(
-                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
+                    new MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
             timelineEventRepository.save(
-                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "REJECTED", "Finance Officer"));
+                    new MyExpenseTimelineEvent(exp, "REJECTED", "Finance Officer"));
 
             ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted",
                     robert.getFullName());
@@ -1071,9 +1080,9 @@ public class DatabaseSeeder implements ApplicationRunner {
             exp = expenseRepository.save(exp);
 
             timelineEventRepository.save(
-                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
+                    new MyExpenseTimelineEvent(exp, "SUBMITTED", robert.getFullName()));
             timelineEventRepository.save(
-                    new com.example.ems.expense.entity.MyExpenseTimelineEvent(exp, "SENT_BACK", "Finance Officer"));
+                    new MyExpenseTimelineEvent(exp, "SENT_BACK", "Finance Officer"));
 
             ExpenseAuditLog subLog = new ExpenseAuditLog(exp.getId(), ExpenseStatus.SUBMITTED, "Submitted",
                     robert.getFullName());
@@ -1115,7 +1124,7 @@ public class DatabaseSeeder implements ApplicationRunner {
             engJob.setDescription("Java Spring Boot Developer");
             engJob.setRequirements("Java, Spring Boot, SQL");
             engJob.setSalaryRange("80k-120k");
-            engJob.setStatus(com.example.ems.recruitment.entity.JobStatus.PUBLISHED);
+            engJob.setStatus(JobStatus.PUBLISHED);
             jobRepository.save(engJob);
 
             Job salesJob = new Job();
@@ -1126,7 +1135,7 @@ public class DatabaseSeeder implements ApplicationRunner {
             salesJob.setDescription("Enterprise B2B Sales");
             salesJob.setRequirements("B2B sales experience");
             salesJob.setSalaryRange("60k-90k");
-            salesJob.setStatus(com.example.ems.recruitment.entity.JobStatus.PUBLISHED);
+            salesJob.setStatus(JobStatus.PUBLISHED);
             jobRepository.save(salesJob);
 
             Job hrJob = new Job();
@@ -1137,7 +1146,7 @@ public class DatabaseSeeder implements ApplicationRunner {
             hrJob.setDescription("Talent acquisition and employee relations");
             hrJob.setRequirements("3+ years in HR");
             hrJob.setSalaryRange("50k-70k");
-            hrJob.setStatus(com.example.ems.recruitment.entity.JobStatus.PUBLISHED);
+            hrJob.setStatus(JobStatus.PUBLISHED);
             jobRepository.save(hrJob);
         }
 

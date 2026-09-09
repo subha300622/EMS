@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.LocalDate;
 
 @Service
 public class GoalReportService {
@@ -40,7 +41,7 @@ public class GoalReportService {
         List<Goal> goals = goalRepository.findAll().stream()
                 .filter(g -> orgId.equals(g.getOrganizationId()) && Boolean.FALSE.equals(g.getIsDeleted()))
                 .filter(g -> !"COMPLETED".equalsIgnoreCase(g.getStatus()) && !"CANCELLED".equalsIgnoreCase(g.getStatus()))
-                .filter(g -> g.getEndDate() != null && java.time.LocalDate.now().isAfter(g.getEndDate()))
+                .filter(g -> g.getEndDate() != null && LocalDate.now().isAfter(g.getEndDate()))
                 .collect(Collectors.toList());
 
         return goals.stream().map(GoalResponse::fromEntity).collect(Collectors.toList());

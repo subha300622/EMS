@@ -3,9 +3,11 @@ package com.example.ems.goal.controller;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.goal.domain.GoalComment;
+import com.example.ems.goal.domain.GoalEffort;
+import com.example.ems.goal.domain.GoalProgress;
 import com.example.ems.goal.dto.*;
 import com.example.ems.goal.service.*;
 import com.example.ems.security.service.JwtService;
@@ -69,14 +71,13 @@ public class MyGoalController {
 
     @Operation(summary = "Get My Assigned Goals", description = "Retrieves goals assigned to the authenticated employee")
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyGoals(
+    public ResponseEntity<ApiResponse<Page<GoalResponse>>> getMyGoals(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         Long empId = currentEmp != null ? currentEmp.getId() : currentUser.getId();
@@ -89,21 +90,20 @@ public class MyGoalController {
 
     @Operation(summary = "Get My Goal Details", description = "Retrieves details of a specific assigned goal")
     @GetMapping("/{goalId}")
-    public ResponseEntity<ApiResponse<Object>> getMyGoalById(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<GoalResponse>> getMyGoalById(@PathVariable("goalId") Long goalId) {
         GoalResponse goal = goalService.getGoalById(goalId);
         return ResponseEntity.ok(ApiResponse.success("Goal details retrieved successfully", goal));
     }
 
     @Operation(summary = "Submit My Goal Progress", description = "Submits progress entry for assigned goal")
     @PostMapping("/{goalId}/progress")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> submitMyGoalProgress(
+    public ResponseEntity<ApiResponse<GoalProgress>> submitMyGoalProgress(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalProgressRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         Long empId = currentEmp != null ? currentEmp.getId() : currentUser.getId();
@@ -115,14 +115,13 @@ public class MyGoalController {
 
     @Operation(summary = "Log My Goal Effort", description = "Logs actual effort hours spent on assigned goal")
     @PostMapping("/{goalId}/efforts")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> logMyGoalEffort(
+    public ResponseEntity<ApiResponse<GoalEffort>> logMyGoalEffort(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalEffortRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         Long empId = currentEmp != null ? currentEmp.getId() : currentUser.getId();
@@ -134,14 +133,13 @@ public class MyGoalController {
 
     @Operation(summary = "Add My Goal Comment", description = "Adds a discussion comment on assigned goal")
     @PostMapping("/{goalId}/comments")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> addMyGoalComment(
+    public ResponseEntity<ApiResponse<GoalComment>> addMyGoalComment(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalCommentRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         Long empId = currentEmp != null ? currentEmp.getId() : currentUser.getId();
@@ -153,12 +151,11 @@ public class MyGoalController {
 
     @Operation(summary = "Get My Goal Dashboard", description = "Calculates personal goal metrics for authenticated employee")
     @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyGoalDashboard(
+    public ResponseEntity<ApiResponse<GoalDashboardResponse>> getMyGoalDashboard(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         Long empId = currentEmp != null ? currentEmp.getId() : currentUser.getId();

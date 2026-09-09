@@ -31,6 +31,15 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.appraisal.repository.AppraisalCommentRepository;
+import com.example.ems.appraisal.repository.AppraisalHistoryRepository;
+import com.example.ems.appraisal.repository.AppraisalTimelineEventRepository;
+import com.example.ems.appraisal.repository.BulkAppraisalActionLogRepository;
+import com.example.ems.attendance.dto.AttendanceStatsResponse;
+import com.example.ems.attendance.service.AttendanceService;
+import com.example.ems.leave.repository.LeaveRepository;
+import com.example.ems.performance.repository.GoalRepository;
+import org.springframework.data.domain.Page;
 
 @Service
 public class AppraisalService {
@@ -50,20 +59,20 @@ public class AppraisalService {
     @Autowired
     private UserRepository userRepository;
     @Autowired
-    private com.example.ems.attendance.service.AttendanceService attendanceService;
+    private AttendanceService attendanceService;
     @Autowired
-    private com.example.ems.leave.repository.LeaveRepository leaveRepository;
+    private LeaveRepository leaveRepository;
     @Autowired
-    private com.example.ems.performance.repository.GoalRepository goalRepository;
+    private GoalRepository goalRepository;
 
     @Autowired
-    private com.example.ems.appraisal.repository.AppraisalCommentRepository commentRepository;
+    private AppraisalCommentRepository commentRepository;
     @Autowired
-    private com.example.ems.appraisal.repository.AppraisalTimelineEventRepository timelineEventRepository;
+    private AppraisalTimelineEventRepository timelineEventRepository;
     @Autowired
-    private com.example.ems.appraisal.repository.AppraisalHistoryRepository historyRepository;
+    private AppraisalHistoryRepository historyRepository;
     @Autowired
-    private com.example.ems.appraisal.repository.BulkAppraisalActionLogRepository bulkActionLogRepository;
+    private BulkAppraisalActionLogRepository bulkActionLogRepository;
 
     @Transactional
     public void seedCoreAppraisalData() {
@@ -477,9 +486,9 @@ public class AppraisalService {
         });
     }
 
-    public org.springframework.data.domain.Page<IncrementResponse> getSalaryRevisions(String status,
-            org.springframework.data.domain.Pageable pageable) {
-        org.springframework.data.domain.Page<Increment> page;
+    public Page<IncrementResponse> getSalaryRevisions(String status,
+            Pageable pageable) {
+        Page<Increment> page;
         if (status != null && !status.trim().isEmpty()) {
             page = incrementRepository.findByStatus(status.trim().toUpperCase(), pageable);
         } else {
@@ -838,7 +847,7 @@ public class AppraisalService {
                     item.setEmployeeProfileImage(a.getEmployee().getProfileImage());
                     item.setDepartment(a.getEmployee().getDepartment());
 
-                    com.example.ems.attendance.dto.AttendanceStatsResponse attStats = attendanceService
+                    AttendanceStatsResponse attStats = attendanceService
                             .getAttendanceStats(a.getEmployee().getId());
                     item.setAttendance(attStats.getAttendancePercentage());
                     item.setLeaves(leaveRepository.findByEmployeeId(a.getEmployee().getId()).size());
@@ -931,7 +940,7 @@ public class AppraisalService {
                 emp.getDepartment(),
                 emp.getProfileImage()));
 
-        com.example.ems.attendance.dto.AttendanceStatsResponse attStats = attendanceService
+        AttendanceStatsResponse attStats = attendanceService
                 .getAttendanceStats(emp.getId());
         detail.setAttendance(attStats.getAttendancePercentage());
 
@@ -1067,7 +1076,7 @@ public class AppraisalService {
         a.setUpdatedAt(LocalDateTime.now());
 
         // Check if attendance is < 85% to mark status MANUAL_REVIEW_REQUIRED
-        com.example.ems.attendance.dto.AttendanceStatsResponse attStats = attendanceService
+        AttendanceStatsResponse attStats = attendanceService
                 .getAttendanceStats(a.getEmployee().getId());
         if (attStats.getAttendancePercentage() < 85.0 && !a.isAttendanceJustified()) {
             a.setStatus(AppraisalStatus.MANUAL_REVIEW_REQUIRED);
@@ -1132,7 +1141,7 @@ public class AppraisalService {
             }
         }
 
-        com.example.ems.attendance.dto.AttendanceStatsResponse attStats = attendanceService
+        AttendanceStatsResponse attStats = attendanceService
                 .getAttendanceStats(a.getEmployee().getId());
         if (attStats.getAttendancePercentage() < 85.0 && !a.isAttendanceJustified()) {
             throw new IllegalArgumentException(

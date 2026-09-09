@@ -20,6 +20,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class AssetLifecycleServiceTest {
@@ -49,7 +51,7 @@ class AssetLifecycleServiceTest {
     private AssetStateMachineService stateMachineService;
 
     @Mock
-    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private AssetLifecycleService lifecycleService;
@@ -102,7 +104,7 @@ class AssetLifecycleServiceTest {
     @Test
     @DisplayName("Cannot delete ASSIGNED asset")
     void deleteAsset_WhenAssigned_ThrowsConflict() {
-        doThrow(new ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT, "Cannot delete an ASSIGNED asset"))
+        doThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Cannot delete an ASSIGNED asset"))
                 .when(assetService).deleteAsset(orgId, 1L, "admin@example.com");
 
         assertThrows(ResponseStatusException.class, () -> lifecycleService.deleteAsset(orgId, 1L, "admin@example.com"));

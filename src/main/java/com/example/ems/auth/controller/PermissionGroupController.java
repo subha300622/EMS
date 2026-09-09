@@ -21,6 +21,11 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
+import com.example.ems.auth.dto.AddPermissionsToGroupRequest;
+import com.example.ems.auth.dto.CreatePermissionGroupRequest;
+import com.example.ems.auth.dto.UpdatePermissionGroupRequest;
+import com.example.ems.auth.service.RoleService;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/permission-groups")
@@ -41,7 +46,7 @@ public class PermissionGroupController {
     private JwtService jwtService;
 
     @Autowired
-    private com.example.ems.auth.service.RoleService roleService;
+    private RoleService roleService;
 
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -76,9 +81,9 @@ public class PermissionGroupController {
 
     @PostMapping
     @Operation(summary = "Create permission group", description = "Restricted to PLATFORM_ADMIN.")
-    public ResponseEntity<?> createPermissionGroup(
+public ResponseEntity<?> createPermissionGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestBody @jakarta.validation.Valid com.example.ems.auth.dto.CreatePermissionGroupRequest request) {
+            @RequestBody @Valid CreatePermissionGroupRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -124,10 +129,10 @@ public class PermissionGroupController {
 
     @PutMapping("/{groupId}")
     @Operation(summary = "Update permission group", description = "Restricted to PLATFORM_ADMIN.")
-    public ResponseEntity<?> updatePermissionGroup(
+public ResponseEntity<?> updatePermissionGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long groupId,
-            @RequestBody @jakarta.validation.Valid com.example.ems.auth.dto.UpdatePermissionGroupRequest request) {
+            @RequestBody @Valid UpdatePermissionGroupRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -155,7 +160,7 @@ public class PermissionGroupController {
 
     @DeleteMapping("/{groupId}")
     @Operation(summary = "Delete permission group", description = "Restricted to PLATFORM_ADMIN.")
-    public ResponseEntity<?> deletePermissionGroup(
+public ResponseEntity<?> deletePermissionGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long groupId) {
 
@@ -174,7 +179,7 @@ public class PermissionGroupController {
 
         permissionGroupRepository.deleteById(groupId);
         roleService.evictAllUserPermissionsCache();
-        return ResponseEntity.ok(ApiResponse.success("Permission group deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Permission group deleted successfully", null));
     }
 
     @GetMapping("/{groupId}/permissions")
@@ -187,10 +192,10 @@ public class PermissionGroupController {
 
     @PostMapping("/{groupId}/permissions")
     @Operation(summary = "Add permissions to group", description = "Restricted to PLATFORM_ADMIN.")
-    public ResponseEntity<?> addPermissionsToGroup(
+public ResponseEntity<?> addPermissionsToGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long groupId,
-            @RequestBody @jakarta.validation.Valid com.example.ems.auth.dto.AddPermissionsToGroupRequest request) {
+            @RequestBody @Valid AddPermissionsToGroupRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -222,7 +227,7 @@ public class PermissionGroupController {
 
     @DeleteMapping("/{groupId}/permissions/{permissionId}")
     @Operation(summary = "Remove permission from group", description = "Restricted to PLATFORM_ADMIN.")
-    public ResponseEntity<?> removePermissionFromGroup(
+public ResponseEntity<?> removePermissionFromGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long groupId,
             @PathVariable Long permissionId) {
@@ -246,6 +251,6 @@ public class PermissionGroupController {
         permissionGroupRepository.save(group);
         roleService.evictAllUserPermissionsCache();
 
-        return ResponseEntity.ok(ApiResponse.success("Permission removed from group successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Permission removed from group successfully", null));
     }
 }

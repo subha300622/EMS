@@ -24,13 +24,14 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import io.swagger.v3.oas.annotations.Hidden;
 
 @RestController
 @RequestMapping({"/api/v1/expenses/finance", "/api/v1/finance/expenses"})
 @CrossOrigin("*")
 @Tag(name = "Expense Management (Finance)")
 @Deprecated
-@io.swagger.v3.oas.annotations.Hidden
+@Hidden
 public class FinanceExpenseController {
 
     @Autowired

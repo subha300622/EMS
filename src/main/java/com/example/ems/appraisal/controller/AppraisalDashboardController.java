@@ -8,7 +8,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -64,14 +63,14 @@ public class AppraisalDashboardController {
 
     @Operation(summary = "Get Organization-wide Appraisal Dashboard")
     @GetMapping("/dashboard")
-    public ResponseEntity<?> getOrganizationDashboard(
+    public ResponseEntity<ApiResponse<AppraisalOrganizationDashboardDto>> getOrganizationDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_VIEW") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_VIEW permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_VIEW permission", "AUTH_002"));
         }
 
         AppraisalOrganizationDashboardDto dashboard = dashboardService.getOrganizationDashboard();
@@ -80,15 +79,15 @@ public class AppraisalDashboardController {
 
     @Operation(summary = "Get Appraisal Cycle-specific Dashboard")
     @GetMapping("/cycles/{cycleId}/dashboard")
-    public ResponseEntity<?> getCycleDashboard(
+    public ResponseEntity<ApiResponse<AppraisalCycleDashboardDto>> getCycleDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_VIEW") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_VIEW permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_VIEW permission", "AUTH_002"));
         }
 
         AppraisalCycleDashboardDto dashboard = dashboardService.getCycleDashboard(cycleId);
@@ -97,15 +96,15 @@ public class AppraisalDashboardController {
 
     @Operation(summary = "Get Employee Personal Appraisal Dashboard")
     @GetMapping("/my/dashboard")
-    public ResponseEntity<?> getEmployeeDashboard(
+    public ResponseEntity<ApiResponse<AppraisalEmployeeDashboardDto>> getEmployeeDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         Employee employee = resolveEmployee(user);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Employee profile not found", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Employee profile not found", "AUTH_002"));
         }
 
         AppraisalEmployeeDashboardDto dashboard = dashboardService.getEmployeeDashboard(employee);

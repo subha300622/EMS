@@ -1,9 +1,19 @@
 package com.example.ems.organization.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Organization subscription summary")
 public class OrganizationSubscriptionDto {
+    @Schema(description = "Plan name/tier", example = "ENTERPRISE")
     private String plan;
+
+    @Schema(description = "Subscription Status", example = "ACTIVE")
     private String status;
+
+    @Schema(description = "Subscription Start Date", example = "2026-01-01")
     private String startDate;
+
+    @Schema(description = "Subscription Expiry Date", example = "2027-01-01")
     private String expiryDate;
 
     public OrganizationSubscriptionDto() {}

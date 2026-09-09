@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.example.ems.common.dto.DocumentSignatureRequest;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -78,15 +79,14 @@ public class DmsController {
 
     // ── 1. DASHBOARD ─────────────────────────────────────────────────────────
     @GetMapping("/documents/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDashboard(
+public ResponseEntity<?> getDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         DmsDashboardResponse stats = dmsService.getDashboardStats();
@@ -95,39 +95,37 @@ public class DmsController {
 
     // ── 2. DOCUMENTS CRUD / LIST ─────────────────────────────────────────────
     @PostMapping("/documents")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> createDocument(
+public ResponseEntity<?> createDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody DmsDocumentRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         // Scoping: non-managers can only upload documents owned by themselves
         if (!isManager(currentUser)) {
             if (currentUser.getEmployeeId() == null || !currentUser.getEmployeeId().equals(String.valueOf(request.getEmployeeId()))) {
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(ErrorResponse.error("Access Denied: You cannot upload documents for another employee.", "AUTH_002"));
             }
         }
 
         try {
             DmsDocumentResponse response = dmsService.createDocument(request, currentUser.getWorkEmail());
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
+            return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Document uploaded successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_001"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_001"));
         }
     }
 
     @GetMapping("/documents")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDocuments(
+public ResponseEntity<?> getDocuments(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         // If manager, return all. Otherwise, return only employee's own/shared documents
@@ -141,25 +139,24 @@ public class DmsController {
     }
 
     @GetMapping("/documents/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDocumentById(
+public ResponseEntity<?> getDocumentById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<DmsDocumentResponse> docOpt = dmsService.getDocumentById(id);
         if (docOpt.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         DmsDocumentResponse doc = docOpt.get();
 
         // Check permission: manager, owner, or recipient
         if (!isManager(currentUser) && !isDocumentOwner(currentUser, doc) && !isDocumentSharedWith(currentUser, id)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not have permissions to view this document.", "AUTH_002"));
         }
 
@@ -167,25 +164,24 @@ public class DmsController {
     }
 
     @GetMapping("/documents/{id}/download")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> downloadDocument(
+public ResponseEntity<?> downloadDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<DmsDocumentResponse> docOpt = dmsService.getDocumentById(id);
         if (docOpt.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         DmsDocumentResponse doc = docOpt.get();
 
         // Check permission: manager, owner, or recipient
         if (!isManager(currentUser) && !isDocumentOwner(currentUser, doc) && !isDocumentSharedWith(currentUser, id)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not have permissions to download this document.", "AUTH_002"));
         }
 
@@ -194,26 +190,25 @@ public class DmsController {
     }
 
     @PutMapping("/documents/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateDocument(
+public ResponseEntity<?> updateDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody DmsDocumentRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<DmsDocumentResponse> docOpt = dmsService.getDocumentById(id);
         if (docOpt.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         DmsDocumentResponse doc = docOpt.get();
 
         // Check permission: manager or owner
         if (!isManager(currentUser) && !isDocumentOwner(currentUser, doc)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not have permissions to update this document.", "AUTH_002"));
         }
 
@@ -221,80 +216,77 @@ public class DmsController {
             DmsDocumentResponse response = dmsService.updateDocument(id, request, currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Document updated successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_001"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_001"));
         }
     }
 
     @DeleteMapping("/documents/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> deleteDocument(
+public ResponseEntity<?> deleteDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<DmsDocumentResponse> docOpt = dmsService.getDocumentById(id);
         if (docOpt.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         DmsDocumentResponse doc = docOpt.get();
 
         // Check permission: manager or owner
         if (!isManager(currentUser) && !isDocumentOwner(currentUser, doc)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not have permissions to delete this document.", "AUTH_002"));
         }
 
         boolean deleted = dmsService.deleteDocument(id, currentUser.getWorkEmail());
         if (deleted) {
-            return ResponseEntity.ok(ApiResponse.success("Document deleted successfully"));
+            return ResponseEntity.ok(ApiResponse.success("Document deleted successfully", null));
         } else {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
         }
     }
 
     // ── 4. APPROVAL / REJECTION ──────────────────────────────────────────────
     @PatchMapping("/documents/{id}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveDocument(
+public ResponseEntity<?> approveDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Optional<DmsDocumentResponse> approved = dmsService.approveDocument(id, currentUser.getWorkEmail());
         if (approved.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         return ResponseEntity.ok(ApiResponse.success("Document approved successfully", approved.get()));
     }
 
     @PatchMapping("/documents/{id}/reject")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectDocument(
+public ResponseEntity<?> rejectDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Optional<DmsDocumentResponse> rejected = dmsService.rejectDocument(id, currentUser.getWorkEmail());
         if (rejected.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         return ResponseEntity.ok(ApiResponse.success("Document rejected successfully", rejected.get()));
@@ -302,93 +294,90 @@ public class DmsController {
 
     // ── 5. VERSIONS ──────────────────────────────────────────────────────────
     @PostMapping("/documents/{id}/versions")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> addVersion(
+public ResponseEntity<?> addVersion(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody DmsDocumentVersionRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<DmsDocumentResponse> docOpt = dmsService.getDocumentById(id);
         if (docOpt.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         DmsDocumentResponse doc = docOpt.get();
 
         // Check permission: manager or owner
         if (!isManager(currentUser) && !isDocumentOwner(currentUser, doc)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot upload versions for this document.", "AUTH_002"));
         }
 
         try {
             DmsDocumentVersionResponse version = dmsService.addVersion(id, request, currentUser.getWorkEmail());
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
+            return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("New version uploaded successfully", version));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_003"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_003"));
         }
     }
 
     // ── 6. SHARES ────────────────────────────────────────────────────────────
     @PostMapping("/documents/{id}/shares")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> shareDocument(
+public ResponseEntity<?> shareDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody DmsDocumentShareRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<DmsDocumentResponse> docOpt = dmsService.getDocumentById(id);
         if (docOpt.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         DmsDocumentResponse doc = docOpt.get();
 
         // Check permission: manager or owner
         if (!isManager(currentUser) && !isDocumentOwner(currentUser, doc)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You cannot share this document.", "AUTH_002"));
         }
 
         try {
             DmsDocumentShareResponse share = dmsService.shareDocument(id, request, currentUser.getWorkEmail());
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
+            return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Document shared successfully", share));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_004"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_004"));
         }
     }
 
     // ── 7. AUDIT LOGS ────────────────────────────────────────────────────────
     @GetMapping("/documents/{id}/audit-logs")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAuditLogs(
+public ResponseEntity<?> getAuditLogs(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Optional<DmsDocumentResponse> docOpt = dmsService.getDocumentById(id);
         if (docOpt.isEmpty())
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error("Document not found with ID: " + id, "DMS_002"));
 
         DmsDocumentResponse doc = docOpt.get();
 
         // Check permission: manager or owner
         if (!isManager(currentUser) && !isDocumentOwner(currentUser, doc)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: You do not have permission to view audit logs for this document.", "AUTH_002"));
         }
 
@@ -398,12 +387,11 @@ public class DmsController {
 
     // ── 8. EXPIRING DOCUMENTS ────────────────────────────────────────────────
     @GetMapping("/documents/expiring")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getExpiringDocuments(
+public ResponseEntity<?> getExpiringDocuments(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         if (isManager(currentUser)) {
@@ -420,14 +408,13 @@ public class DmsController {
 
     // ── 9. SIGNATURE REQUESTS ────────────────────────────────────────────────
     @PostMapping("/documents/{id}/signature-request")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> signatureRequest(
+public ResponseEntity<?> signatureRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody @Valid com.example.ems.common.dto.DocumentSignatureRequest body){
+            @RequestBody @Valid DocumentSignatureRequest body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         // Dynamically routing:
@@ -439,10 +426,10 @@ public class DmsController {
 
             try {
                 DmsSignatureResponse response = dmsService.submitSignatureRequest(id, request, currentUser.getWorkEmail());
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
+                return ResponseEntity.status(HttpStatus.CREATED)
                         .body(ApiResponse.success("Document signature requested successfully", response));
             } catch (IllegalArgumentException e) {
-                return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_005"));
+                return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_005"));
             }
         }
 
@@ -456,26 +443,25 @@ public class DmsController {
                 DmsSignatureResponse response = dmsService.completeSignature(id, request, currentUser.getWorkEmail());
                 return ResponseEntity.ok(ApiResponse.success("Document signature logged successfully", response));
             } catch (IllegalArgumentException e) {
-                return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_006"));
+                return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DMS_006"));
             }
         }
 
-        return (ResponseEntity) ResponseEntity.badRequest()
+        return ResponseEntity.badRequest()
                 .body(ErrorResponse.error("Invalid request payload. Include 'employeeId' to request signature or 'status' to sign document.", "VAL_001"));
     }
 
     // ── 10. REPORTS ──────────────────────────────────────────────────────────
     @GetMapping("/documents/reports/{reportType}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getReports(
+public ResponseEntity<?> getReports(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String reportType){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null)
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         if (!isManager(currentUser))
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires HR/Manager permissions.", "AUTH_002"));
 
         Map<String, Object> data = dmsService.getReports(reportType);

@@ -30,7 +30,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
+import com.example.ems.reports.organization.dto.OrganizationReportExportRequest;
+import com.example.ems.reports.organization.dto.ReportExportInitiatedResponse;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/platform/reports/organizations")
@@ -166,7 +168,7 @@ public class PlatformOrganizationReportController {
     @PostMapping("/export")
     public ResponseEntity<?> export(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.reports.organization.dto.OrganizationReportExportRequest body) {
+            @RequestBody(required = false) @Valid OrganizationReportExportRequest body) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
@@ -192,11 +194,12 @@ public class PlatformOrganizationReportController {
         String plan = body != null ? body.plan() : null;
 
         ReportExportHistory history = reportFacade.exportReport(format, search, status, plan, user.getWorkEmail());
-        return ResponseEntity.ok(ApiResponse.success("Report export started successfully", Map.of(
-                "exportId", history.getId(),
-                "status", history.getStatus().name(),
-                "downloadUrl", "/api/v1/platform/reports/organizations/export/download/" + history.getId()
-        )));
+        ReportExportInitiatedResponse response = new ReportExportInitiatedResponse(
+                history.getId(),
+                history.getStatus().name(),
+                "/api/v1/platform/reports/organizations/export/download/" + history.getId()
+        );
+        return ResponseEntity.ok(ApiResponse.success("Report export started successfully", response));
     }
 
     @Operation(summary = "Get history of report exports")

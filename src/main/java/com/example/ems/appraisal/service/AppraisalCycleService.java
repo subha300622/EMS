@@ -21,6 +21,11 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.appraisal.entity.AppraisalConfigurationVersion;
+import com.example.ems.appraisal.entity.AppraisalInitiationMode;
+import com.example.ems.appraisal.repository.AppraisalConfigurationRepository;
+import com.example.ems.appraisal.repository.AppraisalConfigurationVersionRepository;
+import com.example.ems.common.exception.ConflictException;
 
 @Service
 public class AppraisalCycleService {
@@ -38,13 +43,13 @@ public class AppraisalCycleService {
     private OrganizationRepository organizationRepository;
 
     @Autowired
-    private com.example.ems.appraisal.repository.AppraisalConfigurationRepository configRepository;
+    private AppraisalConfigurationRepository configRepository;
 
     @Autowired
     private AppraisalConfigurationExtendedService configExtendedService;
 
     @Autowired
-    private com.example.ems.appraisal.repository.AppraisalConfigurationVersionRepository versionRepository;
+    private AppraisalConfigurationVersionRepository versionRepository;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -59,7 +64,7 @@ public class AppraisalCycleService {
         }
 
         if (cycleRepository.findByOrganizationId(orgId).stream().anyMatch(c -> c.getName().equalsIgnoreCase(dto.getName().trim()))) {
-            throw new com.example.ems.common.exception.ConflictException("An appraisal cycle with name '" + dto.getName().trim() + "' already exists.");
+            throw new ConflictException("An appraisal cycle with name '" + dto.getName().trim() + "' already exists.");
         }
 
         AppraisalCycle cycle = new AppraisalCycle();
@@ -99,7 +104,7 @@ public class AppraisalCycleService {
         if (dto.getName() != null && !dto.getName().trim().equalsIgnoreCase(cycle.getName())) {
             if (cycleRepository.findByOrganizationId(orgId).stream()
                     .anyMatch(c -> !c.getId().equals(cycleId) && c.getName().equalsIgnoreCase(dto.getName().trim()))) {
-                throw new com.example.ems.common.exception.ConflictException("An appraisal cycle with name '" + dto.getName().trim() + "' already exists.");
+                throw new ConflictException("An appraisal cycle with name '" + dto.getName().trim() + "' already exists.");
             }
             cycle.setName(dto.getName().trim());
         }
@@ -163,7 +168,7 @@ public class AppraisalCycleService {
 
         // Bind or snapshot configuration version if not present
         if (cycle.getConfigurationVersion() == null) {
-            com.example.ems.appraisal.entity.AppraisalConfigurationVersion latestVer = versionRepository
+            AppraisalConfigurationVersion latestVer = versionRepository
                     .findFirstByOrganizationIdOrderByVersionNumberDesc(orgId)
                     .orElseGet(() -> {
                         // Create initial snapshot if none exists
@@ -335,7 +340,7 @@ public class AppraisalCycleService {
 
         // Check organization initiation mode
         configRepository.findByOrganizationId(orgId).ifPresent(config -> {
-            if (config.getInitiationMode() == com.example.ems.appraisal.entity.AppraisalInitiationMode.EMPLOYEE_ONLY) {
+            if (config.getInitiationMode() == AppraisalInitiationMode.EMPLOYEE_ONLY) {
                 throw new IllegalStateException("Appraisal initiation mode is configured as EMPLOYEE_ONLY. HR batch generation is disabled for this organization.");
             }
         });

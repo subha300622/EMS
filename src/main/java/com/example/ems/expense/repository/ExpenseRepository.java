@@ -9,14 +9,16 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
+import com.example.ems.expense.entity.ExpenseStatus;
+import java.util.Optional;
 
 @Repository
 public interface ExpenseRepository extends JpaRepository<Expense, Long> {
-    List<Expense> findByStatus(com.example.ems.expense.entity.ExpenseStatus status);
-    List<Expense> findByStatusIn(List<com.example.ems.expense.entity.ExpenseStatus> statuses);
+    List<Expense> findByStatus(ExpenseStatus status);
+    List<Expense> findByStatusIn(List<ExpenseStatus> statuses);
     List<Expense> findByEmployeeId(Long employeeId);
 
-    java.util.Optional<Expense> findByExpenseNumber(String expenseNumber);
+    Optional<Expense> findByExpenseNumber(String expenseNumber);
 
     @Query("SELECT e FROM Expense e WHERE e.employee.id = :employeeId " +
            "AND (:status IS NULL OR e.status = :status) " +
@@ -25,7 +27,7 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
            "AND (:toDate IS NULL OR e.expenseDate <= :toDate)")
     Page<Expense> findByFilters(
         @Param("employeeId") Long employeeId,
-        @Param("status") com.example.ems.expense.entity.ExpenseStatus status,
+        @Param("status") ExpenseStatus status,
         @Param("categoryCode") String categoryCode,
         @Param("fromDate") LocalDate fromDate,
         @Param("toDate") LocalDate toDate,

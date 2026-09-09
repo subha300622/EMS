@@ -29,6 +29,7 @@ import java.util.HashSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.UUID;
 
 @Service
 public class SignupService {
@@ -97,7 +98,7 @@ public class SignupService {
             newOrg.setEmail(normalizedEmail);
             newOrg.setPhone(normalizedPhone);
             newOrg.setStatus(OrganizationStatus.ACTIVE);
-            newOrg.setOrganizationCode("TEMP_" + java.util.UUID.randomUUID().toString().substring(0, 10));
+            newOrg.setOrganizationCode("TEMP_" + UUID.randomUUID().toString().substring(0, 10));
             
             final Organization savedOrg = organizationRepository.save(newOrg);
 

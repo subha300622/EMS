@@ -9,7 +9,6 @@ import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.organization.entity.Organization;
 import com.example.ems.organization.repository.OrganizationRepository;
 import com.example.ems.security.service.JwtService;
@@ -23,6 +22,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
+import com.example.ems.common.util.ClientIpResolver;
+import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/v1/platform/organizations/{orgId}/users")
@@ -66,30 +67,25 @@ public class PlatformOrganizationUserController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    private ResponseEntity<?> organizationSuspendedResponse() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResponse.error("Organization is suspended.", "ORG_001"));
-    }
-
     @GetMapping
     @Operation(summary = "List all users in the organization")
-    public ResponseEntity<?> getOrgUsers(
+    public ResponseEntity<ApiResponse<List<User>>> getOrgUsers(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId) {
 
         User user = resolveUser(authHeader);
         if (user == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         if (!checkPermission(user, "platform.role.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.role.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.role.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted())
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Organization is suspended.", "ORG_001"));
 
         List<User> users = userRepository.findByOrganizationId(orgId);
         return ResponseEntity.ok(ApiResponse.success("Organization users retrieved successfully.", users));
@@ -97,24 +93,24 @@ public class PlatformOrganizationUserController {
 
     @GetMapping("/{userId}")
     @Operation(summary = "Get user details")
-    public ResponseEntity<?> getOrgUserDetails(
+    public ResponseEntity<ApiResponse<User>> getOrgUserDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId,
             @PathVariable Long userId) {
 
         User user = resolveUser(authHeader);
         if (user == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         if (!checkPermission(user, "platform.role.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.role.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.role.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted())
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Organization is suspended.", "ORG_001"));
 
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
@@ -122,7 +118,7 @@ public class PlatformOrganizationUserController {
         // Validate organization bound
         if (targetUser.getOrganization() == null || !orgId.equals(targetUser.getOrganization().getId())) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("User does not belong to specified organization.", "USER_ORG_MISMATCH"));
+                    .body(ApiResponse.error("User does not belong to specified organization.", "USER_ORG_MISMATCH"));
         }
 
         return ResponseEntity.ok(ApiResponse.success("User details retrieved successfully.", targetUser));
@@ -130,24 +126,24 @@ public class PlatformOrganizationUserController {
 
     @GetMapping("/{userId}/permissions")
     @Operation(summary = "Get user effective permissions")
-    public ResponseEntity<?> getOrgUserPermissions(
+    public ResponseEntity<ApiResponse<List<String>>> getOrgUserPermissions(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId,
             @PathVariable Long userId) {
 
         User user = resolveUser(authHeader);
         if (user == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         if (!checkPermission(user, "platform.role.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.role.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.role.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted())
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Organization is suspended.", "ORG_001"));
 
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
@@ -155,7 +151,7 @@ public class PlatformOrganizationUserController {
         // Validate organization bound
         if (targetUser.getOrganization() == null || !orgId.equals(targetUser.getOrganization().getId())) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("User does not belong to specified organization.", "USER_ORG_MISMATCH"));
+                    .body(ApiResponse.error("User does not belong to specified organization.", "USER_ORG_MISMATCH"));
         }
 
         List<String> permissions = roleService.getPermissionsForUserId(targetUser.getUserId());
@@ -165,19 +161,19 @@ public class PlatformOrganizationUserController {
 
     @PutMapping("/{userId}/role")
     @Operation(summary = "Override user's role assignment")
-    public ResponseEntity<?> overrideUserRole(
+    public ResponseEntity<ApiResponse<User>> overrideUserRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId,
             @PathVariable Long userId,
             @RequestBody OverrideUserRoleRequest req,
-            jakarta.servlet.http.HttpServletRequest servletRequest) {
+            HttpServletRequest servletRequest) {
 
         User user = resolveUser(authHeader);
         if (user == null)
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         if (!checkPermission(user, "platform.role.override")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.role.override' permission.",
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.role.override' permission.",
                             "AUTH_002"));
         }
 
@@ -185,7 +181,7 @@ public class PlatformOrganizationUserController {
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted())
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Organization is suspended.", "ORG_001"));
 
         User targetUser = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + userId));
@@ -193,11 +189,11 @@ public class PlatformOrganizationUserController {
         // Validate organization bound
         if (targetUser.getOrganization() == null || !orgId.equals(targetUser.getOrganization().getId())) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("User does not belong to specified organization.", "USER_ORG_MISMATCH"));
+                    .body(ApiResponse.error("User does not belong to specified organization.", "USER_ORG_MISMATCH"));
         }
 
         if (req.getReason() == null || req.getReason().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body(ErrorResponse
+            return ResponseEntity.badRequest().body(ApiResponse
                     .error("Reason is required for auditing platform admin overrides.", "AUDIT_REASON_REQUIRED"));
         }
 
@@ -210,7 +206,7 @@ public class PlatformOrganizationUserController {
         }
 
         if (targetRoleOpt.isEmpty()) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Specified role not found.", "ROLE_NOT_FOUND"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("Specified role not found.", "ROLE_NOT_FOUND"));
         }
 
         Role targetRole = targetRoleOpt.get();
@@ -220,7 +216,7 @@ public class PlatformOrganizationUserController {
             Long roleOrgId = targetRole.getOrganization() != null ? targetRole.getOrganization().getId() : null;
             if (roleOrgId == null || !roleOrgId.equals(orgId)) {
                 return ResponseEntity.badRequest().body(
-                        ErrorResponse.error("Role does not belong to the target organization.", "ROLE_ORG_MISMATCH"));
+                        ApiResponse.error("Role does not belong to the target organization.", "ROLE_ORG_MISMATCH"));
             }
         }
 
@@ -238,7 +234,7 @@ public class PlatformOrganizationUserController {
                 "OVERRIDE_USER_ROLE",
                 "User",
                 String.valueOf(userId),
-                com.example.ems.common.util.ClientIpResolver.getClientIp(servletRequest),
+                ClientIpResolver.getClientIp(servletRequest),
                 "Platform Admin overridden user role for user ID: " + userId + " (email: " + targetUser.getWorkEmail()
                         + ") to role '" + targetRole.getName() + "'. Reason: " + req.getReason());
         auditLogRepository.save(auditLog);

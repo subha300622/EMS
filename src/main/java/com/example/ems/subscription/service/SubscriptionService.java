@@ -15,6 +15,8 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import com.example.ems.subscription.exception.InvalidStateTransitionException;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 @Service
 @Transactional
@@ -23,7 +25,7 @@ public class SubscriptionService {
     private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(SubscriptionService.class);
 
     @Autowired
-    private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+    private JdbcTemplate jdbcTemplate;
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
@@ -432,7 +434,7 @@ public class SubscriptionService {
         );
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void markInvoiceAsPaid(Long invoiceId) {
         SubscriptionInvoice invoice = invoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new IllegalArgumentException("Invoice not found: " + invoiceId));
@@ -444,7 +446,7 @@ public class SubscriptionService {
         invoiceRepository.save(invoice);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public void activateSubscription(Long subscriptionId, String gatewayPaymentId) {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new IllegalArgumentException("Subscription not found: " + subscriptionId));
@@ -458,7 +460,7 @@ public class SubscriptionService {
     private void transitionSubscription(Subscription sub, SubscriptionStatus newStatus, String performedBy, String remarks, String action) {
         SubscriptionStatus oldStatus = sub.getStatus();
         if (!SubscriptionStateMachine.canTransition(oldStatus, newStatus)) {
-            throw new com.example.ems.subscription.exception.InvalidStateTransitionException(
+            throw new InvalidStateTransitionException(
                 "Invalid subscription state transition from " + oldStatus + " to " + newStatus
             );
         }
@@ -472,7 +474,7 @@ public class SubscriptionService {
     private void transitionInvoice(SubscriptionInvoice invoice, InvoiceStatus newStatus) {
         InvoiceStatus oldStatus = invoice.getStatus();
         if (!InvoiceStateMachine.canTransition(oldStatus, newStatus)) {
-            throw new com.example.ems.subscription.exception.InvalidStateTransitionException(
+            throw new InvalidStateTransitionException(
                 "Invalid invoice state transition from " + oldStatus + " to " + newStatus
             );
         }

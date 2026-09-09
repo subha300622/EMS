@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.auth.entity.User;
 
 @Service
 @Transactional(readOnly = true)
@@ -173,7 +174,7 @@ public class OrganizationAnalyticsService {
                     .count();
 
             List<String> emails = userRepository.findByOrganizationId(org.getId()).stream()
-                    .map(com.example.ems.auth.entity.User::getWorkEmail)
+                    .map(User::getWorkEmail)
                     .collect(Collectors.toList());
 
             long auditCount = 0;
@@ -255,7 +256,7 @@ public class OrganizationAnalyticsService {
 
         long departmentCount = organizationRepository.countDepartments(org.getId());
         long roleCount = userRepository.findByOrganizationId(org.getId()).stream()
-                .map(com.example.ems.auth.entity.User::getRole)
+                .map(User::getRole)
                 .filter(Objects::nonNull)
                 .distinct()
                 .count();
@@ -267,7 +268,7 @@ public class OrganizationAnalyticsService {
 
         // Fetch logs size for user emails
         List<String> emails = userRepository.findByOrganizationId(org.getId()).stream()
-                .map(com.example.ems.auth.entity.User::getWorkEmail)
+                .map(User::getWorkEmail)
                 .collect(Collectors.toList());
 
         long auditCount = 0;

@@ -4,7 +4,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.dto.*;
 import com.example.ems.employee.entity.MyEmployeeDocument;
 import com.example.ems.employee.service.MyDocumentService;
@@ -58,70 +57,65 @@ public class MyDocumentController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    private ResponseEntity<ErrorResponse> unauthorizedResponse() {
+    private <T> ResponseEntity<ApiResponse<T>> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+                .body(ApiResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private ResponseEntity<ErrorResponse> forbiddenResponse(String permission) {
+    private <T> ResponseEntity<ApiResponse<T>> forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
+                .body(ApiResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
-
-
 
     // 2. Get Document Categories
     @Operation(summary = "Get Document Categories", description = "Retrieves categories and document compliance statuses for the logged-in employee.")
     @GetMapping("/categories")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getCategories(
+    public ResponseEntity<ApiResponse<MyDocumentCategoriesResponse>> getCategories(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.read")) {
-            return (ResponseEntity) forbiddenResponse("document.self.read");
+            return forbiddenResponse("document.self.read");
         }
 
         try {
             MyDocumentCategoriesResponse response = documentService.getDocumentCategories(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "DOC_001"));
         }
     }
 
     // 3. Get Documents by Category
     @Operation(summary = "Get Documents by Category", description = "Retrieves employee documents belonging to a specific category.")
     @GetMapping("/categories/{categoryId}/documents")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDocumentsByCategory(
+    public ResponseEntity<ApiResponse<MyCategoryDocumentsResponse>> getDocumentsByCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("categoryId") Long categoryId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.read")) {
-            return (ResponseEntity) forbiddenResponse("document.self.read");
+            return forbiddenResponse("document.self.read");
         }
 
         try {
             MyCategoryDocumentsResponse response = documentService.getDocumentsByCategory(currentUser.getWorkEmail(), categoryId);
             return ResponseEntity.ok(ApiResponse.success("Category documents retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "DOC_001"));
         }
     }
 
     // 4. Upload Document
     @Operation(summary = "Upload Document", description = "Uploads a new document under a specified category and document type.")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> uploadDocument(
+    public ResponseEntity<ApiResponse<MyDocumentUploadResponse>> uploadDocument(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam("file") MultipartFile file,
             @RequestParam("categoryId") Long categoryId,
@@ -132,10 +126,10 @@ public class MyDocumentController {
             @RequestParam(value = "remarks", required = false) String remarks){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.upload")) {
-            return (ResponseEntity) forbiddenResponse("document.self.upload");
+            return forbiddenResponse("document.self.upload");
         }
 
         try {
@@ -147,26 +141,25 @@ public class MyDocumentController {
             );
             return ResponseEntity.ok(ApiResponse.success("Document uploaded successfully", response));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_002"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "DOC_002"));
         }
     }
 
     // 5. Replace Existing Document
     @Operation(summary = "Replace Document Version", description = "Uploads a new version of an existing document to replace the previous one.")
     @PutMapping(value = "/{documentId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> replaceDocument(
+    public ResponseEntity<ApiResponse<MyDocumentReplaceResponse>> replaceDocument(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("documentId") Long documentId,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "remarks", required = false) String remarks){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.update")) {
-            return (ResponseEntity) forbiddenResponse("document.self.update");
+            return forbiddenResponse("document.self.update");
         }
 
         try {
@@ -175,56 +168,54 @@ public class MyDocumentController {
             );
             return ResponseEntity.ok(ApiResponse.success("Document replaced successfully", response));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_002"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "DOC_002"));
         }
     }
 
     // 6. Get Document Details
     @Operation(summary = "Get Document Details", description = "Retrieves structural metadata and verification history of a specific document.")
     @GetMapping("/{documentId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDocumentDetails(
+    public ResponseEntity<ApiResponse<MyDocumentDetailsResponse>> getDocumentDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("documentId") Long documentId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.read")) {
-            return (ResponseEntity) forbiddenResponse("document.self.read");
+            return forbiddenResponse("document.self.read");
         }
 
         try {
             MyDocumentDetailsResponse response = documentService.getDocumentDetails(currentUser.getWorkEmail(), documentId);
             return ResponseEntity.ok(ApiResponse.success("Document details retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "DOC_001"));
         }
     }
 
     // 7. Preview/View Document
     @Operation(summary = "Preview Document", description = "Generates a temporary read-only preview URL for viewing the document.")
     @GetMapping("/{documentId}/preview")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> previewDocument(
+    public ResponseEntity<ApiResponse<MyDocumentPreviewResponse>> previewDocument(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("documentId") Long documentId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.preview")) {
-            return (ResponseEntity) forbiddenResponse("document.self.preview");
+            return forbiddenResponse("document.self.preview");
         }
 
         try {
             MyDocumentPreviewResponse response = documentService.previewDocument(currentUser.getWorkEmail(), documentId);
             return ResponseEntity.ok(ApiResponse.success("Document preview generated successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "DOC_001"));
         }
     }
 
@@ -236,10 +227,10 @@ public class MyDocumentController {
             @PathVariable("documentId") Long documentId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return unauthorizedResponse();
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(currentUser, "document.self.download")) {
-            return forbiddenResponse("document.self.download");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Requires 'document.self.download' permission.", "AUTH_002"));
         }
 
         try {
@@ -251,78 +242,75 @@ public class MyDocumentController {
             return new ResponseEntity<>(doc.getFileData(), headers, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
+                    .body(ApiResponse.error(e.getMessage(), "DOC_001"));
         }
     }
 
     // 9. Get Expiry Notifications
     @Operation(summary = "Get Document Expiry Alerts", description = "Retrieves active warnings for documents that are expiring soon.")
     @GetMapping("/notifications")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getExpiryNotifications(
+    public ResponseEntity<ApiResponse<MyDocumentNotificationsResponse>> getExpiryNotifications(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.read")) {
-            return (ResponseEntity) forbiddenResponse("document.self.read");
+            return forbiddenResponse("document.self.read");
         }
 
         try {
             MyDocumentNotificationsResponse response = documentService.getExpiryNotifications(currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Expiry notifications retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "DOC_001"));
         }
     }
 
     // 10. Get Document Activity History
     @Operation(summary = "Get Document Audit History", description = "Retrieves an audit log of upload, update, and verification activities on the employee's documents.")
     @GetMapping("/history")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDocumentHistory(
+    public ResponseEntity<ApiResponse<MyDocumentHistoryResponse>> getDocumentHistory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.history.read")) {
-            return (ResponseEntity) forbiddenResponse("document.self.history.read");
+            return forbiddenResponse("document.self.history.read");
         }
 
         try {
             MyDocumentHistoryResponse response = documentService.getDocumentActivityHistory(currentUser.getWorkEmail(), page, size);
             return ResponseEntity.ok(ApiResponse.success("Document activity history retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "DOC_001"));
         }
     }
 
     // 11. Get Allowed Document Types
     @Operation(summary = "Get Allowed Document Types", description = "Retrieves a catalog of allowed document codes and their criteria.")
     @GetMapping("/document-types")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAllowedDocumentTypes(
+    public ResponseEntity<ApiResponse<MyDocumentTypesResponse>> getAllowedDocumentTypes(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) unauthorizedResponse();
+            return unauthorizedResponse();
         }
         if (!checkPermission(currentUser, "document.self.read")) {
-            return (ResponseEntity) forbiddenResponse("document.self.read");
+            return forbiddenResponse("document.self.read");
         }
 
         try {
             MyDocumentTypesResponse response = documentService.getAllowedDocumentTypes();
             return ResponseEntity.ok(ApiResponse.success("Allowed document types retrieved successfully", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "DOC_001"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "DOC_001"));
         }
     }
 }

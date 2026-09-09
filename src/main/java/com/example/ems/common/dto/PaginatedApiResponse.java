@@ -1,4 +1,6 @@
 package com.example.ems.common.dto;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 public class PaginatedApiResponse<T> extends ApiResponse<T> {
     private int page;
@@ -20,7 +22,7 @@ public class PaginatedApiResponse<T> extends ApiResponse<T> {
         return new PaginatedApiResponse<>(
                 true,
                 message,
-                java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
+                Instant.now().truncatedTo(ChronoUnit.SECONDS).toString(),
                 data,
                 page,
                 size,

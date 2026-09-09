@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.Duration;
 
 @Service
 public class MySupportService {
@@ -191,7 +192,7 @@ public class MySupportService {
                 .filter(t -> (SupportTicketStatus.RESOLVED == t.getStatus() || SupportTicketStatus.CLOSED == t.getStatus()) && t.getResolvedAt() != null)
                 .collect(Collectors.toList());
         long totalHours = resolvedOrClosed.stream()
-                .mapToLong(t -> java.time.Duration.between(t.getCreatedAt(), t.getResolvedAt()).toHours()).sum();
+                .mapToLong(t -> Duration.between(t.getCreatedAt(), t.getResolvedAt()).toHours()).sum();
         long avgHours = resolvedOrClosed.isEmpty() ? 0 : totalHours / resolvedOrClosed.size();
 
         long breached = tickets.stream().filter(t -> {

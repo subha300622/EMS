@@ -53,7 +53,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/summary")
-    public ResponseEntity<?> getSummaryReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+public ResponseEntity<?> getSummaryReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         TrainingReportSummaryResponse summary = trainingService.getReportSummary(user);
@@ -61,7 +61,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/participation")
-    public ResponseEntity<?> getParticipationReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+public ResponseEntity<?> getParticipationReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         List<ParticipationReportResponse> report = trainingService.getParticipationReport(user);
@@ -69,7 +69,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/attendance")
-    public ResponseEntity<?> getAttendanceReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+public ResponseEntity<?> getAttendanceReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         List<AttendanceReportResponse> report = trainingService.getAttendanceReport(user);
@@ -77,7 +77,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/export")
-    public ResponseEntity<?> exportReport(
+public ResponseEntity<?> exportReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "csv") String format) {
         User user = resolveUser(authHeader);
@@ -100,7 +100,7 @@ public class TrainingReportController {
 
     // ── Department, Team & Employee Reports ─────────────────────────────────
     @GetMapping("/department/{departmentId}")
-    public ResponseEntity<?> getDepartmentReport(
+public ResponseEntity<?> getDepartmentReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId) {
         User user = resolveUser(authHeader);
@@ -113,7 +113,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/department/{departmentId}/completion")
-    public ResponseEntity<?> getDepartmentCompletionReport(
+public ResponseEntity<?> getDepartmentCompletionReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId) {
         User user = resolveUser(authHeader);
@@ -126,7 +126,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/team/{teamId}")
-    public ResponseEntity<?> getTeamReport(
+public ResponseEntity<?> getTeamReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId) {
         User user = resolveUser(authHeader);
@@ -139,7 +139,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/team/{teamId}/completion")
-    public ResponseEntity<?> getTeamCompletionReport(
+public ResponseEntity<?> getTeamCompletionReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId) {
         User user = resolveUser(authHeader);
@@ -152,7 +152,7 @@ public class TrainingReportController {
     }
 
     @GetMapping("/employee/{employeeId}")
-    public ResponseEntity<?> getEmployeeReport(
+public ResponseEntity<?> getEmployeeReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long employeeId) {
         User user = resolveUser(authHeader);

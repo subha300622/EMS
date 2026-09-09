@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
+import com.example.ems.onboarding.dto.OnboardingDecisionRequest;
+import com.example.ems.onboarding.dto.OnboardingDecisionResultDto;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping("/api/v1/onboarding")
@@ -66,34 +68,35 @@ public class OnboardingApprovalPolicyController {
 
     @PostMapping("/{onboardingId}/approve")
     @Operation(summary = "Approve Candidate Onboarding via Approval Policy Engine")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ONBOARDING_APPROVE')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> approveOnboarding(
+    @PreAuthorize("hasAuthority('ONBOARDING_APPROVE')")
+    public ResponseEntity<ApiResponse<OnboardingDecisionResultDto>> approveOnboarding(
             @PathVariable Long onboardingId,
-            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.onboarding.dto.OnboardingDecisionRequest body) {
+            @RequestBody(required = false) @Valid OnboardingDecisionRequest body) {
         String remarks = (body != null) ? body.getEffectiveRemarks("Approved via Approval Policy Engine") : "Approved via Approval Policy Engine";
-        Map<String, Object> result = policyService.approveOnboardingWithPolicy(onboardingId, remarks);
+        policyService.approveOnboardingWithPolicy(onboardingId, remarks);
+        OnboardingDecisionResultDto result = new OnboardingDecisionResultDto(onboardingId, "APPROVED", remarks);
         return ResponseEntity.ok(ApiResponse.success("Onboarding approved successfully", result));
     }
 
     @PostMapping("/{onboardingId}/reject")
     @Operation(summary = "Reject Candidate Onboarding via Approval Policy Engine")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ONBOARDING_REJECT')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> rejectOnboarding(
+    @PreAuthorize("hasAuthority('ONBOARDING_REJECT')")
+    public ResponseEntity<ApiResponse<OnboardingDecisionResultDto>> rejectOnboarding(
             @PathVariable Long onboardingId,
-            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.onboarding.dto.OnboardingDecisionRequest body) {
+            @RequestBody(required = false) @Valid OnboardingDecisionRequest body) {
         String remarks = (body != null) ? body.getEffectiveRemarks("Rejected via Approval Policy Engine") : "Rejected via Approval Policy Engine";
-        Map<String, Object> result = Map.of("onboardingId", onboardingId, "status", "REJECTED", "remarks", remarks);
+        OnboardingDecisionResultDto result = new OnboardingDecisionResultDto(onboardingId, "REJECTED", remarks);
         return ResponseEntity.ok(ApiResponse.success("Onboarding rejected successfully", result));
     }
 
     @PostMapping("/{onboardingId}/send-back")
     @Operation(summary = "Send Back Candidate Onboarding via Approval Policy Engine")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('ONBOARDING_APPROVE')")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> sendBackOnboarding(
+    @PreAuthorize("hasAuthority('ONBOARDING_APPROVE')")
+    public ResponseEntity<ApiResponse<OnboardingDecisionResultDto>> sendBackOnboarding(
             @PathVariable Long onboardingId,
-            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.onboarding.dto.OnboardingDecisionRequest body) {
+            @RequestBody(required = false) @Valid OnboardingDecisionRequest body) {
         String remarks = (body != null) ? body.getEffectiveRemarks("Sent back via Approval Policy Engine") : "Sent back via Approval Policy Engine";
-        Map<String, Object> result = Map.of("onboardingId", onboardingId, "status", "NEEDS_REVISION", "remarks", remarks);
+        OnboardingDecisionResultDto result = new OnboardingDecisionResultDto(onboardingId, "NEEDS_REVISION", remarks);
         return ResponseEntity.ok(ApiResponse.success("Onboarding sent back successfully", result));
     }
 }

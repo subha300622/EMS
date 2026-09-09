@@ -8,6 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.data.domain.PageRequest;
 
 @SpringBootTest
 @Transactional
@@ -39,14 +40,5 @@ public class SubscriptionAnalyticsServiceTest {
     public void testGetTrialOrganizations() {
         var page = analyticsService.getTrialOrganizations(PageRequest.of(0, 10));
         assertThat(page).isNotNull();
-    }
-
-    private static class PageRequest extends org.springframework.data.domain.PageRequest {
-        protected PageRequest(int page, int size) {
-            super(page, size, org.springframework.data.domain.Sort.unsorted());
-        }
-        public static org.springframework.data.domain.PageRequest of(int page, int size) {
-            return new PageRequest(page, size);
-        }
     }
 }

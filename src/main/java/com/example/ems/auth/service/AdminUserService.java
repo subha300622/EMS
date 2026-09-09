@@ -37,6 +37,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class AdminUserService {
@@ -123,7 +125,7 @@ public class AdminUserService {
 
             // Traverse manager chain to detect loop
             User current = reportingManager;
-            java.util.Set<Long> visited = new java.util.HashSet<>();
+            Set<Long> visited = new HashSet<>();
             while (current != null) {
                 if (!visited.add(current.getId())) {
                     throw new BadRequestException("Circular reporting manager loop detected");

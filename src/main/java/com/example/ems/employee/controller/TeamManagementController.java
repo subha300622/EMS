@@ -2,9 +2,7 @@ package com.example.ems.employee.controller;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
@@ -24,7 +22,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.performance.service.PerformanceService;
@@ -34,6 +31,8 @@ import com.example.ems.training.service.TrainingAssignmentService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.example.ems.employee.dto.TeamManagementDtos;
+import java.time.LocalDate;
 
 @RestController
 @RequestMapping("/api/v1/team")
@@ -70,18 +69,17 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Directory", description = "Retrieves profiles of all direct reports reporting to the authenticated manager.")
     @GetMapping
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getTeamDirectory(
+    public ResponseEntity<ApiResponse<List<Employee>>> getTeamDirectory(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -96,25 +94,24 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Member Details", description = "Retrieves detailed profile metadata for a specific direct report.")
     @GetMapping("/{id}")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getTeamMemberDetails(
+    public ResponseEntity<ApiResponse<Employee>> getTeamMemberDetails(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findById(id).orElse(null);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee not found with ID: " + id, "EMP_002"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee not found with ID: " + id, "EMP_002"));
         }
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -123,8 +120,8 @@ public class TeamManagementController {
         boolean hasGlobalRead = roleService.hasPermission(currentUser.getWorkEmail(), "employee.read");
 
         if (!isDirectReport && !hasGlobalRead) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: This employee does not report to you.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: This employee does not report to you.", "AUTH_002"));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Team member details retrieved successfully", employee));
@@ -132,18 +129,17 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Attendance", description = "Retrieves today's punch status and shift notes for all team members.")
     @GetMapping("/attendance")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getTeamAttendance(
+    public ResponseEntity<ApiResponse<List<TeamManagementDtos.TeamAttendanceItemDto>>> getTeamAttendance(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -153,31 +149,22 @@ public class TeamManagementController {
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
-        List<Map<String, Object>> attendanceList = new ArrayList<>();
+        List<TeamManagementDtos.TeamAttendanceItemDto> attendanceList = new ArrayList<>();
 
         for (Employee emp : directReports) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("employeeId", emp.getId());
-            map.put("employeeName", emp.getFullName());
-            map.put("employeeEmail", emp.getEmail());
-
             Attendance todayAttendance = attendanceService.getTodayAttendance(emp).orElse(null);
             if (todayAttendance != null) {
-                map.put("attendanceId", todayAttendance.getId());
-                map.put("date", todayAttendance.getDate());
-                map.put("status", todayAttendance.getStatus());
-                map.put("punchInTime", todayAttendance.getPunchInTime());
-                map.put("punchOutTime", todayAttendance.getPunchOutTime());
-                map.put("notes", todayAttendance.getNotes());
+                attendanceList.add(new TeamManagementDtos.TeamAttendanceItemDto(
+                        emp.getId(), emp.getFullName(), emp.getEmail(),
+                        todayAttendance.getId(), todayAttendance.getDate(), todayAttendance.getStatus(),
+                        todayAttendance.getPunchInTime(), todayAttendance.getPunchOutTime(), todayAttendance.getNotes()
+                ));
             } else {
-                map.put("attendanceId", null);
-                map.put("date", java.time.LocalDate.now());
-                map.put("status", "Absent");
-                map.put("punchInTime", null);
-                map.put("punchOutTime", null);
-                map.put("notes", null);
+                attendanceList.add(new TeamManagementDtos.TeamAttendanceItemDto(
+                        emp.getId(), emp.getFullName(), emp.getEmail(),
+                        null, LocalDate.now(), "Absent", null, null, null
+                ));
             }
-            attendanceList.add(map);
         }
 
         return ResponseEntity.ok(ApiResponse.success("Team attendance retrieved successfully", attendanceList));
@@ -185,18 +172,17 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Schedules", description = "Retrieves shift scheduling and work timings for the team members for today.")
     @GetMapping("/schedules")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getTeamSchedules(
+    public ResponseEntity<ApiResponse<List<TeamManagementDtos.TeamScheduleItemDto>>> getTeamSchedules(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -206,19 +192,18 @@ public class TeamManagementController {
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
-        List<Map<String, Object>> scheduleList = new ArrayList<>();
+        List<TeamManagementDtos.TeamScheduleItemDto> scheduleList = new ArrayList<>();
 
         for (Employee emp : directReports) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("employeeId", emp.getId());
-            map.put("employeeName", emp.getFullName());
-            map.put("employeeEmail", emp.getEmail());
+            Object sched = null;
             try {
-                map.put("todaySchedule", myScheduleService.getTodaySchedule(emp.getEmail()));
+                sched = myScheduleService.getTodaySchedule(emp.getEmail());
             } catch (Exception e) {
-                map.put("todaySchedule", null);
+                sched = null;
             }
-            scheduleList.add(map);
+            scheduleList.add(new TeamManagementDtos.TeamScheduleItemDto(
+                    emp.getId(), emp.getFullName(), emp.getEmail(), sched
+            ));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Team schedules retrieved successfully", scheduleList));
@@ -226,18 +211,17 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Performance Summary", description = "Retrieves active performance goals and feedback loops for all team members.")
     @GetMapping("/performance")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getTeamPerformance(
+    public ResponseEntity<ApiResponse<List<TeamManagementDtos.TeamPerformanceItemDto>>> getTeamPerformance(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -247,21 +231,21 @@ public class TeamManagementController {
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
-        List<Map<String, Object>> performanceList = new ArrayList<>();
+        List<TeamManagementDtos.TeamPerformanceItemDto> performanceList = new ArrayList<>();
 
         for (Employee emp : directReports) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("employeeId", emp.getId());
-            map.put("employeeName", emp.getFullName());
-            map.put("employeeEmail", emp.getEmail());
+            List<?> goals;
+            List<?> feedbacks;
             try {
-                map.put("goals", performanceService.getGoalsByEmployee(emp.getId()));
-                map.put("feedbacks", performanceService.getFeedbacksByEmployee(emp.getId()));
+                goals = performanceService.getGoalsByEmployee(emp.getId());
+                feedbacks = performanceService.getFeedbacksByEmployee(emp.getId());
             } catch (Exception e) {
-                map.put("goals", Collections.emptyList());
-                map.put("feedbacks", Collections.emptyList());
+                goals = Collections.emptyList();
+                feedbacks = Collections.emptyList();
             }
-            performanceList.add(map);
+            performanceList.add(new TeamManagementDtos.TeamPerformanceItemDto(
+                    emp.getId(), emp.getFullName(), emp.getEmail(), goals, feedbacks
+            ));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Team performance retrieved successfully", performanceList));
@@ -269,18 +253,17 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Trainings Status", description = "Retrieves course enrollment and training completion logs for all team members.")
     @GetMapping("/trainings")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getTeamTrainings(
+    public ResponseEntity<ApiResponse<List<TeamManagementDtos.TeamTrainingItemDto>>> getTeamTrainings(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -290,19 +273,18 @@ public class TeamManagementController {
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
-        List<Map<String, Object>> trainingList = new ArrayList<>();
+        List<TeamManagementDtos.TeamTrainingItemDto> trainingList = new ArrayList<>();
 
         for (Employee emp : directReports) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("employeeId", emp.getId());
-            map.put("employeeName", emp.getFullName());
-            map.put("employeeEmail", emp.getEmail());
+            List<?> enrollments;
             try {
-                map.put("enrollments", trainingService.getMyTrainings(emp.getEmail()));
+                enrollments = trainingService.getMyTrainings(emp.getEmail());
             } catch (Exception e) {
-                map.put("enrollments", Collections.emptyList());
+                enrollments = Collections.emptyList();
             }
-            trainingList.add(map);
+            trainingList.add(new TeamManagementDtos.TeamTrainingItemDto(
+                    emp.getId(), emp.getFullName(), emp.getEmail(), enrollments
+            ));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Team trainings retrieved successfully", trainingList));
@@ -310,18 +292,17 @@ public class TeamManagementController {
 
     @Operation(summary = "Get Team Assets Allocation", description = "Retrieves hardware and software assets allocated to the team members.")
     @GetMapping("/assets")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getTeamAssets(
+    public ResponseEntity<ApiResponse<List<TeamManagementDtos.TeamAssetItemDto>>> getTeamAssets(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         Employee manager = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -331,20 +312,18 @@ public class TeamManagementController {
         }
 
         List<Employee> directReports = employeeRepository.findByManagerId(manager.getId());
-        List<Map<String, Object>> assetList = new ArrayList<>();
+        List<TeamManagementDtos.TeamAssetItemDto> assetList = new ArrayList<>();
 
         for (Employee emp : directReports) {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("employeeId", emp.getId());
-            map.put("employeeName", emp.getFullName());
-            map.put("employeeEmail", emp.getEmail());
+            List<?> assets;
             try {
-                map.put("assets",
-                        myAssetService.getAssignedAssets(emp, null, null, null, Pageable.unpaged()).getContent());
+                assets = myAssetService.getAssignedAssets(emp, null, null, null, Pageable.unpaged()).getContent();
             } catch (Exception e) {
-                map.put("assets", Collections.emptyList());
+                assets = Collections.emptyList();
             }
-            assetList.add(map);
+            assetList.add(new TeamManagementDtos.TeamAssetItemDto(
+                    emp.getId(), emp.getFullName(), emp.getEmail(), assets
+            ));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Team assets retrieved successfully", assetList));

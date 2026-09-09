@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.example.ems.auth.service.RoleService;
 
 public class DepartmentControllerTest {
 
@@ -42,7 +43,7 @@ public class DepartmentControllerTest {
     private JwtService jwtService;
 
     @Mock
-    private com.example.ems.auth.service.RoleService roleService;
+    private RoleService roleService;
 
     @InjectMocks
     private DepartmentController departmentController;

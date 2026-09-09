@@ -1,13 +1,26 @@
 package com.example.ems.reports.revenue.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
+@Schema(description = "Revenue trend entry response")
 public class RevenueTrendResponse {
+    @Schema(description = "Time Period label", example = "2026-06")
     private String period;
+
+    @Schema(description = "Gross Revenue", example = "80000.00")
     private BigDecimal grossRevenue;
+
+    @Schema(description = "Net Revenue", example = "75000.00")
     private BigDecimal netRevenue;
+
+    @Schema(description = "Tax Collected", example = "12000.00")
     private BigDecimal taxCollected;
+
+    @Schema(description = "Discounts Applied", example = "5000.00")
     private BigDecimal discountAmount;
+
+    @Schema(description = "Refund Amount", example = "0.00")
     private BigDecimal refundAmount;
 
     public RevenueTrendResponse() {}

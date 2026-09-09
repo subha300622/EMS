@@ -7,7 +7,6 @@ import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.organization.repository.OrganizationRepository;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -62,15 +61,15 @@ public class PlatformDashboardController {
 
     @GetMapping
     @Operation(summary = "Get Platform Dashboard Summary")
-    public ResponseEntity<?> getDashboard(
+    public ResponseEntity<ApiResponse<PlatformDashboardResponse>> getDashboard(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "platform.dashboard.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.dashboard.view' permission.",
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.dashboard.view' permission.",
                             "AUTH_002"));
         }
 
@@ -105,7 +104,7 @@ public class PlatformDashboardController {
             return ResponseEntity
                     .ok(ApiResponse.success("Platform dashboard metrics retrieved successfully.", response));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "DASHBOARD_ERR"));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage(), "DASHBOARD_ERR"));
         }
     }
 }

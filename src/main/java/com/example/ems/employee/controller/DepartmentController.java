@@ -22,6 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.ems.employee.dto.UpdateDepartmentStatusRequest;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -57,18 +59,17 @@ public class DepartmentController {
 
         @Operation(summary = "Create Department", description = "Creates a new department within the authenticated user's organization.")
         @PostMapping("/departments")
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        public ResponseEntity<ApiResponse<Department>> createDepartment(
+public ResponseEntity<?> createDepartment(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
                         @RequestBody DepartmentCreateRequest request) {
 
                 User currentUser = resolveUser(authHeader);
                 if (currentUser == null) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
                 }
                 if (isPlatformAdmin(currentUser)) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                         .body(ErrorResponse.error("Platform Admin cannot perform organization domain mutations", "AUTH_003"));
                 }
 
@@ -78,20 +79,19 @@ public class DepartmentController {
                         return ResponseEntity.status(HttpStatus.CREATED)
                                         .body(ApiResponse.success("Department created successfully", created));
                 } catch (IllegalArgumentException e) {
-                        return (ResponseEntity) ResponseEntity.badRequest()
+                        return ResponseEntity.badRequest()
                                         .body(ErrorResponse.error(e.getMessage(), "DEP_001"));
                 }
         }
 
         @Operation(summary = "Get All Departments", description = "Retrieves a detailed list of departments belonging to the authenticated organization context.")
         @GetMapping("/departments")
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        public ResponseEntity<ApiResponse<List<DepartmentResponseDto>>> getDepartments(
+public ResponseEntity<?> getDepartments(
                         @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
                 User currentUser = resolveUser(authHeader);
                 if (currentUser == null) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
                 }
 
@@ -101,39 +101,38 @@ public class DepartmentController {
 
         @Operation(summary = "Get Department Details", description = "Retrieves detailed department profile for the authenticated organization.")
         @GetMapping("/departments/{id}")
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        public ResponseEntity<ApiResponse<DepartmentResponseDto>> getDepartmentById(
+public ResponseEntity<?> getDepartmentById(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
                         @PathVariable("id") Long id) {
 
                 User currentUser = resolveUser(authHeader);
                 if (currentUser == null) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
                 }
 
-                return departmentService.getDepartmentDetails(id)
-                                .map(details -> ResponseEntity.ok(ApiResponse
-                                                .success("Department details retrieved successfully", details)))
-                                .orElseGet(() -> (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                                                .body(ErrorResponse.error("Department not found in your organization", "DEP_404")));
+                var detailsOpt = departmentService.getDepartmentDetails(id);
+                if (detailsOpt.isPresent()) {
+                        return ResponseEntity.ok(ApiResponse.success("Department details retrieved successfully", detailsOpt.get()));
+                }
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                                .body(ErrorResponse.error("Department not found in your organization", "DEP_404"));
         }
 
         @Operation(summary = "Update Department", description = "Updates a department within the user's organization and records audit history.")
         @PutMapping("/departments/{id}")
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        public ResponseEntity<ApiResponse<DepartmentResponseDto>> updateDepartment(
+public ResponseEntity<?> updateDepartment(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
                         @PathVariable("id") Long id,
                         @RequestBody DepartmentUpdateRequest request) {
 
                 User currentUser = resolveUser(authHeader);
                 if (currentUser == null) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
                 }
                 if (isPlatformAdmin(currentUser)) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                         .body(ErrorResponse.error("Platform Admin cannot perform organization domain mutations", "AUTH_003"));
                 }
 
@@ -142,21 +141,20 @@ public class DepartmentController {
                         DepartmentResponseDto updated = departmentService.updateDepartment(id, request, currentUser);
                         return ResponseEntity.ok(ApiResponse.success("Department updated successfully", updated));
                 } catch (IllegalArgumentException e) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                         .body(ErrorResponse.error(e.getMessage(), "DEP_404"));
                 }
         }
 
         @Operation(summary = "Get Department Change History", description = "Retrieves the audit log history of changes for a department.")
         @GetMapping("/departments/{id}/history")
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        public ResponseEntity<ApiResponse<List<DepartmentAuditLog>>> getHistory(
+public ResponseEntity<?> getHistory(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
                         @PathVariable("id") Long id) {
 
                 User currentUser = resolveUser(authHeader);
                 if (currentUser == null) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
                 }
 
@@ -167,18 +165,17 @@ public class DepartmentController {
 
         @Operation(summary = "Delete Department", description = "Deletes a department belonging to the authenticated organization.")
         @DeleteMapping("/departments/{id}")
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        public ResponseEntity<Object> deleteDepartment(
+public ResponseEntity<?> deleteDepartment(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
                         @PathVariable("id") Long id) {
 
                 User currentUser = resolveUser(authHeader);
                 if (currentUser == null) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
                 }
                 if (isPlatformAdmin(currentUser)) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                         .body(ErrorResponse.error("Platform Admin cannot perform organization domain mutations", "AUTH_003"));
                 }
 
@@ -189,33 +186,32 @@ public class DepartmentController {
                         response.put("id", String.valueOf(id));
                         return ResponseEntity.ok(response);
                 } else {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                         .body(ErrorResponse.error("Department not found in your organization", "DEP_404"));
                 }
         }
 
         @Operation(summary = "Toggle Department Status", description = "Deactivates or activates a department status in the authenticated organization.")
         @PatchMapping("/departments/{id}")
-        @SuppressWarnings({ "unchecked", "rawtypes" })
-        public ResponseEntity<ApiResponse<Map<String, String>>> toggleStatus(
+public ResponseEntity<?> toggleStatus(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
                         @PathVariable("id") Long id,
-                        @RequestBody @jakarta.validation.Valid com.example.ems.employee.dto.UpdateDepartmentStatusRequest statusMap) {
+                        @RequestBody @Valid UpdateDepartmentStatusRequest statusMap) {
 
                 User currentUser = resolveUser(authHeader);
                 if (currentUser == null) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                                         .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
                 }
                 if (isPlatformAdmin(currentUser)) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
                                         .body(ErrorResponse.error("Platform Admin cannot perform organization domain mutations", "AUTH_003"));
                 }
 
 
                 String status = statusMap != null ? statusMap.status() : null;
                 if (status == null || (!status.equalsIgnoreCase("Active") && !status.equalsIgnoreCase("Inactive"))) {
-                        return (ResponseEntity) ResponseEntity.badRequest()
+                        return ResponseEntity.badRequest()
                                         .body(ErrorResponse.error("Invalid status value", "DEP_400"));
                 }
 
@@ -227,7 +223,7 @@ public class DepartmentController {
                         return ResponseEntity
                                         .ok(ApiResponse.success("Department status updated successfully", response));
                 } catch (IllegalArgumentException e) {
-                        return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                         .body(ErrorResponse.error(e.getMessage(), "DEP_404"));
                 }
         }

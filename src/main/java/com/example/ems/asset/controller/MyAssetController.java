@@ -8,7 +8,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -51,15 +50,18 @@ public class MyAssetController {
     @Autowired
     private RoleService roleService;
 
-    private User resolveUser(String authHeader) {
+    private String extractUsername(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
-            if (jwtService.validateAccessToken(token)) {
-                String email = jwtService.getEmailFromToken(token);
-                return userRepository.findByWorkEmail(email).orElse(null);
-            }
+            return jwtService.getEmailFromToken(token);
         }
         return null;
+    }
+
+    private User resolveUser(String authHeader) {
+        String email = extractUsername(authHeader);
+        if (email == null) return null;
+        return userRepository.findByWorkEmail(email).orElse(null);
     }
 
     private Employee resolveEmployee(User user) {
@@ -87,14 +89,14 @@ public class MyAssetController {
                 || roleService.isSuperAdmin(currentUser.getWorkEmail());
     }
 
-    private ResponseEntity<ErrorResponse> unauthorizedResponse() {
+    private <T> ResponseEntity<ApiResponse<T>> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+                .body(ApiResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private ResponseEntity<ErrorResponse> forbiddenResponse(String permission) {
+    private <T> ResponseEntity<ApiResponse<T>> forbiddenResponse(String permission) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
+                .body(ApiResponse.error("Access Denied: Requires '" + permission + "' permission.", "AUTH_002"));
     }
 
 
@@ -102,8 +104,7 @@ public class MyAssetController {
     // 2. Get My Assigned Assets
     @Operation(summary = "Get My Assigned Assets", description = "Retrieves a paginated list of all assets currently assigned to the logged-in employee.")
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAssignedAssets(
+    public ResponseEntity<ApiResponse<Page<MyAssignedAssetItem>>> getAssignedAssets(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String category,
@@ -113,13 +114,13 @@ public class MyAssetController {
             @RequestParam(defaultValue = "assignedDate,desc") String sort){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.read")) return (ResponseEntity) forbiddenResponse("asset.self.read");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.read")) return forbiddenResponse("asset.self.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         String statusParam = (status != null && !status.isBlank() && !"ALL".equalsIgnoreCase(status)) ? status.trim().toUpperCase() : null;
@@ -148,83 +149,80 @@ public class MyAssetController {
     // 3. Get Asset Details
     @Operation(summary = "Get Asset Details", description = "Retrieves the details of a specific assigned asset by its ID.")
     @GetMapping("/{assetId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAssetDetails(
+    public ResponseEntity<ApiResponse<MyAssetDetailsResponse>> getAssetDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("assetId") Long assetId){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.read")) return (ResponseEntity) forbiddenResponse("asset.self.read");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.read")) return forbiddenResponse("asset.self.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<MyAsset> assetOpt = assetRepository.findById(assetId);
         if (assetOpt.isEmpty()) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Asset not found with ID: " + assetId, "AST_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Asset not found with ID: " + assetId, "AST_404"));
         }
 
         if (!isAssetOwnerOrAdmin(currentUser, employee, assetOpt.get())) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You do not own this asset.", "AST_403"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: You do not own this asset.", "AST_403"));
         }
 
         try {
             MyAssetDetailsResponse response = assetService.getAssetDetails(assetId, employee);
             return ResponseEntity.ok(ApiResponse.success("Asset details retrieved successfully", response));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "AST_500"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "AST_500"));
         }
     }
 
     // 4. Submit Asset Request
     @Operation(summary = "Submit Asset Request", description = "Submits a request for a new asset (e.g. laptop, mobile device).")
     @PostMapping("/requests")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> requestAsset(
+    public ResponseEntity<ApiResponse<AssetRequestResponse>> requestAsset(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody CreateAssetRequest request){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.request")) return (ResponseEntity) forbiddenResponse("asset.self.request");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.request")) return forbiddenResponse("asset.self.request");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         try {
             AssetRequestResponse response = assetService.requestAsset(request, employee);
             return ResponseEntity.ok(ApiResponse.success("Asset request submitted successfully", response));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "AST_500"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "AST_500"));
         }
     }
 
     // 5. Get Asset Requests
     @Operation(summary = "Get Asset Requests", description = "Retrieves a list of all asset requests submitted by the logged-in employee.")
     @GetMapping("/requests")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAssetRequests(
+    public ResponseEntity<ApiResponse<AssetRequestsListResponse>> getAssetRequests(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.read")) return (ResponseEntity) forbiddenResponse("asset.self.read");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.read")) return forbiddenResponse("asset.self.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         AssetRequestsListResponse response = assetService.getAssetRequests(employee);
@@ -234,57 +232,55 @@ public class MyAssetController {
     // 6. Report Issue on Asset
     @Operation(summary = "Report Asset Issue", description = "Reports a hardware or software issue with an assigned asset and creates a support ticket.")
     @PostMapping("/{assetId}/issues")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> reportIssue(
+    public ResponseEntity<ApiResponse<ReportIssueResponse>> reportIssue(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("assetId") Long assetId,
             @Valid @RequestBody ReportIssueRequest request){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.issue.create")) return (ResponseEntity) forbiddenResponse("asset.self.issue.create");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.issue.create")) return forbiddenResponse("asset.self.issue.create");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<MyAsset> assetOpt = assetRepository.findById(assetId);
         if (assetOpt.isEmpty()) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Asset not found with ID: " + assetId, "AST_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Asset not found with ID: " + assetId, "AST_404"));
         }
 
         if (!isAssetOwnerOrAdmin(currentUser, employee, assetOpt.get())) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You do not own this asset.", "AST_403"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: You do not own this asset.", "AST_403"));
         }
 
         try {
             ReportIssueResponse response = assetService.reportIssue(assetId, request, employee);
             return ResponseEntity.ok(ApiResponse.success("Asset issue ticket reported successfully", response));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "AST_500"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "AST_500"));
         }
     }
 
     // 7. Get Asset Issues
     @Operation(summary = "Get Asset Issues", description = "Retrieves a list of all reported issues and ticket statuses for the employee's assets.")
     @GetMapping("/issues")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAssetIssues(
+    public ResponseEntity<ApiResponse<AssetIssuesListResponse>> getAssetIssues(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.read")) return (ResponseEntity) forbiddenResponse("asset.self.read");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.read")) return forbiddenResponse("asset.self.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         AssetIssuesListResponse response = assetService.getAssetIssues(employee);
@@ -294,89 +290,86 @@ public class MyAssetController {
     // 8. Submit Asset Return Request
     @Operation(summary = "Submit Asset Return Request", description = "Initiates a return request for a company asset with details on condition and reason.")
     @PostMapping("/{assetId}/return-request")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> submitReturnRequest(
+    public ResponseEntity<ApiResponse<AssetReturnResponse>> submitReturnRequest(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("assetId") Long assetId,
             @Valid @RequestBody AssetReturnFormRequest request){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.return.request")) return (ResponseEntity) forbiddenResponse("asset.self.return.request");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.return.request")) return forbiddenResponse("asset.self.return.request");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<MyAsset> assetOpt = assetRepository.findById(assetId);
         if (assetOpt.isEmpty()) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Asset not found with ID: " + assetId, "AST_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Asset not found with ID: " + assetId, "AST_404"));
         }
 
         if (!isAssetOwnerOrAdmin(currentUser, employee, assetOpt.get())) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You do not own this asset.", "AST_403"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: You do not own this asset.", "AST_403"));
         }
 
         try {
             AssetReturnResponse response = assetService.submitReturnRequest(assetId, request, employee);
             return ResponseEntity.ok(ApiResponse.success("Asset return request submitted successfully", response));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "AST_500"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "AST_500"));
         }
     }
 
     // 9. Get Asset Timeline
     @Operation(summary = "Get Asset Timeline", description = "Retrieves the lifecycle timeline of an asset, including assignment, checkouts, and returns.")
     @GetMapping("/{assetId}/timeline")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAssetTimeline(
+    public ResponseEntity<ApiResponse<AssetTimelineResponse>> getAssetTimeline(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("assetId") Long assetId){
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.timeline.read")) return (ResponseEntity) forbiddenResponse("asset.self.timeline.read");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.timeline.read")) return forbiddenResponse("asset.self.timeline.read");
 
         Employee employee = resolveEmployee(currentUser);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Optional<MyAsset> assetOpt = assetRepository.findById(assetId);
         if (assetOpt.isEmpty()) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Asset not found with ID: " + assetId, "AST_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Asset not found with ID: " + assetId, "AST_404"));
         }
 
         if (!isAssetOwnerOrAdmin(currentUser, employee, assetOpt.get())) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: You do not own this asset.", "AST_403"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: You do not own this asset.", "AST_403"));
         }
 
         try {
             AssetTimelineResponse response = assetService.getAssetTimeline(assetId, employee);
             return ResponseEntity.ok(ApiResponse.success("Asset activity timeline retrieved successfully", response));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "AST_500"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(e.getMessage(), "AST_500"));
         }
     }
 
     // 10. Get Allowed Category Configurations
     @Operation(summary = "Get Asset Categories", description = "Retrieves configurations for allowed asset categories.")
     @GetMapping("/categories")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getCategories(
+    public ResponseEntity<ApiResponse<AssetCategoriesResponse>> getCategories(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.read")) return (ResponseEntity) forbiddenResponse("asset.self.read");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.read")) return forbiddenResponse("asset.self.read");
 
         AssetCategoriesResponse response = assetService.getCategories();
         return ResponseEntity.ok(ApiResponse.success("Allowed categories retrieved successfully", response));
@@ -385,12 +378,11 @@ public class MyAssetController {
     // 11. Get Policy Acknowledgement Details
     @Operation(summary = "Get Asset Policies", description = "Retrieves policies and policy acknowledgement details for assets.")
     @GetMapping("/policies")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getPolicies(
+    public ResponseEntity<ApiResponse<AssetPoliciesResponse>> getPolicies(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser, "asset.self.read")) return (ResponseEntity) forbiddenResponse("asset.self.read");
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser, "asset.self.read")) return forbiddenResponse("asset.self.read");
 
         AssetPoliciesResponse response = assetService.getPolicies();
         return ResponseEntity.ok(ApiResponse.success("Policies retrieved successfully", response));

@@ -33,9 +33,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/platform-admin")
@@ -192,7 +191,7 @@ public class PlatformAdminOrganizationController {
     public ResponseEntity<?> updateStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody @Valid com.example.ems.organization.dto.UpdateOrganizationStatusRequest body) {
+            @RequestBody @Valid UpdateOrganizationStatusRequest body) {
 
         ResponseEntity<?> accessError = validateAccess(authHeader, "organization.update");
         if (accessError != null) return accessError;
@@ -280,17 +279,15 @@ public class PlatformAdminOrganizationController {
         if (accessError != null) return accessError;
 
         Page<Employee> emps = organizationService.getEmployees(id, PageRequest.of(page, size));
-        Page<Map<String, Object>> empDtos = emps.map(e -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", e.getId());
-            map.put("employeeId", e.getEmployeeId());
-            map.put("fullName", e.getFullName());
-            map.put("email", e.getEmail());
-            map.put("department", e.getDepartment());
-            map.put("designation", e.getDesignation());
-            map.put("status", e.getStatus());
-            return map;
-        });
+        Page<PlatformOrgResponses.PlatformOrgEmployeeResponse> empDtos = emps.map(e -> new PlatformOrgResponses.PlatformOrgEmployeeResponse(
+                e.getId(),
+                e.getEmployeeId(),
+                e.getFullName(),
+                e.getEmail(),
+                e.getDepartment(),
+                e.getDesignation(),
+                e.getStatus()
+        ));
         return ResponseEntity.ok(ApiResponse.success("Organization employees retrieved", empDtos));
     }
 
@@ -304,16 +301,14 @@ public class PlatformAdminOrganizationController {
         if (accessError != null) return accessError;
 
         List<User> admins = organizationService.getAdmins(id);
-        List<Map<String, Object>> adminDtos = admins.stream().map(u -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", u.getId());
-            map.put("userId", u.getUserId());
-            map.put("fullName", u.getFullName());
-            map.put("workEmail", u.getWorkEmail());
-            map.put("role", u.getRole() != null ? u.getRole().getName() : u.getRequestedRole());
-            map.put("status", u.getStatus());
-            return map;
-        }).collect(java.util.stream.Collectors.toList());
+        List<PlatformOrgResponses.PlatformOrgAdminResponse> adminDtos = admins.stream().map(u -> new PlatformOrgResponses.PlatformOrgAdminResponse(
+                u.getId(),
+                u.getUserId(),
+                u.getFullName(),
+                u.getWorkEmail(),
+                u.getRole() != null ? u.getRole().getName() : u.getRequestedRole(),
+                u.getStatus()
+        )).collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success("Organization admins retrieved", adminDtos));
     }
 
@@ -329,20 +324,20 @@ public class PlatformAdminOrganizationController {
         if (accessError != null) return accessError;
 
         Page<OrganizationAuditLog> logs = organizationService.getAuditLogs(id, PageRequest.of(page, size));
-        List<Map<String, Object>> content = new ArrayList<>();
+        List<PlatformOrgResponses.PlatformOrgAuditLogResponse> content = new ArrayList<>();
         for (OrganizationAuditLog entry : logs.getContent()) {
-            Map<String, Object> item = new LinkedHashMap<>();
-            item.put("id", entry.getId());
-            item.put("action", entry.getAction());
-            item.put("entity", entry.getEntity());
-            item.put("entityId", entry.getEntityId());
-            item.put("performedBy", entry.getPerformedBy());
-            item.put("performedAt", entry.getPerformedAt());
-            item.put("oldValues", entry.getOldValues());
-            item.put("newValues", entry.getNewValues());
-            content.add(item);
+            content.add(new PlatformOrgResponses.PlatformOrgAuditLogResponse(
+                    entry.getId(),
+                    entry.getAction(),
+                    entry.getEntity(),
+                    entry.getEntityId(),
+                    entry.getPerformedBy(),
+                    entry.getPerformedAt() != null ? entry.getPerformedAt().toString() : null,
+                    entry.getOldValues(),
+                    entry.getNewValues()
+            ));
         }
-        Page<Map<String, Object>> logDtos = new PageImpl<>(
+        Page<PlatformOrgResponses.PlatformOrgAuditLogResponse> logDtos = new PageImpl<>(
                 content, PageRequest.of(page, size), logs.getTotalElements());
         return ResponseEntity.ok(ApiResponse.success("Organization audit logs retrieved", logDtos));
     }
@@ -423,46 +418,41 @@ public class PlatformAdminOrganizationController {
                 )
         );
 
-        Map<String, Object> response = new LinkedHashMap<>();
-        response.put("organizations", orgs.stream().map(o -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", o.getId());
-            map.put("organizationCode", o.getOrganizationCode());
-            map.put("name", o.getName());
-            map.put("email", o.getEmail());
-            map.put("status", o.getStatus());
-            return map;
-        }).toList());
+        List<PlatformOrgResponses.PlatformGlobalSearchResponse.OrgSearchItem> orgItems = orgs.stream().map(o -> new PlatformOrgResponses.PlatformGlobalSearchResponse.OrgSearchItem(
+                o.getId(),
+                o.getOrganizationCode(),
+                o.getName(),
+                o.getEmail(),
+                o.getStatus() != null ? o.getStatus().name() : null
+        )).toList();
 
-        response.put("employees", emps.stream().map(e -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", e.getId());
-            map.put("employeeId", e.getEmployeeId());
-            map.put("fullName", e.getFullName());
-            map.put("email", e.getEmail());
-            map.put("department", e.getDepartment());
-            map.put("designation", e.getDesignation());
-            return map;
-        }).toList());
+        List<PlatformOrgResponses.PlatformGlobalSearchResponse.EmpSearchItem> empItems = emps.stream().map(e -> new PlatformOrgResponses.PlatformGlobalSearchResponse.EmpSearchItem(
+                e.getId(),
+                e.getEmployeeId(),
+                e.getFullName(),
+                e.getEmail(),
+                e.getDepartment(),
+                e.getDesignation()
+        )).toList();
 
-        response.put("departments", depts.stream().map(d -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", d.getId());
-            map.put("code", d.getCode());
-            map.put("name", d.getName());
-            map.put("status", d.getStatus());
-            return map;
-        }).toList());
+        List<PlatformOrgResponses.PlatformGlobalSearchResponse.DeptSearchItem> deptItems = depts.stream().map(d -> new PlatformOrgResponses.PlatformGlobalSearchResponse.DeptSearchItem(
+                d.getId(),
+                d.getCode(),
+                d.getName(),
+                d.getStatus()
+        )).toList();
 
-        response.put("users", users.stream().map(u -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", u.getId());
-            map.put("userId", u.getUserId());
-            map.put("fullName", u.getFullName());
-            map.put("workEmail", u.getWorkEmail());
-            map.put("role", u.getRole() != null ? u.getRole().getName() : u.getRequestedRole());
-            return map;
-        }).toList());
+        List<PlatformOrgResponses.PlatformGlobalSearchResponse.UserSearchItem> userItems = users.stream().map(u -> new PlatformOrgResponses.PlatformGlobalSearchResponse.UserSearchItem(
+                u.getId(),
+                u.getUserId(),
+                u.getFullName(),
+                u.getWorkEmail(),
+                u.getRole() != null ? u.getRole().getName() : u.getRequestedRole()
+        )).toList();
+
+        PlatformOrgResponses.PlatformGlobalSearchResponse response = new PlatformOrgResponses.PlatformGlobalSearchResponse(
+                orgItems, empItems, deptItems, userItems
+        );
 
         return ResponseEntity.ok(ApiResponse.success("Search results retrieved", response));
     }

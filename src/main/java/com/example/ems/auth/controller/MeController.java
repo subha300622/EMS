@@ -40,6 +40,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.example.ems.attendance.entity.Attendance;
+import com.example.ems.auth.dto.BootstrapSummaryDto;
+import com.example.ems.auth.dto.OrgContextSummaryDto;
+import com.example.ems.auth.dto.UserPermissionsDto;
+import com.example.ems.support.entity.SupportTicketStatus;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 
 @RestController
 @RequestMapping({"/api/v1/me", "/api/v1/auth/me"})
@@ -59,7 +71,7 @@ public class MeController {
     @Autowired
     private JwtService jwtService;
 
-    @org.springframework.beans.factory.annotation.Value("${app.dicebear-avatar-url}")
+    @Value("${app.dicebear-avatar-url}")
     private String dicebearAvatarUrl;
 
     @Autowired
@@ -97,23 +109,22 @@ public class MeController {
 
     @Operation(summary = "Get My Profile", description = "Retrieves the full HRMS profile of the currently authenticated user.")
     @GetMapping("/profile")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyProfile(
+public ResponseEntity<?> getMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.read' permission.", "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
@@ -127,29 +138,28 @@ public class MeController {
                     "Admin-only fields (fullName, department, designation, salary) are not accepted.")
     @PutMapping("/profile")
     @Transactional
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateMyProfile(
+public ResponseEntity<?> updateMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody ProfileUpdateRequest body){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.update")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.update' permission.", "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
         if (!body.hasAnyUpdate()) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("No editable fields provided. Accepted fields: phone, address, emergencyContact, profileImage", "VAL_004"));
         }
 
@@ -176,29 +186,28 @@ public class MeController {
 
     @Operation(summary = "Get My Dashboard Stats", description = "Retrieves active counts of pending leaves, pending expenses, assigned assets, pending reviews, and open tickets.")
     @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<MyDashboardResponse>> getMyDashboard(
+public ResponseEntity<?> getMyDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.dashboard.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.dashboard.read' permission.", "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
         if (employee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Employee profile not found for user", "EMP_002"));
         }
 
         // 1. Attendance Data
-        java.util.Optional<com.example.ems.attendance.entity.Attendance> optAttendance =
-                attendanceRepository.findByEmployeeIdAndDate(employee.getId(), java.time.LocalDate.now());
+        Optional<Attendance> optAttendance =
+                attendanceRepository.findByEmployeeIdAndDate(employee.getId(), LocalDate.now());
 
         String todayStatus = "Absent";
         String checkIn = null;
@@ -206,7 +215,7 @@ public class MeController {
         String workingHours = null;
 
         if (optAttendance.isPresent()) {
-            com.example.ems.attendance.entity.Attendance att = optAttendance.get();
+            Attendance att = optAttendance.get();
             String rawStatus = att.getStatus();
             if (rawStatus != null && !rawStatus.isBlank()) {
                 todayStatus = rawStatus.substring(0, 1).toUpperCase() + rawStatus.substring(1).toLowerCase();
@@ -214,18 +223,18 @@ public class MeController {
                 todayStatus = "Present";
             }
 
-            java.time.format.DateTimeFormatter timeFormatter = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
+            DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
             if (att.getPunchInTime() != null) {
                 checkIn = att.getPunchInTime().format(timeFormatter);
-                java.time.LocalTime end = att.getPunchOutTime();
+                LocalTime end = att.getPunchOutTime();
                 if (end != null) {
                     checkOut = end.format(timeFormatter);
                 }
                 
-                java.time.LocalTime start = att.getPunchInTime();
-                java.time.LocalTime effectiveEnd = (end != null) ? end : java.time.LocalTime.now();
+                LocalTime start = att.getPunchInTime();
+                LocalTime effectiveEnd = (end != null) ? end : LocalTime.now();
                 if (!effectiveEnd.isBefore(start)) {
-                    java.time.Duration duration = java.time.Duration.between(start, effectiveEnd);
+                    Duration duration = Duration.between(start, effectiveEnd);
                     long hrs = duration.toHours();
                     long mins = duration.toMinutesPart();
                     workingHours = String.format("%02d:%02d", hrs, mins);
@@ -299,7 +308,7 @@ public class MeController {
 
         // 8. Support Data
         long openTicketsCount = supportTicketRepository.findByEmployeeEmail(employee.getEmail()).stream()
-                .filter(t -> t.getStatus() == com.example.ems.support.entity.SupportTicketStatus.OPEN || t.getStatus() == com.example.ems.support.entity.SupportTicketStatus.IN_PROGRESS)
+                .filter(t -> t.getStatus() == SupportTicketStatus.OPEN || t.getStatus() == SupportTicketStatus.IN_PROGRESS)
                 .count();
         MyDashboardResponse.SupportData supportData = new MyDashboardResponse.SupportData(openTicketsCount);
 
@@ -324,54 +333,52 @@ public class MeController {
 
     @Operation(summary = "Get Current User Bootstrap Data", description = "Returns bootstrap summary containing user details, org summary, and assigned roles.")
     @GetMapping("/bootstrap")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyBootstrap(
+public ResponseEntity<?> getMyBootstrap(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Long orgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : currentUser.getOrganizationId();
         String orgName = currentUser.getOrganization() != null ? currentUser.getOrganization().getName() : currentUser.getOrganizationName();
 
-        Map<String, Object> userSummary = Map.of(
-                "userId", currentUser.getUserId(),
-                "employeeId", currentUser.getEmployeeId() != null ? currentUser.getEmployeeId() : currentUser.getUserId(),
-                "fullName", currentUser.getFullName() != null ? currentUser.getFullName() : "",
-                "email", currentUser.getWorkEmail() != null ? currentUser.getWorkEmail() : "",
-                "status", currentUser.getStatus() != null ? currentUser.getStatus() : "ACTIVE"
+        BootstrapSummaryDto.UserSummaryDto userSummary = new BootstrapSummaryDto.UserSummaryDto(
+                currentUser.getUserId(),
+                currentUser.getEmployeeId() != null ? currentUser.getEmployeeId() : currentUser.getUserId(),
+                currentUser.getFullName() != null ? currentUser.getFullName() : "",
+                currentUser.getWorkEmail() != null ? currentUser.getWorkEmail() : "",
+                currentUser.getStatus() != null ? currentUser.getStatus() : "ACTIVE"
         );
-        Map<String, Object> orgSummary = Map.of(
-                "organizationId", orgId != null ? orgId.toString() : "",
-                "name", orgName != null ? orgName : ""
+        BootstrapSummaryDto.OrgSummaryDto orgSummary = new BootstrapSummaryDto.OrgSummaryDto(
+                orgId != null ? orgId.toString() : "",
+                orgName != null ? orgName : ""
         );
         List<String> roles = currentUser.getRole() != null ? List.of(currentUser.getRole().getName()) : Collections.emptyList();
 
-        Map<String, Object> data = Map.of("user", userSummary, "organization", orgSummary, "roles", roles);
+        BootstrapSummaryDto data = new BootstrapSummaryDto(userSummary, orgSummary, roles);
         return ResponseEntity.ok(ApiResponse.success("Bootstrap data retrieved successfully", data));
     }
 
     @Operation(summary = "Get Current User Org Context", description = "Returns organization scope and boundary details for current user.")
     @GetMapping("/context")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMyContext(
+public ResponseEntity<?> getMyContext(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         Long orgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : currentUser.getOrganizationId();
         String orgName = currentUser.getOrganization() != null ? currentUser.getOrganization().getName() : currentUser.getOrganizationName();
 
-        Map<String, Object> data = Map.of(
-                "userId", currentUser.getUserId(),
-                "organizationId", orgId != null ? orgId.toString() : "",
-                "organizationName", orgName != null ? orgName : "",
-                "scope", "ORGANIZATION"
+        OrgContextSummaryDto data = new OrgContextSummaryDto(
+                currentUser.getUserId(),
+                orgId != null ? orgId.toString() : "",
+                orgName != null ? orgName : "",
+                "ORGANIZATION"
         );
         return ResponseEntity.ok(ApiResponse.success("User organization context retrieved successfully", data));
     }
@@ -475,7 +482,7 @@ public class MeController {
                 exitSection.setExitInitiated(true);
                 exitSection.setExitStatus(ob.getStatus());
                 exitSection.setLastWorkingDay(
-                        ob.getRequestedLastWorkingDay() != null ? ob.getRequestedLastWorkingDay().toString() : null);
+                    ob.getRequestedLastWorkingDay() != null ? ob.getRequestedLastWorkingDay().toString() : null);
                 try {
                     long pendingKt = exitKtTaskRepository.countPendingByOffboardingId(employee.getId());
                     exitSection.setPendingKTTasks((int) pendingKt);
@@ -615,27 +622,27 @@ public class MeController {
 
     @Operation(summary = "Get Current User Roles and Effective Permissions", description = "Returns the authenticated user's assigned roles and effective permission strings.")
     @GetMapping("/permissions")
-    public ResponseEntity<?> getMyPermissions(
-            @RequestHeader(value = org.springframework.http.HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+public ResponseEntity<?> getMyPermissions(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        List<Map<String, Object>> roles = new java.util.ArrayList<>();
+        List<UserPermissionsDto.RoleSummaryDto> roles = new ArrayList<>();
         if (currentUser.getRole() != null) {
-            roles.add(Map.of(
-                    "id", currentUser.getRole().getId(),
-                    "name", currentUser.getRole().getName()
+            roles.add(new UserPermissionsDto.RoleSummaryDto(
+                    currentUser.getRole().getId(),
+                    currentUser.getRole().getName()
             ));
         }
 
         List<String> effectivePermissions = roleService.getPermissionsForUserId(currentUser.getUserId());
 
-        Map<String, Object> responseData = Map.of(
-                "roles", roles,
-                "permissions", effectivePermissions
+        UserPermissionsDto responseData = new UserPermissionsDto(
+                roles,
+                effectivePermissions
         );
 
         return ResponseEntity.ok(ApiResponse.success("User permissions retrieved successfully", responseData));

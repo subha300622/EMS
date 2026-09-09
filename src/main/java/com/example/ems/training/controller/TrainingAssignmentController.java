@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.ems.training.dto.CompleteTrainingRequest;
+import com.example.ems.training.dto.TrainingAssignmentItemResponse;
 
 @RestController
 @RequestMapping("/api/v1/training")
@@ -77,7 +79,7 @@ public class TrainingAssignmentController {
 
     // ── A. Catalog APIs (HR) ─────────────────────────────────────────────────
     @PostMapping("/catalog")
-    public ResponseEntity<?> createCourse(
+public ResponseEntity<?> createCourse(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody TrainingCatalogRequest request) {
         User currentUser = resolveUser(authHeader);
@@ -105,7 +107,7 @@ public class TrainingAssignmentController {
     }
 
     @GetMapping("/catalog/{id}")
-    public ResponseEntity<?> getCourseById(@PathVariable Long id) {
+public ResponseEntity<?> getCourseById(@PathVariable Long id) {
         Optional<TrainingCourse> course = assignmentService.getCourseById(id);
         if (course.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -116,7 +118,7 @@ public class TrainingAssignmentController {
 
     // ── B. Assignment APIs (Manager/HR) ──────────────────────────────────────
     @PostMapping("/assign")
-    public ResponseEntity<?> assignTraining(
+public ResponseEntity<?> assignTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody TrainingAssignRequest request) {
         User currentUser = resolveUser(authHeader);
@@ -143,20 +145,20 @@ public class TrainingAssignmentController {
 
     @GetMapping("/assignments")
     public ResponseEntity<?> getAssignments() {
-        List<Map<String, Object>> list = assignmentService.getAssignments().stream().map(a -> {
-            Map<String, Object> map = new LinkedHashMap<>();
-            map.put("assignmentId", a.getId());
-            map.put("courseName", a.getCourse().getTitle());
-            map.put("dueDate", a.getDueDate() != null ? a.getDueDate().toString() : null);
-            map.put("priority", a.getPriority());
-            map.put("assignedCount", a.getProgressList().size());
-            return map;
-        }).collect(Collectors.toList());
+        List<TrainingAssignmentItemResponse> list = assignmentService.getAssignments().stream().map(a ->
+            new TrainingAssignmentItemResponse(
+                a.getId(),
+                a.getCourse().getTitle(),
+                a.getDueDate() != null ? a.getDueDate().toString() : null,
+                a.getPriority(),
+                a.getProgressList().size()
+            )
+        ).collect(Collectors.toList());
         return ResponseEntity.ok(list);
     }
 
     @GetMapping("/assignments/{id}")
-    public ResponseEntity<?> getAssignmentDetails(@PathVariable Long id) {
+public ResponseEntity<?> getAssignmentDetails(@PathVariable Long id) {
         Optional<Map<String, Object>> details = assignmentService.getAssignmentDetails(id);
         if (details.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -166,7 +168,7 @@ public class TrainingAssignmentController {
     }
 
     @GetMapping("/employee/{id}")
-    public ResponseEntity<?> getEmployeeDetail(
+public ResponseEntity<?> getEmployeeDetail(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
@@ -194,7 +196,7 @@ public class TrainingAssignmentController {
 
     // ── C. Employee Training APIs ────────────────────────────────────────────
     @GetMapping("/my")
-    public ResponseEntity<?> getMyTrainings(
+public ResponseEntity<?> getMyTrainings(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -207,7 +209,7 @@ public class TrainingAssignmentController {
     }
 
     @PutMapping("/{assignmentId}/progress")
-    public ResponseEntity<?> updateProgress(
+public ResponseEntity<?> updateProgress(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assignmentId,
             @Valid @RequestBody TrainingProgressUpdateRequest request) {
@@ -234,10 +236,10 @@ public class TrainingAssignmentController {
     }
 
     @PutMapping("/{assignmentId}/complete")
-    public ResponseEntity<?> completeTraining(
+public ResponseEntity<?> completeTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long assignmentId,
-            @RequestBody @Valid com.example.ems.training.dto.CompleteTrainingRequest body) {
+            @RequestBody @Valid CompleteTrainingRequest body) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -267,7 +269,7 @@ public class TrainingAssignmentController {
 
     // ── D. Team Dashboard APIs (Manager UI) ──────────────────────────────────
     @GetMapping("/team/summary")
-    public ResponseEntity<?> getTeamSummary(
+public ResponseEntity<?> getTeamSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) Long managerId) {
         User currentUser = resolveUser(authHeader);
@@ -294,7 +296,7 @@ public class TrainingAssignmentController {
     }
 
     @GetMapping("/team")
-    public ResponseEntity<?> getTeamProgress(
+public ResponseEntity<?> getTeamProgress(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) Long managerId) {
         User currentUser = resolveUser(authHeader);
@@ -321,7 +323,7 @@ public class TrainingAssignmentController {
     }
 
     @GetMapping("/team/risk")
-    public ResponseEntity<?> getTeamRisk(
+public ResponseEntity<?> getTeamRisk(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) Long managerId) {
         User currentUser = resolveUser(authHeader);

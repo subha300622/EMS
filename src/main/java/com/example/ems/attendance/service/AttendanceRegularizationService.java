@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import com.example.ems.auth.service.PermissionRegistry;
+import com.example.ems.auth.service.RoleService;
 
 @Service
 public class AttendanceRegularizationService {
@@ -29,15 +31,15 @@ public class AttendanceRegularizationService {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private com.example.ems.auth.service.RoleService roleService;
+    private RoleService roleService;
 
     public List<AttendanceRegularization> getRegularizationsForUser(User currentUser, String status) {
         String email = currentUser.getWorkEmail();
-        boolean hasAdminPerm = roleService.hasPermission(email, com.example.ems.auth.service.PermissionRegistry.ATTENDANCE_READ)
-                || roleService.hasPermission(email, com.example.ems.auth.service.PermissionRegistry.ATTENDANCE_MANAGE);
+        boolean hasAdminPerm = roleService.hasPermission(email, PermissionRegistry.ATTENDANCE_READ)
+                || roleService.hasPermission(email, PermissionRegistry.ATTENDANCE_MANAGE);
 
-        boolean hasSelfPerm = roleService.hasPermission(email, com.example.ems.auth.service.PermissionRegistry.ATTENDANCE_SELF_READ)
-                || roleService.hasPermission(email, com.example.ems.auth.service.PermissionRegistry.EMPLOYEE_ATTENDANCE_READ);
+        boolean hasSelfPerm = roleService.hasPermission(email, PermissionRegistry.ATTENDANCE_SELF_READ)
+                || roleService.hasPermission(email, PermissionRegistry.EMPLOYEE_ATTENDANCE_READ);
 
         if (!hasAdminPerm && !hasSelfPerm) {
             throw new SecurityException("Access Denied: Requires 'attendance.read', 'attendance.manage', 'attendance.self.read', or 'employee.attendance.read' permission.");

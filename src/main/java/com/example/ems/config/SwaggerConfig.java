@@ -16,6 +16,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import io.swagger.v3.oas.models.Operation;
+import io.swagger.v3.oas.models.media.StringSchema;
+import io.swagger.v3.oas.models.parameters.HeaderParameter;
+import java.util.ArrayList;
 
 @Configuration
 @OpenAPIDefinition(info = @Info(title = "Enterprise HRMS API", version = "1.0", description = """
@@ -85,6 +89,8 @@ public class SwaggerConfig {
                                                                 .description("Webhooks configuration and outgoing event dispatch logs."),
                                                 new Tag().name("Approval Center")
                                                                 .description("Pending approvals list, actions history, and workflow routing."),
+                                                new Tag().name("Holiday Maintenance").description(
+                                                                "Organization-wide holiday setup, calendar view, and active holiday validation."),
                                                 new Tag().name("Employee Self Service - Profile")
                                                                 .description("Self-Service profile updates, address details, phone number revisions."),
                                                 new Tag().name("Employee Self Service - Schedule")
@@ -107,7 +113,7 @@ public class SwaggerConfig {
                         }
 
                         Set<String> usedTagNames = new HashSet<>();
-                        List<String> pathsToRemove = new java.util.ArrayList<>();
+                        List<String> pathsToRemove = new ArrayList<>();
 
                         openApi.getPaths().forEach((path, pathItem) -> {
                                 // Check if path is excluded
@@ -203,7 +209,7 @@ public class SwaggerConfig {
                 };
         }
 
-        private boolean hasAllowedTag(io.swagger.v3.oas.models.Operation operation, Set<String> allowedTags,
+        private boolean hasAllowedTag(Operation operation, Set<String> allowedTags,
                         boolean isESS) {
                 if (operation.getTags() == null) {
                         return false;
@@ -243,16 +249,17 @@ public class SwaggerConfig {
                                 .build();
         }
 
-        @Bean
-        public GroupedOpenApi attendanceApi() {
-                return GroupedOpenApi.builder()
-                                .group("Attendance & Scheduling")
-                                .pathsToMatch("/api/v1/**")
-                                .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
-                                                "Team Scheduling Module",
-                                                "Leave Management"), null, false))
-                                .build();
-        }
+    @Bean
+    public GroupedOpenApi attendanceApi() {
+        return GroupedOpenApi.builder()
+                .group("Attendance & Scheduling")
+                .pathsToMatch("/api/v1/**")
+                .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
+                                "Team Scheduling Module",
+                                "Leave Management",
+                                "Holiday Maintenance"), null, false))
+                .build();
+    }
 
         @Bean
         public GroupedOpenApi payrollApi() {
@@ -359,11 +366,11 @@ public class SwaggerConfig {
                                                 boolean hasOrgIdParam = operation.getParameters() != null && operation.getParameters().stream()
                                                         .anyMatch(p -> "X-Organization-Id".equalsIgnoreCase(p.getName()) || "organizationId".equalsIgnoreCase(p.getName()));
                                                 if (!hasOrgIdParam) {
-                                                        operation.addParametersItem(new io.swagger.v3.oas.models.parameters.HeaderParameter()
+                                                        operation.addParametersItem(new HeaderParameter()
                                                                 .name("X-Organization-Id")
                                                                 .description("Organization ID header (e.g. 9645). Mandatory for POST, PUT, DELETE, and PATCH operations.")
                                                                 .required(true)
-                                                                .schema(new io.swagger.v3.oas.models.media.StringSchema().example("9645")));
+                                                                .schema(new StringSchema().example("9645")));
                                                 }
                                         });
                                 });

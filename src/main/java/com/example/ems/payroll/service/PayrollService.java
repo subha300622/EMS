@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.example.ems.payroll.entity.SalaryComponentType;
+import com.example.ems.payroll.repository.PayslipRepository;
 
 @Service
 public class PayrollService {
@@ -39,7 +40,7 @@ public class PayrollService {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private com.example.ems.payroll.repository.PayslipRepository payslipRepository;
+    private PayslipRepository payslipRepository;
 
     @Autowired
     private SalaryStructureRepository salaryStructureRepository;

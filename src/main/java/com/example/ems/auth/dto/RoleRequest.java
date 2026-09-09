@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 
 import jakarta.validation.constraints.NotBlank;
+import java.util.List;
 
 public class RoleRequest {
 
@@ -15,13 +16,13 @@ public class RoleRequest {
     private String description;
 
     @Schema(example = "[1, 2]")
-    private java.util.List<Long> permissionGroupIds;
+    private List<Long> permissionGroupIds;
 
     @Schema(example = "[10, 15]")
-    private java.util.List<Long> permissionIds;
+    private List<Long> permissionIds;
 
     @Schema(example = "[\"employee.read\", \"attendance.read\"]")
-    private java.util.List<String> permissionNames;
+    private List<String> permissionNames;
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -29,12 +30,12 @@ public class RoleRequest {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public java.util.List<Long> getPermissionGroupIds() { return permissionGroupIds; }
-    public void setPermissionGroupIds(java.util.List<Long> permissionGroupIds) { this.permissionGroupIds = permissionGroupIds; }
+    public List<Long> getPermissionGroupIds() { return permissionGroupIds; }
+    public void setPermissionGroupIds(List<Long> permissionGroupIds) { this.permissionGroupIds = permissionGroupIds; }
 
-    public java.util.List<Long> getPermissionIds() { return permissionIds; }
-    public void setPermissionIds(java.util.List<Long> permissionIds) { this.permissionIds = permissionIds; }
+    public List<Long> getPermissionIds() { return permissionIds; }
+    public void setPermissionIds(List<Long> permissionIds) { this.permissionIds = permissionIds; }
 
-    public java.util.List<String> getPermissionNames() { return permissionNames; }
-    public void setPermissionNames(java.util.List<String> permissionNames) { this.permissionNames = permissionNames; }
+    public List<String> getPermissionNames() { return permissionNames; }
+    public void setPermissionNames(List<String> permissionNames) { this.permissionNames = permissionNames; }
 }

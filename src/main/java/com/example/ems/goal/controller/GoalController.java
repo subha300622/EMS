@@ -21,6 +21,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.ems.goal.domain.GoalProgress;
+import com.example.ems.goal.service.GoalProgressService;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/goals")
@@ -41,7 +44,7 @@ public class GoalController {
     private JwtService jwtService;
 
     @Autowired
-    private com.example.ems.goal.service.GoalProgressService progressService;
+    private GoalProgressService progressService;
 
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -62,8 +65,7 @@ public class GoalController {
 
     @Operation(summary = "Create Goal", description = "Creates a new goal with tenant-isolated scope and optional approval workflow")
     @PostMapping
-
-    public ResponseEntity<ApiResponse<Object>> createGoal(
+    public ResponseEntity<ApiResponse<GoalResponse>> createGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody CreateGoalRequest request) {
 
@@ -81,16 +83,14 @@ public class GoalController {
 
     @Operation(summary = "Get Goal by ID", description = "Retrieves details of a specific goal")
     @GetMapping("/{goalId:\\d+}")
-
-    public ResponseEntity<ApiResponse<Object>> getGoalById(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<GoalResponse>> getGoalById(@PathVariable("goalId") Long goalId) {
         GoalResponse response = goalService.getGoalById(goalId);
         return ResponseEntity.ok(ApiResponse.success("Goal retrieved successfully", response));
     }
 
     @Operation(summary = "List All Goals", description = "Retrieves paginated goals for the active tenant organization")
     @GetMapping
-
-    public ResponseEntity<ApiResponse<Object>> getAllGoals(
+    public ResponseEntity<ApiResponse<Page<GoalResponse>>> getAllGoals(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size);
@@ -100,8 +100,7 @@ public class GoalController {
 
     @Operation(summary = "Update Goal Details", description = "Updates goal metadata without mutating state lifecycle status")
     @PutMapping("/{goalId:\\d+}")
-
-    public ResponseEntity<ApiResponse<Object>> updateGoal(
+    public ResponseEntity<ApiResponse<GoalResponse>> updateGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId,
             @RequestBody UpdateGoalRequest request) {
@@ -119,8 +118,7 @@ public class GoalController {
 
     @Operation(summary = "Delete Goal", description = "Soft deletes a goal")
     @DeleteMapping("/{goalId:\\d+}")
-
-    public ResponseEntity<ApiResponse<Object>> deleteGoal(
+    public ResponseEntity<ApiResponse<Void>> deleteGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
 
@@ -139,8 +137,7 @@ public class GoalController {
 
     @Operation(summary = "Activate Goal", description = "Transitions goal status to ACTIVE")
     @PostMapping("/{goalId:\\d+}/activate")
-
-    public ResponseEntity<ApiResponse<Object>> activateGoal(
+    public ResponseEntity<ApiResponse<GoalResponse>> activateGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
@@ -152,8 +149,7 @@ public class GoalController {
 
     @Operation(summary = "Hold Goal", description = "Puts active goal on hold")
     @PostMapping("/{goalId:\\d+}/hold")
-
-    public ResponseEntity<ApiResponse<Object>> holdGoal(
+    public ResponseEntity<ApiResponse<GoalResponse>> holdGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
@@ -165,8 +161,7 @@ public class GoalController {
 
     @Operation(summary = "Resume Goal", description = "Resumes goal from ON_HOLD to ACTIVE")
     @PostMapping("/{goalId:\\d+}/resume")
-
-    public ResponseEntity<ApiResponse<Object>> resumeGoal(
+    public ResponseEntity<ApiResponse<GoalResponse>> resumeGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
@@ -178,8 +173,7 @@ public class GoalController {
 
     @Operation(summary = "Complete Goal", description = "Marks goal as COMPLETED or triggers completion approval workflow")
     @PostMapping("/{goalId:\\d+}/complete")
-
-    public ResponseEntity<ApiResponse<Object>> completeGoal(
+    public ResponseEntity<ApiResponse<GoalResponse>> completeGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
@@ -191,8 +185,7 @@ public class GoalController {
 
     @Operation(summary = "Cancel Goal", description = "Cancels a goal")
     @PostMapping("/{goalId:\\d+}/cancel")
-
-    public ResponseEntity<ApiResponse<Object>> cancelGoal(
+    public ResponseEntity<ApiResponse<GoalResponse>> cancelGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
@@ -204,8 +197,7 @@ public class GoalController {
 
     @Operation(summary = "Reopen Goal", description = "Reopens a completed or cancelled goal to ACTIVE status")
     @PostMapping("/{goalId:\\d+}/reopen")
-
-    public ResponseEntity<ApiResponse<Object>> reopenGoal(
+    public ResponseEntity<ApiResponse<GoalResponse>> reopenGoal(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("goalId") Long goalId) {
         User user = resolveUser(authHeader);
@@ -217,7 +209,7 @@ public class GoalController {
 
     @Operation(summary = "Get Goal History", description = "Retrieves state change and progress history for a goal")
     @GetMapping("/{goalId:\\d+}/history")
-    public ResponseEntity<ApiResponse<Object>> getGoalHistory(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<List<GoalProgress>>> getGoalHistory(@PathVariable("goalId") Long goalId) {
         var history = progressService.getProgressHistory(goalId);
         return ResponseEntity.ok(ApiResponse.success("Goal history retrieved successfully", history));
     }

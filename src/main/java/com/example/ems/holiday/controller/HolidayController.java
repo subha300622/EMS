@@ -18,6 +18,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
 @RequestMapping("/api/v1/holidays")
@@ -45,16 +46,24 @@ public class HolidayController {
         return null;
     }
 
-    @Operation(summary = "Create Holiday", description = "Creates a new organization-wide holiday.")
+    @Operation(
+            summary = "Create Holiday",
+            description = "Creates a new organization-wide holiday."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Holiday created successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid holiday input payload"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Holiday conflict on same date")
+    })
     @PostMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> createHoliday(
+public ResponseEntity<?> createHoliday(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody HolidayCreateRequest request) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -63,24 +72,31 @@ public class HolidayController {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Holiday created successfully", dto));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error(e.getMessage(), "VAL_001"));
         } catch (IllegalStateException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CONFLICT)
+            return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ErrorResponse.error(e.getMessage(), "HOLIDAY_001"));
         }
     }
 
-    @Operation(summary = "Get Holiday", description = "Retrieves holiday by holiday ID for the authenticated organization.")
+    @Operation(
+            summary = "Get Holiday",
+            description = "Retrieves holiday by holiday ID for the authenticated organization."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found")
+    })
     @GetMapping("/{holidayId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getHolidayById(
+public ResponseEntity<?> getHolidayById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String holidayId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -88,15 +104,21 @@ public class HolidayController {
             HolidayResponseDto dto = holidayService.getHolidayById(user, holidayId);
             return ResponseEntity.ok(ApiResponse.success("Holiday retrieved successfully", dto));
         } catch (ResourceNotFoundException | IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "HOLIDAY_404"));
         }
     }
 
-    @Operation(summary = "List Holidays", description = "Retrieves paginated list of organization-wide holidays with optional date filters.")
+    @Operation(
+            summary = "List Holidays",
+            description = "Retrieves paginated list of organization-wide holidays with optional date filters."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holidays retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request")
+    })
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> listHolidays(
+public ResponseEntity<?> listHolidays(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -106,7 +128,7 @@ public class HolidayController {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -114,17 +136,26 @@ public class HolidayController {
         return ResponseEntity.ok(ApiResponse.success("Holidays retrieved successfully", resp));
     }
 
-    @Operation(summary = "Update Holiday", description = "Updates an existing holiday.")
+    @Operation(
+            summary = "Update Holiday",
+            description = "Updates an existing holiday."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid holiday input payload"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Holiday date conflict")
+    })
     @PutMapping("/{holidayId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateHoliday(
+public ResponseEntity<?> updateHoliday(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String holidayId,
             @Valid @RequestBody HolidayUpdateRequest request) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -132,27 +163,34 @@ public class HolidayController {
             HolidayResponseDto dto = holidayService.updateHoliday(user, holidayId, request);
             return ResponseEntity.ok(ApiResponse.success("Holiday updated successfully", dto));
         } catch (ResourceNotFoundException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "HOLIDAY_404"));
         } catch (IllegalStateException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CONFLICT)
+            return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ErrorResponse.error(e.getMessage(), "HOLIDAY_001"));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error(e.getMessage(), "VAL_001"));
         }
     }
 
-    @Operation(summary = "Deactivate Holiday", description = "Deactivates (soft deletes) a holiday.")
+    @Operation(
+            summary = "Deactivate Holiday",
+            description = "Deactivates (soft deletes) a holiday."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday deactivated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found")
+    })
     @DeleteMapping("/{holidayId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> deleteHoliday(
+public ResponseEntity<?> deleteHoliday(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String holidayId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -160,21 +198,27 @@ public class HolidayController {
             HolidayResponseDto dto = holidayService.deleteHoliday(user, holidayId);
             return ResponseEntity.ok(ApiResponse.success("Holiday deactivated successfully", dto));
         } catch (ResourceNotFoundException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "HOLIDAY_404"));
         }
     }
 
-    @Operation(summary = "Check Holiday", description = "Checks whether a given date is an active holiday for the organization.")
+    @Operation(
+            summary = "Check Holiday",
+            description = "Checks whether a given date is an active holiday for the organization."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday check completed"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request")
+    })
     @GetMapping("/check")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> checkHoliday(
+public ResponseEntity<?> checkHoliday(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -182,16 +226,22 @@ public class HolidayController {
         return ResponseEntity.ok(ApiResponse.success("Holiday check completed", resp));
     }
 
-    @Operation(summary = "Get Holiday Calendar", description = "Retrieves active holiday calendar for a given year.")
+    @Operation(
+            summary = "Get Holiday Calendar",
+            description = "Retrieves active holiday calendar for a given year."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday calendar retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request")
+    })
     @GetMapping("/calendar")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getHolidayCalendar(
+public ResponseEntity<?> getHolidayCalendar(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) Integer year) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 

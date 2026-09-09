@@ -17,6 +17,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.List;
 import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.cache.Cache;
 
 /**
  * Redis infrastructure and cache configuration.
@@ -120,23 +121,23 @@ public class RedisCacheConfig implements CachingConfigurer {
     public CacheErrorHandler errorHandler() {
         return new CacheErrorHandler() {
             @Override
-            public void handleCacheGetError(RuntimeException ex, org.springframework.cache.Cache cache, Object key) {
+            public void handleCacheGetError(RuntimeException ex, Cache cache, Object key) {
                 log.warn("[Cache] GET failed key='{}' cache='{}': {}", key, cache.getName(), ex.getMessage());
             }
 
             @Override
-            public void handleCachePutError(RuntimeException ex, org.springframework.cache.Cache cache, Object key,
+            public void handleCachePutError(RuntimeException ex, Cache cache, Object key,
                     Object value) {
                 log.warn("[Cache] PUT failed key='{}' cache='{}': {}", key, cache.getName(), ex.getMessage());
             }
 
             @Override
-            public void handleCacheEvictError(RuntimeException ex, org.springframework.cache.Cache cache, Object key) {
+            public void handleCacheEvictError(RuntimeException ex, Cache cache, Object key) {
                 log.warn("[Cache] EVICT failed key='{}' cache='{}': {}", key, cache.getName(), ex.getMessage());
             }
 
             @Override
-            public void handleCacheClearError(RuntimeException ex, org.springframework.cache.Cache cache) {
+            public void handleCacheClearError(RuntimeException ex, Cache cache) {
                 log.warn("[Cache] CLEAR failed cache='{}': {}", cache.getName(), ex.getMessage());
             }
         };

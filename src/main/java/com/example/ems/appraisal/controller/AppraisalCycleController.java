@@ -7,7 +7,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -21,6 +20,11 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.example.ems.appraisal.dto.AppraisalBatchGenerationResponseDto;
+import com.example.ems.appraisal.dto.AppraisalConfigurationSnapshotDto;
+import com.example.ems.appraisal.dto.CycleEligibilityPreviewResponseDto;
+import com.example.ems.appraisal.dto.CycleGenerationStatusResponseDto;
+import com.example.ems.appraisal.dto.UpdateAppraisalCycleDto;
 
 @RestController
 @RequestMapping("/api/v1/appraisals/cycles")
@@ -67,15 +71,15 @@ public class AppraisalCycleController {
 
     @Operation(summary = "Create Appraisal Cycle")
     @PostMapping
-    public ResponseEntity<?> createCycle(
+    public ResponseEntity<ApiResponse<AppraisalCycleResponseDto>> createCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody CreateAppraisalCycleDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CYCLE_CREATE") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CYCLE_CREATE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CYCLE_CREATE permission", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(user);
@@ -85,11 +89,11 @@ public class AppraisalCycleController {
 
     @Operation(summary = "Get All Appraisal Cycles")
     @GetMapping
-    public ResponseEntity<?> getCycles(
+    public ResponseEntity<ApiResponse<List<AppraisalCycleResponseDto>>> getCycles(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         List<AppraisalCycleResponseDto> cycles = cycleService.getCycles();
@@ -98,12 +102,12 @@ public class AppraisalCycleController {
 
     @Operation(summary = "Get Appraisal Cycle by ID")
     @GetMapping("/{cycleId}")
-    public ResponseEntity<?> getCycleById(
+    public ResponseEntity<ApiResponse<AppraisalCycleResponseDto>> getCycleById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         AppraisalCycleResponseDto cycle = cycleService.getCycleById(cycleId);
@@ -112,15 +116,15 @@ public class AppraisalCycleController {
 
     @Operation(summary = "Activate Appraisal Cycle")
     @PostMapping("/{cycleId}/activate")
-    public ResponseEntity<?> activateCycle(
+    public ResponseEntity<ApiResponse<AppraisalCycleResponseDto>> activateCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CYCLE_ACTIVATE") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CYCLE_ACTIVATE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CYCLE_ACTIVATE permission", "AUTH_002"));
         }
 
         AppraisalCycleResponseDto activated = cycleService.activateCycle(cycleId);
@@ -129,33 +133,39 @@ public class AppraisalCycleController {
 
     @Operation(summary = "Generate Appraisals for Cycle (HR-initiated batch eligibility resolution)")
     @PostMapping("/{cycleId}/generate")
-    public ResponseEntity<?> generateAppraisals(
+    public ResponseEntity<ApiResponse<AppraisalBatchGenerationResponseDto>> generateAppraisals(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CYCLE_UPDATE") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CYCLE_UPDATE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CYCLE_UPDATE permission", "AUTH_002"));
         }
 
         Map<String, Object> result = cycleService.generateAppraisalsForCycle(cycleId);
-        return ResponseEntity.ok(ApiResponse.success("Appraisals generated successfully for cycle", result));
+        AppraisalBatchGenerationResponseDto response = new AppraisalBatchGenerationResponseDto(
+                (Long) result.get("cycleId"),
+                (String) result.get("cycleName"),
+                (Integer) result.get("generatedCount"),
+                (Integer) result.get("totalAppraisalsInCycle")
+        );
+        return ResponseEntity.ok(ApiResponse.success("Appraisals generated successfully for cycle", response));
     }
 
     @Operation(summary = "Update Appraisal Cycle (Draft only)")
     @PutMapping("/{cycleId}")
-    public ResponseEntity<?> updateCycle(
+    public ResponseEntity<ApiResponse<AppraisalCycleResponseDto>> updateCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId,
-            @Valid @RequestBody com.example.ems.appraisal.dto.UpdateAppraisalCycleDto dto) {
+            @Valid @RequestBody UpdateAppraisalCycleDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CYCLE_UPDATE") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CYCLE_UPDATE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CYCLE_UPDATE permission", "AUTH_002"));
         }
 
         AppraisalCycleResponseDto updated = cycleService.updateCycle(cycleId, dto);
@@ -164,15 +174,15 @@ public class AppraisalCycleController {
 
     @Operation(summary = "Delete Appraisal Cycle (Draft only)")
     @DeleteMapping("/{cycleId}")
-    public ResponseEntity<?> deleteCycle(
+    public ResponseEntity<ApiResponse<Void>> deleteCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CYCLE_DELETE") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CYCLE_DELETE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CYCLE_DELETE permission", "AUTH_002"));
         }
 
         cycleService.deleteCycle(cycleId);
@@ -181,57 +191,57 @@ public class AppraisalCycleController {
 
     @Operation(summary = "Get Cycle Configuration Snapshot")
     @GetMapping("/{cycleId}/configuration")
-    public ResponseEntity<?> getCycleConfiguration(
+    public ResponseEntity<ApiResponse<AppraisalConfigurationSnapshotDto>> getCycleConfiguration(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        com.example.ems.appraisal.dto.AppraisalConfigurationSnapshotDto snapshot = cycleService.getCycleConfiguration(cycleId);
+        AppraisalConfigurationSnapshotDto snapshot = cycleService.getCycleConfiguration(cycleId);
         return ResponseEntity.ok(ApiResponse.success("Cycle configuration snapshot retrieved successfully", snapshot));
     }
 
     @Operation(summary = "Get Cycle Eligibility Preview")
     @GetMapping("/{cycleId}/eligibility-preview")
-    public ResponseEntity<?> getEligibilityPreview(
+    public ResponseEntity<ApiResponse<CycleEligibilityPreviewResponseDto>> getEligibilityPreview(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        com.example.ems.appraisal.dto.CycleEligibilityPreviewResponseDto preview = cycleService.getEligibilityPreview(cycleId);
+        CycleEligibilityPreviewResponseDto preview = cycleService.getEligibilityPreview(cycleId);
         return ResponseEntity.ok(ApiResponse.success("Cycle eligibility preview retrieved successfully", preview));
     }
 
     @Operation(summary = "Get Cycle Generation Status")
     @GetMapping("/{cycleId}/generation-status")
-    public ResponseEntity<?> getGenerationStatus(
+    public ResponseEntity<ApiResponse<CycleGenerationStatusResponseDto>> getGenerationStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        com.example.ems.appraisal.dto.CycleGenerationStatusResponseDto status = cycleService.getGenerationStatus(cycleId);
+        CycleGenerationStatusResponseDto status = cycleService.getGenerationStatus(cycleId);
         return ResponseEntity.ok(ApiResponse.success("Cycle generation status retrieved successfully", status));
     }
 
     @Operation(summary = "Close Appraisal Cycle")
     @PostMapping("/{cycleId}/close")
-    public ResponseEntity<?> closeCycle(
+    public ResponseEntity<ApiResponse<AppraisalCycleResponseDto>> closeCycle(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long cycleId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CYCLE_CLOSE") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CYCLE_CLOSE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CYCLE_CLOSE permission", "AUTH_002"));
         }
 
         AppraisalCycleResponseDto closed = cycleService.closeCycle(cycleId);

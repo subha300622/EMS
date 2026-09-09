@@ -3,7 +3,6 @@ package com.example.ems.schedule.swap.controller;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.schedule.swap.dto.*;
 import com.example.ems.schedule.swap.service.ScheduleSwapService;
@@ -13,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.ems.approval.dto.ApprovalActionRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @RestController
 @RequestMapping({"/api/v1/schedule-change-requests", "/api/v1/schedule-swap-requests"})
@@ -42,15 +43,14 @@ public class ScheduleSwapController {
 
     @Operation(summary = "Create Swap Request", description = "Submits a request to swap scheduled shifts with another employee and initiates the approval workflow.")
     @PostMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> createSwapRequest(
+    public ResponseEntity<ApiResponse<ScheduleSwapResponseDto>> createSwapRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody ScheduleSwapCreateRequest request) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         try {
@@ -60,34 +60,33 @@ public class ScheduleSwapController {
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.contains("Source and target schedules belong to the same employee")) {
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ErrorResponse.error(msg, "SWAP_002"));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(ApiResponse.error(msg, "SWAP_002"));
             }
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error(msg, "VAL_001"));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(msg, "VAL_001"));
         } catch (IllegalStateException e) {
             String msg = e.getMessage();
             if (msg != null && msg.contains("An active swap request already exists")) {
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.CONFLICT)
-                        .body(ErrorResponse.error(msg, "SWAP_003"));
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                        .body(ApiResponse.error(msg, "SWAP_003"));
             }
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ErrorResponse.error(msg, "VAL_002"));
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error(msg, "VAL_002"));
         }
     }
 
     @Operation(summary = "Get All Swap Requests", description = "Retrieves paginated list of schedule swap requests in the organization.")
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getSwapRequests(
+    public ResponseEntity<ApiResponse<ScheduleSwapListResponse>> getSwapRequests(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         ScheduleSwapListResponse resp = scheduleSwapService.getSwapRequests(user, page, size);
@@ -96,16 +95,15 @@ public class ScheduleSwapController {
 
     @Operation(summary = "Get My Swap Requests", description = "Retrieves paginated list of swap requests requested by or involving the logged-in employee.")
     @GetMapping("/my")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getMySwapRequests(
+    public ResponseEntity<ApiResponse<ScheduleSwapListResponse>> getMySwapRequests(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         ScheduleSwapListResponse resp = scheduleSwapService.getMySwapRequests(user, page, size);
@@ -114,62 +112,59 @@ public class ScheduleSwapController {
 
     @Operation(summary = "Get Swap Request Detail", description = "Retrieves single swap request details by ID.")
     @GetMapping("/{requestId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getSwapRequestById(
+    public ResponseEntity<ApiResponse<ScheduleSwapResponseDto>> getSwapRequestById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String requestId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         try {
             ScheduleSwapResponseDto dto = scheduleSwapService.getSwapRequestById(user, requestId);
             return ResponseEntity.ok(ApiResponse.success("Swap request retrieved successfully", dto));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "VAL_001"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "VAL_001"));
         }
     }
 
     @Operation(summary = "Cancel Swap Request", description = "Cancels an active schedule swap request.")
     @PostMapping("/{requestId}/cancel")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> cancelSwapRequest(
+    public ResponseEntity<ApiResponse<ScheduleSwapResponseDto>> cancelSwapRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String requestId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         try {
             ScheduleSwapResponseDto dto = scheduleSwapService.cancelSwapRequest(user, requestId);
             return ResponseEntity.ok(ApiResponse.success("Swap request cancelled successfully", dto));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error(e.getMessage(), "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(e.getMessage(), "AUTH_002"));
         } catch (IllegalStateException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CONFLICT)
-                    .body(ErrorResponse.error(e.getMessage(), "VAL_002"));
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(ApiResponse.error(e.getMessage(), "VAL_002"));
         }
     }
 
     @Operation(summary = "Approve Swap Request")
     @PostMapping("/{requestId}/approve")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('SCHEDULE_APPROVE')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveSwapRequest(
+    @PreAuthorize("hasAuthority('SCHEDULE_APPROVE')")
+    public ResponseEntity<ApiResponse<ScheduleSwapResponseDto>> approveSwapRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String requestId,
-            @RequestBody(required = false) com.example.ems.approval.dto.ApprovalActionRequest request) {
+            @RequestBody(required = false) ApprovalActionRequest request) {
 
         User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         String comment = request != null ? request.getComment() : null;
         ScheduleSwapResponseDto dto = scheduleSwapService.approveSwapRequest(user, requestId, comment);
@@ -178,15 +173,14 @@ public class ScheduleSwapController {
 
     @Operation(summary = "Reject Swap Request")
     @PostMapping("/{requestId}/reject")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('SCHEDULE_REJECT')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectSwapRequest(
+    @PreAuthorize("hasAuthority('SCHEDULE_REJECT')")
+    public ResponseEntity<ApiResponse<ScheduleSwapResponseDto>> rejectSwapRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String requestId,
-            @RequestBody(required = false) com.example.ems.approval.dto.ApprovalActionRequest request) {
+            @RequestBody(required = false) ApprovalActionRequest request) {
 
         User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         String comment = request != null ? request.getComment() : null;
         ScheduleSwapResponseDto dto = scheduleSwapService.rejectSwapRequest(user, requestId, comment);
@@ -195,15 +189,14 @@ public class ScheduleSwapController {
 
     @Operation(summary = "Send Back Swap Request")
     @PostMapping("/{requestId}/send-back")
-    @org.springframework.security.access.prepost.PreAuthorize("hasAuthority('SCHEDULE_APPROVE')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> sendBackSwapRequest(
+    @PreAuthorize("hasAuthority('SCHEDULE_APPROVE')")
+    public ResponseEntity<ApiResponse<ScheduleSwapResponseDto>> sendBackSwapRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String requestId,
-            @RequestBody(required = false) com.example.ems.approval.dto.ApprovalActionRequest request) {
+            @RequestBody(required = false) ApprovalActionRequest request) {
 
         User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         String comment = request != null ? request.getComment() : null;
         ScheduleSwapResponseDto dto = scheduleSwapService.sendBackSwapRequest(user, requestId, comment);

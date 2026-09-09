@@ -33,6 +33,7 @@ import com.example.ems.approval.repository.ApprovalTaskRepository;
 import com.example.ems.approval.service.ApprovalWorkflowEngineService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
+import java.time.Duration;
 
 @Service
 @Transactional(readOnly = true)
@@ -124,7 +125,7 @@ public class FinanceExpenseService {
                 }
 
                 if (sub != null && app != null) {
-                    long diffMs = java.time.Duration.between(sub, app).toMillis();
+                    long diffMs = Duration.between(sub, app).toMillis();
                     double diffDays = (double) diffMs / (1000.0 * 60 * 60 * 24);
                     if (diffDays < 0)
                         diffDays = 0;
@@ -439,7 +440,7 @@ public class FinanceExpenseService {
                 }
 
                 if (sub != null && app != null) {
-                    long diffMs = java.time.Duration.between(sub, app).toMillis();
+                    long diffMs = Duration.between(sub, app).toMillis();
                     double diffDays = (double) diffMs / (1000.0 * 60 * 60 * 24);
                     if (diffDays < 0)
                         diffDays = 0;

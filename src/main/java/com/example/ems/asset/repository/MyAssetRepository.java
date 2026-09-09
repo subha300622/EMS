@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MyAssetRepository extends JpaRepository<MyAsset, Long> {
@@ -29,7 +30,7 @@ public interface MyAssetRepository extends JpaRepository<MyAsset, Long> {
 
     List<MyAsset> findByAssignedToIdAndStatus(Long employeeId, String status);
 
-    java.util.Optional<MyAsset> findByAssetCode(String assetCode);
+    Optional<MyAsset> findByAssetCode(String assetCode);
 
     @Query("SELECT a FROM MyAsset a WHERE " +
            "(:status IS NULL OR " +

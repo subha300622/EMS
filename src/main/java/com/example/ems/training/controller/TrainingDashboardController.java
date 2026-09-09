@@ -46,7 +46,7 @@ public class TrainingDashboardController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getDashboard(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+public ResponseEntity<?> getDashboard(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         TrainingDashboardMetricsResponse metrics = trainingService.getDashboardMetrics(user);

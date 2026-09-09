@@ -15,6 +15,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import com.example.ems.onboarding.dto.OnboardingDashboardResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @RestController
 @RequestMapping("/api/v1/dashboard")
@@ -61,15 +65,27 @@ public class DashboardController {
 
 
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDashboard(
+    @Operation(
+            summary = "Get Centralized Dashboard Metrics",
+            description = "Retrieves role-specific dashboard metrics for HR, FINANCE, or MANAGER.",
+            responses = {
+                    @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                            responseCode = "200",
+                            description = "Dashboard metrics retrieved successfully",
+                            content = @Content(
+                                    schema = @Schema(implementation = OnboardingDashboardResponse.class)
+                            )
+                    )
+            }
+    )
+public ResponseEntity<?> getDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false, defaultValue = "HR") String role,
             @RequestParam(required = false) Long managerId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -79,7 +95,7 @@ public class DashboardController {
                 return ResponseEntity.ok(ApiResponse.success("HR dashboard summary metrics retrieved", summary));
             } else if ("FINANCE".equalsIgnoreCase(role)) {
                 if (!checkFinanceAccess(currentUser)) {
-                    return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
                 }
                 Map<String, Object> summary = financeOnboardingService.getDashboardSummary();
@@ -93,11 +109,11 @@ public class DashboardController {
                 Map<String, Object> stats = teamOnboardingService.getManagerDashboard(targetManagerId);
                 return ResponseEntity.ok(ApiResponse.success("Manager dashboard metrics retrieved", stats));
             } else {
-                return (ResponseEntity) ResponseEntity.badRequest()
+                return ResponseEntity.badRequest()
                         .body(ErrorResponse.error("Unsupported role parameter: " + role, "VAL_002"));
             }
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "ONB_ERR"));
         }
     }

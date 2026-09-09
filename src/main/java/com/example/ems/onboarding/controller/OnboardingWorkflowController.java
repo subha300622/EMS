@@ -17,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/onboarding")
@@ -89,10 +90,10 @@ public class OnboardingWorkflowController {
 
     @PatchMapping("/{onboardingId:\\d+}/template")
     @Operation(summary = "Assign or Replace Template")
-    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> assignTemplate(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> assignTemplate(
             @PathVariable Long onboardingId,
             @RequestBody OnboardingAssignTemplateRequest request) {
-        java.util.Map<String, Object> response = workflowService.assignTemplate(onboardingId, request);
+        Map<String, Object> response = workflowService.assignTemplate(onboardingId, request);
         return ResponseEntity.ok(ApiResponse.success("Template assigned/replaced successfully", response));
     }
 }

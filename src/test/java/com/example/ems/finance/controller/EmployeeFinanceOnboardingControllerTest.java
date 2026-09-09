@@ -20,9 +20,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import com.example.ems.finance.dto.CtcBreakupResponse;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -114,7 +116,18 @@ public class EmployeeFinanceOnboardingControllerTest {
     @Test
     public void testCalculateCtcSuccess() throws Exception {
         mockAuthSuccess();
-        when(service.calculateCtcBreakup(any())).thenReturn(Map.of("monthlyCtc", 100000, "basicSalary", 50000));
+        CtcBreakupResponse response = new CtcBreakupResponse(
+                BigDecimal.valueOf(1200000),
+                BigDecimal.valueOf(100000),
+                BigDecimal.valueOf(50000),
+                BigDecimal.valueOf(20000),
+                BigDecimal.valueOf(30000),
+                BigDecimal.valueOf(6000),
+                BigDecimal.valueOf(200),
+                BigDecimal.valueOf(10000),
+                BigDecimal.valueOf(83800)
+        );
+        when(service.calculateStructuredCtcBreakup(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/finance/analytics/calculate-ctc")
                 .header("Authorization", token)

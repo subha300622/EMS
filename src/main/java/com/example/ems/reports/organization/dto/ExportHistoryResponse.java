@@ -1,13 +1,31 @@
 package com.example.ems.reports.organization.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Report export history log entry response")
 public class ExportHistoryResponse {
+    @Schema(description = "Export History ID", example = "1")
     private Long id;
+
+    @Schema(description = "Report Name", example = "Organizations-2026")
     private String reportName;
+
+    @Schema(description = "Created By User Email", example = "admin@example.com")
     private String createdBy;
+
+    @Schema(description = "Export Category / Type", example = "ORGANIZATION")
     private String exportType;
+
+    @Schema(description = "File Format", example = "CSV")
     private String exportFormat;
+
+    @Schema(description = "Export Job Status", example = "COMPLETED")
     private String status;
+
+    @Schema(description = "File Download URL", example = "/api/v1/platform/reports/organizations/export/download/1")
     private String downloadUrl;
+
+    @Schema(description = "Created Date/Time", example = "2026-07-03T10:15:00Z")
     private String createdTime;
 
     public ExportHistoryResponse() {}

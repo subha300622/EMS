@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.appraisal.repository.AppraisalRepository;
 
 @Service
 public class AppraisalRequestService {
@@ -43,7 +44,7 @@ public class AppraisalRequestService {
     private OrganizationRepository organizationRepository;
 
     @Autowired
-    private com.example.ems.appraisal.repository.AppraisalRepository appraisalRepository;
+    private AppraisalRepository appraisalRepository;
 
     private static final Set<AppraisalRequestStatus> ACTIVE_REQUEST_STATUSES = Set.of(
             AppraisalRequestStatus.DRAFT,

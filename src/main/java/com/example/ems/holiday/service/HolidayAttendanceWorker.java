@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.time.Instant;
 
 @Service
 public class HolidayAttendanceWorker {
@@ -72,7 +73,7 @@ public class HolidayAttendanceWorker {
                 attendance.setStatus("HOLIDAY");
                 attendance.setAttendanceType("HOLIDAY");
                 attendance.setNotes("Organization Holiday: " + holiday.getName());
-                attendance.setServerTime(java.time.Instant.now());
+                attendance.setServerTime(Instant.now());
 
                 attendanceRepository.save(attendance);
                 log.info("Marked HOLIDAY attendance for employee {} on {}", emp.getEmployeeId(), targetDate);

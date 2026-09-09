@@ -16,6 +16,19 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import com.example.ems.auth.dto.BootstrapResponse;
+import com.example.ems.auth.dto.LoginResponse;
+import com.example.ems.auth.dto.ProfileUpdateRequest;
+import com.example.ems.employee.entity.Department;
+import com.example.ems.employee.repository.DepartmentRepository;
+import com.example.ems.settings.entity.CompanySetting;
+import com.example.ems.settings.entity.EmployeeSetting;
+import com.example.ems.settings.repository.CompanySettingRepository;
+import com.example.ems.settings.repository.EmployeeSettingRepository;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 public class UserService {
@@ -29,15 +42,15 @@ public class UserService {
     @Autowired
     private EmployeeRepository employeeRepository;
     @Autowired
-    private com.example.ems.employee.repository.DepartmentRepository departmentRepository;
+    private DepartmentRepository departmentRepository;
     @Autowired
-    private com.example.ems.settings.repository.EmployeeSettingRepository employeeSettingRepository;
+    private EmployeeSettingRepository employeeSettingRepository;
     @Autowired
-    private com.example.ems.settings.repository.CompanySettingRepository companySettingRepository;
+    private CompanySettingRepository companySettingRepository;
     @Autowired
     private RoleService roleService;
 
-    @org.springframework.beans.factory.annotation.Value("${app.dicebear-avatar-url}")
+    @Value("${app.dicebear-avatar-url}")
     private String dicebearAvatarUrl;
 
     // ──────────────────────────────────────────
@@ -57,7 +70,7 @@ public class UserService {
         return user;
     }
 
-    public java.util.List<User> getAllUsers() {
+    public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
@@ -248,14 +261,14 @@ public class UserService {
         return true;
     }
 
-    public java.util.List<User> searchUsers(String query) {
+    public List<User> searchUsers(String query) {
         if (query == null || query.trim().isEmpty()) {
             return getAllUsers();
         }
         return userRepository.searchUsers(query.trim());
     }
 
-    public User updateUserProfile(Long id, com.example.ems.auth.dto.ProfileUpdateRequest request) {
+    public User updateUserProfile(Long id, ProfileUpdateRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         if (request.getPhone() != null) {
@@ -283,7 +296,7 @@ public class UserService {
         roleService.evictUserPermissionsCache(userId);
     }
 
-    public com.example.ems.auth.dto.BootstrapResponse.UserProfileResponse getUserProfile(User user) {
+    public BootstrapResponse.UserProfileResponse getUserProfile(User user) {
         Optional<Employee> optEmp = employeeRepository.findByEmail(user.getWorkEmail());
         String profileImage = optEmp.map(Employee::getProfileImage).orElse(null);
         if (profileImage == null || profileImage.isBlank()) {
@@ -297,7 +310,7 @@ public class UserService {
 
         boolean mfaRequired = false;
         try {
-            Optional<com.example.ems.settings.entity.EmployeeSetting> optSettings = employeeSettingRepository
+            Optional<EmployeeSetting> optSettings = employeeSettingRepository
                     .findByUserEmail(user.getWorkEmail());
             if (optSettings.isPresent()) {
                 mfaRequired = Boolean.TRUE.equals(optSettings.get().getMfaEnabled());
@@ -306,7 +319,7 @@ public class UserService {
             // Fallback to false
         }
 
-        return new com.example.ems.auth.dto.BootstrapResponse.UserProfileResponse(
+        return new BootstrapResponse.UserProfileResponse(
                 user.getId(),
                 user.getUserId(),
                 user.getFullName(),
@@ -316,17 +329,17 @@ public class UserService {
                 false, // mustChangePassword
                 mfaRequired,
                 user.getStatus(),
-                java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString(),
+                Instant.now().truncatedTo(ChronoUnit.SECONDS).toString(),
                 user.getOrganizationName(),
                 user.getBranch());
     }
 
-    public com.example.ems.auth.dto.BootstrapResponse.OrgContextResponse getUserContext(User user) {
+    public BootstrapResponse.OrgContextResponse getUserContext(User user) {
         Optional<Employee> optEmp = employeeRepository.findByEmail(user.getWorkEmail());
 
         Long companyId = null;
         try {
-            Optional<com.example.ems.settings.entity.CompanySetting> optCompany = companySettingRepository.findAll()
+            Optional<CompanySetting> optCompany = companySettingRepository.findAll()
                     .stream().findFirst();
             if (optCompany.isPresent()) {
                 companyId = optCompany.get().getId();
@@ -337,16 +350,16 @@ public class UserService {
 
         Long departmentId = null;
         if (optEmp.isPresent() && optEmp.get().getDepartment() != null) {
-            Optional<com.example.ems.employee.entity.Department> optDept = departmentRepository
+            Optional<Department> optDept = departmentRepository
                     .findByNameIgnoreCase(optEmp.get().getDepartment());
             if (optDept.isPresent()) {
                 departmentId = optDept.get().getId();
             }
         }
 
-        return new com.example.ems.auth.dto.BootstrapResponse.OrgContextResponse(
+        return new BootstrapResponse.OrgContextResponse(
                 companyId,
                 departmentId,
-                new com.example.ems.auth.dto.LoginResponse.BranchContext(null, false));
+                new LoginResponse.BranchContext(null, false));
     }
 }

@@ -26,6 +26,8 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.example.ems.config.GlobalExceptionHandler;
+import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 
 @SpringBootTest
 @Transactional
@@ -89,7 +91,7 @@ public class CustomPermissionSystemIntegrationTest {
                 customRoleController,
                 meController,
                 userRoleController
-        ).setControllerAdvice(new com.example.ems.config.GlobalExceptionHandler()).build();
+        ).setControllerAdvice(new GlobalExceptionHandler()).build();
 
         organization = new Organization();
         organization.setName("Permission Test Corp " + System.currentTimeMillis());
@@ -212,7 +214,7 @@ public class CustomPermissionSystemIntegrationTest {
                                   "permissionIds": [%d, %d]
                                 }
                                 """, p1.getId(), p2.getId())))
-                .andDo(org.springframework.test.web.servlet.result.MockMvcResultHandlers.print())
+                .andDo(MockMvcResultHandlers.print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(2));
     }

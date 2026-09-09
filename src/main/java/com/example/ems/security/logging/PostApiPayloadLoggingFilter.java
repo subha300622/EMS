@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import com.example.ems.common.logging.MaskingMessageConverter;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 @Order(10) // Run after primary security filtering
@@ -29,7 +31,7 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
 
     private static final Object fileLock = new Object();
 
-    @org.springframework.beans.factory.annotation.Value("${ems.logging.post-api-path:post_api_payloads.log}")
+    @Value("${ems.logging.post-api-path:post_api_payloads.log}")
     private String logFilePath;
 
     @Override
@@ -75,7 +77,7 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
         if (reqBody.isBlank()) {
             reqBody = "[Empty]";
         } else {
-            reqBody = com.example.ems.common.logging.MaskingMessageConverter.mask(reqBody);
+            reqBody = MaskingMessageConverter.mask(reqBody);
         }
 
         // Extract response payload
@@ -83,7 +85,7 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
         if (respBody.isBlank()) {
             respBody = "[Empty]";
         } else {
-            respBody = com.example.ems.common.logging.MaskingMessageConverter.mask(respBody);
+            respBody = MaskingMessageConverter.mask(respBody);
         }
 
         // Extract authenticated user if available

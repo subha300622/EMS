@@ -7,7 +7,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -69,14 +68,14 @@ public class AppraisalConfigurationController {
 
     @Operation(summary = "Get Organization Appraisal Configuration")
     @GetMapping("/configuration")
-    public ResponseEntity<?> getConfiguration(
+    public ResponseEntity<ApiResponse<AppraisalConfigurationDto>> getConfiguration(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_VIEW") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_VIEW permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_VIEW permission", "AUTH_002"));
         }
 
         AppraisalConfigurationDto dto = configurationService.getConfiguration();
@@ -85,15 +84,15 @@ public class AppraisalConfigurationController {
 
     @Operation(summary = "Save or Update Organization Appraisal Configuration")
     @PutMapping("/configuration")
-    public ResponseEntity<?> saveConfiguration(
+    public ResponseEntity<ApiResponse<AppraisalConfigurationDto>> saveConfiguration(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody SaveAppraisalConfigurationRequest request) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(user);
@@ -101,18 +100,18 @@ public class AppraisalConfigurationController {
             AppraisalConfigurationDto saved = configurationService.saveOrUpdateConfiguration(request, employee);
             return ResponseEntity.ok(ApiResponse.success("Appraisal configuration saved successfully", saved));
         } catch (SecurityException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error(e.getMessage(), "AUTH_003"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error(e.getMessage(), "AUTH_003"));
         }
     }
 
     @Operation(summary = "Get Appraisal Request Reasons")
     @GetMapping("/request-reasons")
-    public ResponseEntity<?> getRequestReasons(
+    public ResponseEntity<ApiResponse<List<AppraisalRequestReasonDto>>> getRequestReasons(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "activeOnly", defaultValue = "false") boolean activeOnly) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         List<AppraisalRequestReasonDto> list = reasonService.getReasons(activeOnly);
@@ -121,15 +120,15 @@ public class AppraisalConfigurationController {
 
     @Operation(summary = "Create Appraisal Request Reason")
     @PostMapping("/request-reasons")
-    public ResponseEntity<?> createRequestReason(
+    public ResponseEntity<ApiResponse<AppraisalRequestReasonDto>> createRequestReason(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody CreateRequestReasonDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
         }
 
         AppraisalRequestReasonDto created = reasonService.createReason(dto);
@@ -138,16 +137,16 @@ public class AppraisalConfigurationController {
 
     @Operation(summary = "Update Appraisal Request Reason")
     @PutMapping("/request-reasons/{reasonId}")
-    public ResponseEntity<?> updateRequestReason(
+    public ResponseEntity<ApiResponse<AppraisalRequestReasonDto>> updateRequestReason(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long reasonId,
             @RequestBody UpdateRequestReasonDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
         }
 
         AppraisalRequestReasonDto updated = reasonService.updateReason(reasonId, dto);
@@ -156,16 +155,16 @@ public class AppraisalConfigurationController {
 
     @Operation(summary = "Activate or Deactivate Appraisal Request Reason")
     @PatchMapping("/request-reasons/{reasonId}/status")
-    public ResponseEntity<?> updateReasonStatus(
+    public ResponseEntity<ApiResponse<AppraisalRequestReasonDto>> updateReasonStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long reasonId,
             @RequestBody ReasonStatusDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
         }
 
         boolean active = dto.getActive() != null ? dto.getActive() : true;
@@ -175,15 +174,15 @@ public class AppraisalConfigurationController {
 
     @Operation(summary = "Delete or Soft-Deactivate Appraisal Request Reason")
     @DeleteMapping("/request-reasons/{reasonId}")
-    public ResponseEntity<?> deleteRequestReason(
+    public ResponseEntity<ApiResponse<Void>> deleteRequestReason(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long reasonId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE permission", "AUTH_002"));
         }
 
         reasonService.deleteReason(reasonId);

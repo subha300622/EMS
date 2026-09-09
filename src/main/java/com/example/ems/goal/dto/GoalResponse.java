@@ -3,6 +3,7 @@ package com.example.ems.goal.dto;
 import com.example.ems.goal.domain.Goal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class GoalResponse {
 
@@ -82,8 +83,8 @@ public class GoalResponse {
         if (goal.getEndDate() != null && LocalDate.now().isAfter(goal.getEndDate())) return "OVERDUE";
 
         if (goal.getStartDate() != null && goal.getEndDate() != null && !goal.getEndDate().isBefore(goal.getStartDate())) {
-            long totalDays = java.time.temporal.ChronoUnit.DAYS.between(goal.getStartDate(), goal.getEndDate());
-            long elapsedDays = java.time.temporal.ChronoUnit.DAYS.between(goal.getStartDate(), LocalDate.now());
+            long totalDays = ChronoUnit.DAYS.between(goal.getStartDate(), goal.getEndDate());
+            long elapsedDays = ChronoUnit.DAYS.between(goal.getStartDate(), LocalDate.now());
             if (totalDays > 0 && elapsedDays > 0) {
                 double expectedProgress = Math.min(100.0, ((double) elapsedDays / totalDays) * 100.0);
                 int actualProgress = goal.getProgress() != null ? goal.getProgress() : 0;

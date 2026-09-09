@@ -2,6 +2,9 @@ package com.example.ems.auth.entity;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.example.ems.organization.entity.Organization;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Table(name = "users", indexes = {
@@ -50,7 +53,7 @@ public class User {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", insertable = false, updatable = false)
-    private com.example.ems.organization.entity.Organization organization;
+    private Organization organization;
 
     @Column(name = "department_id")
     private Long departmentId;
@@ -84,7 +87,7 @@ public class User {
     private AuthProvider provider = AuthProvider.LOCAL;
 
     @Column(name = "created_at", updatable = false)
-    private java.time.Instant createdAt;
+    private Instant createdAt;
 
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
@@ -93,18 +96,18 @@ public class User {
     @PreUpdate
     public void prePersistOrUpdate() {
         if (this.createdAt == null) {
-            this.createdAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+            this.createdAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
         }
         if (this.workEmail != null) {
             this.workEmail = this.workEmail.trim().toLowerCase();
         }
     }
 
-    public java.time.Instant getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(java.time.Instant createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -252,11 +255,11 @@ public class User {
         this.password = password;
     }
 
-    public com.example.ems.organization.entity.Organization getOrganization() {
+    public Organization getOrganization() {
         return organization;
     }
 
-    public void setOrganization(com.example.ems.organization.entity.Organization organization) {
+    public void setOrganization(Organization organization) {
         this.organization = organization;
         this.organizationId = (organization != null) ? organization.getId() : null;
     }

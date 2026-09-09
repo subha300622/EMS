@@ -37,6 +37,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.example.ems.organization.entity.Organization;
+import com.example.ems.organization.repository.OrganizationRepository;
+import com.example.ems.security.service.JwtService;
+import org.springframework.web.context.WebApplicationContext;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -91,13 +95,13 @@ public class FileStorageIntegrationTest {
     private String adminToken;
 
     @Autowired
-    private com.example.ems.organization.repository.OrganizationRepository organizationRepository;
+    private OrganizationRepository organizationRepository;
 
     @Autowired
-    private org.springframework.web.context.WebApplicationContext webApplicationContext;
+    private WebApplicationContext webApplicationContext;
 
     @Autowired
-    private com.example.ems.security.service.JwtService jwtService;
+    private JwtService jwtService;
 
     private Long testOrgId;
 
@@ -117,8 +121,8 @@ public class FileStorageIntegrationTest {
         mockStorageService.clear();
 
         // Organization
-        com.example.ems.organization.entity.Organization org = organizationRepository.findAll().stream().findFirst().orElseGet(() -> {
-            com.example.ems.organization.entity.Organization o = new com.example.ems.organization.entity.Organization();
+        Organization org = organizationRepository.findAll().stream().findFirst().orElseGet(() -> {
+            Organization o = new Organization();
             o.setName("Storage Test Org");
             o.setNormalizedName("storage test org");
             o.setOrganizationCode("STORG01");

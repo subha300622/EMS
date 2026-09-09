@@ -23,6 +23,10 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
+import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.security.service.JwtService;
+import java.util.ArrayList;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @EnableWebSecurity
@@ -47,9 +51,9 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource(
-            @org.springframework.beans.factory.annotation.Value("${app.frontend-url:http://localhost:3000}") String frontendUrl) {
+            @Value("${app.frontend-url:http://localhost:3000}") String frontendUrl) {
         CorsConfiguration configuration = new CorsConfiguration();
-        java.util.List<String> origins = new java.util.ArrayList<>(List.of(
+        List<String> origins = new ArrayList<>(List.of(
                 "http://localhost:3000",
                 "http://127.0.0.1:3000",
                 "http://192.168.1.35:3000",
@@ -74,8 +78,8 @@ public class SecurityConfig {
             AuthenticationEntryPoint entryPoint,
             Environment environment,
             CorsConfigurationSource corsConfigurationSource,
-            com.example.ems.security.service.JwtService jwtService,
-            com.example.ems.auth.repository.UserRepository userRepository) throws Exception {
+            JwtService jwtService,
+            UserRepository userRepository) throws Exception {
         JwtAuthenticationFilter jwtAuthenticationFilter = new JwtAuthenticationFilter(
                 authenticationManager, entryPoint, environment, jwtService, userRepository);
 
@@ -123,8 +127,8 @@ public class SecurityConfig {
             AuthenticationManager authenticationManager,
             AuthenticationEntryPoint entryPoint,
             Environment environment,
-            com.example.ems.security.service.JwtService jwtService,
-            com.example.ems.auth.repository.UserRepository userRepository) {
+            JwtService jwtService,
+            UserRepository userRepository) {
         JwtAuthenticationFilter filter = new JwtAuthenticationFilter(authenticationManager, entryPoint, environment,
                 jwtService, userRepository);
         FilterRegistrationBean<JwtAuthenticationFilter> registrationBean = new FilterRegistrationBean<>(filter);

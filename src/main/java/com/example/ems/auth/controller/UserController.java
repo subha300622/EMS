@@ -170,7 +170,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get User by ID", description = "Retrieves user details under the tenant organization without permissions field.")
     @GetMapping("/{userId}")
-    public ResponseEntity<?> getUserById(
+public ResponseEntity<?> getUserById(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -215,7 +215,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update User Details", description = "Updates profile fields: fullName, email, mobile. Disallows status, roles, password, and IDs.")
     @PutMapping("/{userId}")
-    public ResponseEntity<?> updateUser(
+public ResponseEntity<?> updateUser(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -265,7 +265,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Delete User", description = "Soft deletes / deactivates a user account.")
     @DeleteMapping("/{userId}")
-    public ResponseEntity<?> deleteUser(
+public ResponseEntity<?> deleteUser(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -290,7 +290,7 @@ public class UserController {
         target.setStatus("INACTIVE");
         userRepository.save(target);
 
-        return ResponseEntity.ok(ApiResponse.success("User deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success("User deleted successfully", null));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -298,7 +298,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Reset User Password", description = "Admin-initiated password reset generating a temporary password.")
     @PutMapping("/{userId}/password/reset")
-    public ResponseEntity<?> resetPassword(
+public ResponseEntity<?> resetPassword(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @RequestBody(required = false) ResetPasswordAdminRequest request) {
@@ -333,7 +333,7 @@ public class UserController {
         }
         userRepository.save(target);
 
-        return ResponseEntity.ok(ApiResponse.success("Password reset successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Password reset successfully", null));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -341,7 +341,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update User Role", description = "Updates a user's single primary role.")
     @PutMapping("/{userId}/role")
-    public ResponseEntity<?> updateUserRole(
+public ResponseEntity<?> updateUserRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -385,7 +385,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Remove User Role", description = "Removes any assigned role from the user.")
     @DeleteMapping("/{userId}/role")
-    public ResponseEntity<?> removeUserRole(
+public ResponseEntity<?> removeUserRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -411,7 +411,7 @@ public class UserController {
         target.setRoleId(null);
         userRepository.save(target);
 
-        return ResponseEntity.ok(ApiResponse.success("Role removed successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Role removed successfully", null));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -419,7 +419,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get User Roles", description = "Retrieves user roles array without permissions.")
     @GetMapping("/{userId}/roles")
-    public ResponseEntity<?> getUserRoles(
+public ResponseEntity<?> getUserRoles(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -450,7 +450,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Assign Multiple Roles", description = "Assigns multiple roles to a user.")
     @PutMapping("/{userId}/roles")
-    public ResponseEntity<?> assignMultipleRoles(
+public ResponseEntity<?> assignMultipleRoles(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @Valid @RequestBody AssignMultipleRolesRequest request) {
@@ -498,7 +498,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update User Status", description = "Updates user status: ACTIVE, INACTIVE, SUSPENDED, LOCKED, PENDING.")
     @PutMapping("/{userId}/status")
-    public ResponseEntity<?> updateUserStatus(
+public ResponseEntity<?> updateUserStatus(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @Valid @RequestBody UpdateStatusRequest request) {
@@ -533,7 +533,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Export Users to CSV", description = "Exports filtered user list as CSV.")
     @GetMapping("/export")
-    public ResponseEntity<?> exportUsers(
+public ResponseEntity<?> exportUsers(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String roleId,
@@ -582,7 +582,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Current User Bootstrap Data", description = "Retrieves user summary, organization details, and roles for initial application bootstrap.")
     @GetMapping("/me/bootstrap")
-    public ResponseEntity<?> getMyBootstrap(
+public ResponseEntity<?> getMyBootstrap(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -613,7 +613,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Current User Org Context", description = "Retrieves user organization context.")
     @GetMapping("/me/context")
-    public ResponseEntity<?> getMyContext(
+public ResponseEntity<?> getMyContext(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -640,7 +640,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Current User Profile", description = "Retrieves current authenticated user profile.")
     @GetMapping("/me/profile")
-    public ResponseEntity<?> getMyProfile(
+public ResponseEntity<?> getMyProfile(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -670,7 +670,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Pending Users", description = "Retrieves registration requests pending approval scoped to current tenant.")
     @GetMapping("/pending")
-    public ResponseEntity<?> getPendingUsers(
+public ResponseEntity<?> getPendingUsers(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -704,7 +704,7 @@ public class UserController {
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Search Users", description = "Paginated search across users with query, status, and roleId filters.")
     @GetMapping("/search")
-    public ResponseEntity<?> searchUsers(
+public ResponseEntity<?> searchUsers(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String status,

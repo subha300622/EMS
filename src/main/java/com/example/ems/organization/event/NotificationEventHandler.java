@@ -8,6 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Decoupled event handler triggering email confirmation notifications asynchronously after commit.
@@ -26,8 +29,8 @@ public class NotificationEventHandler {
     /**
      * Sends the notification asynchronously. Catches failures and registers them in the retry queue.
      */
-    @org.springframework.scheduling.annotation.Async
-    @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentSucceeded(PaymentSucceededEvent event) {
         String handlerName = "NotificationEventHandler";

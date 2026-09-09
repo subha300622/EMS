@@ -20,13 +20,15 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.example.ems.organization.entity.Organization;
+import com.example.ems.organization.repository.OrganizationRepository;
 
 @SpringBootTest
 @Transactional
 public class AssetWorkflowIntegrationTest {
 
     @Autowired
-    private com.example.ems.organization.repository.OrganizationRepository organizationRepository;
+    private OrganizationRepository organizationRepository;
 
     @Autowired
     private AssetLifecycleService lifecycleService;
@@ -49,7 +51,7 @@ public class AssetWorkflowIntegrationTest {
     @Autowired
     private AssetAssignmentRepository assignmentRepository;
 
-    private com.example.ems.organization.entity.Organization org;
+    private Organization org;
     private AssetCategory category;
     private AssetLocation loc1;
     private AssetLocation loc2;
@@ -60,7 +62,7 @@ public class AssetWorkflowIntegrationTest {
 
     @BeforeEach
     public void setUp() {
-        org = new com.example.ems.organization.entity.Organization();
+        org = new Organization();
         org.setName("Asset Test Organization");
         org.setOrganizationCode("ORG_AST_" + System.currentTimeMillis());
         org = organizationRepository.save(org);

@@ -6,10 +6,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
     List<Attendance> findByEmployeeId(Long employeeId);
-    org.springframework.data.domain.Page<Attendance> findByEmployeeId(Long employeeId, org.springframework.data.domain.Pageable pageable);
+    Page<Attendance> findByEmployeeId(Long employeeId, Pageable pageable);
     Optional<Attendance> findByEmployeeIdAndDate(Long employeeId, LocalDate date);
     boolean existsByEmployeeIdAndDate(Long employeeId, LocalDate date);
 
@@ -17,7 +21,7 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
 
     List<Attendance> findByEmployeeIdInAndDateBetween(List<Long> employeeIds, LocalDate startDate, LocalDate endDate);
 
-    @org.springframework.data.jpa.repository.Query("""
+    @Query("""
         SELECT a.date,
                SUM(CASE WHEN UPPER(a.status) = 'PRESENT' THEN 1 ELSE 0 END),
                SUM(CASE WHEN UPPER(a.status) = 'ABSENT' THEN 1 ELSE 0 END),
@@ -30,8 +34,8 @@ public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
         ORDER BY a.date ASC
     """)
     List<Object[]> getTrendStats(
-        @org.springframework.data.repository.query.Param("employeeIds") List<Long> employeeIds,
-        @org.springframework.data.repository.query.Param("startDate") LocalDate startDate,
-        @org.springframework.data.repository.query.Param("endDate") LocalDate endDate
+        @Param("employeeIds") List<Long> employeeIds,
+        @Param("startDate") LocalDate startDate,
+        @Param("endDate") LocalDate endDate
     );
 }

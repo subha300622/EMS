@@ -29,6 +29,10 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -94,10 +98,10 @@ class CompleteEMSBackendCrossTenantSecurityTest {
         teamOrgA.setTeamName("Org A Team");
         teamOrgA.setOrganization(orgA);
 
-        when(teamRepository.findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.jpa.domain.Specification.class), org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Pageable.class)))
-                .thenReturn(new org.springframework.data.domain.PageImpl<>(List.of(teamOrgA)));
+        when(teamRepository.findAll(org.mockito.ArgumentMatchers.any(Specification.class), org.mockito.ArgumentMatchers.any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(teamOrgA)));
 
-        org.springframework.data.domain.Page<TeamDtos.TeamResponseDto> page = teamService.listTeams(null, null, null, 0, 10, userOrgA);
+        Page<TeamDtos.TeamResponseDto> page = teamService.listTeams(null, null, null, 0, 10, userOrgA);
         assertNotNull(page);
         assertEquals(1, page.getTotalElements());
         assertEquals("Org A Team", page.getContent().get(0).getTeamName());

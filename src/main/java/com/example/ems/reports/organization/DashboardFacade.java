@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import com.example.ems.reports.organization.dto.UserActivityReportResponse;
 
 @Component
 public class DashboardFacade {
@@ -35,7 +36,7 @@ public class DashboardFacade {
         return dashboardService.getEmployeeDistribution();
     }
 
-    public Map<String, Object> getActivityReport() {
+    public UserActivityReportResponse getActivityReport() {
         return dashboardService.getActivityReport();
     }
 }

@@ -33,6 +33,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.example.ems.config.GlobalExceptionHandler;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class OnboardingDocumentControllerTest {
 
@@ -70,15 +72,15 @@ public class OnboardingDocumentControllerTest {
         objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
 
         // Manual injection of service and mocks into controllers/services
-        org.springframework.test.util.ReflectionTestUtils.setField(service, "onboardingRepository", onboardingRepository);
-        org.springframework.test.util.ReflectionTestUtils.setField(service, "onboardingDocumentRepository", onboardingDocumentRepository);
-        org.springframework.test.util.ReflectionTestUtils.setField(service, "storageService", storageService);
-        org.springframework.test.util.ReflectionTestUtils.setField(controller, "documentService", service);
-        org.springframework.test.util.ReflectionTestUtils.setField(controller, "securityContextFacade", securityContextFacade);
-        org.springframework.test.util.ReflectionTestUtils.setField(controller, "userRepository", userRepository);
+        ReflectionTestUtils.setField(service, "onboardingRepository", onboardingRepository);
+        ReflectionTestUtils.setField(service, "onboardingDocumentRepository", onboardingDocumentRepository);
+        ReflectionTestUtils.setField(service, "storageService", storageService);
+        ReflectionTestUtils.setField(controller, "documentService", service);
+        ReflectionTestUtils.setField(controller, "securityContextFacade", securityContextFacade);
+        ReflectionTestUtils.setField(controller, "userRepository", userRepository);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new com.example.ems.config.GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
 
         // Standard setup entities

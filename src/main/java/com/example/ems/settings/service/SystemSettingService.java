@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.time.LocalTime;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @Transactional
@@ -17,16 +19,16 @@ public class SystemSettingService {
     @Autowired
     private SystemSettingRepository systemSettingRepository;
 
-    @org.springframework.beans.factory.annotation.Value("${resend.from-email:EMS System <noreply@company.com>}")
+    @Value("${resend.from-email:EMS System <noreply@company.com>}")
     private String fromEmailProperty;
 
-    @org.springframework.beans.factory.annotation.Value("${app.email.sender-address:noreply@company.com}")
+    @Value("${app.email.sender-address:noreply@company.com}")
     private String defaultSenderAddress;
 
-    @org.springframework.beans.factory.annotation.Value("${integrations.slack-webhook:}")
+    @Value("${integrations.slack-webhook:}")
     private String slackWebhook;
 
-    @org.springframework.beans.factory.annotation.Value("${integrations.jira-base-url:}")
+    @Value("${integrations.jira-base-url:}")
     private String jiraBaseUrl;
 
     public void initDefaultSettings() {
@@ -89,12 +91,12 @@ public class SystemSettingService {
     }
 
     @Transactional(readOnly = true)
-    public java.time.LocalTime getOfficeStartTime() {
+    public LocalTime getOfficeStartTime() {
         String val = getSettingValue("attendance.office_start_time", "09:30");
         try {
-            return java.time.LocalTime.parse(val.trim());
+            return LocalTime.parse(val.trim());
         } catch (Exception e) {
-            return java.time.LocalTime.of(9, 30);
+            return LocalTime.of(9, 30);
         }
     }
 }

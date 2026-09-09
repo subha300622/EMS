@@ -29,6 +29,9 @@ import java.time.LocalDate;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.example.ems.config.GlobalExceptionHandler;
+import com.example.ems.payroll.repository.EmployeeSalaryAssignmentRepository;
+import com.example.ems.payroll.repository.SalaryComponentRepository;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -66,10 +69,10 @@ public class PayrollRunIntegrationTest {
         private EmployeeSalaryComponentValueRepository employeeSalaryComponentValueRepository;
 
         @Autowired
-        private com.example.ems.payroll.repository.SalaryComponentRepository salaryComponentRepository;
+        private SalaryComponentRepository salaryComponentRepository;
 
         @Autowired
-        private com.example.ems.payroll.repository.EmployeeSalaryAssignmentRepository employeeSalaryAssignmentRepository;
+        private EmployeeSalaryAssignmentRepository employeeSalaryAssignmentRepository;
 
         @Autowired
         private ObjectMapper objectMapper;
@@ -79,7 +82,7 @@ public class PayrollRunIntegrationTest {
 
         @BeforeEach
         void setUp() {
-                com.example.ems.config.GlobalExceptionHandler exceptionHandler = new com.example.ems.config.GlobalExceptionHandler();
+                GlobalExceptionHandler exceptionHandler = new GlobalExceptionHandler();
                 salaryComponentMockMvc = MockMvcBuilders.standaloneSetup(salaryComponentController)
                                 .setControllerAdvice(exceptionHandler).build();
                 salaryStructureMockMvc = MockMvcBuilders.standaloneSetup(salaryStructureController)

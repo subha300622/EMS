@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.example.ems.common.exception.BadRequestException;
+import com.example.ems.common.exception.ResourceNotFoundException;
 
 @RestController
 @RequestMapping("/api/v1/admin")
@@ -54,7 +56,7 @@ public class AdminUserController {
 
     @Operation(summary = "Create Tenant User", description = "Creates a new user under the current tenant organization.")
     @PostMapping("/users")
-    public ResponseEntity<?> createUser(
+public ResponseEntity<?> createUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody @Valid AdminUserDtos.CreateAdminUserRequest request) {
 
@@ -73,16 +75,16 @@ public class AdminUserController {
             AdminUserDtos.AdminUserResponse response = adminUserService.createUser(request);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("User created successfully", response));
-        } catch (com.example.ems.common.exception.BadRequestException e) {
+        } catch (BadRequestException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "USR_001"));
-        } catch (com.example.ems.common.exception.ResourceNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "USR_002"));
         }
     }
 
     @Operation(summary = "Get Tenant User by ID", description = "Retrieves user details under the current tenant organization.")
     @GetMapping("/users/{userId}")
-    public ResponseEntity<?> getUser(
+public ResponseEntity<?> getUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -100,14 +102,14 @@ public class AdminUserController {
         try {
             AdminUserDtos.AdminUserResponse response = adminUserService.getUser(userId);
             return ResponseEntity.ok(ApiResponse.success("User retrieved successfully", response));
-        } catch (com.example.ems.common.exception.ResourceNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "USR_002"));
         }
     }
 
     @Operation(summary = "List Tenant Users", description = "Lists all users under the current tenant organization.")
     @GetMapping("/users")
-    public ResponseEntity<?> listUsers(
+public ResponseEntity<?> listUsers(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);

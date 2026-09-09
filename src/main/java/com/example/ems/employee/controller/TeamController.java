@@ -48,14 +48,13 @@ public class TeamController {
     // 1. Create Team
     @Operation(summary = "Create Team", description = "Creates a new team within the user's organization with optional department association and optional team lead.")
     @PostMapping("/teams")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<TeamDtos.TeamResponseDto>> createTeam(
+public ResponseEntity<?> createTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody TeamDtos.TeamCreateRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -64,7 +63,7 @@ public class TeamController {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Team created successfully", created));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_001"));
         }
     }
@@ -72,8 +71,7 @@ public class TeamController {
     // 2. List Teams
     @Operation(summary = "List Teams", description = "Retrieves teams belonging to the user's organization with search, status, department filtering, and pagination.")
     @GetMapping("/teams")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Page<TeamDtos.TeamResponseDto>>> listTeams(
+public ResponseEntity<?> listTeams(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(value = "search", required = false) String search,
             @RequestParam(value = "status", required = false) String status,
@@ -83,7 +81,7 @@ public class TeamController {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -94,14 +92,13 @@ public class TeamController {
     // 3. Get Team Details
     @Operation(summary = "Get Team Details", description = "Retrieves details of a specific team by ID.")
     @GetMapping("/teams/{teamId}")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<TeamDtos.TeamResponseDto>> getTeam(
+public ResponseEntity<?> getTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -109,7 +106,7 @@ public class TeamController {
             TeamDtos.TeamResponseDto team = teamService.getTeam(teamId, currentUser);
             return ResponseEntity.ok(ApiResponse.success("Team retrieved successfully", team));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_404"));
         }
     }
@@ -117,15 +114,14 @@ public class TeamController {
     // 4. Update Team
     @Operation(summary = "Update Team", description = "Updates team details, department association (or null), and team lead.")
     @PutMapping("/teams/{teamId}")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<TeamDtos.TeamResponseDto>> updateTeam(
+public ResponseEntity<?> updateTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId,
             @RequestBody TeamDtos.TeamUpdateRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -137,9 +133,9 @@ public class TeamController {
             errBody.put("code", e.getCode());
             errBody.put("message", e.getMessage());
             errBody.put("details", e.getDetails());
-            return (ResponseEntity) ResponseEntity.badRequest().body(errBody);
+            return ResponseEntity.badRequest().body(errBody);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_002"));
         }
     }
@@ -147,7 +143,7 @@ public class TeamController {
     // 5. Delete Team
     @Operation(summary = "Delete Team", description = "Soft deletes a team if no active members exist. Fails with TEAM_HAS_ACTIVE_MEMBERS if active members remain.")
     @DeleteMapping("/teams/{teamId}")
-    public ResponseEntity<Object> deleteTeam(
+    public ResponseEntity<?> deleteTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId) {
 
@@ -177,15 +173,14 @@ public class TeamController {
     // 6. Change Team Status
     @Operation(summary = "Change Team Status", description = "Updates team status to ACTIVE or INACTIVE.")
     @PatchMapping("/teams/{teamId}/status")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<TeamDtos.TeamResponseDto>> changeTeamStatus(
+public ResponseEntity<?> changeTeamStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId,
             @RequestBody TeamDtos.TeamStatusUpdateRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -193,7 +188,7 @@ public class TeamController {
             TeamDtos.TeamResponseDto updated = teamService.changeTeamStatus(teamId, request.getStatus(), currentUser);
             return ResponseEntity.ok(ApiResponse.success("Team status updated successfully", updated));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_003"));
         }
     }
@@ -201,15 +196,14 @@ public class TeamController {
     // 7. Assign Department to Team
     @Operation(summary = "Assign/Remove Department to/from Team", description = "Assigns a department (or null) to a team after checking member compatibility.")
     @PatchMapping("/teams/{teamId}/department")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<Object> assignDepartment(
+public ResponseEntity<?> assignDepartment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId,
             @RequestBody TeamDtos.TeamDepartmentUpdateRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -223,7 +217,7 @@ public class TeamController {
             errBody.put("details", e.getDetails());
             return ResponseEntity.badRequest().body(errBody);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_004"));
         }
     }
@@ -231,15 +225,14 @@ public class TeamController {
     // 8. Change Team Lead
     @Operation(summary = "Change Team Lead", description = "Promotes an existing active team member to Team Lead (or null to remove lead).")
     @PatchMapping("/teams/{teamId}/team-lead")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<TeamDtos.TeamResponseDto>> changeTeamLead(
+public ResponseEntity<?> changeTeamLead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId,
             @RequestBody TeamDtos.TeamLeadUpdateRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -247,7 +240,7 @@ public class TeamController {
             TeamDtos.TeamResponseDto updated = teamService.changeTeamLead(teamId, request.getEmployeeId(), currentUser);
             return ResponseEntity.ok(ApiResponse.success("Team lead updated successfully", updated));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_005"));
         }
     }
@@ -255,14 +248,13 @@ public class TeamController {
     // 9. Get Team Members
     @Operation(summary = "Get Team Members", description = "Retrieves active members of a specific team.")
     @GetMapping("/teams/{teamId}/members")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<TeamDtos.TeamMemberListResponseDto>> getTeamMembers(
+public ResponseEntity<?> getTeamMembers(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -270,7 +262,7 @@ public class TeamController {
             TeamDtos.TeamMemberListResponseDto members = teamService.getTeamMembers(teamId, currentUser);
             return ResponseEntity.ok(ApiResponse.success("Team members retrieved successfully", members));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_404"));
         }
     }
@@ -278,15 +270,14 @@ public class TeamController {
     // 10. Add Single Employee to Team
     @Operation(summary = "Add Employee to Team", description = "Adds an active employee to an active team.")
     @PostMapping("/teams/{teamId}/members")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<TeamDtos.MemberDto>> addMember(
+public ResponseEntity<?> addMember(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId,
             @RequestBody TeamDtos.TeamMemberAddRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -295,7 +286,7 @@ public class TeamController {
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Employee added to team successfully", member));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_006"));
         }
     }
@@ -303,15 +294,14 @@ public class TeamController {
     // 11. Bulk Add Employees to Team
     @Operation(summary = "Bulk Add Employees to Team", description = "Adds multiple employees to a team with partial success status reporting.")
     @PostMapping("/teams/{teamId}/members/bulk")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<TeamDtos.TeamMemberBulkAddResponse>> bulkAddMembers(
+public ResponseEntity<?> bulkAddMembers(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId,
             @RequestBody TeamDtos.TeamMemberBulkAddRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -319,7 +309,7 @@ public class TeamController {
             TeamDtos.TeamMemberBulkAddResponse response = teamService.bulkAddMembers(teamId, request.getEmployeeIds(), currentUser);
             return ResponseEntity.ok(ApiResponse.success("Bulk member addition processed", response));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_007"));
         }
     }
@@ -327,7 +317,7 @@ public class TeamController {
     // 12. Remove Employee from Team
     @Operation(summary = "Remove Employee from Team", description = "Removes an employee from a team (unless employee is current Team Lead).")
     @DeleteMapping("/teams/{teamId}/members/{employeeId}")
-    public ResponseEntity<Object> removeMember(
+    public ResponseEntity<?> removeMember(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId,
             @PathVariable("employeeId") Long employeeId) {
@@ -354,14 +344,13 @@ public class TeamController {
     // 13. Get Teams by Department
     @Operation(summary = "Get Teams by Department", description = "Retrieves teams belonging to a specific department.")
     @GetMapping("/departments/{departmentId}/teams")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<List<TeamDtos.TeamResponseDto>>> getTeamsByDepartment(
+public ResponseEntity<?> getTeamsByDepartment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("departmentId") Long departmentId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -369,7 +358,7 @@ public class TeamController {
             List<TeamDtos.TeamResponseDto> teams = teamService.getTeamsByDepartment(departmentId, currentUser);
             return ResponseEntity.ok(ApiResponse.success("Department teams retrieved successfully", teams));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "DEP_404"));
         }
     }
@@ -377,14 +366,13 @@ public class TeamController {
     // 14. Get Team Audit Logs
     @Operation(summary = "Get Team Audit Logs", description = "Retrieves audit history log of changes for a specific team.")
     @GetMapping("/teams/{teamId}/audit-logs")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<List<TeamAuditLog>>> getAuditLogs(
+public ResponseEntity<?> getAuditLogs(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("teamId") Long teamId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -392,7 +380,7 @@ public class TeamController {
             List<TeamAuditLog> logs = teamService.getAuditLogs(teamId, currentUser);
             return ResponseEntity.ok(ApiResponse.success("Team audit logs retrieved successfully", logs));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "TEAM_404"));
         }
     }

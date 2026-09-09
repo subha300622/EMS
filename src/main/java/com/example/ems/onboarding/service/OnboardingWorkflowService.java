@@ -27,6 +27,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.ems.security.context.TenantContext;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
 
 @Service
 public class OnboardingWorkflowService {
@@ -107,7 +111,7 @@ public class OnboardingWorkflowService {
             LocalDate joiningFrom, LocalDate joiningTo, int page, int limit) {
         List<Onboarding> all = onboardingRepository.findAll();
 
-        java.util.stream.Stream<Onboarding> stream = all.stream();
+        Stream<Onboarding> stream = all.stream();
 
         if (status != null && !status.isBlank()) {
             if ("pre-joining".equalsIgnoreCase(status)) {
@@ -177,7 +181,7 @@ public class OnboardingWorkflowService {
                     e.setDesignation(request.getDesignation());
                     e.setEmploymentType(request.getEmploymentType());
                     e.setStatus("ACTIVE");
-                    Long orgId = com.example.ems.security.context.TenantContext.getOrganizationId();
+                    Long orgId = TenantContext.getOrganizationId();
                     if (orgId != null) {
                         organizationRepository.findById(orgId).ifPresent(e::setOrganization);
                     } else {
@@ -374,7 +378,7 @@ public class OnboardingWorkflowService {
     }
 
     @Transactional
-    public java.util.Map<String, Object> assignTemplate(Long onboardingId, OnboardingAssignTemplateRequest request) {
+    public Map<String, Object> assignTemplate(Long onboardingId, OnboardingAssignTemplateRequest request) {
         Onboarding onboarding = onboardingRepository.findById(onboardingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Onboarding not found with ID: " + onboardingId));
 
@@ -463,7 +467,7 @@ public class OnboardingWorkflowService {
 
         onboardingRepository.save(onboarding);
 
-        java.util.Map<String, Object> response = new java.util.HashMap<>();
+        Map<String, Object> response = new HashMap<>();
         response.put("onboardingId", "onb-" + onboarding.getId());
         response.put("assignedTemplateId", template.getTemplateCode());
         response.put("phasesCreated", phasesCreated);

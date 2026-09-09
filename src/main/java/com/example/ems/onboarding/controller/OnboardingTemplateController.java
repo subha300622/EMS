@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/onboarding/templates")
@@ -34,13 +35,13 @@ public class OnboardingTemplateController {
 
     @GetMapping
     @Operation(summary = "Get Onboarding Templates List")
-    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> getTemplatesList(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getTemplatesList(
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit,
             @RequestParam(required = false) String search) {
-        java.util.Map<String, Object> response = templateService.getTemplatesList(department, status, page, limit, search);
+        Map<String, Object> response = templateService.getTemplatesList(department, status, page, limit, search);
         return ResponseEntity.ok(ApiResponse.success("Templates retrieved successfully", response));
     }
 
@@ -73,9 +74,9 @@ public class OnboardingTemplateController {
 
     @DeleteMapping("/{templateId}")
     @Operation(summary = "Delete Onboarding Template")
-    public ResponseEntity<ApiResponse<java.util.Map<String, Object>>> deleteTemplate(
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteTemplate(
             @PathVariable String templateId) {
-        java.util.Map<String, Object> result = templateService.deleteTemplate(templateId);
+        Map<String, Object> result = templateService.deleteTemplate(templateId);
         String msg = "deleted".equals(result.get("status")) ? 
                 "Template deleted successfully" : "Template archived because it is currently in use";
         return ResponseEntity.ok(ApiResponse.success(msg, result));

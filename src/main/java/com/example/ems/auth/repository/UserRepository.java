@@ -6,12 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
+import java.util.List;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     User findByWorkEmailAndPassword(String workEmail, String password);
 
-    java.util.Optional<User> findByUserId(String userId);
+    Optional<User> findByUserId(String userId);
 
     boolean existsByUserId(String userId);
 
@@ -23,17 +26,17 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     Optional<User> findByWorkEmail(String workEmail);
 
-    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE " +
+    @Query("SELECT u FROM User u WHERE " +
             "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.workEmail) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.department) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.employeeId) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.userId) LIKE LOWER(CONCAT('%', :query, '%'))")
-    java.util.List<User> searchUsers(@org.springframework.data.repository.query.Param("query") String query);
+    List<User> searchUsers(@Param("query") String query);
 
-    java.util.List<User> findByRoleId(Long roleId);
+    List<User> findByRoleId(Long roleId);
 
-    java.util.List<User> findByOrganizationId(Long organizationId);
+    List<User> findByOrganizationId(Long organizationId);
 
     long countByOrganizationId(Long organizationId);
 

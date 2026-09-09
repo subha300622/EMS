@@ -6,6 +6,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import jakarta.persistence.criteria.JoinType;
 
 @Component
 public class PaymentSpecification implements BaseRevenueSpecification<Payment> {
@@ -42,10 +43,10 @@ public class PaymentSpecification implements BaseRevenueSpecification<Payment> {
 
         if (filters.getCountry() != null && !filters.getCountry().trim().isEmpty()) {
             spec = spec.and((root, query, cb) -> {
-                var invoiceJoin = root.join("invoice", jakarta.persistence.criteria.JoinType.INNER);
-                var subJoin = invoiceJoin.join("subscription", jakarta.persistence.criteria.JoinType.INNER);
-                var orgJoin = subJoin.join("organization", jakarta.persistence.criteria.JoinType.INNER);
-                var addrJoin = orgJoin.join("address", jakarta.persistence.criteria.JoinType.INNER);
+                var invoiceJoin = root.join("invoice", JoinType.INNER);
+                var subJoin = invoiceJoin.join("subscription", JoinType.INNER);
+                var orgJoin = subJoin.join("organization", JoinType.INNER);
+                var addrJoin = orgJoin.join("address", JoinType.INNER);
                 return cb.equal(cb.lower(addrJoin.get("country")), filters.getCountry().trim().toLowerCase());
             });
         }

@@ -1,30 +1,66 @@
 package com.example.ems.reports.organization.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import java.util.Map;
 
+@Schema(description = "Detailed organization analytical report response")
 public class OrganizationReportDetail {
+    @Schema(description = "Organization Database ID", example = "1")
     private Long organizationId;
+
+    @Schema(description = "Organization Code", example = "ORG-1001")
     private String organizationCode;
+
+    @Schema(description = "Organization Name", example = "Acme Corp")
     private String organizationName;
+
+    @Schema(description = "Contact Email", example = "contact@acme.com")
     private String email;
+
+    @Schema(description = "Contact Phone", example = "+1-555-0199")
     private String phone;
+
+    @Schema(description = "Website URL", example = "https://acme.com")
     private String website;
+
+    @Schema(description = "Created Date", example = "2026-01-01")
     private String createdDate;
 
+    @Schema(description = "Subscription Plan Name", example = "ENTERPRISE")
     private String subscriptionPlan;
+
+    @Schema(description = "Subscription Status", example = "ACTIVE")
     private String status;
+
+    @Schema(description = "Subscription Start Date", example = "2026-01-01")
     private String subscriptionStartDate;
+
+    @Schema(description = "Subscription Expiry Date", example = "2027-01-01")
     private String subscriptionExpiryDate;
 
+    @Schema(description = "Total Users Count", example = "100")
     private long organizationUserCount;
+
+    @Schema(description = "Active Users Count", example = "85")
     private long activeUsers;
+
+    @Schema(description = "Departments Count", example = "8")
     private long departmentCount;
+
+    @Schema(description = "Roles Defined Count", example = "5")
     private long roleCount;
+
+    @Schema(description = "Storage Used in GB", example = "15.0")
     private double storageUsedGB;
+
+    @Schema(description = "Revenue Generated", example = "350.0")
     private double revenue;
 
+    @Schema(description = "Enabled Modules List", example = "[\"HR\", \"FINANCE\", \"ATTENDANCE\"]")
     private List<String> modulesEnabled;
+
+    @Schema(description = "Audit Summary Statistics")
     private Map<String, Object> auditSummary;
 
     public OrganizationReportDetail() {}

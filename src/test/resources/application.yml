@@ -33,6 +33,8 @@ spring:
       port: ${REDIS_PORT:6379}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    listener:
+      auto-startup: false
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -82,3 +84,9 @@ razorpay:
   key-secret: ${RAZORPAY_KEY_SECRET:dummy_secret}
   webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:webhook_secret}
   currency: INR
+
+logging:
+  level:
+    org.apache.kafka: ERROR
+    org.apache.kafka.clients.NetworkClient: OFF
+    org.springframework.kafka: ERROR

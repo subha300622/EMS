@@ -24,7 +24,7 @@ public class GoalEffortController {
 
     @Operation(summary = "Log Effort Hours", description = "Logs actual effort hours for a goal")
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> logEffort(
+    public ResponseEntity<ApiResponse<GoalEffort>> logEffort(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalEffortRequest request) {
         GoalEffort entry = effortService.logEffort(goalId, request, 1L, "User", "EMPLOYEE");
@@ -33,14 +33,14 @@ public class GoalEffortController {
 
     @Operation(summary = "Get Effort Entries", description = "Lists effort log entries for a goal")
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getEffortEntries(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<List<GoalEffort>>> getEffortEntries(@PathVariable("goalId") Long goalId) {
         List<GoalEffort> entries = effortService.getEffortEntries(goalId);
         return ResponseEntity.ok(ApiResponse.success("Effort entries retrieved successfully", entries));
     }
 
     @Operation(summary = "Get Effort Entry by ID", description = "Retrieves a specific effort log entry")
     @GetMapping("/{effortId}")
-    public ResponseEntity<ApiResponse<Object>> getEffortById(
+    public ResponseEntity<ApiResponse<GoalEffort>> getEffortById(
             @PathVariable("goalId") Long goalId,
             @PathVariable("effortId") Long effortId) {
         GoalEffort entry = effortService.getEffortById(effortId);
@@ -49,7 +49,7 @@ public class GoalEffortController {
 
     @Operation(summary = "Update Effort Entry", description = "Updates an existing effort log entry")
     @PutMapping("/{effortId}")
-    public ResponseEntity<ApiResponse<Object>> updateEffort(
+    public ResponseEntity<ApiResponse<GoalEffort>> updateEffort(
             @PathVariable("goalId") Long goalId,
             @PathVariable("effortId") Long effortId,
             @RequestBody GoalEffortRequest request) {
@@ -59,7 +59,7 @@ public class GoalEffortController {
 
     @Operation(summary = "Delete Effort Entry", description = "Deletes an effort log entry")
     @DeleteMapping("/{effortId}")
-    public ResponseEntity<ApiResponse<Object>> deleteEffort(
+    public ResponseEntity<ApiResponse<Void>> deleteEffort(
             @PathVariable("goalId") Long goalId,
             @PathVariable("effortId") Long effortId) {
         effortService.deleteEffort(effortId, 1L, "User", "EMPLOYEE");

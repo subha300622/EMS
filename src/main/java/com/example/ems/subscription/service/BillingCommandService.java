@@ -11,6 +11,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import com.example.ems.subscription.exception.InvalidStateTransitionException;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.transaction.TransactionSystemException;
 
 /**
  * Orchestrator acting as the single gatekeeper entry point for all execution flows (initial handlers and retries).
@@ -80,7 +83,7 @@ public class BillingCommandService {
     }
 
     private boolean isTransientFailure(Exception e) {
-        if (e instanceof com.example.ems.subscription.exception.InvalidStateTransitionException) {
+        if (e instanceof InvalidStateTransitionException) {
             return false; // Permanent FSM transition failure
         }
         if (e instanceof IllegalArgumentException) {
@@ -94,7 +97,7 @@ public class BillingCommandService {
         }
         
         // Treat database connection or query timeouts as transient
-        if (e instanceof org.springframework.dao.TransientDataAccessException || e instanceof org.springframework.transaction.TransactionSystemException) {
+        if (e instanceof TransientDataAccessException || e instanceof TransactionSystemException) {
             return true;
         }
         

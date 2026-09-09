@@ -9,6 +9,10 @@ import com.example.ems.common.exception.ResourceNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.ems.reminder.event.ReminderCreatedEvent;
+import com.example.ems.reminder.event.ReminderDeletedEvent;
+import com.example.ems.reminder.event.ReminderUpdatedEvent;
+import org.springframework.context.ApplicationEventPublisher;
 
 /**
  * Business-logic layer for Reminders.
@@ -34,7 +38,7 @@ public class ReminderService {
     private ReminderCacheService cacheService;
 
     @Autowired
-    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private ApplicationEventPublisher eventPublisher;
 
     // ── READ ─────────────────────────────────────────────────────────────────
 
@@ -83,7 +87,7 @@ public class ReminderService {
         ReminderResponse response = toResponse(saved);
 
         // Publish event for transaction-aware cache eviction
-        eventPublisher.publishEvent(new com.example.ems.reminder.event.ReminderCreatedEvent(this, saved));
+        eventPublisher.publishEvent(new ReminderCreatedEvent(this, saved));
         return response;
     }
 
@@ -106,7 +110,7 @@ public class ReminderService {
         ReminderResponse response = toResponse(saved);
 
         // Publish event for transaction-aware cache eviction
-        eventPublisher.publishEvent(new com.example.ems.reminder.event.ReminderUpdatedEvent(this, saved));
+        eventPublisher.publishEvent(new ReminderUpdatedEvent(this, saved));
         return response;
     }
 
@@ -123,7 +127,7 @@ public class ReminderService {
         repository.deleteById(id);
 
         // Publish event for transaction-aware cache eviction
-        eventPublisher.publishEvent(new com.example.ems.reminder.event.ReminderDeletedEvent(this, reminder));
+        eventPublisher.publishEvent(new ReminderDeletedEvent(this, reminder));
     }
 
     // ── Mapper ───────────────────────────────────────────────────────────────

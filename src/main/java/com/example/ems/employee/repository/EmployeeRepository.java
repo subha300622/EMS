@@ -5,6 +5,7 @@ import com.example.ems.employee.entity.Employee;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import java.util.Optional;
+import java.util.List;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSpecificationExecutor<Employee> {
 
@@ -18,9 +19,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     Optional<Employee> findByFullName(String fullName);
 
-    java.util.List<Employee> findByDepartment(String department);
+    List<Employee> findByDepartment(String department);
 
-    java.util.List<Employee> findByManagerId(Long managerId);
+    List<Employee> findByManagerId(Long managerId);
 
     long countByManagerId(Long managerId);
 
@@ -36,13 +37,13 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>, JpaSp
 
     Optional<Employee> findByEmailAndOrganizationId(String email, Long organizationId);
 
-    java.util.List<Employee> findByOrganizationId(Long organizationId);
+    List<Employee> findByOrganizationId(Long organizationId);
 
-    java.util.List<Employee> findByOrganizationIdAndStatus(Long organizationId, String status);
+    List<Employee> findByOrganizationIdAndStatus(Long organizationId, String status);
 
-    java.util.List<Employee> findByOrganizationIdAndDepartment(Long organizationId, String department);
+    List<Employee> findByOrganizationIdAndDepartment(Long organizationId, String department);
 
-    java.util.List<Employee> findByOrganizationIdAndManagerId(Long organizationId, Long managerId);
+    List<Employee> findByOrganizationIdAndManagerId(Long organizationId, Long managerId);
 
     boolean existsByEmailAndOrganizationId(String email, Long organizationId);
 

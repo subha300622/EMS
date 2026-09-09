@@ -1,31 +1,80 @@
 package com.example.ems.reports.revenue.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
+@Schema(description = "Revenue KPI summary metrics response")
 public class RevenueSummaryResponse {
+    @Schema(description = "Total Gross Revenue", example = "100000.00")
     private BigDecimal totalRevenue = BigDecimal.ZERO;
+
+    @Schema(description = "Net Revenue", example = "95000.00")
     private BigDecimal netRevenue = BigDecimal.ZERO;
+
+    @Schema(description = "Collected Cash Revenue", example = "92000.00")
     private BigDecimal collectedRevenue = BigDecimal.ZERO;
+
+    @Schema(description = "Pending / Unpaid Revenue", example = "8000.00")
     private BigDecimal pendingRevenue = BigDecimal.ZERO;
+
+    @Schema(description = "Failed Payments Count", example = "2")
     private Long failedPayments = 0L;
+
+    @Schema(description = "Total Refund Amount", example = "3000.00")
     private BigDecimal refundAmount = BigDecimal.ZERO;
+
+    @Schema(description = "Taxes Collected", example = "18000.00")
     private BigDecimal taxesCollected = BigDecimal.ZERO;
+
+    @Schema(description = "Discounts Applied", example = "5000.00")
     private BigDecimal discountAmount = BigDecimal.ZERO;
+
+    @Schema(description = "Monthly Recurring Revenue (MRR)", example = "8500.00")
     private BigDecimal mrr = BigDecimal.ZERO;
+
+    @Schema(description = "Annual Recurring Revenue (ARR)", example = "102000.00")
     private BigDecimal arr = BigDecimal.ZERO;
+
+    @Schema(description = "Average Revenue Per User (ARPU)", example = "24.50")
     private BigDecimal arpu = BigDecimal.ZERO;
+
+    @Schema(description = "Average Revenue Per Account (ARPA)", example = "2040.00")
     private BigDecimal arpa = BigDecimal.ZERO;
+
+    @Schema(description = "Customer Lifetime Value (LTV)", example = "12500.00")
     private BigDecimal ltv = BigDecimal.ZERO;
+
+    @Schema(description = "Month-over-month revenue growth percentage", example = "8.5")
     private Double revenueGrowthPercent = 0.0;
+
+    @Schema(description = "Refund Rate Percentage", example = "2.1")
     private Double refundRatePercent = 0.0;
+
+    @Schema(description = "Collection Rate Percentage", example = "96.4")
     private Double collectionRatePercent = 0.0;
+
+    @Schema(description = "Discount Impact Percentage", example = "4.2")
     private Double discountImpactPercent = 0.0;
+
+    @Schema(description = "Tax Impact Percentage", example = "18.0")
     private Double taxImpactPercent = 0.0;
+
+    @Schema(description = "Average Invoice Value", example = "1500.00")
     private BigDecimal averageInvoiceValue = BigDecimal.ZERO;
+
+    @Schema(description = "Average Payment Value", example = "1500.00")
     private BigDecimal averagePaymentValue = BigDecimal.ZERO;
+
+    @Schema(description = "Forecasted Revenue for Next Period", example = "110000.00")
     private BigDecimal forecastRevenue = BigDecimal.ZERO;
+
+    @Schema(description = "Net Retention Rate (NRR)", example = "112.0")
     private Double nrr = 0.0;
+
+    @Schema(description = "Gross Retention Rate (GRR)", example = "94.5")
     private Double grr = 0.0;
+
+    @Schema(description = "Churn Rate Percentage", example = "1.8")
     private Double churnRate = 0.0;
 
     public RevenueSummaryResponse() {}

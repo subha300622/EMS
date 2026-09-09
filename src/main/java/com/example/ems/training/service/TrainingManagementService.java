@@ -24,6 +24,8 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.employee.entity.Department;
+import com.example.ems.employee.entity.Team;
 
 @Service
 public class TrainingManagementService {
@@ -620,7 +622,7 @@ public class TrainingManagementService {
 
         if (AssignmentTargetType.DEPARTMENT.equals(targetType)) {
             Long deptId = tryParseLong(idStr);
-            String deptName = deptId != null ? departmentRepository.findById(deptId).map(com.example.ems.employee.entity.Department::getName).orElse(idStr) : idStr;
+            String deptName = deptId != null ? departmentRepository.findById(deptId).map(Department::getName).orElse(idStr) : idStr;
             List<Employee> list = employeeRepository.findByOrganizationId(orgId).stream()
                     .filter(e -> e.getDepartment() != null && e.getDepartment().equalsIgnoreCase(deptName))
                     .toList();
@@ -700,7 +702,7 @@ public class TrainingManagementService {
 
     public DepartmentProgressResponse getDepartmentProgress(Long departmentId, User currentUser) {
         Long orgId = resolveOrganizationId(currentUser);
-        com.example.ems.employee.entity.Department dept = departmentRepository.findById(departmentId)
+        Department dept = departmentRepository.findById(departmentId)
                 .filter(d -> d.getOrganization() != null && d.getOrganization().getId().equals(orgId))
                 .orElseThrow(() -> new IllegalArgumentException("Department not found with ID: " + departmentId));
 
@@ -737,7 +739,7 @@ public class TrainingManagementService {
 
     public TeamProgressResponse getTeamProgress(Long teamId, User currentUser) {
         Long orgId = resolveOrganizationId(currentUser);
-        com.example.ems.employee.entity.Team team = teamRepository.findByIdAndOrganizationIdAndDeletedFalse(teamId, orgId)
+        Team team = teamRepository.findByIdAndOrganizationIdAndDeletedFalse(teamId, orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Team not found with ID: " + teamId));
 
         List<Employee> teamEmployees = employeeRepository.findByOrganizationId(orgId).stream()

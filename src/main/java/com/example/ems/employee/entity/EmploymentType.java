@@ -3,6 +3,7 @@ package com.example.ems.employee.entity;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import com.example.ems.organization.entity.Organization;
 
 @Entity
 @Table(name = "employment_types")
@@ -14,7 +15,7 @@ public class EmploymentType {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
-    private com.example.ems.organization.entity.Organization organization;
+    private Organization organization;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "job_level_id", nullable = false)
@@ -65,8 +66,8 @@ public class EmploymentType {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public com.example.ems.organization.entity.Organization getOrganization() { return organization; }
-    public void setOrganization(com.example.ems.organization.entity.Organization organization) { this.organization = organization; }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 
     public JobLevel getJobLevel() { return jobLevel; }
     public void setJobLevel(JobLevel jobLevel) { this.jobLevel = jobLevel; }

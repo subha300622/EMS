@@ -8,6 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.example.ems.auth.dto.PermissionCatalogResponseDto;
+import com.example.ems.auth.dto.PermissionGroupDto;
+import com.example.ems.auth.dto.PermissionResponse;
+import com.example.ems.auth.entity.PermissionGroup;
+import com.example.ems.auth.repository.PermissionGroupRepository;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class PermissionService {
@@ -29,11 +38,11 @@ public class PermissionService {
         return permissionRepository.findAll();
     }
 
-    public java.util.Optional<Permission> getPermissionById(Long id) {
+    public Optional<Permission> getPermissionById(Long id) {
         return permissionRepository.findById(id);
     }
 
-    public java.util.Optional<Permission> updatePermission(Long id, PermissionRequest request) {
+    public Optional<Permission> updatePermission(Long id, PermissionRequest request) {
         return permissionRepository.findById(id).map(permission -> {
             if (!permission.getName().equalsIgnoreCase(request.getName()) && permissionRepository.existsByName(request.getName())) {
                 throw new IllegalArgumentException("Permission with name '" + request.getName() + "' already exists");
@@ -57,20 +66,20 @@ public class PermissionService {
     }
 
     @Autowired
-    private com.example.ems.auth.repository.PermissionGroupRepository permissionGroupRepository;
+    private PermissionGroupRepository permissionGroupRepository;
 
-    public com.example.ems.auth.dto.PermissionCatalogResponseDto getPermissionCatalog() {
-        List<com.example.ems.auth.entity.PermissionGroup> groups = permissionGroupRepository.findAll();
-        List<com.example.ems.auth.dto.PermissionGroupDto> groupDtos = new java.util.ArrayList<>();
-        java.util.Set<Long> groupedPermissionIds = new java.util.HashSet<>();
+    public PermissionCatalogResponseDto getPermissionCatalog() {
+        List<PermissionGroup> groups = permissionGroupRepository.findAll();
+        List<PermissionGroupDto> groupDtos = new ArrayList<>();
+        Set<Long> groupedPermissionIds = new HashSet<>();
 
-        for (com.example.ems.auth.entity.PermissionGroup group : groups) {
-            List<com.example.ems.auth.dto.PermissionResponse> permDtos = new java.util.ArrayList<>();
+        for (PermissionGroup group : groups) {
+            List<PermissionResponse> permDtos = new ArrayList<>();
             for (Permission p : group.getPermissions()) {
                 groupedPermissionIds.add(p.getId());
-                permDtos.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+                permDtos.add(new PermissionResponse(p.getId(), p.getName(), p.getDescription()));
             }
-            groupDtos.add(new com.example.ems.auth.dto.PermissionGroupDto(
+            groupDtos.add(new PermissionGroupDto(
                 group.getId(),
                 group.getCode(),
                 group.getName(),
@@ -79,13 +88,13 @@ public class PermissionService {
             ));
         }
 
-        List<com.example.ems.auth.dto.PermissionResponse> standalonePerms = new java.util.ArrayList<>();
+        List<PermissionResponse> standalonePerms = new ArrayList<>();
         for (Permission p : permissionRepository.findAll()) {
             if (!groupedPermissionIds.contains(p.getId())) {
-                standalonePerms.add(new com.example.ems.auth.dto.PermissionResponse(p.getId(), p.getName(), p.getDescription()));
+                standalonePerms.add(new PermissionResponse(p.getId(), p.getName(), p.getDescription()));
             }
         }
 
-        return new com.example.ems.auth.dto.PermissionCatalogResponseDto(groupDtos, standalonePerms);
+        return new PermissionCatalogResponseDto(groupDtos, standalonePerms);
     }
 }

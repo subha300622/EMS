@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
+import jakarta.validation.Valid;
 
 /**
  * Developer-only test API to verify the DomainEventPublisher -> Outbox -> Scheduler -> Kafka -> Consumer pipeline.
@@ -45,7 +46,7 @@ public class OutboxTestController {
      */
     @PostMapping("/outbox")
     @Transactional
-    public ResponseEntity<Object> publishTestEvent(@RequestBody(required = false) @jakarta.validation.Valid PublishTestEventRequest body) {
+    public ResponseEntity<?> publishTestEvent(@RequestBody(required = false) @Valid PublishTestEventRequest body) {
         String email = securityContextFacade.getEmail();
         if (email == null || !roleService.isSuperAdmin(email)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)

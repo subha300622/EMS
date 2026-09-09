@@ -51,7 +51,7 @@ public class TrainingLibraryController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createResource(
+public ResponseEntity<?> createResource(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody LibraryResourceCreateRequest request) {
         User user = resolveUser(authHeader);
@@ -65,7 +65,7 @@ public class TrainingLibraryController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getResources(
+public ResponseEntity<?> getResources(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String technology,
@@ -77,7 +77,7 @@ public class TrainingLibraryController {
     }
 
     @PutMapping("/{resourceId}")
-    public ResponseEntity<?> updateResource(
+public ResponseEntity<?> updateResource(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long resourceId,
             @Valid @RequestBody LibraryResourceCreateRequest request) {
@@ -92,7 +92,7 @@ public class TrainingLibraryController {
     }
 
     @DeleteMapping("/{resourceId}")
-    public ResponseEntity<?> deleteResource(
+public ResponseEntity<?> deleteResource(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long resourceId) {
         User user = resolveUser(authHeader);

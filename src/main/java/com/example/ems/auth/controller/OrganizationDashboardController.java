@@ -8,7 +8,6 @@ import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -53,18 +52,18 @@ public class OrganizationDashboardController {
 
     @GetMapping("/dashboard")
     @Operation(summary = "Get Organization Dashboard Summary")
-    public ResponseEntity<?> getDashboard(
+    public ResponseEntity<ApiResponse<OrgDashboardResponse>> getDashboard(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User admin = resolveOrgAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
         }
 
         Long orgId = admin.getOrganization() != null ? admin.getOrganization().getId() : null;
         if (orgId == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("User does not belong to any organization", "AUTH_017"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("User does not belong to any organization", "AUTH_017"));
         }
 
         long userCount = userRepository.countByOrganizationId(orgId);
@@ -89,18 +88,18 @@ public class OrganizationDashboardController {
 
     @GetMapping("/role-stats")
     @Operation(summary = "Get user and permission usage metrics per role for caller's organization")
-    public ResponseEntity<?> getRoleStats(
+    public ResponseEntity<ApiResponse<List<RoleStatsResponse>>> getRoleStats(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User admin = resolveOrgAdmin(authHeader);
         if (admin == null) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
         }
 
         Long orgId = admin.getOrganization() != null ? admin.getOrganization().getId() : null;
         if (orgId == null) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("User does not belong to any organization", "AUTH_017"));
+            return ResponseEntity.badRequest().body(ApiResponse.error("User does not belong to any organization", "AUTH_017"));
         }
 
         List<RoleStatsResponse> stats = roleService.getRoleStats(orgId);

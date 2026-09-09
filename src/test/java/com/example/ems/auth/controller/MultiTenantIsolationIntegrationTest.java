@@ -36,6 +36,7 @@ import java.util.List;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.HashSet;
 
 @SpringBootTest
 @Transactional
@@ -128,7 +129,7 @@ public class MultiTenantIsolationIntegrationTest {
                                         p.setDescription("Manage Users");
                                         return permissionRepository.save(p);
                                 });
-                adminRoleA.setPermissions(new java.util.HashSet<>(List.of(userManage)));
+                adminRoleA.setPermissions(new HashSet<>(List.of(userManage)));
                 adminRoleA = roleRepository.save(adminRoleA);
 
                 // 4. Create Admin A User

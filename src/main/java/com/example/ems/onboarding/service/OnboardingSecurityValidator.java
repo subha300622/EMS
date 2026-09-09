@@ -10,6 +10,7 @@ import com.example.ems.security.context.SecurityContextFacade;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import com.example.ems.security.context.TenantContext;
 
 @Service
 public class OnboardingSecurityValidator {
@@ -115,7 +116,7 @@ public class OnboardingSecurityValidator {
         }
 
         // Check organization context via TenantContext thread-local
-        Long activeOrgId = com.example.ems.security.context.TenantContext.getOrganizationId();
+        Long activeOrgId = TenantContext.getOrganizationId();
         if (activeOrgId == null && user.getOrganization() != null) {
             activeOrgId = user.getOrganization().getId();
         }

@@ -26,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.util.Optional;
+import com.example.ems.security.service.JwtService;
 
 @RestController
 @RequestMapping("/api/files")
@@ -52,7 +53,7 @@ public class FileController {
     private FileMetadataRepository fileMetadataRepository;
 
     @Autowired
-    private com.example.ems.security.service.JwtService jwtService;
+    private JwtService jwtService;
 
     private ResponseEntity<Object> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -80,7 +81,7 @@ public class FileController {
 
     @Operation(summary = "Upload Profile Image", description = "Uploads a profile image for the authenticated user and replaces any previous profile picture.")
     @PostMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Object> uploadProfileImage(
+    public ResponseEntity<?> uploadProfileImage(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam("file") MultipartFile file) {
         User user = getAuthenticatedUser(authHeader);
@@ -101,7 +102,7 @@ public class FileController {
 
     @Operation(summary = "Upload Document", description = "Uploads an HR document or attendance proof for the authenticated user.")
     @PostMapping(value = "/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Object> uploadDocument(
+    public ResponseEntity<?> uploadDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "fileType", defaultValue = "DOCUMENT") String fileType) {
@@ -123,7 +124,7 @@ public class FileController {
 
     @Operation(summary = "Download File (Private Streaming)", description = "Performs RBAC access check on the requested file and streams the private byte content directly to the requester.")
     @GetMapping("/{fileId}/download")
-    public ResponseEntity<Object> downloadFile(
+    public ResponseEntity<?> downloadFile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("fileId") Long fileId) {
         User user = getAuthenticatedUser(authHeader);

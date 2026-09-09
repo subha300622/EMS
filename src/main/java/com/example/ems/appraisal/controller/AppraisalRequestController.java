@@ -8,7 +8,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -68,16 +67,16 @@ public class AppraisalRequestController {
 
     @Operation(summary = "Create Draft Appraisal Request")
     @PostMapping
-    public ResponseEntity<?> createDraftRequest(
+    public ResponseEntity<ApiResponse<AppraisalRequestResponseDto>> createDraftRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody CreateEmployeeAppraisalRequestDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         Employee employee = resolveEmployee(user);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
         }
 
         AppraisalRequestResponseDto created = requestService.createDraftRequest(dto, employee);
@@ -86,16 +85,16 @@ public class AppraisalRequestController {
 
     @Operation(summary = "Submit Appraisal Request")
     @PostMapping("/{requestId}/submit")
-    public ResponseEntity<?> submitRequest(
+    public ResponseEntity<ApiResponse<AppraisalRequestResponseDto>> submitRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long requestId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         Employee employee = resolveEmployee(user);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
         }
 
         AppraisalRequestResponseDto submitted = requestService.submitRequest(requestId, employee);
@@ -104,15 +103,15 @@ public class AppraisalRequestController {
 
     @Operation(summary = "Get My Appraisal Requests")
     @GetMapping("/my")
-    public ResponseEntity<?> getMyRequests(
+    public ResponseEntity<ApiResponse<List<AppraisalRequestResponseDto>>> getMyRequests(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         Employee employee = resolveEmployee(user);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
         }
 
         List<AppraisalRequestResponseDto> myRequests = requestService.getMyRequests(employee);
@@ -121,12 +120,12 @@ public class AppraisalRequestController {
 
     @Operation(summary = "Get Appraisal Request by ID")
     @GetMapping("/{requestId}")
-    public ResponseEntity<?> getRequestById(
+    public ResponseEntity<ApiResponse<AppraisalRequestResponseDto>> getRequestById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long requestId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         AppraisalRequestResponseDto request = requestService.getRequestById(requestId);
@@ -135,7 +134,7 @@ public class AppraisalRequestController {
         boolean hasViewAll = hasPermission(user, "APPRAISAL_REQUEST_VIEW") || hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE");
 
         if (!isOwner && !hasViewAll) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: You do not have permission to view this request", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: You do not have permission to view this request", "AUTH_002"));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Appraisal request retrieved successfully", request));
@@ -143,17 +142,17 @@ public class AppraisalRequestController {
 
     @Operation(summary = "Withdraw Appraisal Request")
     @PostMapping("/{requestId}/withdraw")
-    public ResponseEntity<?> withdrawRequest(
+    public ResponseEntity<ApiResponse<AppraisalRequestResponseDto>> withdrawRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long requestId,
             @RequestBody(required = false) WithdrawAppraisalRequestDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         Employee employee = resolveEmployee(user);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
         }
 
         String reason = dto != null ? dto.getReason() : "Withdrawn by employee";
@@ -163,17 +162,17 @@ public class AppraisalRequestController {
 
     @Operation(summary = "Resubmit Appraisal Request with Additional Information")
     @PostMapping("/{requestId}/resubmit")
-    public ResponseEntity<?> resubmitRequest(
+    public ResponseEntity<ApiResponse<AppraisalRequestResponseDto>> resubmitRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long requestId,
             @RequestBody(required = false) Map<String, String> body) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         Employee employee = resolveEmployee(user);
         if (employee == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Employee profile not found for authenticated user", "AUTH_002"));
         }
 
         String additionalInfo = body != null ? body.get("additionalInformation") : null;
@@ -183,14 +182,14 @@ public class AppraisalRequestController {
 
     @Operation(summary = "Get All Organization Appraisal Requests")
     @GetMapping
-    public ResponseEntity<?> getAllRequests(
+    public ResponseEntity<ApiResponse<List<AppraisalRequestResponseDto>>> getAllRequests(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_REQUEST_VIEW") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_REQUEST_VIEW permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_REQUEST_VIEW permission", "AUTH_002"));
         }
 
         List<AppraisalRequestResponseDto> all = requestService.getAllRequests();

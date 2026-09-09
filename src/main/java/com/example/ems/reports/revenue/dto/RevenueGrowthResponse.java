@@ -1,11 +1,20 @@
 package com.example.ems.reports.revenue.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
+@Schema(description = "Revenue growth analysis response")
 public class RevenueGrowthResponse {
+    @Schema(description = "Time Period label", example = "2026-Q2")
     private String period;
+
+    @Schema(description = "Current Period Revenue", example = "85000.00")
     private BigDecimal currentRevenue;
+
+    @Schema(description = "Previous Period Revenue", example = "78000.00")
     private BigDecimal previousRevenue;
+
+    @Schema(description = "Growth Rate Percentage", example = "8.97")
     private Double growthRate;
 
     public RevenueGrowthResponse() {}

@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.math.BigDecimal;
 
 @Component("INVOICES_ExportStrategy")
 public class InvoiceExportStrategy extends AbstractRevenueExportStrategy {
@@ -40,7 +41,7 @@ public class InvoiceExportStrategy extends AbstractRevenueExportStrategy {
                 row.add(inv.getDueAt() != null ? inv.getDueAt().toString() : "N/A");
                 row.add(inv.getStatus() != null ? inv.getStatus().name() : "N/A");
 
-                java.math.BigDecimal subtotal = inv.getAmount().subtract(inv.getTax() != null ? inv.getTax() : java.math.BigDecimal.ZERO);
+                BigDecimal subtotal = inv.getAmount().subtract(inv.getTax() != null ? inv.getTax() : BigDecimal.ZERO);
                 row.add(formatBigDecimal(subtotal));
                 row.add(formatBigDecimal(inv.getTax()));
                 row.add(formatBigDecimal(inv.getDiscount()));

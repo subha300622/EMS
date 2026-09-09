@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import com.example.ems.auth.dto.AssignPermissionGroupsRequest;
+import com.example.ems.auth.dto.AssignPermissionsRequest;
+import com.example.ems.auth.dto.AssignRoleToUserRequest;
 
 @RestController
 @RequestMapping("/api/v1/roles")
@@ -58,7 +61,7 @@ public class CustomRoleController {
 
     @GetMapping
     @Operation(summary = "List organization custom roles", description = "Lists custom roles for the caller's organization context.")
-    public ResponseEntity<?> getOrganizationRoles(
+public ResponseEntity<?> getOrganizationRoles(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -76,7 +79,7 @@ public class CustomRoleController {
 
     @GetMapping("/{roleId}")
     @Operation(summary = "Get custom role by ID")
-    public ResponseEntity<?> getRoleById(
+public ResponseEntity<?> getRoleById(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId) {
 
@@ -92,7 +95,7 @@ public class CustomRoleController {
 
     @PostMapping
     @Operation(summary = "Create custom role", description = "Creates a new custom role scoped to caller's organization.")
-    public ResponseEntity<?> createCustomRole(
+public ResponseEntity<?> createCustomRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody RoleRequest request) {
 
@@ -112,7 +115,7 @@ public class CustomRoleController {
 
     @PutMapping("/{roleId}")
     @Operation(summary = "Update custom role")
-    public ResponseEntity<?> updateCustomRole(
+public ResponseEntity<?> updateCustomRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @Valid @RequestBody RoleRequest request) {
@@ -132,7 +135,7 @@ public class CustomRoleController {
 
     @DeleteMapping("/{roleId}")
     @Operation(summary = "Delete custom role")
-    public ResponseEntity<?> deleteCustomRole(
+public ResponseEntity<?> deleteCustomRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId) {
 
@@ -146,14 +149,14 @@ public class CustomRoleController {
         }
 
         roleService.deleteTenantRole(roleId);
-        return ResponseEntity.ok(ApiResponse.success("Custom role deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Custom role deleted successfully", null));
     }
 
     // ── Permissions Assignment to Role ──────────────────────────────────────────
 
     @GetMapping("/{roleId}/permissions")
     @Operation(summary = "Get role permissions")
-    public ResponseEntity<?> getRolePermissions(
+public ResponseEntity<?> getRolePermissions(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId) {
 
@@ -169,10 +172,10 @@ public class CustomRoleController {
 
     @PostMapping("/{roleId}/permissions")
     @Operation(summary = "Assign permissions to role")
-    public ResponseEntity<?> assignPermissionsToRole(
+public ResponseEntity<?> assignPermissionsToRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
-            @RequestBody @Valid com.example.ems.auth.dto.AssignPermissionsRequest request) {
+            @RequestBody @Valid AssignPermissionsRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -199,7 +202,7 @@ public class CustomRoleController {
 
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
     @Operation(summary = "Remove permission from role")
-    public ResponseEntity<?> removePermissionFromRole(
+public ResponseEntity<?> removePermissionFromRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @PathVariable Long permissionId) {
@@ -214,14 +217,14 @@ public class CustomRoleController {
         }
 
         roleService.revokePermissionFromRole(roleId, permissionId);
-        return ResponseEntity.ok(ApiResponse.success("Permission removed from role successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Permission removed from role successfully", null));
     }
 
     // ── Permission Group Assignment to Role ──────────────────────────────────────
 
     @GetMapping("/{roleId}/permission-groups")
     @Operation(summary = "Get role permission groups")
-    public ResponseEntity<?> getRolePermissionGroups(
+public ResponseEntity<?> getRolePermissionGroups(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId) {
 
@@ -237,10 +240,10 @@ public class CustomRoleController {
 
     @PostMapping("/{roleId}/permission-groups")
     @Operation(summary = "Assign permission groups to role")
-    public ResponseEntity<?> assignPermissionGroupsToRole(
+public ResponseEntity<?> assignPermissionGroupsToRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
-            @RequestBody @Valid com.example.ems.auth.dto.AssignPermissionGroupsRequest request) {
+            @RequestBody @Valid AssignPermissionGroupsRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -268,7 +271,7 @@ public class CustomRoleController {
 
     @DeleteMapping("/{roleId}/permission-groups/{groupId}")
     @Operation(summary = "Remove permission group from role")
-    public ResponseEntity<?> removePermissionGroupFromRole(
+public ResponseEntity<?> removePermissionGroupFromRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @PathVariable Long groupId) {
@@ -285,17 +288,17 @@ public class CustomRoleController {
         Role role = roleService.requireRoleOwnedByCurrentTenant(roleId);
 
         roleService.removePermissionGroupFromRole(role.getId(), groupId);
-        return ResponseEntity.ok(ApiResponse.success("Permission group removed from role successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Permission group removed from role successfully", null));
     }
 
     // ── User Role Assignment ───────────────────────────────────────────────────
 
     @PostMapping("/{roleId}/users")
     @Operation(summary = "Assign role to employee/user", description = "Assigns the specified role to an employee within caller's organization.")
-    public ResponseEntity<?> assignRoleToUser(
+public ResponseEntity<?> assignRoleToUser(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
-            @RequestBody @Valid com.example.ems.auth.dto.AssignRoleToUserRequest request) {
+            @RequestBody @Valid AssignRoleToUserRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -329,6 +332,6 @@ public class CustomRoleController {
             return ResponseEntity.badRequest().body(ErrorResponse.error("Could not assign role to user", "VAL_003"));
         }
 
-        return ResponseEntity.ok(ApiResponse.success("Role assigned to user successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Role assigned to user successfully", null));
     }
 }

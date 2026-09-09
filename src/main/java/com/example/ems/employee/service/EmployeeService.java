@@ -36,6 +36,21 @@ import com.example.ems.employee.repository.EmployeeRoleRepository;
 import com.example.ems.employee.dto.EmployeeRolesResponse;
 import com.example.ems.audit.repository.AuditLogRepository;
 import com.example.ems.auth.service.SessionService;
+import com.example.ems.appraisal.entity.Increment;
+import com.example.ems.audit.entity.AuditLog;
+import com.example.ems.employee.dto.AssignableRoleDto;
+import com.example.ems.employee.dto.ChangeEmployeeRoleRequest;
+import com.example.ems.employee.entity.Department;
+import com.example.ems.employee.entity.DepartmentTransfer;
+import com.example.ems.employee.entity.Designation;
+import com.example.ems.employee.event.EmployeeDeletedEvent;
+import com.example.ems.employee.event.EmployeeUpdatedEvent;
+import com.example.ems.employee.repository.DesignationRepository;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.stream.Collectors;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 @Service
 public class EmployeeService {
@@ -52,7 +67,7 @@ public class EmployeeService {
     private DepartmentRepository departmentRepository;
 
     @Autowired
-    private com.example.ems.employee.repository.DesignationRepository designationRepository;
+    private DesignationRepository designationRepository;
 
     @Autowired
     private DepartmentTransferRepository departmentTransferRepository;
@@ -95,7 +110,7 @@ public class EmployeeService {
     public User getAuthenticatedUser() {
         String email = securityContextFacade.getEmail();
         if (email == null || email.isBlank()) {
-            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.getName() != null && !auth.getName().isBlank()) {
                 email = auth.getName();
             }
@@ -362,7 +377,7 @@ public class EmployeeService {
         syncUserAccount(saved, request, org);
 
         // Validate roleIds and persist EmployeeRole records
-        List<Role> resolvedRoles = new java.util.ArrayList<>();
+        List<Role> resolvedRoles = new ArrayList<>();
         if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
             for (Object rObj : request.getRoleIds()) {
                 String rStr = String.valueOf(rObj);
@@ -428,7 +443,7 @@ public class EmployeeService {
         }
 
         try {
-            auditLogRepository.save(new com.example.ems.audit.entity.AuditLog(
+            auditLogRepository.save(new AuditLog(
                     String.valueOf(currentUser.getId()),
                     currentUser.getWorkEmail(),
                     "EMPLOYEE_CREATED",
@@ -535,7 +550,7 @@ public class EmployeeService {
         Employee saved = employeeRepository.save(employee);
         syncUserAccount(saved, request, org);
 
-        eventPublisher.publishEvent(new com.example.ems.employee.event.EmployeeUpdatedEvent(this, saved));
+        eventPublisher.publishEvent(new EmployeeUpdatedEvent(this, saved));
         return Optional.of(saved);
     }
 
@@ -552,7 +567,7 @@ public class EmployeeService {
         if (opt.isPresent()) {
             Employee employee = opt.get();
             employeeRepository.deleteById(id);
-            eventPublisher.publishEvent(new com.example.ems.employee.event.EmployeeDeletedEvent(this, employee));
+            eventPublisher.publishEvent(new EmployeeDeletedEvent(this, employee));
             return true;
         }
         return false;
@@ -614,7 +629,7 @@ public class EmployeeService {
                             || e.getEmail().toLowerCase().contains(q)
                             || (e.getDepartment() != null && e.getDepartment().toLowerCase().contains(q))
                             || (e.getLocation() != null && e.getLocation().toLowerCase().contains(q)))
-                    .collect(java.util.stream.Collectors.toList());
+                    .collect(Collectors.toList());
         });
     }
 
@@ -628,19 +643,19 @@ public class EmployeeService {
         return opt.map(employee -> {
             employee.setStatus(status);
             Employee saved = employeeRepository.save(employee);
-            eventPublisher.publishEvent(new com.example.ems.employee.event.EmployeeUpdatedEvent(this, saved));
+            eventPublisher.publishEvent(new EmployeeUpdatedEvent(this, saved));
             return saved;
         });
     }
 
-    public List<java.util.Map<String, Object>> getEmployeeTimeline(Long employeeId) {
+    public List<Map<String, Object>> getEmployeeTimeline(Long employeeId) {
         Employee employee = findEmployeeByTenant(String.valueOf(employeeId))
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
 
         return cacheService.getEmployeeTimeline(employee.getId(), () -> {
-            List<java.util.Map<String, Object>> timeline = new java.util.ArrayList<>();
+            List<Map<String, Object>> timeline = new ArrayList<>();
             if (employee.getJoiningDate() != null) {
-                java.util.Map<String, Object> joined = new java.util.LinkedHashMap<>();
+                Map<String, Object> joined = new LinkedHashMap<>();
                 joined.put("date", employee.getJoiningDate().toString());
                 joined.put("type", "JOINED");
                 joined.put("title", "Joined Company");
@@ -650,23 +665,23 @@ public class EmployeeService {
             }
 
             Long empOrgId = employee.getOrganization() != null ? employee.getOrganization().getId() : null;
-            List<com.example.ems.employee.entity.DepartmentTransfer> transfers = departmentTransferRepository
+            List<DepartmentTransfer> transfers = departmentTransferRepository
                     .findByEmployeeId(employee.getId());
-            for (com.example.ems.employee.entity.DepartmentTransfer transfer : transfers) {
+            for (DepartmentTransfer transfer : transfers) {
                 String fromName = "Unknown";
                 String toName = "Unknown";
                 if (transfer.getFromDepartmentId() != null) {
                     fromName = (empOrgId == null)
-                            ? departmentRepository.findById(transfer.getFromDepartmentId()).map(com.example.ems.employee.entity.Department::getName).orElse("Unknown")
-                            : departmentRepository.findByIdAndOrganizationId(transfer.getFromDepartmentId(), empOrgId).map(com.example.ems.employee.entity.Department::getName).orElse("Unknown");
+                            ? departmentRepository.findById(transfer.getFromDepartmentId()).map(Department::getName).orElse("Unknown")
+                            : departmentRepository.findByIdAndOrganizationId(transfer.getFromDepartmentId(), empOrgId).map(Department::getName).orElse("Unknown");
                 }
                 if (transfer.getToDepartmentId() != null) {
                     toName = (empOrgId == null)
-                            ? departmentRepository.findById(transfer.getToDepartmentId()).map(com.example.ems.employee.entity.Department::getName).orElse("Unknown")
-                            : departmentRepository.findByIdAndOrganizationId(transfer.getToDepartmentId(), empOrgId).map(com.example.ems.employee.entity.Department::getName).orElse("Unknown");
+                            ? departmentRepository.findById(transfer.getToDepartmentId()).map(Department::getName).orElse("Unknown")
+                            : departmentRepository.findByIdAndOrganizationId(transfer.getToDepartmentId(), empOrgId).map(Department::getName).orElse("Unknown");
                 }
 
-                java.util.Map<String, Object> event = new java.util.LinkedHashMap<>();
+                Map<String, Object> event = new LinkedHashMap<>();
                 event.put("date", transfer.getEffectiveDate() != null ? transfer.getEffectiveDate().toString()
                         : transfer.getTransferDate().toLocalDate().toString());
                 event.put("type", "DEPARTMENT_TRANSFER");
@@ -676,11 +691,11 @@ public class EmployeeService {
                 timeline.add(event);
             }
 
-            List<com.example.ems.appraisal.entity.Increment> increments = incrementRepository
+            List<Increment> increments = incrementRepository
                     .findByEmployeeId(employee.getId());
-            for (com.example.ems.appraisal.entity.Increment inc : increments) {
+            for (Increment inc : increments) {
                 if ("APPROVED".equalsIgnoreCase(inc.getStatus()) || "APPLIED".equalsIgnoreCase(inc.getStatus())) {
-                    java.util.Map<String, Object> event = new java.util.LinkedHashMap<>();
+                    Map<String, Object> event = new LinkedHashMap<>();
                     event.put("date", inc.getEffectiveDate() != null ? inc.getEffectiveDate().toString()
                             : inc.getCreatedAt().toLocalDate().toString());
                     event.put("type", "SALARY_REVISION");
@@ -698,7 +713,7 @@ public class EmployeeService {
 
     @Transactional
     public List<Employee> importEmployees(List<EmployeeRequest> requests) {
-        List<Employee> imported = new java.util.ArrayList<>();
+        List<Employee> imported = new ArrayList<>();
         for (EmployeeRequest req : requests) {
             imported.add(createEmployee(req));
         }
@@ -719,7 +734,7 @@ public class EmployeeService {
         List<EmployeeRole> activeRoles = employeeRoleRepository.findByEmployeeIdAndStatus(employee.getId(), "ACTIVE");
         List<EmployeeRolesResponse.EmployeeRoleDto> roleDtos = activeRoles.stream()
                 .map(er -> new EmployeeRolesResponse.EmployeeRoleDto(er.getRole().getId(), er.getRole().getName(), er.getStatus()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
 
         return new EmployeeRolesResponse(employee.getId(), roleDtos);
     }
@@ -759,7 +774,7 @@ public class EmployeeService {
         syncUserRole(employee, role);
 
         try {
-            auditLogRepository.save(new com.example.ems.audit.entity.AuditLog(
+            auditLogRepository.save(new AuditLog(
                     String.valueOf(currentUser.getId()),
                     currentUser.getWorkEmail(),
                     "ROLE_ASSIGNED",
@@ -789,7 +804,7 @@ public class EmployeeService {
             throw new IllegalArgumentException("Role IDs list cannot be empty.");
         }
 
-        List<Role> rolesToAssign = new java.util.ArrayList<>();
+        List<Role> rolesToAssign = new ArrayList<>();
         for (Long roleId : roleIds) {
             Role role = roleRepository.findById(roleId)
                     .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
@@ -823,7 +838,7 @@ public class EmployeeService {
         }
 
         try {
-            auditLogRepository.save(new com.example.ems.audit.entity.AuditLog(
+            auditLogRepository.save(new AuditLog(
                     String.valueOf(currentUser.getId()),
                     currentUser.getWorkEmail(),
                     "BULK_ROLES_ASSIGNED",
@@ -840,7 +855,7 @@ public class EmployeeService {
     }
 
     @Transactional
-    public EmployeeRolesResponse changeEmployeeRoles(Long employeeId, com.example.ems.employee.dto.ChangeEmployeeRoleRequest request, User currentUserOverride) {
+    public EmployeeRolesResponse changeEmployeeRoles(Long employeeId, ChangeEmployeeRoleRequest request, User currentUserOverride) {
         User currentUser = currentUserOverride != null ? currentUserOverride : getAuthenticatedUser();
         boolean platAdmin = isPlatformAdmin(currentUser);
         Organization org = platAdmin ? null : getAuthenticatedOrganization(currentUser);
@@ -853,7 +868,7 @@ public class EmployeeService {
             throw new IllegalArgumentException("Role IDs list cannot be empty.");
         }
 
-        List<Role> newRoles = new java.util.ArrayList<>();
+        List<Role> newRoles = new ArrayList<>();
         boolean containsSuperAdmin = false;
         for (Long rId : request.getRoleIds()) {
             Role role = roleRepository.findById(rId)
@@ -909,7 +924,7 @@ public class EmployeeService {
         }
 
         try {
-            auditLogRepository.save(new com.example.ems.audit.entity.AuditLog(
+            auditLogRepository.save(new AuditLog(
                     String.valueOf(currentUser.getId()),
                     currentUser.getWorkEmail(),
                     "ROLE_CHANGED",
@@ -958,7 +973,7 @@ public class EmployeeService {
         }
 
         try {
-            auditLogRepository.save(new com.example.ems.audit.entity.AuditLog(
+            auditLogRepository.save(new AuditLog(
                     String.valueOf(currentUser.getId()),
                     currentUser.getWorkEmail(),
                     "ROLE_REMOVED",
@@ -974,7 +989,7 @@ public class EmployeeService {
         return getEmployeeRoles(employeeId, currentUser);
     }
 
-    public List<com.example.ems.employee.dto.AssignableRoleDto> getAssignableRoles(User currentUserOverride) {
+    public List<AssignableRoleDto> getAssignableRoles(User currentUserOverride) {
         User currentUser = currentUserOverride != null ? currentUserOverride : getAuthenticatedUser();
         Long orgId = (currentUser != null && currentUser.getOrganization() != null) ? currentUser.getOrganization().getId() : null;
         List<Role> allRoles = roleRepository.findAll();
@@ -1003,9 +1018,9 @@ public class EmployeeService {
                     } else {
                         formattedName = r.getDescription() != null ? r.getDescription() : r.getName();
                     }
-                    return new com.example.ems.employee.dto.AssignableRoleDto(r.getId(), r.getName(), formattedName);
+                    return new AssignableRoleDto(r.getId(), r.getName(), formattedName);
                 })
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
     }
 
     public Optional<Employee> findByIdentifier(String identifier) {
@@ -1028,7 +1043,7 @@ public class EmployeeService {
         Employee emp = findEmployeeByTenant(identifier)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + identifier));
 
-        Map<String, Object> data = new java.util.LinkedHashMap<>();
+        Map<String, Object> data = new LinkedHashMap<>();
         data.put("employeeId", emp.getEmployeeId() != null ? emp.getEmployeeId() : "EMP" + emp.getId());
         data.put("id", emp.getId());
         data.put("organizationId", emp.getOrganization() != null ? emp.getOrganization().getId() : null);
@@ -1040,14 +1055,14 @@ public class EmployeeService {
         List<EmployeeRole> activeRoles = employeeRoleRepository.findByEmployeeIdAndStatus(emp.getId(), "ACTIVE");
         List<String> roleIds = activeRoles.stream()
                 .map(r -> String.valueOf(r.getRole().getId()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         List<Map<String, Object>> roleAssignments = activeRoles.stream().map(r -> {
-            Map<String, Object> m = new java.util.LinkedHashMap<>();
+            Map<String, Object> m = new LinkedHashMap<>();
             m.put("roleId", r.getRole().getId());
             m.put("roleName", r.getRole().getName());
             m.put("status", r.getStatus());
             return m;
-        }).collect(java.util.stream.Collectors.toList());
+        }).collect(Collectors.toList());
 
         data.put("roleIds", roleIds);
         data.put("roleAssignments", roleAssignments);
@@ -1055,12 +1070,12 @@ public class EmployeeService {
         Long deptId = null;
         if (emp.getDepartment() != null) {
             deptId = departmentRepository.findByName(emp.getDepartment())
-                    .map(com.example.ems.employee.entity.Department::getId).orElse(null);
+                    .map(Department::getId).orElse(null);
         }
         Long desigId = null;
         if (emp.getDesignation() != null) {
             desigId = designationRepository.findByDesignationIgnoreCase(emp.getDesignation())
-                    .map(com.example.ems.employee.entity.Designation::getId).orElse(null);
+                    .map(Designation::getId).orElse(null);
         }
 
         data.put("departmentId", deptId);
@@ -1070,13 +1085,13 @@ public class EmployeeService {
         data.put("managerId", emp.getManager() != null ? emp.getManager().getId() : null);
         data.put("locationId", null);
 
-        Map<String, Object> personalDetails = new java.util.LinkedHashMap<>();
+        Map<String, Object> personalDetails = new LinkedHashMap<>();
         personalDetails.put("nationality", emp.getNationality());
         personalDetails.put("maritalStatus", emp.getMaritalStatus());
         personalDetails.put("bloodGroup", emp.getBloodGroup());
         data.put("personalDetails", personalDetails);
 
-        Map<String, Object> contactDetails = new java.util.LinkedHashMap<>();
+        Map<String, Object> contactDetails = new LinkedHashMap<>();
         contactDetails.put("personalEmail", emp.getEmail());
         contactDetails.put("workMobile", emp.getWorkMobile());
         contactDetails.put("personalMobile", emp.getPersonalMobile());
@@ -1087,14 +1102,14 @@ public class EmployeeService {
         contactDetails.put("postalCode", null);
         data.put("contactDetails", contactDetails);
 
-        Map<String, Object> emergencyContact = new java.util.LinkedHashMap<>();
+        Map<String, Object> emergencyContact = new LinkedHashMap<>();
         emergencyContact.put("name", emp.getEmergencyContactName());
         emergencyContact.put("relationship", "EMERGENCY");
         emergencyContact.put("countryCode", "+91");
         emergencyContact.put("phone", emp.getEmergencyContactNumber() != null ? emp.getEmergencyContactNumber() : emp.getEmergencyContact());
         data.put("emergencyContact", emergencyContact);
 
-        Map<String, Object> bankDetails = new java.util.LinkedHashMap<>();
+        Map<String, Object> bankDetails = new LinkedHashMap<>();
         bankDetails.put("accountHolderName", emp.getFullName());
         bankDetails.put("accountNumber", null);
         bankDetails.put("bankName", null);
@@ -1173,7 +1188,7 @@ public class EmployeeService {
 
         Employee saved = employeeRepository.save(emp);
 
-        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        Map<String, Object> result = new LinkedHashMap<>();
         result.put("employeeId", saved.getEmployeeId() != null ? saved.getEmployeeId() : "EMP" + saved.getId());
         result.put("fullName", saved.getFullName());
         result.put("email", saved.getEmail());
@@ -1188,7 +1203,7 @@ public class EmployeeService {
         User user = userRepository.findByWorkEmail(emp.getEmail()).orElse(null);
         String userAccountStatus = user != null ? user.getStatus() : emp.getStatus();
 
-        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        Map<String, Object> result = new LinkedHashMap<>();
         result.put("employeeId", emp.getEmployeeId() != null ? emp.getEmployeeId() : "EMP" + emp.getId());
         result.put("status", emp.getStatus());
         result.put("employmentStatus", emp.getStatus());
@@ -1204,7 +1219,7 @@ public class EmployeeService {
         emp.setStatus(newStatus);
         Employee saved = employeeRepository.save(emp);
 
-        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        Map<String, Object> result = new LinkedHashMap<>();
         result.put("employeeId", saved.getEmployeeId() != null ? saved.getEmployeeId() : "EMP" + saved.getId());
         result.put("status", saved.getStatus());
         return result;
@@ -1249,7 +1264,7 @@ public class EmployeeService {
             }
         });
 
-        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        Map<String, Object> result = new LinkedHashMap<>();
         result.put("employeeId", emp.getEmployeeId() != null ? emp.getEmployeeId() : "EMP" + emp.getId());
         result.put("status", "DELETED");
         return result;

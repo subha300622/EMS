@@ -22,6 +22,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import com.example.ems.common.util.ClientIpResolver;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 @Transactional
@@ -145,10 +148,10 @@ public class EmployeeConversionService {
 
     private String getCurrentClientIp() {
         try {
-            org.springframework.web.context.request.ServletRequestAttributes attrs =
-                    (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+            ServletRequestAttributes attrs =
+                    (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
-                return com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+                return ClientIpResolver.getClientIp(attrs.getRequest());
             }
         } catch (Exception ignored) {}
         return "0.0.0.0";

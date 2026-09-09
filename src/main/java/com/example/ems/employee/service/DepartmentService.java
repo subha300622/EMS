@@ -24,6 +24,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.*;
+import com.example.ems.organization.entity.Organization;
+import com.example.ems.organization.repository.OrganizationRepository;
 
 @Service
 public class DepartmentService {
@@ -44,7 +46,7 @@ public class DepartmentService {
     private DepartmentAuditLogRepository departmentAuditLogRepository;
 
     @Autowired
-    private com.example.ems.organization.repository.OrganizationRepository organizationRepository;
+    private OrganizationRepository organizationRepository;
 
     @Transactional
     public Department createDepartment(DepartmentCreateRequest request, User currentUser) {
@@ -52,7 +54,7 @@ public class DepartmentService {
         if (orgId == null && currentUser != null && currentUser.getOrganization() != null) {
             orgId = currentUser.getOrganization().getId();
         }
-        com.example.ems.organization.entity.Organization userOrg = null;
+        Organization userOrg = null;
         if (orgId != null) {
             userOrg = organizationRepository.findById(orgId).orElse(null);
             if (departmentRepository.existsByNameAndOrganizationId(request.getName(), orgId)) {

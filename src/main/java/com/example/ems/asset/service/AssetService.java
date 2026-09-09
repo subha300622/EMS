@@ -24,6 +24,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.example.ems.asset.entity.AssetEventType;
 
 @Service
 public class AssetService {
@@ -90,7 +91,7 @@ public class AssetService {
         asset = assetRepository.save(asset);
 
         historyService.recordHistory(
-                organizationId, asset.getId(), com.example.ems.asset.entity.AssetEventType.ASSET_CREATED,
+                organizationId, asset.getId(), AssetEventType.ASSET_CREATED,
                 null, AssetStatus.AVAILABLE.name(),
                 null, null, null, location.getId(),
                 performedBy, null, "Asset created with code: " + code

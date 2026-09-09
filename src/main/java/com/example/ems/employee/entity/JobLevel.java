@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import com.example.ems.organization.entity.Organization;
 
 @Entity
 @Table(name = "job_levels")
@@ -16,7 +17,7 @@ public class JobLevel {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
-    private com.example.ems.organization.entity.Organization organization;
+    private Organization organization;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "designation_id", nullable = false)
@@ -70,8 +71,8 @@ public class JobLevel {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public com.example.ems.organization.entity.Organization getOrganization() { return organization; }
-    public void setOrganization(com.example.ems.organization.entity.Organization organization) { this.organization = organization; }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 
     public Designation getDesignation() { return designation; }
     public void setDesignation(Designation designation) { this.designation = designation; }

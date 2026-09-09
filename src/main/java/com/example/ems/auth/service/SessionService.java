@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.transaction.annotation.Propagation;
 
 @Service
 public class SessionService {
@@ -116,7 +117,7 @@ public class SessionService {
         return metadata;
     }
 
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SessionMetadata createSession(String userId, String email, String userAgent, String ipAddress) {
         String sessionId = UUID.randomUUID().toString();
         String refreshToken = UUID.randomUUID().toString();
@@ -168,7 +169,7 @@ public class SessionService {
         return null;
     }
 
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public SessionMetadata rotateRefreshToken(String oldRefreshToken) {
         Optional<UserSession> dbSessionOpt = databaseSessionStore.findByRefreshToken(oldRefreshToken);
         if (dbSessionOpt.isEmpty()) {
@@ -211,7 +212,7 @@ public class SessionService {
         return convertToMetadata(dbSession);
     }
 
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeSession(String refreshToken) {
         if (refreshToken == null) return;
 
@@ -223,7 +224,7 @@ public class SessionService {
             dbSession.setRevokedAt(LocalDateTime.now());
             dbSession.setRevocationEventId(UUID.randomUUID().toString());
             // Scramble refresh token so it cannot be matched/found by old value anymore
-            dbSession.setRefreshToken("REVOKED-" + java.util.UUID.randomUUID().toString());
+            dbSession.setRefreshToken("REVOKED-" + UUID.randomUUID().toString());
             databaseSessionStore.save(dbSession);
             // Evict from Redis cache after DB commit
             redisSessionCache.delete(dbSession.getSessionId());
@@ -233,7 +234,7 @@ public class SessionService {
         }
     }
 
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeSessionById(String userId, String sessionId) {
         if (sessionId == null) return;
 
@@ -245,7 +246,7 @@ public class SessionService {
             dbSession.setRevokedAt(LocalDateTime.now());
             dbSession.setRevocationEventId(UUID.randomUUID().toString());
             // Scramble refresh token so it cannot be matched/found by old value anymore
-            dbSession.setRefreshToken("REVOKED-" + java.util.UUID.randomUUID().toString());
+            dbSession.setRefreshToken("REVOKED-" + UUID.randomUUID().toString());
             databaseSessionStore.save(dbSession);
             // Evict from Redis cache after DB save
             redisSessionCache.delete(sessionId);
@@ -268,7 +269,7 @@ public class SessionService {
         return list;
     }
 
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void revokeAllSessions(String userId) {
         if (userId == null) return;
 
@@ -279,7 +280,7 @@ public class SessionService {
             dbSession.setRevokedAt(LocalDateTime.now());
             dbSession.setRevocationEventId(UUID.randomUUID().toString());
             // Scramble refresh token so it cannot be matched/found by old value anymore
-            dbSession.setRefreshToken("REVOKED-" + java.util.UUID.randomUUID().toString());
+            dbSession.setRefreshToken("REVOKED-" + UUID.randomUUID().toString());
             databaseSessionStore.save(dbSession);
             // Evict from Redis cache after DB save
             redisSessionCache.delete(dbSession.getSessionId());

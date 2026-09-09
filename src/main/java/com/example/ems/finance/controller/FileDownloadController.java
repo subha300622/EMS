@@ -15,6 +15,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+import com.example.ems.expense.entity.Expense;
+import com.example.ems.expense.entity.MyExpenseReceipt;
+import com.example.ems.expense.repository.ExpenseRepository;
 
 @RestController
 @RequestMapping("/api/v1/files")
@@ -35,7 +38,7 @@ public class FileDownloadController {
     private FnfSettlementRepository settlementRepository;
 
     @Autowired
-    private com.example.ems.expense.repository.ExpenseRepository expenseRepository;
+    private ExpenseRepository expenseRepository;
 
     // ── Receipt folders download subpath ──────────────────────────────────────
     @GetMapping("/receipts/{fileName:.+}")
@@ -48,9 +51,9 @@ public class FileDownloadController {
             String idStr = fileName.substring(8, fileName.length() - 4);
             try {
                 Long expenseId = Long.parseLong(idStr);
-                Optional<com.example.ems.expense.entity.Expense> expOpt = expenseRepository.findById(expenseId);
+                Optional<Expense> expOpt = expenseRepository.findById(expenseId);
                 if (expOpt.isPresent()) {
-                    com.example.ems.expense.entity.Expense e = expOpt.get();
+                    Expense e = expOpt.get();
                     if (e.getAttachmentData() != null && e.getAttachmentData().length > 0) {
                         HttpHeaders headers = new HttpHeaders();
                         headers.setContentType(MediaType.parseMediaType(e.getAttachmentType() != null ? e.getAttachmentType() : "application/pdf"));
@@ -58,7 +61,7 @@ public class FileDownloadController {
                         headers.setContentLength(e.getAttachmentData().length);
                         return new ResponseEntity<>(e.getAttachmentData(), headers, HttpStatus.OK);
                     } else if (!e.getReceipts().isEmpty()) {
-                        com.example.ems.expense.entity.MyExpenseReceipt r = e.getReceipts().get(0);
+                        MyExpenseReceipt r = e.getReceipts().get(0);
                         HttpHeaders headers = new HttpHeaders();
                         headers.setContentType(MediaType.parseMediaType(r.getFileType() != null ? r.getFileType() : "application/pdf"));
                         headers.setContentDispositionFormData("attachment", r.getFileName());

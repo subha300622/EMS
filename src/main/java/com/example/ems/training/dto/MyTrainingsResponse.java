@@ -2,15 +2,22 @@ package com.example.ems.training.dto;
 
 import com.example.ems.training.entity.Training;
 import com.example.ems.training.entity.ParticipationStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Schema(description = "My Trainings Response")
 public class MyTrainingsResponse {
 
+    @Schema(description = "Individual training item details")
     public static class MyTrainingItem {
+        @Schema(description = "Training entity details")
         private Training training;
+        @Schema(description = "User's participation status", example = "ACCEPTED")
         private ParticipationStatus participationStatus;
+
+        public MyTrainingItem() {}
 
         public MyTrainingItem(Training training, ParticipationStatus participationStatus) {
             this.training = training;

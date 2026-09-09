@@ -18,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
+import com.example.ems.auth.entity.User;
+import com.example.ems.auth.repository.UserRepository;
 
 @Service
 public class AssetRequestService {
@@ -98,7 +100,7 @@ public class AssetRequestService {
     }
 
     @Autowired
-    private com.example.ems.auth.repository.UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Transactional
     public AssetActionResultResponse approveRequest(Long organizationId, Long requestId, ApprovalActionRequest actionReq, String performedBy) {
@@ -107,7 +109,7 @@ public class AssetRequestService {
 
         if (approvalEngineService != null) {
             try {
-                com.example.ems.auth.entity.User actor = userRepository.findByWorkEmail(performedBy).orElse(null);
+                User actor = userRepository.findByWorkEmail(performedBy).orElse(null);
                 if (actor != null) {
                     approvalEngineService.approveInstanceTask(actor, requestId.toString(), comment);
                 }
@@ -126,7 +128,7 @@ public class AssetRequestService {
 
         if (approvalEngineService != null) {
             try {
-                com.example.ems.auth.entity.User actor = userRepository.findByWorkEmail(performedBy).orElse(null);
+                User actor = userRepository.findByWorkEmail(performedBy).orElse(null);
                 if (actor != null) {
                     approvalEngineService.rejectInstanceTask(actor, requestId.toString(), comment);
                 }
@@ -145,7 +147,7 @@ public class AssetRequestService {
 
         if (approvalEngineService != null) {
             try {
-                com.example.ems.auth.entity.User actor = userRepository.findByWorkEmail(performedBy).orElse(null);
+                User actor = userRepository.findByWorkEmail(performedBy).orElse(null);
                 if (actor != null) {
                     approvalEngineService.requestChanges(actor, requestId.toString(), comment);
                 }

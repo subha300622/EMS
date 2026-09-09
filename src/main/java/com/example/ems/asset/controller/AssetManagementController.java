@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import com.example.ems.security.dto.AuthPrincipal;
 
 @RestController
 @RequestMapping("/api/v1/assets")
@@ -64,7 +65,7 @@ public class AssetManagementController {
         }
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth.getPrincipal() instanceof com.example.ems.security.dto.AuthPrincipal p) {
+            if (auth.getPrincipal() instanceof AuthPrincipal p) {
                 if (p.getEmail() != null) {
                     User u = userRepository.findByWorkEmail(p.getEmail()).orElseGet(() -> userRepository.findByUserId(p.getEmail()).orElse(null));
                     if (u != null) return u;

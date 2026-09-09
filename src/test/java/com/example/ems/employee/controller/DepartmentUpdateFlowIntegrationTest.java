@@ -29,9 +29,11 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 
 @SpringBootTest
-@org.springframework.test.context.ActiveProfiles("test")
+@ActiveProfiles("test")
 public class DepartmentUpdateFlowIntegrationTest {
 
     private MockMvc mockMvc;
@@ -58,7 +60,7 @@ public class DepartmentUpdateFlowIntegrationTest {
     private JwtService jwtService;
 
     @Autowired
-    private org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder passwordEncoder;
+    private BCryptPasswordEncoder passwordEncoder;
 
     private static final String ADMIN_EMAIL = "deptadmin@company.com";
     private User adminUser;

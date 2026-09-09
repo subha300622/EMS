@@ -5,6 +5,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 @Repository
 public interface OnboardingTemplateRepository extends JpaRepository<OnboardingTemplate, Long> {
@@ -14,7 +16,7 @@ public interface OnboardingTemplateRepository extends JpaRepository<OnboardingTe
 
     Optional<OnboardingTemplate> findByTemplateCode(String templateCode);
 
-    @org.springframework.data.jpa.repository.Modifying
-    @org.springframework.data.jpa.repository.Query("UPDATE OnboardingTemplate t SET t.isDefault = false WHERE t.departmentId = :departmentId AND t.designation = :designation AND t.employmentType = :employmentType AND t.isDefault = true AND t.status = 'ACTIVE'")
+    @Modifying
+    @Query("UPDATE OnboardingTemplate t SET t.isDefault = false WHERE t.departmentId = :departmentId AND t.designation = :designation AND t.employmentType = :employmentType AND t.isDefault = true AND t.status = 'ACTIVE'")
     void resetDefaultTemplate(String departmentId, String designation, String employmentType);
 }

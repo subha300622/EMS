@@ -23,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Propagation;
 
 @Service
 public class MyDocumentService {
@@ -109,7 +110,7 @@ public class MyDocumentService {
         }
     }
 
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void seedMockDocumentsForEmployee(Employee emp) {
         if (employeeDocumentRepository.findByEmployeeId(emp.getId()).size() > 0) {
             return;

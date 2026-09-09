@@ -36,6 +36,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.hamcrest.Matchers.nullValue;
+import java.util.Collections;
 
 public class MeControllerTest {
 
@@ -146,11 +147,11 @@ public class MeControllerTest {
         when(employeeRepository.findByEmail(EMAIL)).thenReturn(Optional.of(employee));
 
         when(attendanceRepository.findByEmployeeIdAndDate(any(), any())).thenReturn(Optional.empty());
-        when(leaveRepository.findByEmployeeIdAndStatus(10L, "PENDING")).thenReturn(java.util.Collections.emptyList());
-        when(expenseRepository.findByEmployeeId(10L)).thenReturn(java.util.Collections.emptyList());
-        when(assetRepository.findByAssignedToId(10L)).thenReturn(java.util.Collections.emptyList());
-        when(reviewRepository.findByEmployeeId(10L)).thenReturn(java.util.Collections.emptyList());
-        when(supportTicketRepository.findByEmployeeEmail(EMAIL)).thenReturn(java.util.Collections.emptyList());
+        when(leaveRepository.findByEmployeeIdAndStatus(10L, "PENDING")).thenReturn(Collections.emptyList());
+        when(expenseRepository.findByEmployeeId(10L)).thenReturn(Collections.emptyList());
+        when(assetRepository.findByAssignedToId(10L)).thenReturn(Collections.emptyList());
+        when(reviewRepository.findByEmployeeId(10L)).thenReturn(Collections.emptyList());
+        when(supportTicketRepository.findByEmployeeEmail(EMAIL)).thenReturn(Collections.emptyList());
 
         mockMvc.perform(get("/api/v1/me/dashboard")
                 .header("Authorization", AUTH_HEADER))

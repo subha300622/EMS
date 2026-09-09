@@ -2,6 +2,8 @@ package com.example.ems.appraisal.dto;
 
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
 
 public class ReviewStageDto {
     private Long id;
@@ -11,8 +13,8 @@ public class ReviewStageDto {
     private String stageName;
 
     @NotNull(message = "rating is required")
-    @jakarta.validation.constraints.DecimalMin(value = "1.0", message = "Rating must be at least 1.0")
-    @jakarta.validation.constraints.DecimalMax(value = "5.0", message = "Rating must not exceed 5.0")
+    @DecimalMin(value = "1.0", message = "Rating must be at least 1.0")
+    @DecimalMax(value = "5.0", message = "Rating must not exceed 5.0")
     private Double rating;
 
     private String comments;

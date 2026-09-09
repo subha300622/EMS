@@ -1,11 +1,20 @@
 package com.example.ems.reports.revenue.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
+@Schema(description = "Revenue dashboard analytical overview response")
 public class RevenueDashboardResponse {
+    @Schema(description = "Revenue key performance indicators")
     private RevenueSummaryResponse kpis;
+
+    @Schema(description = "Historical revenue trend series")
     private List<RevenueTrendResponse> trends;
+
+    @Schema(description = "Period-over-period growth rates")
     private List<RevenueGrowthResponse> growth;
+
+    @Schema(description = "Predictive revenue forecasts")
     private RevenueForecastResponse forecast;
 
     public RevenueDashboardResponse() {}

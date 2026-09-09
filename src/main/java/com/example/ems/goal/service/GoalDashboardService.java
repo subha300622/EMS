@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import com.example.ems.goal.dto.GoalResponse;
 
 @Service
 public class GoalDashboardService {
@@ -49,7 +50,7 @@ public class GoalDashboardService {
             totalAct += (g.getActualHours() != null ? g.getActualHours() : 0.0);
 
             // Compute health status
-            var resp = com.example.ems.goal.dto.GoalResponse.fromEntity(g);
+            var resp = GoalResponse.fromEntity(g);
             String health = resp.getHealthIndicator();
             if ("OVERDUE".equals(health)) overdue++;
             else if ("AT_RISK".equals(health)) atRisk++;

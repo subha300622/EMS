@@ -8,7 +8,6 @@ import com.example.ems.approval.service.ApprovalWorkflowEngineService;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.expense.dto.ApproveExpenseRequest;
@@ -35,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.ems.approval.dto.ApprovalTaskDto;
 
 @RestController
 @RequestMapping("/api/v1/expenses")
@@ -92,19 +92,18 @@ public class ExpenseController {
     @Operation(summary = "List Expenses", description = "Retrieves expenses for approval or review")
     @GetMapping
     @PreAuthorize("hasAuthority('EXPENSE_VIEW')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getExpenses(
+    public ResponseEntity<ApiResponse<MyExpenseListResponse>> getExpenses(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         Long orgId = resolveOrgId(authHeader);
@@ -156,17 +155,16 @@ public class ExpenseController {
     @Operation(summary = "Get Expense Details", description = "Retrieves details of a specific expense claim")
     @GetMapping("/{expenseId}")
     @PreAuthorize("hasAuthority('EXPENSE_VIEW')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getExpenseDetails(
+    public ResponseEntity<ApiResponse<ExpenseDetailsResponse>> getExpenseDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         ExpenseDetailsResponse details = myExpenseService.getExpenseDetails(expenseId, currentEmp);
@@ -176,18 +174,17 @@ public class ExpenseController {
     @Operation(summary = "Approve Expense Claim", description = "Approves an expense claim")
     @PostMapping("/{expenseId}/approve")
     @PreAuthorize("hasAuthority('EXPENSE_APPROVE')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveExpense(
+    public ResponseEntity<ApiResponse<ApprovalTaskDto>> approveExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId,
             @RequestBody(required = false) ApproveExpenseRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", expenseId.toString());
@@ -199,8 +196,8 @@ public class ExpenseController {
                 .orElseGet(() -> tasks.isEmpty() ? null : tasks.get(0).getApprovalTaskId());
 
         if (taskId == null) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
         }
 
         String comment = (request != null && request.getComments() != null) ? request.getComments() : "Approved";
@@ -218,18 +215,17 @@ public class ExpenseController {
     @Operation(summary = "Reject Expense Claim", description = "Rejects an expense claim")
     @PostMapping("/{expenseId}/reject")
     @PreAuthorize("hasAuthority('EXPENSE_REJECT')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectExpense(
+    public ResponseEntity<ApiResponse<ApprovalTaskDto>> rejectExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId,
             @Valid @RequestBody ExpenseRejectRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", expenseId.toString());
@@ -241,8 +237,8 @@ public class ExpenseController {
                 .orElseGet(() -> tasks.isEmpty() ? null : tasks.get(0).getApprovalTaskId());
 
         if (taskId == null) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
         }
 
         String reason = (request != null && request.getReason() != null) ? request.getReason() : "Rejected";
@@ -261,18 +257,17 @@ public class ExpenseController {
     @Operation(summary = "Send Back Expense Claim", description = "Requests changes on an expense claim")
     @PostMapping("/{expenseId}/send-back")
     @PreAuthorize("hasAuthority('EXPENSE_APPROVE')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> sendBackExpense(
+    public ResponseEntity<ApiResponse<ApprovalTaskDto>> sendBackExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId,
             @Valid @RequestBody ExpenseRejectRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", expenseId.toString());
@@ -284,8 +279,8 @@ public class ExpenseController {
                 .orElseGet(() -> tasks.isEmpty() ? null : tasks.get(0).getApprovalTaskId());
 
         if (taskId == null) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
         }
 
         String comments = (request != null && request.getReason() != null) ? request.getReason() : "Changes requested";
@@ -304,17 +299,16 @@ public class ExpenseController {
     @Operation(summary = "Reimburse Expense Claim", description = "Marks expense as reimbursed")
     @PostMapping("/{expenseId}/reimburse")
     @PreAuthorize("hasAuthority('EXPENSE_REIMBURSE')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> reimburseExpense(
+    public ResponseEntity<ApiResponse<Expense>> reimburseExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Expense exp = expenseRepository.findById(expenseId).orElse(null);
         if (exp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Expense claim not found.", "EXP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Expense claim not found.", "EXP_404"));
         }
 
         exp.setReimbursementStatus("PAID");

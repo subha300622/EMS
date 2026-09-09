@@ -23,6 +23,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.util.List;
+import com.example.ems.common.exception.ConflictException;
+import com.example.ems.common.exception.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 
 @RestController
 @RequestMapping("/api/v1/onboarding")
@@ -77,7 +80,7 @@ public class OnboardingDocumentController {
 
     @GetMapping("/{onboardingId}/documents")
     @Operation(summary = "Get Onboarding Documents List")
-    public ResponseEntity<ApiResponse<List<OnboardingDocumentResponse>>> getDocuments(
+    public ResponseEntity<?> getDocuments(
             @PathVariable String onboardingId) {
         Long parsedOnbId = parseOnboardingId(onboardingId);
         List<OnboardingDocumentResponse> response = documentService.getDocuments(parsedOnbId);
@@ -86,7 +89,7 @@ public class OnboardingDocumentController {
 
     @PostMapping(value = "/{onboardingId}/documents/{documentId}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload Onboarding Document File")
-    public ResponseEntity<Object> uploadDocument(
+    public ResponseEntity<?> uploadDocument(
             @PathVariable String onboardingId,
             @PathVariable String documentId,
             @RequestParam("file") MultipartFile file) {
@@ -103,7 +106,7 @@ public class OnboardingDocumentController {
             return ResponseEntity.ok(ApiResponse.success("Document uploaded successfully", response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "VAL_004"));
-        } catch (org.springframework.security.access.AccessDeniedException e) {
+        } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error(e.getMessage(), "AUTH_002"));
         } catch (Exception e) {
@@ -114,7 +117,7 @@ public class OnboardingDocumentController {
 
     @GetMapping("/{onboardingId}/documents/{documentId}/download")
     @Operation(summary = "Download Onboarding Document File")
-    public ResponseEntity<Object> downloadDocument(
+    public ResponseEntity<?> downloadDocument(
             @PathVariable String onboardingId,
             @PathVariable String documentId) {
         User user = getAuthenticatedUser();
@@ -146,10 +149,10 @@ public class OnboardingDocumentController {
                     .body(resource);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "VAL_004"));
-        } catch (org.springframework.security.access.AccessDeniedException e) {
+        } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error(e.getMessage(), "AUTH_002"));
-        } catch (com.example.ems.common.exception.ResourceNotFoundException e) {
+        } catch (ResourceNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "STO_003"));
         } catch (Exception e) {
@@ -160,7 +163,7 @@ public class OnboardingDocumentController {
 
     @PatchMapping("/{onboardingId}/documents/{documentId}/verify")
     @Operation(summary = "Verify or Reject Onboarding Document")
-    public ResponseEntity<Object> verifyDocument(
+    public ResponseEntity<?> verifyDocument(
             @PathVariable String onboardingId,
             @PathVariable String documentId,
             @Valid @RequestBody OnboardingDocumentVerifyRequest request) {
@@ -179,7 +182,7 @@ public class OnboardingDocumentController {
             return ResponseEntity.ok(ApiResponse.success("Document verification updated successfully", response));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "VAL_004"));
-        } catch (com.example.ems.common.exception.ConflictException e) {
+        } catch (ConflictException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(ErrorResponse.error(e.getMessage(), "CON_409"));
         } catch (Exception e) {
@@ -190,7 +193,7 @@ public class OnboardingDocumentController {
 
     @DeleteMapping("/{onboardingId}/documents/{documentId}")
     @Operation(summary = "Delete or Reset Onboarding Document")
-    public ResponseEntity<Object> deleteDocument(
+    public ResponseEntity<?> deleteDocument(
             @PathVariable String onboardingId,
             @PathVariable String documentId) {
         User user = getAuthenticatedUser();
@@ -206,7 +209,7 @@ public class OnboardingDocumentController {
             return ResponseEntity.ok(ApiResponse.success("Document deleted successfully", null));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "VAL_004"));
-        } catch (org.springframework.security.access.AccessDeniedException e) {
+        } catch (AccessDeniedException e) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error(e.getMessage(), "AUTH_002"));
         } catch (Exception e) {

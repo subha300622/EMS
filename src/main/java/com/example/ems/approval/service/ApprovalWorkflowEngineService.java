@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.security.context.TenantContext;
 
 @Service
 public class ApprovalWorkflowEngineService {
@@ -121,7 +122,7 @@ public class ApprovalWorkflowEngineService {
 
         Long orgId = requester != null && requester.getOrganization() != null 
                 ? requester.getOrganization().getId() 
-                : (com.example.ems.security.context.TenantContext.getOrganizationId() != null ? com.example.ems.security.context.TenantContext.getOrganizationId() : 1L);
+                : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseGet(() -> {
@@ -159,7 +160,7 @@ public class ApprovalWorkflowEngineService {
                     return definitionRepository.save(defaultDef);
                 });
 
-        String wfiId = "WFI-" + String.format("%05d", System.currentTimeMillis() % 100000);
+        String wfiId = "WFI-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
 
         ApprovalWorkflowInstance instance = new ApprovalWorkflowInstance();
         instance.setWorkflowInstanceId(wfiId);
@@ -210,7 +211,7 @@ public class ApprovalWorkflowEngineService {
         ApprovalWorkflowStep step = stepOpt.get();
         Employee approver = approverResolver.resolveApprover(step, requester, context);
 
-        String taskId = "AT-" + String.format("%05d", System.currentTimeMillis() % 100000);
+        String taskId = "AT-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
         Instant now = Instant.now();
         Instant dueAt = step.getSlaHours() != null ? now.plus(step.getSlaHours(), ChronoUnit.HOURS) : now.plus(48, ChronoUnit.HOURS);
 

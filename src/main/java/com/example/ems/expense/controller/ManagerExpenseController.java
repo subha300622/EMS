@@ -9,7 +9,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.expense.dto.ApproveExpenseRequest;
@@ -36,13 +35,15 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.ems.approval.dto.ApprovalTaskDto;
+import io.swagger.v3.oas.annotations.Hidden;
 
 @RestController
 @RequestMapping({"/api/v1/expenses/manager", "/api/v1/manager/expenses"})
 @CrossOrigin("*")
 @Tag(name = "Manager - Expense Approvals (Deprecated)")
 @Deprecated
-@io.swagger.v3.oas.annotations.Hidden
+@Hidden
 public class ManagerExpenseController {
 
     @Autowired
@@ -103,34 +104,33 @@ public class ManagerExpenseController {
                 || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    private ResponseEntity<ErrorResponse> unauthorizedResponse() {
+    private <T> ResponseEntity<ApiResponse<T>> unauthorizedResponse() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+                .body(ApiResponse.error("Unauthorized", "AUTH_014"));
     }
 
-    private ResponseEntity<ErrorResponse> forbiddenResponse() {
+    private <T> ResponseEntity<ApiResponse<T>> forbiddenResponse() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResponse.error("Access Denied: You are not assigned to approve this claim.", "EXP_403"));
+                .body(ApiResponse.error("Access Denied: You are not assigned to approve this claim.", "EXP_403"));
     }
 
     @Operation(summary = "Get Pending Manager Expense Approvals", description = "Retrieves expenses assigned to the logged-in manager for approval (Task-based security).")
     @Deprecated
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getManagerExpenses(
+    public ResponseEntity<ApiResponse<MyExpenseListResponse>> getManagerExpenses(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
-        if (!checkPermission(currentUser)) return (ResponseEntity) forbiddenResponse();
+        if (currentUser == null) return unauthorizedResponse();
+        if (!checkPermission(currentUser)) return forbiddenResponse();
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         // Resolve org ID from JWT token (multi-tenant barrier)
@@ -185,18 +185,17 @@ public class ManagerExpenseController {
     @Operation(summary = "Get Expense Details for Manager Approval", description = "Retrieves details of an expense claim if assigned to the logged-in manager.")
     @Deprecated
     @GetMapping("/{expenseId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getExpenseDetails(
+    public ResponseEntity<ApiResponse<ExpenseDetailsResponse>> getExpenseDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (currentUser == null) return unauthorizedResponse();
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         // Verify task-based security
@@ -204,7 +203,7 @@ public class ManagerExpenseController {
         boolean isAssignedApprover = tasks.stream().anyMatch(t -> t.getApprover() != null && t.getApprover().getId().equals(currentEmp.getId()));
 
         if (!isAssignedApprover && !roleService.isSuperAdmin(currentUser.getWorkEmail()) && !roleService.hasPermission(currentUser.getWorkEmail(), "expense.manage")) {
-            return (ResponseEntity) forbiddenResponse();
+            return forbiddenResponse();
         }
 
         ExpenseDetailsResponse details = myExpenseService.getExpenseDetails(expenseId, currentEmp);
@@ -214,19 +213,18 @@ public class ManagerExpenseController {
     @Operation(summary = "Approve Expense Claim (Manager)", description = "Approves the manager step for an assigned expense claim.")
     @Deprecated
     @PatchMapping("/{expenseId}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveExpense(
+    public ResponseEntity<ApiResponse<ApprovalTaskDto>> approveExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId,
             @RequestBody(required = false) ApproveExpenseRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (currentUser == null) return unauthorizedResponse();
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", expenseId.toString());
@@ -235,15 +233,15 @@ public class ManagerExpenseController {
                 .findFirst();
 
         if (assignedTaskOpt.isEmpty() && !roleService.isSuperAdmin(currentUser.getWorkEmail())) {
-            return (ResponseEntity) forbiddenResponse();
+            return forbiddenResponse();
         }
 
         String taskId = assignedTaskOpt.map(ApprovalTask::getApprovalTaskId)
                 .orElseGet(() -> tasks.isEmpty() ? null : tasks.get(0).getApprovalTaskId());
 
         if (taskId == null) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
         }
 
         String comment = (request != null && request.getComments() != null) ? request.getComments() : "Approved by Manager";
@@ -262,19 +260,18 @@ public class ManagerExpenseController {
     @Operation(summary = "Reject Expense Claim (Manager)", description = "Rejects an assigned expense claim.")
     @Deprecated
     @PatchMapping("/{expenseId}/reject")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectExpense(
+    public ResponseEntity<ApiResponse<ApprovalTaskDto>> rejectExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId,
             @Valid @RequestBody ExpenseRejectRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (currentUser == null) return unauthorizedResponse();
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", expenseId.toString());
@@ -283,15 +280,15 @@ public class ManagerExpenseController {
                 .findFirst();
 
         if (assignedTaskOpt.isEmpty() && !roleService.isSuperAdmin(currentUser.getWorkEmail())) {
-            return (ResponseEntity) forbiddenResponse();
+            return forbiddenResponse();
         }
 
         String taskId = assignedTaskOpt.map(ApprovalTask::getApprovalTaskId)
                 .orElseGet(() -> tasks.isEmpty() ? null : tasks.get(0).getApprovalTaskId());
 
         if (taskId == null) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
         }
 
         String reason = (request != null && request.getReason() != null) ? request.getReason() : "Rejected by Manager";
@@ -310,19 +307,18 @@ public class ManagerExpenseController {
     @Operation(summary = "Send Back Expense Claim (Manager)", description = "Requests changes on an assigned expense claim.")
     @Deprecated
     @PatchMapping("/{expenseId}/send-back")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> sendBackExpense(
+    public ResponseEntity<ApiResponse<ApprovalTaskDto>> sendBackExpense(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("expenseId") Long expenseId,
             @Valid @RequestBody ExpenseRejectRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) return (ResponseEntity) unauthorizedResponse();
+        if (currentUser == null) return unauthorizedResponse();
 
         Employee currentEmp = resolveEmployee(currentUser);
         if (currentEmp == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee profile not found.", "EMP_404"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee profile not found.", "EMP_404"));
         }
 
         List<ApprovalTask> tasks = taskRepository.findActiveTasksForBusinessRef(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", expenseId.toString());
@@ -331,15 +327,15 @@ public class ManagerExpenseController {
                 .findFirst();
 
         if (assignedTaskOpt.isEmpty() && !roleService.isSuperAdmin(currentUser.getWorkEmail())) {
-            return (ResponseEntity) forbiddenResponse();
+            return forbiddenResponse();
         }
 
         String taskId = assignedTaskOpt.map(ApprovalTask::getApprovalTaskId)
                 .orElseGet(() -> tasks.isEmpty() ? null : tasks.get(0).getApprovalTaskId());
 
         if (taskId == null) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("No active approval task found for expense ID: " + expenseId, "EXP_400"));
         }
 
         String comments = (request != null && request.getReason() != null) ? request.getReason() : "Changes requested by Manager";

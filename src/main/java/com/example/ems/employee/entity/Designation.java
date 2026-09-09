@@ -5,6 +5,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import com.example.ems.organization.entity.Organization;
 
 @Entity
 @Table(name = "designations")
@@ -16,7 +17,7 @@ public class Designation {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
-    private com.example.ems.organization.entity.Organization organization;
+    private Organization organization;
 
     @Column(nullable = false)
     private String designation;
@@ -66,8 +67,8 @@ public class Designation {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public com.example.ems.organization.entity.Organization getOrganization() { return organization; }
-    public void setOrganization(com.example.ems.organization.entity.Organization organization) { this.organization = organization; }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 
     public String getDesignation() { return designation; }
     public void setDesignation(String designation) { this.designation = designation; }

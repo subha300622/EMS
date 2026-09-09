@@ -24,7 +24,7 @@ public class GoalProgressController {
 
     @Operation(summary = "Add Progress Update", description = "Appends an immutable progress history entry and recalculates weighted parent progress")
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> addProgressUpdate(
+    public ResponseEntity<ApiResponse<GoalProgress>> addProgressUpdate(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalProgressRequest request) {
         GoalProgress entry = progressService.addProgressUpdate(goalId, request, 1L, "User", "EMPLOYEE");
@@ -33,7 +33,7 @@ public class GoalProgressController {
 
     @Operation(summary = "Get Current Progress Status", description = "Retrieves the latest progress record for a goal")
     @GetMapping("/current")
-    public ResponseEntity<ApiResponse<Object>> getCurrentProgress(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<GoalProgress>> getCurrentProgress(@PathVariable("goalId") Long goalId) {
         List<GoalProgress> history = progressService.getProgressHistory(goalId);
         GoalProgress latest = history.isEmpty() ? null : history.get(history.size() - 1);
         return ResponseEntity.ok(ApiResponse.success("Current progress retrieved successfully", latest));
@@ -41,7 +41,7 @@ public class GoalProgressController {
 
     @Operation(summary = "Get Progress History", description = "Retrieves progress history trend for a goal")
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getProgressHistory(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<List<GoalProgress>>> getProgressHistory(@PathVariable("goalId") Long goalId) {
         List<GoalProgress> history = progressService.getProgressHistory(goalId);
         return ResponseEntity.ok(ApiResponse.success("Progress history retrieved successfully", history));
     }

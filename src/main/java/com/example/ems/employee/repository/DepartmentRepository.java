@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface DepartmentRepository extends JpaRepository<Department, Long>, JpaSpecificationExecutor<Department> {
@@ -14,7 +15,7 @@ public interface DepartmentRepository extends JpaRepository<Department, Long>, J
     Optional<Department> findByCode(String code);
     boolean existsByName(String name);
     boolean existsByCode(String code);
-    java.util.List<Department> findByOrganizationId(Long organizationId);
+    List<Department> findByOrganizationId(Long organizationId);
     Optional<Department> findByIdAndOrganizationId(Long id, Long organizationId);
     Optional<Department> findByNameIgnoreCaseAndOrganizationId(String name, Long organizationId);
     boolean existsByNameAndOrganizationId(String name, Long organizationId);

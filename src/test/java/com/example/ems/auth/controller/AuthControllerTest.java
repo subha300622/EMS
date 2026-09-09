@@ -35,6 +35,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.example.ems.auth.dto.RefreshTokenRequest;
 
 public class AuthControllerTest {
 
@@ -129,7 +130,7 @@ public class AuthControllerTest {
 
     @Test
     public void testRefreshSuccess() throws Exception {
-        com.example.ems.auth.dto.RefreshTokenRequest refreshRequest = new com.example.ems.auth.dto.RefreshTokenRequest();
+        RefreshTokenRequest refreshRequest = new RefreshTokenRequest();
         refreshRequest.setRefreshToken("valid-refresh-token");
 
         SessionService.SessionMetadata sessionMetadata = new SessionService.SessionMetadata(
@@ -163,7 +164,7 @@ public class AuthControllerTest {
 
     @Test
     public void testRefreshInvalidToken() throws Exception {
-        com.example.ems.auth.dto.RefreshTokenRequest refreshRequest = new com.example.ems.auth.dto.RefreshTokenRequest();
+        RefreshTokenRequest refreshRequest = new RefreshTokenRequest();
         refreshRequest.setRefreshToken("invalid-refresh-token");
 
         when(sessionService.rotateRefreshToken("invalid-refresh-token")).thenReturn(null);

@@ -4,7 +4,7 @@ import com.example.ems.approval.dto.ApprovalActionRequest;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
+import com.example.ems.employee.dto.DocumentApprovalResponse;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -13,8 +13,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/documents")
@@ -42,51 +40,48 @@ public class DocumentApprovalController {
     @Operation(summary = "Approve Document Verification", description = "Approves a submitted employee document")
     @PostMapping("/{documentId}/approve")
     @PreAuthorize("hasAuthority('DOCUMENT_APPROVE')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveDocument(
+    public ResponseEntity<ApiResponse<DocumentApprovalResponse>> approveDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long documentId,
             @RequestBody(required = false) ApprovalActionRequest request) {
 
         User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         String comment = request != null ? request.getComment() : "Approved";
-        Map<String, Object> response = Map.of("documentId", documentId, "status", "APPROVED", "comment", comment);
+        DocumentApprovalResponse response = new DocumentApprovalResponse(documentId, "APPROVED", comment);
         return ResponseEntity.ok(ApiResponse.success("Document approved successfully", response));
     }
 
     @Operation(summary = "Reject Document Verification", description = "Rejects a submitted employee document")
     @PostMapping("/{documentId}/reject")
     @PreAuthorize("hasAuthority('DOCUMENT_REJECT')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectDocument(
+    public ResponseEntity<ApiResponse<DocumentApprovalResponse>> rejectDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long documentId,
             @RequestBody(required = false) ApprovalActionRequest request) {
 
         User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         String comment = request != null ? request.getComment() : "Rejected";
-        Map<String, Object> response = Map.of("documentId", documentId, "status", "REJECTED", "comment", comment);
+        DocumentApprovalResponse response = new DocumentApprovalResponse(documentId, "REJECTED", comment);
         return ResponseEntity.ok(ApiResponse.success("Document rejected successfully", response));
     }
 
     @Operation(summary = "Send Back Document Verification", description = "Requests re-upload or revision of a document")
     @PostMapping("/{documentId}/send-back")
     @PreAuthorize("hasAuthority('DOCUMENT_APPROVE')")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> sendBackDocument(
+    public ResponseEntity<ApiResponse<DocumentApprovalResponse>> sendBackDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long documentId,
             @RequestBody(required = false) ApprovalActionRequest request) {
 
         User user = resolveUser(authHeader);
-        if (user == null) return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         String comment = request != null ? request.getComment() : "Sent back";
-        Map<String, Object> response = Map.of("documentId", documentId, "status", "NEEDS_REVISION", "comment", comment);
+        DocumentApprovalResponse response = new DocumentApprovalResponse(documentId, "NEEDS_REVISION", comment);
         return ResponseEntity.ok(ApiResponse.success("Document sent back for revision successfully", response));
     }
 }

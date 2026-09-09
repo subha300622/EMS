@@ -22,6 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.reports.organization.dto.UserActivityReportResponse;
 
 @Service
 @Transactional(readOnly = true)
@@ -224,7 +225,7 @@ public class OrganizationDashboardService {
     }
 
     @Cacheable(value = ReportCacheNames.ACTIVITY_REPORT)
-    public Map<String, Object> getActivityReport() {
+    public UserActivityReportResponse getActivityReport() {
         long totalUsers = userRepository.count();
         long activeUsers = userRepository.findAll().stream()
                 .filter(u -> "ACTIVE".equalsIgnoreCase(u.getStatus()))
@@ -233,13 +234,12 @@ public class OrganizationDashboardService {
 
         long auditCount = auditLogRepository.count();
 
-        Map<String, Object> activity = new LinkedHashMap<>();
-        activity.put("lastLogin", Instant.now().toString());
-        activity.put("activeUsers", activeUsers);
-        activity.put("inactiveUsers", inactiveUsers);
-        activity.put("lastActivity", Instant.now().toString());
-        activity.put("auditCount", auditCount);
-
-        return activity;
+        return new UserActivityReportResponse(
+                Instant.now().toString(),
+                activeUsers,
+                inactiveUsers,
+                Instant.now().toString(),
+                auditCount
+        );
     }
 }

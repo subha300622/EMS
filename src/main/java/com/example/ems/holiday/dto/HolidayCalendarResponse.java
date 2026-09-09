@@ -1,11 +1,16 @@
 package com.example.ems.holiday.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 import java.util.List;
 
+@Schema(description = "Holiday calendar for a specific calendar year")
 public class HolidayCalendarResponse {
 
+    @Schema(description = "Calendar year", example = "2026")
     private int year;
+
+    @Schema(description = "List of scheduled holidays in the year")
     private List<HolidayCalendarItem> holidays;
 
     public HolidayCalendarResponse() {}
@@ -31,9 +36,15 @@ public class HolidayCalendarResponse {
         this.holidays = holidays;
     }
 
+    @Schema(description = "Holiday calendar item entry")
     public static class HolidayCalendarItem {
+        @Schema(description = "Unique Holiday Identifier", example = "HOL-2026-001")
         private String holidayId;
+
+        @Schema(description = "Date of the holiday (YYYY-MM-DD)", example = "2026-12-25")
         private LocalDate date;
+
+        @Schema(description = "Name of the holiday", example = "Christmas Day")
         private String name;
 
         public HolidayCalendarItem() {}

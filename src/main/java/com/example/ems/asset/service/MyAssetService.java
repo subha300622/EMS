@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.example.ems.auth.entity.User;
+import com.example.ems.auth.repository.UserRepository;
 
 @Service
 @Transactional
@@ -55,7 +57,7 @@ public class MyAssetService {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private com.example.ems.auth.repository.UserRepository userRepository;
+    private UserRepository userRepository;
 
     @Autowired
     private MyAssetAssignmentRepository myAssetAssignmentRepository;
@@ -86,7 +88,7 @@ public class MyAssetService {
         // 3. Seed Mock Active Assets for employee if empty
         Optional<Employee> mockEmployeeOpt = employeeRepository.findAll().stream()
                 .filter(e -> {
-                    com.example.ems.auth.entity.User u = userRepository.findByWorkEmail(e.getEmail()).orElse(null);
+                    User u = userRepository.findByWorkEmail(e.getEmail()).orElse(null);
                     return u != null && u.getRole() != null && "EMPLOYEE".equalsIgnoreCase(u.getRole().getName());
                 })
                 .findFirst();

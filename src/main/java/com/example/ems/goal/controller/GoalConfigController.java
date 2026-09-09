@@ -24,7 +24,7 @@ public class GoalConfigController {
     @Operation(summary = "Get Organization Goal Config", description = "Retrieves org-level goal module settings")
     @GetMapping
     @PreAuthorize("hasAuthority('GOAL_CONFIG_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
-    public ResponseEntity<ApiResponse<Object>> getConfig() {
+    public ResponseEntity<ApiResponse<GoalConfig>> getConfig() {
         GoalConfig config = configService.getOrCreateConfig();
         return ResponseEntity.ok(ApiResponse.success("Goal config retrieved successfully", config));
     }
@@ -32,7 +32,7 @@ public class GoalConfigController {
     @Operation(summary = "Get Active Goal Categories", description = "Lists active goal categories for active tenant")
     @GetMapping("/categories")
     @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
-    public ResponseEntity<ApiResponse<Object>> getCategories() {
+    public ResponseEntity<ApiResponse<List<GoalCategory>>> getCategories() {
         List<GoalCategory> categories = configService.getCategories();
         return ResponseEntity.ok(ApiResponse.success("Goal categories retrieved successfully", categories));
     }
@@ -40,7 +40,7 @@ public class GoalConfigController {
     @Operation(summary = "Get Active Goal Types", description = "Lists active goal types for active tenant")
     @GetMapping("/types")
     @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
-    public ResponseEntity<ApiResponse<Object>> getTypes() {
+    public ResponseEntity<ApiResponse<List<GoalTypeEntity>>> getTypes() {
         List<GoalTypeEntity> types = configService.getTypes();
         return ResponseEntity.ok(ApiResponse.success("Goal types retrieved successfully", types));
     }
@@ -48,7 +48,7 @@ public class GoalConfigController {
     @Operation(summary = "Get Active Goal Priorities", description = "Lists active goal priorities sorted by order")
     @GetMapping("/priorities")
     @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
-    public ResponseEntity<ApiResponse<Object>> getPriorities() {
+    public ResponseEntity<ApiResponse<List<GoalPriorityEntity>>> getPriorities() {
         List<GoalPriorityEntity> priorities = configService.getPriorities();
         return ResponseEntity.ok(ApiResponse.success("Goal priorities retrieved successfully", priorities));
     }
@@ -56,7 +56,7 @@ public class GoalConfigController {
     @Operation(summary = "Get Active Goal Statuses", description = "Lists active goal system/custom statuses")
     @GetMapping("/statuses")
     @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
-    public ResponseEntity<ApiResponse<Object>> getStatuses() {
+    public ResponseEntity<ApiResponse<List<GoalStatusEntity>>> getStatuses() {
         List<GoalStatusEntity> statuses = configService.getStatuses();
         return ResponseEntity.ok(ApiResponse.success("Goal statuses retrieved successfully", statuses));
     }
@@ -64,7 +64,7 @@ public class GoalConfigController {
     @Operation(summary = "Get Goal Visibilities", description = "Lists active goal visibility options")
     @GetMapping("/visibilities")
     @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
-    public ResponseEntity<ApiResponse<Object>> getVisibilities() {
+    public ResponseEntity<ApiResponse<List<GoalVisibilitySetting>>> getVisibilities() {
         List<GoalVisibilitySetting> visibilities = configService.getVisibilities();
         return ResponseEntity.ok(ApiResponse.success("Goal visibilities retrieved successfully", visibilities));
     }
@@ -72,7 +72,7 @@ public class GoalConfigController {
     @Operation(summary = "Get Goal Assignment Rules", description = "Lists goal assignment rules for active tenant")
     @GetMapping("/assignment-rules")
     @PreAuthorize("hasAuthority('GOAL_CONFIG_VIEW') or hasRole('ADMIN') or hasRole('MANAGER')")
-    public ResponseEntity<ApiResponse<Object>> getAssignmentRules() {
+    public ResponseEntity<ApiResponse<List<GoalAssignmentRule>>> getAssignmentRules() {
         List<GoalAssignmentRule> rules = configService.getAssignmentRules();
         return ResponseEntity.ok(ApiResponse.success("Goal assignment rules retrieved successfully", rules));
     }
@@ -80,7 +80,7 @@ public class GoalConfigController {
     @Operation(summary = "Get Goal Notification Settings", description = "Lists goal notification settings for active tenant")
     @GetMapping("/notifications")
     @PreAuthorize("hasAuthority('GOAL_CONFIG_VIEW') or hasRole('ADMIN') or hasRole('MANAGER')")
-    public ResponseEntity<ApiResponse<Object>> getNotificationSettings() {
+    public ResponseEntity<ApiResponse<List<GoalNotificationSetting>>> getNotificationSettings() {
         List<GoalNotificationSetting> settings = configService.getNotificationSettings();
         return ResponseEntity.ok(ApiResponse.success("Goal notification settings retrieved successfully", settings));
     }

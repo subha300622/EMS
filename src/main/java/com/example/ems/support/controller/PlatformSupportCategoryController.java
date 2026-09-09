@@ -75,7 +75,7 @@ public class PlatformSupportCategoryController {
 
     @GetMapping("/stats")
     @Operation(summary = "Get Category Dashboard Statistics")
-    public ResponseEntity<?> getStats(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+public ResponseEntity<?> getStats(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return unauthorizedResponse();
         if (!checkPermission(user, "support.category.view")) return forbiddenResponse("support.category.view");
@@ -90,7 +90,7 @@ public class PlatformSupportCategoryController {
 
     @GetMapping
     @Operation(summary = "Get Categories (Paginated/Filtered Table)")
-    public ResponseEntity<?> getCategories(
+public ResponseEntity<?> getCategories(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit,
@@ -130,7 +130,7 @@ public class PlatformSupportCategoryController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Get Single Category")
-    public ResponseEntity<?> getCategory(
+public ResponseEntity<?> getCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long id) {
         User user = resolveUser(authHeader);
@@ -147,7 +147,7 @@ public class PlatformSupportCategoryController {
 
     @PostMapping
     @Operation(summary = "Create Category")
-    public ResponseEntity<?> createCategory(
+public ResponseEntity<?> createCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody PlatformCategoryRequest req) {
         User user = resolveUser(authHeader);
@@ -165,7 +165,7 @@ public class PlatformSupportCategoryController {
 
     @PutMapping("/{id}")
     @Operation(summary = "Update Category")
-    public ResponseEntity<?> updateCategory(
+public ResponseEntity<?> updateCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody PlatformCategoryRequest req) {
@@ -183,7 +183,7 @@ public class PlatformSupportCategoryController {
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Change Category Status")
-    public ResponseEntity<?> changeStatus(
+public ResponseEntity<?> changeStatus(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long id,
             @RequestParam String status) {
@@ -201,7 +201,7 @@ public class PlatformSupportCategoryController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete Category")
-    public ResponseEntity<?> deleteCategory(
+public ResponseEntity<?> deleteCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long id) {
         User user = resolveUser(authHeader);
@@ -218,7 +218,7 @@ public class PlatformSupportCategoryController {
 
     @PatchMapping("/reorder")
     @Operation(summary = "Reorder Categories Display Orders")
-    public ResponseEntity<?> reorderCategories(
+public ResponseEntity<?> reorderCategories(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody PlatformCategoryReorderRequest req) {
         User user = resolveUser(authHeader);
@@ -235,7 +235,7 @@ public class PlatformSupportCategoryController {
 
     @GetMapping("/analytics")
     @Operation(summary = "Category Usage Analytics")
-    public ResponseEntity<?> getAnalytics(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+public ResponseEntity<?> getAnalytics(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return unauthorizedResponse();
         if (!checkPermission(user, "support.category.view")) return forbiddenResponse("support.category.view");
@@ -250,7 +250,7 @@ public class PlatformSupportCategoryController {
 
     @GetMapping("/options")
     @Operation(summary = "Category Options Dropdown (Lightweight)")
-    public ResponseEntity<?> getOptions(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+public ResponseEntity<?> getOptions(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return unauthorizedResponse();
         if (!checkPermission(user, "support.category.view")) return forbiddenResponse("support.category.view");

@@ -20,6 +20,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.springframework.cache.Cache;
+import org.springframework.dao.DataIntegrityViolationException;
 
 @Service
 public class SubscriptionAnalyticsService {
@@ -334,7 +336,7 @@ public class SubscriptionAnalyticsService {
                 "VALUES (?, ?, ?, 'RUNNING', ?, 50, ?)",
                 rebuildId, now, mode, rebuildEndSeq, rebuildEndSeq
             );
-        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+        } catch (DataIntegrityViolationException ex) {
             log.error("Rebuild concurrency guard block: A rebuild analytics snapshot run is already in progress.");
             throw new IllegalStateException("An active analytics snapshot rebuild job is already in progress.");
         }
@@ -514,7 +516,7 @@ public class SubscriptionAnalyticsService {
      * Evicts granular dashboard cache keys.
      */
     public void evictAnalyticsCaches() {
-        org.springframework.cache.Cache cache = cacheManager.getCache("subscriptionsOverview");
+        Cache cache = cacheManager.getCache("subscriptionsOverview");
         if (cache != null) {
             cache.evict("dashboard_overview");
             cache.evict("metric_mrr");

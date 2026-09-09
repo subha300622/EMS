@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.Duration;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.time.Instant;
 
 @Entity
 @Table(name = "attendance", uniqueConstraints = {
@@ -46,7 +47,7 @@ public class Attendance {
     private String location;
 
     @Column(name = "server_time")
-    private java.time.Instant serverTime;
+    private Instant serverTime;
 
     @Column(name = "is_late")
     private Boolean isLate = false;
@@ -112,8 +113,8 @@ public class Attendance {
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
 
-    public java.time.Instant getServerTime() { return serverTime; }
-    public void setServerTime(java.time.Instant serverTime) { this.serverTime = serverTime; }
+    public Instant getServerTime() { return serverTime; }
+    public void setServerTime(Instant serverTime) { this.serverTime = serverTime; }
 
     public Boolean getIsLate() { return isLate; }
     public void setIsLate(Boolean isLate) { this.isLate = isLate; }

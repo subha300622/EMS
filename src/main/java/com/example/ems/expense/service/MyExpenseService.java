@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.example.ems.auth.entity.User;
+import com.example.ems.auth.repository.UserRepository;
 
 @Service
 @Transactional
@@ -54,7 +56,7 @@ public class MyExpenseService {
     private ApprovalWorkflowEngineService approvalWorkflowEngineService;
 
     @Autowired
-    private com.example.ems.auth.repository.UserRepository userRepository;
+    private UserRepository userRepository;
 
     @EventListener(ContextRefreshedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -112,7 +114,7 @@ public class MyExpenseService {
         // 3. Seed 24 Mock claims for employee if empty
         Optional<Employee> mockEmployeeOpt = employeeRepository.findAll().stream()
                 .filter(e -> {
-                    com.example.ems.auth.entity.User u = userRepository.findByWorkEmail(e.getEmail()).orElse(null);
+                    User u = userRepository.findByWorkEmail(e.getEmail()).orElse(null);
                     return u != null && u.getRole() != null && "EMPLOYEE".equalsIgnoreCase(u.getRole().getName());
                 })
                 .findFirst();
@@ -315,8 +317,8 @@ public class MyExpenseService {
 
     @Transactional(readOnly = true)
     public MyExpenseListResponse getMyExpenses(Employee employee, String status, String category, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
-        com.example.ems.expense.entity.ExpenseStatus statusEnum = (status != null && !status.trim().isEmpty())
-                ? com.example.ems.expense.entity.ExpenseStatus.valueOf(status.trim().toUpperCase())
+        ExpenseStatus statusEnum = (status != null && !status.trim().isEmpty())
+                ? ExpenseStatus.valueOf(status.trim().toUpperCase())
                 : null;
         Page<Expense> page = expenseRepository.findByFilters(employee.getId(), statusEnum, category, fromDate, toDate, pageable);
 

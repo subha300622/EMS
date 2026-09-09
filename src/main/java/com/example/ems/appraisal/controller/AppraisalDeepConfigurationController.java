@@ -6,7 +6,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -54,13 +53,16 @@ public class AppraisalDeepConfigurationController {
     }
 
     private Employee resolveEmployee(User user) {
-        if (user == null || user.getWorkEmail() == null) return null;
+        if (user == null || user.getWorkEmail() == null)
+            return null;
         return employeeRepository.findByEmail(user.getWorkEmail()).orElse(null);
     }
 
     private boolean hasPermission(User user, String permission) {
-        if (user == null) return false;
-        if (user.getRole() != null && "PLATFORM_ADMIN".equalsIgnoreCase(user.getRole().getName())) return true;
+        if (user == null)
+            return false;
+        if (user.getRole() != null && "PLATFORM_ADMIN".equalsIgnoreCase(user.getRole().getName()))
+            return true;
         return roleService.hasPermission(user.getWorkEmail(), permission);
     }
 
@@ -68,14 +70,15 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Validate Appraisal Configuration", description = "Validates stages, criteria weights, rating scale, and performance category intervals proactively")
     @PostMapping("/validate")
-    public ResponseEntity<?> validateConfiguration(
+    public ResponseEntity<ApiResponse<AppraisalConfigurationValidationResponseDto>> validateConfiguration(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
-        if (!hasPermission(user, "APPRAISAL_CONFIGURATION_VIEW") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+        if (!hasPermission(user, "APPRAISAL_CONFIGURATION_VIEW")
+                && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         AppraisalConfigurationValidationResponseDto result = extendedService.validateConfiguration();
@@ -86,31 +89,33 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Create Immutable Configuration Version Snapshot")
     @PostMapping("/snapshot")
-    public ResponseEntity<?> createSnapshot(
+    public ResponseEntity<ApiResponse<AppraisalConfigurationVersionResponseDto>> createSnapshot(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody(required = false) Map<String, String> body) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Missing APPRAISAL_CONFIGURATION_MANAGE", "AUTH_002"));
         }
 
         Employee employee = resolveEmployee(user);
         String desc = body != null ? body.get("description") : null;
         AppraisalConfigurationVersionResponseDto snapshot = extendedService.createSnapshot(employee, desc);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Configuration version snapshot created successfully", snapshot));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Configuration version snapshot created successfully", snapshot));
     }
 
     @Operation(summary = "Get Configuration Version Snapshot by Version Number")
     @GetMapping("/versions/{versionNumber}")
-    public ResponseEntity<?> getSnapshotByVersion(
+    public ResponseEntity<ApiResponse<AppraisalConfigurationSnapshotDto>> getSnapshotByVersion(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Integer versionNumber) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         AppraisalConfigurationSnapshotDto snapshot = extendedService.getSnapshotByVersion(versionNumber);
@@ -121,11 +126,11 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Get Configured Review Stages")
     @GetMapping("/review-stages")
-    public ResponseEntity<?> getReviewStages(
+    public ResponseEntity<ApiResponse<List<ReviewStageConfigurationDto>>> getReviewStages(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         List<ReviewStageConfigurationDto> stages = extendedService.getReviewStages();
         return ResponseEntity.ok(ApiResponse.success("Review stages retrieved successfully", stages));
@@ -133,33 +138,34 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Create Review Stage")
     @PostMapping("/review-stages")
-    public ResponseEntity<?> createReviewStage(
+    public ResponseEntity<ApiResponse<ReviewStageConfigurationDto>> createReviewStage(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody ReviewStageConfigurationDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         ReviewStageConfigurationDto created = extendedService.createReviewStage(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Review stage created successfully", created));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Review stage created successfully", created));
     }
 
     @Operation(summary = "Update Review Stage")
     @PutMapping("/review-stages/{stageId}")
-    public ResponseEntity<?> updateReviewStage(
+    public ResponseEntity<ApiResponse<ReviewStageConfigurationDto>> updateReviewStage(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long stageId,
             @RequestBody ReviewStageConfigurationDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         ReviewStageConfigurationDto updated = extendedService.updateReviewStage(stageId, dto);
@@ -168,15 +174,15 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Delete Review Stage")
     @DeleteMapping("/review-stages/{stageId}")
-    public ResponseEntity<?> deleteReviewStage(
+    public ResponseEntity<ApiResponse<Void>> deleteReviewStage(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long stageId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         extendedService.deleteReviewStage(stageId);
@@ -185,16 +191,16 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Toggle Review Stage Status")
     @PatchMapping("/review-stages/{stageId}/status")
-    public ResponseEntity<?> toggleReviewStageStatus(
+    public ResponseEntity<ApiResponse<ReviewStageConfigurationDto>> toggleReviewStageStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long stageId,
             @RequestBody Map<String, Boolean> body) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         boolean required = body != null && Boolean.TRUE.equals(body.get("required"));
@@ -206,11 +212,11 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Get Rating Scale Configuration")
     @GetMapping("/rating-scale")
-    public ResponseEntity<?> getRatingScale(
+    public ResponseEntity<ApiResponse<RatingScaleDto>> getRatingScale(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         RatingScaleDto scale = extendedService.getRatingScale();
         return ResponseEntity.ok(ApiResponse.success("Rating scale retrieved successfully", scale));
@@ -218,15 +224,15 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Save or Update Rating Scale")
     @PutMapping("/rating-scale")
-    public ResponseEntity<?> saveRatingScale(
+    public ResponseEntity<ApiResponse<RatingScaleDto>> saveRatingScale(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody RatingScaleDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         RatingScaleDto saved = extendedService.saveOrUpdateRatingScale(dto);
@@ -237,11 +243,11 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Get Evaluation Criteria")
     @GetMapping("/criteria")
-    public ResponseEntity<?> getCriteria(
+    public ResponseEntity<ApiResponse<List<AppraisalCriterionDto>>> getCriteria(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         List<AppraisalCriterionDto> list = extendedService.getCriteria();
         return ResponseEntity.ok(ApiResponse.success("Evaluation criteria retrieved successfully", list));
@@ -249,33 +255,34 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Create Evaluation Criterion")
     @PostMapping("/criteria")
-    public ResponseEntity<?> createCriterion(
+    public ResponseEntity<ApiResponse<AppraisalCriterionDto>> createCriterion(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody AppraisalCriterionDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         AppraisalCriterionDto created = extendedService.createCriterion(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Evaluation criterion created successfully", created));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Evaluation criterion created successfully", created));
     }
 
     @Operation(summary = "Update Evaluation Criterion")
     @PutMapping("/criteria/{criterionId}")
-    public ResponseEntity<?> updateCriterion(
+    public ResponseEntity<ApiResponse<AppraisalCriterionDto>> updateCriterion(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long criterionId,
             @RequestBody AppraisalCriterionDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         AppraisalCriterionDto updated = extendedService.updateCriterion(criterionId, dto);
@@ -284,15 +291,15 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Delete Evaluation Criterion")
     @DeleteMapping("/criteria/{criterionId}")
-    public ResponseEntity<?> deleteCriterion(
+    public ResponseEntity<ApiResponse<Void>> deleteCriterion(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long criterionId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         extendedService.deleteCriterion(criterionId);
@@ -303,11 +310,11 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Get Performance Categories")
     @GetMapping("/performance-categories")
-    public ResponseEntity<?> getPerformanceCategories(
+    public ResponseEntity<ApiResponse<List<PerformanceCategoryDto>>> getPerformanceCategories(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         List<PerformanceCategoryDto> list = extendedService.getPerformanceCategories();
         return ResponseEntity.ok(ApiResponse.success("Performance categories retrieved successfully", list));
@@ -315,33 +322,34 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Create Performance Category")
     @PostMapping("/performance-categories")
-    public ResponseEntity<?> createPerformanceCategory(
+    public ResponseEntity<ApiResponse<PerformanceCategoryDto>> createPerformanceCategory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody PerformanceCategoryDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         PerformanceCategoryDto created = extendedService.createPerformanceCategory(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success("Performance category created successfully", created));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Performance category created successfully", created));
     }
 
     @Operation(summary = "Update Performance Category")
     @PutMapping("/performance-categories/{categoryId}")
-    public ResponseEntity<?> updatePerformanceCategory(
+    public ResponseEntity<ApiResponse<PerformanceCategoryDto>> updatePerformanceCategory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long categoryId,
             @RequestBody PerformanceCategoryDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         PerformanceCategoryDto updated = extendedService.updatePerformanceCategory(categoryId, dto);
@@ -350,49 +358,19 @@ public class AppraisalDeepConfigurationController {
 
     @Operation(summary = "Delete Performance Category")
     @DeleteMapping("/performance-categories/{categoryId}")
-    public ResponseEntity<?> deletePerformanceCategory(
+    public ResponseEntity<ApiResponse<Void>> deletePerformanceCategory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long categoryId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied", "AUTH_002"));
         }
 
         extendedService.deletePerformanceCategory(categoryId);
         return ResponseEntity.ok(ApiResponse.success("Performance category deleted successfully", null));
     }
-
-    // ── 7. INCREMENT POLICY & RULES CRUD ────────────────────────────────────────
-
-    @Operation(summary = "Get Increment Policy & Rules")
-    @GetMapping("/increment-policy")
-    public ResponseEntity<?> getIncrementPolicy(
-            @RequestHeader(value = "Authorization", required = false) String authHeader) {
-        User user = resolveUser(authHeader);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        IncrementPolicyDto policy = extendedService.getIncrementPolicy();
-        return ResponseEntity.ok(ApiResponse.success("Increment policy retrieved successfully", policy));
-    }
-
-    @Operation(summary = "Save or Update Increment Policy & Rules")
-    @PutMapping("/increment-policy")
-    public ResponseEntity<?> saveIncrementPolicy(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody IncrementPolicyDto dto) {
-        User user = resolveUser(authHeader);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-        if (!hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied", "AUTH_002"));
-        }
-
-        IncrementPolicyDto saved = extendedService.saveOrUpdateIncrementPolicy(dto);
-        return ResponseEntity.ok(ApiResponse.success("Increment policy saved successfully", saved));
-    }
 }
+

@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.ems.reminder.entity.Reminder;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 
 /**
  * Production-grade cache facade for the Reminder module, extending {@link BaseCacheService}.
@@ -44,8 +47,8 @@ public class ReminderCacheService extends BaseCacheService {
         try {
             log.info("[Cache] Starting cache warm-up (top 100 reminders)...");
             List<ReminderResponse> top100 = repository
-                    .findAll(org.springframework.data.domain.PageRequest.of(0, 100,
-                            org.springframework.data.domain.Sort.by("id").descending()))
+                    .findAll(PageRequest.of(0, 100,
+                            Sort.by("id").descending()))
                     .stream()
                     .map(this::toResponse)
                     .collect(Collectors.toList());
@@ -138,7 +141,7 @@ public class ReminderCacheService extends BaseCacheService {
 
     // ── Mapper helper ─────────────────────────────────────────────────────────
 
-    private ReminderResponse toResponse(com.example.ems.reminder.entity.Reminder r) {
+    private ReminderResponse toResponse(Reminder r) {
         ReminderResponse res = new ReminderResponse();
         res.setId(r.getId());
         res.setTitle(r.getTitle());

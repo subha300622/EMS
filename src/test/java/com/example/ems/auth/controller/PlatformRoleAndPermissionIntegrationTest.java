@@ -29,6 +29,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.example.ems.auth.dto.UserManagementDtos;
 
 @SpringBootTest
 @Transactional
@@ -225,8 +226,8 @@ public class PlatformRoleAndPermissionIntegrationTest {
                 Role customOrgRole = roleService.createTenantRole(testOrg.getId(), roleReq);
 
                 // 1. Assign role to regular user
-                com.example.ems.auth.dto.UserManagementDtos.UpdateRoleRequest updateRoleReq = 
-                        new com.example.ems.auth.dto.UserManagementDtos.UpdateRoleRequest(String.valueOf(customOrgRole.getId()));
+                UserManagementDtos.UpdateRoleRequest updateRoleReq = 
+                        new UserManagementDtos.UpdateRoleRequest(String.valueOf(customOrgRole.getId()));
 
                 userMvc.perform(put("/api/v1/users/" + regularUser.getUserId() + "/role")
                                 .header("Authorization", "Bearer " + orgAdminToken)

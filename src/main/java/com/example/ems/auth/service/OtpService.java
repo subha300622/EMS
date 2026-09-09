@@ -23,6 +23,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Arrays;
+import java.util.List;
+import org.springframework.core.env.Environment;
 
 @Service
 public class OtpService {
@@ -45,7 +48,7 @@ public class OtpService {
     @Autowired
     private OtpTokenRepository otpTokenRepository;
     @Autowired
-    private org.springframework.core.env.Environment environment;
+    private Environment environment;
     @Autowired
     private SessionService sessionService;
 
@@ -78,7 +81,7 @@ public class OtpService {
         }
 
         String otpKey = getOtpKey(email);
-        java.util.List<String> activeProfiles = java.util.Arrays.asList(environment.getActiveProfiles());
+        List<String> activeProfiles = Arrays.asList(environment.getActiveProfiles());
         boolean isProduction = activeProfiles.contains("prod") || activeProfiles.contains("production");
 
         boolean cooldownActive = false;

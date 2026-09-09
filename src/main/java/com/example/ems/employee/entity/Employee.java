@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import com.example.ems.organization.entity.Organization;
 
 @Entity
 @Table(name = "employees", indexes = {
@@ -69,7 +70,7 @@ public class Employee {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
     @com.fasterxml.jackson.annotation.JsonIgnore
-    private com.example.ems.organization.entity.Organization organization;
+    private Organization organization;
 
     private String availability = "AVAILABLE";
 
@@ -229,8 +230,8 @@ public class Employee {
     public LocalDateTime getLastActiveAt() { return lastActiveAt; }
     public void setLastActiveAt(LocalDateTime lastActiveAt) { this.lastActiveAt = lastActiveAt; }
 
-    public com.example.ems.organization.entity.Organization getOrganization() { return organization; }
-    public void setOrganization(com.example.ems.organization.entity.Organization organization) { this.organization = organization; }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 
     // Getters and Setters for new fields
     public String getFirstName() { return firstName; }

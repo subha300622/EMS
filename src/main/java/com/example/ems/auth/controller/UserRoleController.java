@@ -54,7 +54,7 @@ public class UserRoleController {
 
     @GetMapping("/{id}/role")
     @Operation(summary = "Get user role details")
-    public ResponseEntity<?> getUserRole(
+public ResponseEntity<?> getUserRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long id) {
 
@@ -89,7 +89,7 @@ public class UserRoleController {
 
     @PutMapping("/{id}/role")
     @Operation(summary = "Assign role to a user")
-    public ResponseEntity<?> assignUserRole(
+public ResponseEntity<?> assignUserRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long id,
             @Valid @RequestBody AssignRoleRequest req) {
@@ -123,7 +123,7 @@ public class UserRoleController {
             }
 
             if (success) {
-                return ResponseEntity.ok(ApiResponse.success("User role assigned successfully."));
+                return ResponseEntity.ok(ApiResponse.success("User role assigned successfully.", null));
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                         .body(ErrorResponse.error("Failed to assign role.", "ROLE_ASSIGN_FAIL"));
@@ -135,7 +135,7 @@ public class UserRoleController {
 
     @GetMapping("/{id}/effective-permissions")
     @Operation(summary = "Resolve effective permissions for a user")
-    public ResponseEntity<?> getEffectivePermissions(
+public ResponseEntity<?> getEffectivePermissions(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long id) {
 

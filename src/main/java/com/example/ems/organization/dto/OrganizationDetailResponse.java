@@ -1,16 +1,40 @@
 package com.example.ems.organization.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Detailed organization information response")
 public class OrganizationDetailResponse {
+    @Schema(description = "Organization Database ID", example = "1")
     private Long id;
+
+    @Schema(description = "Organization Code", example = "ORG-1001")
     private String organizationCode;
+
+    @Schema(description = "Organization Name", example = "Acme Corp")
     private String name;
+
+    @Schema(description = "Primary Contact Email", example = "contact@acme.com")
     private String email;
+
+    @Schema(description = "Primary Contact Phone", example = "+1-555-0199")
     private String phone;
+
+    @Schema(description = "Website URL", example = "https://acme.com")
     private String website;
+
+    @Schema(description = "Physical address")
     private OrganizationAddressDto address;
+
+    @Schema(description = "Subscription details")
     private OrganizationSubscriptionDto subscription;
+
+    @Schema(description = "Total Employee Count", example = "150")
     private long employeeCount;
+
+    @Schema(description = "Total Admin Count", example = "3")
     private long adminCount;
+
+    @Schema(description = "Registration Date/Time", example = "2026-01-01T00:00:00Z")
     private String createdAt;
 
     public OrganizationDetailResponse() {}

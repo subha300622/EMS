@@ -6,13 +6,7 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.employee.dto.EmployeeListItemDto;
-import com.example.ems.employee.dto.EmployeeRequest;
-import com.example.ems.employee.dto.AssignRoleRequest;
-import com.example.ems.employee.dto.AssignBulkRolesRequest;
-import com.example.ems.employee.dto.ChangeEmployeeRoleRequest;
-import com.example.ems.employee.dto.EmployeeRolesResponse;
-import com.example.ems.employee.dto.AssignableRoleDto;
+import com.example.ems.employee.dto.*;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.service.EmployeeService;
 import com.example.ems.employee.repository.DepartmentRepository;
@@ -45,6 +39,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -68,53 +63,52 @@ public class EmployeeController {
 
     @Operation(summary = "Create Employee Record", description = "Creates a new employee profile in the system with contact details, department, role, and salary parameters.")
     @PostMapping("/employees")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> createEmployee(
+    public ResponseEntity<?> createEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody @Valid EmployeeRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.create")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.create' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'employee.create' permission.", "AUTH_002"));
         }
 
         try {
 
             Employee created = employeeService.createEmployee(request, currentUser.getWorkEmail());
-            Map<String, Object> resMap = new java.util.LinkedHashMap<>();
-            resMap.put("id", created.getId());
-            resMap.put("employeeId", created.getEmployeeId());
-            resMap.put("organizationId", created.getOrganization() != null ? created.getOrganization().getId() : null);
-            resMap.put("fullName", created.getFullName());
-            resMap.put("email", created.getEmail());
-            resMap.put("department", created.getDepartment());
-            resMap.put("designation", created.getDesignation());
-            resMap.put("joiningDate", created.getJoiningDate());
-            resMap.put("status", created.getStatus());
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.CREATED)
-                    .body(ApiResponse.success("Employee created successfully", resMap));
+            EmployeeCreatedResponseDto res = new EmployeeCreatedResponseDto(
+                    created.getId(),
+                    created.getEmployeeId(),
+                    created.getOrganization() != null ? created.getOrganization().getId() : null,
+                    created.getFullName(),
+                    created.getEmail(),
+                    created.getDepartment(),
+                    created.getDesignation(),
+                    created.getJoiningDate(),
+                    created.getStatus()
+            );
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(ApiResponse.success("Employee created successfully", res));
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
                                 "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
             }
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_001"));
+            return ResponseEntity.badRequest().body(ApiResponse.error(msg, "EMP_001"));
         }
     }
 
     @Operation(summary = "Get All Employees", description = "Retrieves a paginated, searchable, and filterable list of all employees in the system.")
     @GetMapping("/employees")
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Page<EmployeeListItemDto>>> getAllEmployees(
+    @Transactional(readOnly = true)
+public ResponseEntity<?> getAllEmployees(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -124,13 +118,13 @@ public class EmployeeController {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read") &&
                 !roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
 
@@ -211,150 +205,169 @@ public class EmployeeController {
 
     @Operation(summary = "Get Employee Master Profile", description = "Retrieves full master profile of an employee by employeeId.")
     @GetMapping("/employees/{employeeId}")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getEmployeeMasterProfile(
+    public ResponseEntity<?> getEmployeeMasterProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String employeeId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
 
         try {
             Map<String, Object> data = employeeService.getEmployeeMasterProfileData(employeeId);
             return ResponseEntity.ok(ApiResponse.success("Employee retrieved successfully", data));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "EMP_002"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "EMP_002"));
         }
     }
 
     @Operation(summary = "Update Employee Master Profile", description = "Updates attributes of an existing employee master profile.")
     @PutMapping("/employees/{employeeId}")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> updateEmployeeMasterProfile(
+    public ResponseEntity<?> updateEmployeeMasterProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String employeeId,
             @RequestBody @Valid EmployeeRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.update")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.update' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'employee.update' permission.", "AUTH_002"));
         }
 
         try {
             Map<String, Object> data = employeeService.updateEmployeeMasterProfile(employeeId, request,
                     currentUser.getWorkEmail());
-            return ResponseEntity.ok(ApiResponse.success("Employee updated successfully", data));
+            EmployeeUpdateResponseDto res = new EmployeeUpdateResponseDto(
+                    (String) data.get("employeeId"),
+                    (String) data.get("fullName"),
+                    (String) data.get("email"),
+                    (String) data.get("employmentStatus")
+            );
+            return ResponseEntity.ok(ApiResponse.success("Employee updated successfully", res));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_003"));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage(), "EMP_003"));
         }
     }
 
     @Operation(summary = "Get Employee Status", description = "Retrieves current employment and account status for an employee.")
     @GetMapping("/employees/{employeeId}/status")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> getEmployeeStatus(
+    public ResponseEntity<?> getEmployeeStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String employeeId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
 
         try {
             Map<String, Object> data = employeeService.getEmployeeStatusDetail(employeeId);
-            return ResponseEntity.ok(ApiResponse.success("Employee status retrieved successfully", data));
+            EmployeeStatusResponseDto res = new EmployeeStatusResponseDto(
+                    (String) data.get("employeeId"),
+                    (String) data.get("status"),
+                    (String) data.get("employmentStatus"),
+                    (String) data.get("userAccountStatus")
+            );
+            return ResponseEntity.ok(ApiResponse.success("Employee status retrieved successfully", res));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error(e.getMessage(), "EMP_002"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage(), "EMP_002"));
         }
     }
 
     @Operation(summary = "Update Employee Status", description = "Updates status indicators for an employee.")
     @PatchMapping("/employees/{employeeId}/status")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> updateEmployeeStatusPatch(
+    public ResponseEntity<?> updateEmployeeStatusPatch(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String employeeId,
-            @RequestBody @Valid com.example.ems.employee.dto.UpdateEmployeeStatusRequest body) {
+            @RequestBody @Valid UpdateEmployeeStatusRequest body) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.update")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.update' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'employee.update' permission.", "AUTH_002"));
         }
 
         String newStatus = body != null ? body.status() : null;
         String reason = body != null ? body.reason() : null;
         if (newStatus == null || newStatus.isBlank()) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("Status field is required", "VAL_001"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Status field is required", "VAL_001"));
         }
 
         try {
             Map<String, Object> data = employeeService.updateEmployeeStatusPatch(employeeId, newStatus, reason,
                     currentUser);
-            return ResponseEntity.ok(ApiResponse.success("Employee status updated successfully", data));
+            EmployeeStatusResponseDto res = new EmployeeStatusResponseDto(
+                    (String) data.get("employeeId"),
+                    (String) data.get("status"),
+                    (String) data.get("status"),
+                    null
+            );
+            return ResponseEntity.ok(ApiResponse.success("Employee status updated successfully", res));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "EMP_003"));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage(), "EMP_003"));
         }
     }
 
     @Operation(summary = "Soft Delete Employee", description = "Soft deactivates an employee record and revokes user sessions.")
     @DeleteMapping("/employees/{employeeId}")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<Object>> deleteEmployeeMaster(
+    public ResponseEntity<?> deleteEmployeeMaster(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String employeeId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.delete")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.delete' permission.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'employee.delete' permission.", "AUTH_002"));
         }
 
         try {
             Map<String, Object> data = employeeService.softDeleteEmployeeByIdentifier(employeeId, currentUser);
-            return ResponseEntity.ok(ApiResponse.success("Employee deleted successfully", data));
+            EmployeeStatusResponseDto res = new EmployeeStatusResponseDto(
+                    (String) data.get("employeeId"),
+                    (String) data.get("status"),
+                    (String) data.get("status"),
+                    null
+            );
+            return ResponseEntity.ok(ApiResponse.success("Employee deleted successfully", res));
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("LAST_SUPER_ADMIN_CANNOT_BE_REMOVED")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
-                        .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.",
+                return ResponseEntity.badRequest()
+                        .body(ApiResponse.error("The last Super Admin of an organization cannot be removed.",
                                 "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
             }
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_004"));
+            return ResponseEntity.badRequest().body(ApiResponse.error(msg, "EMP_004"));
         }
     }
 
@@ -373,19 +386,18 @@ public class EmployeeController {
 
     @Operation(summary = "Get Employee Roles", description = "Retrieves active organization role assignments for an employee.")
     @GetMapping("/employees/{employeeId}/roles")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<EmployeeRolesResponse>> getEmployeeRoles(
+public ResponseEntity<?> getEmployeeRoles(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long employeeId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.read' permission.", "AUTH_002"));
         }
 
@@ -393,28 +405,27 @@ public class EmployeeController {
             EmployeeRolesResponse res = employeeService.getEmployeeRoles(employeeId, currentUser);
             return ResponseEntity.ok(ApiResponse.success("Employee roles retrieved successfully", res));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "EMP_ROLE_001"));
         }
     }
 
     @Operation(summary = "Assign Single Role", description = "Assigns an organization role to an employee.")
     @PostMapping("/employees/{employeeId}/roles")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<EmployeeRolesResponse>> assignRoleToEmployee(
+public ResponseEntity<?> assignRoleToEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long employeeId,
             @RequestBody @Valid AssignRoleRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.update")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "role.assign")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires role assignment permission.", "AUTH_002"));
         }
 
@@ -426,36 +437,35 @@ public class EmployeeController {
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
+                return ResponseEntity.badRequest()
                         .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
                                 "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
             }
             if (msg != null && msg.startsWith("ROLE_ALREADY_ASSIGNED")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
+                return ResponseEntity.badRequest()
                         .body(ErrorResponse.error("One or more roles are already assigned to the employee.",
                                 "ROLE_ALREADY_ASSIGNED"));
             }
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_002"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_002"));
         }
     }
 
     @Operation(summary = "Assign Multiple Roles", description = "Assigns multiple organization roles to an employee transactionally.")
     @PostMapping("/employees/{employeeId}/roles/bulk")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<EmployeeRolesResponse>> assignBulkRolesToEmployee(
+public ResponseEntity<?> assignBulkRolesToEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long employeeId,
             @RequestBody @Valid AssignBulkRolesRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.update")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "role.assign")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires role assignment permission.", "AUTH_002"));
         }
 
@@ -466,36 +476,35 @@ public class EmployeeController {
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
+                return ResponseEntity.badRequest()
                         .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
                                 "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
             }
             if (msg != null && msg.startsWith("ROLE_ALREADY_ASSIGNED")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
+                return ResponseEntity.badRequest()
                         .body(ErrorResponse.error("One or more roles are already assigned to the employee.",
                                 "ROLE_ALREADY_ASSIGNED"));
             }
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_003"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_003"));
         }
     }
 
     @Operation(summary = "Change Employee Roles", description = "Replaces/updates employee role assignments with effective date and reason.")
     @PutMapping("/employees/{employeeId}/roles")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<EmployeeRolesResponse>> changeEmployeeRoles(
+public ResponseEntity<?> changeEmployeeRoles(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long employeeId,
             @RequestBody @Valid ChangeEmployeeRoleRequest request) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.update")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "role.assign")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires role assignment permission.", "AUTH_002"));
         }
 
@@ -505,36 +514,35 @@ public class EmployeeController {
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("LAST_SUPER_ADMIN_CANNOT_BE_REMOVED")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
+                return ResponseEntity.badRequest()
                         .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.",
                                 "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
             }
             if (msg != null && msg.startsWith("PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
+                return ResponseEntity.badRequest()
                         .body(ErrorResponse.error("PLATFORM_ADMIN cannot be assigned through employee role management.",
                                 "PLATFORM_ADMIN_ROLE_NOT_ASSIGNABLE"));
             }
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_004"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_004"));
         }
     }
 
     @Operation(summary = "Remove Employee Role", description = "Removes an assigned role from an employee.")
     @DeleteMapping("/employees/{employeeId}/roles/{roleId}")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<EmployeeRolesResponse>> removeEmployeeRole(
+public ResponseEntity<?> removeEmployeeRole(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long employeeId,
             @PathVariable Long roleId) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.update")
                 && !roleService.hasPermission(currentUser.getWorkEmail(), "role.assign")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires role assignment permission.", "AUTH_002"));
         }
 
@@ -544,23 +552,22 @@ public class EmployeeController {
         } catch (IllegalArgumentException e) {
             String msg = e.getMessage();
             if (msg != null && msg.startsWith("LAST_SUPER_ADMIN_CANNOT_BE_REMOVED")) {
-                return (ResponseEntity) ResponseEntity.badRequest()
+                return ResponseEntity.badRequest()
                         .body(ErrorResponse.error("The last Super Admin of an organization cannot be removed.",
                                 "LAST_SUPER_ADMIN_CANNOT_BE_REMOVED"));
             }
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_005"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(msg, "EMP_ROLE_005"));
         }
     }
 
     @Operation(summary = "Get Assignable Roles", description = "Retrieves available organization roles for employee management screens.")
     @GetMapping("/roles/assignable")
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public ResponseEntity<ApiResponse<List<AssignableRoleDto>>> getAssignableRoles(
+public ResponseEntity<?> getAssignableRoles(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 

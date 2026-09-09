@@ -10,7 +10,6 @@ import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.organization.entity.Organization;
 import com.example.ems.organization.repository.OrganizationRepository;
 import com.example.ems.security.service.JwtService;
@@ -25,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.auth.dto.OrgActivityDto;
 
 @RestController
 @RequestMapping("/api/v1/platform/organizations")
@@ -66,16 +66,11 @@ public class PlatformOrganizationController {
         return roleService.hasPermission(user.getWorkEmail(), permission) || roleService.isSuperAdmin(user.getWorkEmail());
     }
 
-    private ResponseEntity<?> organizationSuspendedResponse() {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ErrorResponse.error("Organization is suspended.", "ORG_001"));
-    }
-
     // ── Endpoints ─────────────────────────────────────────────────────────────
 
     @GetMapping
     @Operation(summary = "List Organizations with pagination & filtering")
-    public ResponseEntity<?> getOrganizations(
+    public ResponseEntity<ApiResponse<Page<Organization>>> getOrganizations(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
@@ -84,11 +79,11 @@ public class PlatformOrganizationController {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "platform.organization.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
         }
 
         try {
@@ -121,30 +116,31 @@ public class PlatformOrganizationController {
             Page<Organization> resultPage = new PageImpl<>(paginatedList, PageRequest.of(page, size), total);
             return ResponseEntity.ok(ApiResponse.success("Organizations retrieved successfully.", resultPage));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "ORG_LIST_ERR"));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage(), "ORG_LIST_ERR"));
         }
     }
 
     @GetMapping("/{orgId}")
     @Operation(summary = "Get Organization Details")
-    public ResponseEntity<?> getOrganizationDetails(
+    public ResponseEntity<ApiResponse<Organization>> getOrganizationDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "platform.organization.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted()) {
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Organization is suspended.", "ORG_001"));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Organization details retrieved successfully.", org));
@@ -152,24 +148,25 @@ public class PlatformOrganizationController {
 
     @GetMapping("/{orgId}/summary")
     @Operation(summary = "Get Organization Dashboard Summary Statistics")
-    public ResponseEntity<?> getOrganizationSummary(
+    public ResponseEntity<ApiResponse<PlatformOrganizationSummaryResponse>> getOrganizationSummary(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "platform.organization.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted()) {
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Organization is suspended.", "ORG_001"));
         }
 
         long userCount = userRepository.countByOrganizationId(orgId);
@@ -202,24 +199,25 @@ public class PlatformOrganizationController {
 
     @GetMapping("/{orgId}/rbac-summary")
     @Operation(summary = "Get Organization RBAC Summary")
-    public ResponseEntity<?> getOrganizationRbacSummary(
+    public ResponseEntity<ApiResponse<OrganizationRbacSummary>> getOrganizationRbacSummary(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "platform.organization.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted()) {
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Organization is suspended.", "ORG_001"));
         }
 
         long userCount = userRepository.countByOrganizationId(orgId);
@@ -265,24 +263,25 @@ public class PlatformOrganizationController {
 
     @GetMapping("/{orgId}/audit-logs")
     @Operation(summary = "Get Organization Audit Logs")
-    public ResponseEntity<?> getOrganizationAuditLogs(
+    public ResponseEntity<ApiResponse<List<AuditLog>>> getOrganizationAuditLogs(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "platform.audit.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.audit.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.audit.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted()) {
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Organization is suspended.", "ORG_001"));
         }
 
         List<User> orgUsers = userRepository.findByOrganizationId(orgId);
@@ -298,24 +297,25 @@ public class PlatformOrganizationController {
 
     @GetMapping("/{orgId}/role-history")
     @Operation(summary = "Get Organization Role Audit History")
-    public ResponseEntity<?> getOrganizationRoleHistory(
+    public ResponseEntity<ApiResponse<List<AuditLog>>> getOrganizationRoleHistory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "platform.audit.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.audit.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.audit.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted()) {
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Organization is suspended.", "ORG_001"));
         }
 
         List<User> orgUsers = userRepository.findByOrganizationId(orgId);
@@ -331,41 +331,40 @@ public class PlatformOrganizationController {
 
     @GetMapping("/{orgId}/activities")
     @Operation(summary = "Get Organization Activity Feed")
-    public ResponseEntity<?> getOrganizationActivities(
+    public ResponseEntity<ApiResponse<List<OrgActivityDto>>> getOrganizationActivities(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long orgId) {
 
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "platform.organization.view")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
+                    .body(ApiResponse.error("Access Denied: Requires 'platform.organization.view' permission.", "AUTH_002"));
         }
 
         Organization org = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + orgId));
 
         if (org.isDeleted()) {
-            return organizationSuspendedResponse();
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Organization is suspended.", "ORG_001"));
         }
 
         List<User> orgUsers = userRepository.findByOrganizationId(orgId);
         List<String> emails = orgUsers.stream().map(User::getWorkEmail).collect(Collectors.toList());
 
-        List<Map<String, Object>> activities = auditLogRepository.findAll().stream()
+        List<OrgActivityDto> activities = auditLogRepository.findAll().stream()
                 .filter(log -> emails.contains(log.getUserEmail()))
                 .sorted(Comparator.comparing(AuditLog::getCreatedAt).reversed())
                 .limit(50)
-                .map(log -> {
-                    Map<String, Object> activity = new LinkedHashMap<>();
-                    activity.put("timestamp", log.getCreatedAt().toString());
-                    activity.put("action", log.getAction());
-                    activity.put("details", log.getDetails() != null ? log.getDetails() : "");
-                    activity.put("actor", log.getUserName() != null ? log.getUserName() : log.getUserEmail());
-                    return activity;
-                })
+                .map(log -> new OrgActivityDto(
+                        log.getCreatedAt() != null ? log.getCreatedAt().toString() : "",
+                        log.getAction() != null ? log.getAction() : "",
+                        log.getDetails() != null ? log.getDetails() : "",
+                        log.getUserName() != null ? log.getUserName() : (log.getUserEmail() != null ? log.getUserEmail() : "")
+                ))
                 .collect(Collectors.toList());
 
         return ResponseEntity.ok(ApiResponse.success("Organization activity feed retrieved successfully.", activities));

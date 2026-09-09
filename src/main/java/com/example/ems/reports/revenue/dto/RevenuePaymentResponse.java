@@ -1,20 +1,47 @@
 package com.example.ems.reports.revenue.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
+@Schema(description = "Revenue payments transaction record response")
 public class RevenuePaymentResponse {
+    @Schema(description = "Payment ID", example = "1")
     private Long paymentId;
+
+    @Schema(description = "Organization ID", example = "10")
     private Long organizationId;
+
+    @Schema(description = "Organization Name", example = "Acme Corp")
     private String organizationName;
+
+    @Schema(description = "Subscription Plan Name", example = "ENTERPRISE")
     private String plan;
+
+    @Schema(description = "Invoice Number", example = "INV-001")
     private String invoiceNumber;
+
+    @Schema(description = "Payment Gateway Name", example = "RAZORPAY")
     private String gateway;
+
+    @Schema(description = "Payment Status", example = "SUCCESS")
     private String status;
+
+    @Schema(description = "Currency Code", example = "USD")
     private String currency;
+
+    @Schema(description = "Payment Amount", example = "100.00")
     private BigDecimal amount;
+
+    @Schema(description = "Tax Amount", example = "0.00")
     private BigDecimal tax;
+
+    @Schema(description = "Discount Amount", example = "0.00")
     private BigDecimal discount;
+
+    @Schema(description = "Net Amount", example = "100.00")
     private BigDecimal netAmount;
+
+    @Schema(description = "Paid Date/Time", example = "2026-07-03")
     private String paidDate;
 
     public RevenuePaymentResponse() {}

@@ -8,6 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.example.ems.payroll.dto.ExecutePayrollPaymentRequest;
+import jakarta.validation.Valid;
 
 @RestController
 public class PayrollPaymentController {
@@ -23,7 +25,7 @@ public class PayrollPaymentController {
             @PathVariable Long runId,
             @RequestParam(required = false) String mode,
             @RequestParam(required = false) String simulation,
-            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.payroll.dto.ExecutePayrollPaymentRequest body) {
+            @RequestBody(required = false) @Valid ExecutePayrollPaymentRequest body) {
 
         String selectedMode = mode;
         String sim = simulation;

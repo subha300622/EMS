@@ -16,6 +16,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.audit.dto.AuditDashboardStatsDto;
+import com.example.ems.expense.entity.ExpenseStatus;
+import org.springframework.data.jpa.domain.Specification;
 
 @Service
 @Transactional
@@ -74,14 +77,14 @@ public class AuditLogService {
             }
         }
 
-        org.springframework.data.jpa.domain.Specification<AuditLog> spec = AuditLogSpecification.filter(search, module,
+        Specification<AuditLog> spec = AuditLogSpecification.filter(search, module,
                 action, user, startDateTime, endDateTime, severity, flagged, allowedModules);
 
         return auditLogRepository.findAll(spec, pageable);
     }
 
     @Transactional(readOnly = true)
-    public Map<String, Object> getDashboardStats(Collection<String> allowedModules) {
+    public AuditDashboardStatsDto getDashboardStats(Collection<String> allowedModules) {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime startOfDay = now.toLocalDate().atStartOfDay();
         LocalDateTime startOfWeek = now.minusDays(7).toLocalDate().atStartOfDay();
@@ -106,16 +109,15 @@ public class AuditLogService {
                 startOfWeek);
 
         long pendingLeaves = leaveRepository != null ? leaveRepository.findByStatus("PENDING").size() : 0;
-        long pendingExpenses = expenseRepository != null ? expenseRepository.findByStatus(com.example.ems.expense.entity.ExpenseStatus.PENDING).size() : 0;
+        long pendingExpenses = expenseRepository != null ? expenseRepository.findByStatus(ExpenseStatus.PENDING).size() : 0;
         long pendingApprovals = pendingLeaves + pendingExpenses;
 
-        Map<String, Object> stats = new HashMap<>();
-        stats.put("financeActionsToday", financeActionsToday);
-        stats.put("flaggedCount", flaggedCount);
-        stats.put("payrollEventsThisWeek", payrollEventsThisWeek);
-        stats.put("pendingApprovalsThisMonth", pendingApprovals);
-
-        return stats;
+        return new AuditDashboardStatsDto(
+                financeActionsToday,
+                flaggedCount,
+                payrollEventsThisWeek,
+                pendingApprovals
+        );
     }
 
     @Transactional
@@ -168,7 +170,7 @@ public class AuditLogService {
     public byte[] exportLogsToCsv(Collection<String> allowedModules) {
         List<AuditLog> logs;
         if (allowedModules != null && !allowedModules.isEmpty()) {
-            org.springframework.data.jpa.domain.Specification<AuditLog> spec = AuditLogSpecification.filter(null, null,
+            Specification<AuditLog> spec = AuditLogSpecification.filter(null, null,
                     null, null, null, null, null, null, allowedModules);
             logs = auditLogRepository.findAll(spec);
         } else {

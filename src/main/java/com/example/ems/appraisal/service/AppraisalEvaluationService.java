@@ -20,6 +20,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto;
 
 @Service
 public class AppraisalEvaluationService {
@@ -358,7 +359,7 @@ public class AppraisalEvaluationService {
     }
 
     @Transactional(readOnly = true)
-    public com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto getCurrentStage(Long appraisalId, User currentUser) {
+    public AppraisalCurrentStageResponseDto getCurrentStage(Long appraisalId, User currentUser) {
         Long orgId = TenantContext.requireOrganizationId();
         Appraisal appraisal = appraisalRepository.findByIdAndOrganizationId(appraisalId, orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal not found with ID: " + appraisalId));
@@ -395,7 +396,7 @@ public class AppraisalEvaluationService {
                 .map(this::mapToReviewDto)
                 .collect(Collectors.toList());
 
-        com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto response = new com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto();
+        AppraisalCurrentStageResponseDto response = new AppraisalCurrentStageResponseDto();
         response.setAppraisalId(appraisal.getId());
         if (appraisal.getEmployee() != null) {
             response.setEmployeeId(appraisal.getEmployee().getId());

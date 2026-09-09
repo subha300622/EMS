@@ -19,6 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import com.example.ems.common.util.ClientIpResolver;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @RestController
 @RequestMapping("/api/v1/platform/revenue/dashboard")
@@ -73,10 +76,10 @@ public class PlatformRevenueDashboardController {
         if (user != null) {
             String clientIp = "0.0.0.0";
             try {
-                org.springframework.web.context.request.ServletRequestAttributes attrs =
-                        (org.springframework.web.context.request.ServletRequestAttributes) org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+                ServletRequestAttributes attrs =
+                        (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
                 if (attrs != null) {
-                    clientIp = com.example.ems.common.util.ClientIpResolver.getClientIp(attrs.getRequest());
+                    clientIp = ClientIpResolver.getClientIp(attrs.getRequest());
                 }
             } catch (Exception ignored) {}
             auditLogService.logAction(

@@ -4,6 +4,9 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.organization.entity.Organization;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "appraisals")
@@ -76,17 +79,17 @@ public class Appraisal {
     @ElementCollection
     @CollectionTable(name = "appraisal_achievements", joinColumns = @JoinColumn(name = "appraisal_id"))
     @Column(name = "achievement")
-    private java.util.List<String> achievements = new java.util.ArrayList<>();
+    private List<String> achievements = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "appraisal_strengths", joinColumns = @JoinColumn(name = "appraisal_id"))
     @Column(name = "strength")
-    private java.util.List<String> strengths = new java.util.ArrayList<>();
+    private List<String> strengths = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "appraisal_improvement_areas", joinColumns = @JoinColumn(name = "appraisal_id"))
     @Column(name = "improvement_area")
-    private java.util.List<String> improvementAreas = new java.util.ArrayList<>();
+    private List<String> improvementAreas = new ArrayList<>();
 
     private Double leadershipOwnershipRating;
     private Double technicalExcellenceRating;
@@ -97,7 +100,7 @@ public class Appraisal {
 
     private String myBand = "A+";
 
-    private java.time.LocalDate selfReviewDueDate = java.time.LocalDate.of(2026, 4, 25);
+    private LocalDate selfReviewDueDate = LocalDate.of(2026, 4, 25);
 
     private boolean financeStageStarted = false;
     private boolean compensationFrozen = false;
@@ -284,27 +287,27 @@ public class Appraisal {
         this.attendanceJustifiedBy = attendanceJustifiedBy;
     }
 
-    public java.util.List<String> getAchievements() {
+    public List<String> getAchievements() {
         return achievements;
     }
 
-    public void setAchievements(java.util.List<String> achievements) {
+    public void setAchievements(List<String> achievements) {
         this.achievements = achievements;
     }
 
-    public java.util.List<String> getStrengths() {
+    public List<String> getStrengths() {
         return strengths;
     }
 
-    public void setStrengths(java.util.List<String> strengths) {
+    public void setStrengths(List<String> strengths) {
         this.strengths = strengths;
     }
 
-    public java.util.List<String> getImprovementAreas() {
+    public List<String> getImprovementAreas() {
         return improvementAreas;
     }
 
-    public void setImprovementAreas(java.util.List<String> improvementAreas) {
+    public void setImprovementAreas(List<String> improvementAreas) {
         this.improvementAreas = improvementAreas;
     }
 
@@ -329,8 +332,8 @@ public class Appraisal {
     public String getMyBand() { return myBand; }
     public void setMyBand(String myBand) { this.myBand = myBand; }
 
-    public java.time.LocalDate getSelfReviewDueDate() { return selfReviewDueDate; }
-    public void setSelfReviewDueDate(java.time.LocalDate selfReviewDueDate) { this.selfReviewDueDate = selfReviewDueDate; }
+    public LocalDate getSelfReviewDueDate() { return selfReviewDueDate; }
+    public void setSelfReviewDueDate(LocalDate selfReviewDueDate) { this.selfReviewDueDate = selfReviewDueDate; }
 
     public boolean isFinanceStageStarted() { return financeStageStarted; }
     public void setFinanceStageStarted(boolean financeStageStarted) { this.financeStageStarted = financeStageStarted; }

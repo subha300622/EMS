@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import com.example.ems.reports.organization.dto.UserActivityReportResponse;
 
 @RestController
 @RequestMapping("/api/v1/platform/dashboard/organizations")
@@ -125,7 +126,7 @@ public class PlatformOrganizationDashboardController {
         ResponseEntity<?> accessCheck = validateAccess(authHeader, PermissionRegistry.PLATFORM_REPORTS_VIEW);
         if (accessCheck != null) return accessCheck;
 
-        Map<String, Object> data = dashboardFacade.getActivityReport();
+        UserActivityReportResponse data = dashboardFacade.getActivityReport();
         return ResponseEntity.ok(ApiResponse.success("Activity metrics loaded successfully", data));
     }
 }

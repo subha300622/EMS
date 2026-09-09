@@ -27,6 +27,9 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import com.example.ems.holiday.repository.HolidayRepository;
+import com.example.ems.schedule.entity.ScheduleException;
+import com.example.ems.schedule.repository.ScheduleExceptionRepository;
 
 // Service for managing schedule operations
 @Service
@@ -45,10 +48,10 @@ public class ScheduleManagementService {
     private OrganizationRepository organizationRepository;
 
     @Autowired
-    private com.example.ems.schedule.repository.ScheduleExceptionRepository scheduleExceptionRepository;
+    private ScheduleExceptionRepository scheduleExceptionRepository;
 
     @Autowired
-    private com.example.ems.holiday.repository.HolidayRepository holidayRepository;
+    private HolidayRepository holidayRepository;
 
     public EmployeeAvailabilityDto getEmployeeAvailability(User currentUser, String employeeIdInput, LocalDate date) {
         Long orgId = resolveOrganizationId(currentUser);
@@ -61,13 +64,13 @@ public class ScheduleManagementService {
         }
 
         // 2. Check Active Leave Exception
-        List<com.example.ems.schedule.entity.ScheduleException> exceptions = scheduleExceptionRepository.findActiveExceptionsOnDate(empCode, date);
+        List<ScheduleException> exceptions = scheduleExceptionRepository.findActiveExceptionsOnDate(empCode, date);
         if (exceptions.isEmpty()) {
             exceptions = scheduleExceptionRepository.findActiveExceptionsOnDate(employee.getId().toString(), date);
         }
 
         if (!exceptions.isEmpty()) {
-            com.example.ems.schedule.entity.ScheduleException exc = exceptions.get(0);
+            ScheduleException exc = exceptions.get(0);
             return new EmployeeAvailabilityDto(empCode, date, false, "LEAVE", exc.getLeaveRequestId());
         }
 
@@ -268,7 +271,7 @@ public class ScheduleManagementService {
         }
 
         String empCode = employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getId().toString();
-        List<com.example.ems.schedule.entity.ScheduleException> leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(empCode, date, date);
+        List<ScheduleException> leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(empCode, date, date);
         if (leaveExc.isEmpty()) {
             leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(employee.getId().toString(), date, date);
         }
@@ -318,7 +321,7 @@ public class ScheduleManagementService {
         }
 
         String empCode = schedule.getEmployee().getEmployeeId() != null ? schedule.getEmployee().getEmployeeId() : schedule.getEmployee().getId().toString();
-        List<com.example.ems.schedule.entity.ScheduleException> leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(empCode, date, date);
+        List<ScheduleException> leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(empCode, date, date);
         if (leaveExc.isEmpty()) {
             leaveExc = scheduleExceptionRepository.findActiveExceptionsInDateRange(schedule.getEmployee().getId().toString(), date, date);
         }

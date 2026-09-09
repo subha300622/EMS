@@ -19,6 +19,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import com.example.ems.attendance.repository.AttendanceLogRepository;
 
 @SpringBootTest
 public class AttendanceConcurrencyTest {
@@ -33,7 +34,7 @@ public class AttendanceConcurrencyTest {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private com.example.ems.attendance.repository.AttendanceLogRepository attendanceLogRepository;
+    private AttendanceLogRepository attendanceLogRepository;
 
     private Employee employee;
 

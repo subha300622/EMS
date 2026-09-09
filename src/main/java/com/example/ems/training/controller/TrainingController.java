@@ -54,7 +54,7 @@ public class TrainingController {
 
     // ── Training Lifecycle & CRUD ────────────────────────────────────────────
     @PostMapping
-    public ResponseEntity<?> createTraining(
+public ResponseEntity<?> createTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody TrainingCreateRequest request) {
         User user = resolveUser(authHeader);
@@ -68,7 +68,7 @@ public class TrainingController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getTrainings(
+public ResponseEntity<?> getTrainings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) TrainingStatus status,
             @RequestParam(required = false) String category,
@@ -80,7 +80,7 @@ public class TrainingController {
     }
 
     @GetMapping("/{trainingId}")
-    public ResponseEntity<?> getTrainingById(
+public ResponseEntity<?> getTrainingById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -94,7 +94,7 @@ public class TrainingController {
     }
 
     @PutMapping("/{trainingId}")
-    public ResponseEntity<?> updateTraining(
+public ResponseEntity<?> updateTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @Valid @RequestBody TrainingCreateRequest request) {
@@ -109,7 +109,7 @@ public class TrainingController {
     }
 
     @PostMapping("/{trainingId}/submit")
-    public ResponseEntity<?> submitForApproval(
+public ResponseEntity<?> submitForApproval(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -123,7 +123,7 @@ public class TrainingController {
     }
 
     @PostMapping("/{trainingId}/approve")
-    public ResponseEntity<?> approveTraining(
+public ResponseEntity<?> approveTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @RequestBody(required = false) TrainingApprovalRequest request) {
@@ -139,7 +139,7 @@ public class TrainingController {
     }
 
     @PostMapping("/{trainingId}/reject")
-    public ResponseEntity<?> rejectTraining(
+public ResponseEntity<?> rejectTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @RequestBody(required = false) TrainingApprovalRequest request) {
@@ -155,7 +155,7 @@ public class TrainingController {
     }
 
     @PostMapping("/{trainingId}/send-back")
-    public ResponseEntity<?> sendBackTraining(
+public ResponseEntity<?> sendBackTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @RequestBody(required = false) TrainingApprovalRequest request) {
@@ -171,7 +171,7 @@ public class TrainingController {
     }
 
     @PostMapping("/{trainingId}/publish")
-    public ResponseEntity<?> publishTraining(
+public ResponseEntity<?> publishTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -185,7 +185,7 @@ public class TrainingController {
     }
 
     @PostMapping("/{trainingId}/cancel")
-    public ResponseEntity<?> cancelTraining(
+public ResponseEntity<?> cancelTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @RequestBody(required = false) TrainingApprovalRequest request) {
@@ -202,7 +202,7 @@ public class TrainingController {
 
     // ── Participants & Assignments ───────────────────────────────────────────
     @PostMapping("/{trainingId}/assignments")
-    public ResponseEntity<?> assignUnified(
+public ResponseEntity<?> assignUnified(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @Valid @RequestBody TrainingUnifiedAssignmentRequest request) {
@@ -217,7 +217,7 @@ public class TrainingController {
     }
 
     @PostMapping("/{trainingId}/participants")
-    public ResponseEntity<?> assignParticipants(
+public ResponseEntity<?> assignParticipants(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @Valid @RequestBody ParticipantAssignRequest request) {
@@ -232,7 +232,7 @@ public class TrainingController {
     }
 
     @GetMapping("/{trainingId}/participants")
-    public ResponseEntity<?> getParticipants(
+public ResponseEntity<?> getParticipants(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -246,7 +246,7 @@ public class TrainingController {
     }
 
     @DeleteMapping("/{trainingId}/participants/{employeeId}")
-    public ResponseEntity<?> removeParticipant(
+public ResponseEntity<?> removeParticipant(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @PathVariable Long employeeId) {
@@ -262,7 +262,7 @@ public class TrainingController {
 
     // ── Attendance ───────────────────────────────────────────────────────────
     @PostMapping("/{trainingId}/attendance")
-    public ResponseEntity<?> recordAttendance(
+public ResponseEntity<?> recordAttendance(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @Valid @RequestBody AttendanceBulkMarkRequest request) {
@@ -277,7 +277,7 @@ public class TrainingController {
     }
 
     @GetMapping("/{trainingId}/attendance")
-    public ResponseEntity<?> getAttendanceRecords(
+public ResponseEntity<?> getAttendanceRecords(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -291,7 +291,7 @@ public class TrainingController {
     }
 
     @PatchMapping("/{trainingId}/participants/{employeeId}/attendance")
-    public ResponseEntity<?> updateParticipantAttendance(
+public ResponseEntity<?> updateParticipantAttendance(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @PathVariable Long employeeId,
@@ -309,7 +309,7 @@ public class TrainingController {
 
     // ── Materials ────────────────────────────────────────────────────────────
     @PostMapping("/{trainingId}/materials")
-    public ResponseEntity<?> addMaterial(
+public ResponseEntity<?> addMaterial(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @Valid @RequestBody MaterialCreateRequest request) {
@@ -324,7 +324,7 @@ public class TrainingController {
     }
 
     @GetMapping("/{trainingId}/materials")
-    public ResponseEntity<?> getMaterials(
+public ResponseEntity<?> getMaterials(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -338,7 +338,7 @@ public class TrainingController {
     }
 
     @DeleteMapping("/{trainingId}/materials/{materialId}")
-    public ResponseEntity<?> deleteMaterial(
+public ResponseEntity<?> deleteMaterial(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @PathVariable Long materialId) {
@@ -354,7 +354,7 @@ public class TrainingController {
 
     // ── Feedback ─────────────────────────────────────────────────────────────
     @PostMapping("/{trainingId}/feedback")
-    public ResponseEntity<?> submitFeedback(
+public ResponseEntity<?> submitFeedback(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @Valid @RequestBody FeedbackSubmitRequest request) {
@@ -369,7 +369,7 @@ public class TrainingController {
     }
 
     @GetMapping("/{trainingId}/feedback")
-    public ResponseEntity<?> getFeedbackSummary(
+public ResponseEntity<?> getFeedbackSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -384,7 +384,7 @@ public class TrainingController {
 
     // ── Calendar View ────────────────────────────────────────────────────────
     @GetMapping("/calendar")
-    public ResponseEntity<?> getCalendarEvents(
+public ResponseEntity<?> getCalendarEvents(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate) {

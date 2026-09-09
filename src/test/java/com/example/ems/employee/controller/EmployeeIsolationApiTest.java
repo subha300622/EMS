@@ -25,6 +25,10 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+import com.example.ems.employee.repository.EmployeeRoleRepository;
+import com.example.ems.employee.service.EmployeeCacheService;
+import java.util.function.Supplier;
+import org.springframework.context.ApplicationEventPublisher;
 
 public class EmployeeIsolationApiTest {
 
@@ -44,13 +48,13 @@ public class EmployeeIsolationApiTest {
     private OrganizationRepository organizationRepository;
 
     @Mock
-    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+    private ApplicationEventPublisher eventPublisher;
 
     @Mock
-    private com.example.ems.employee.repository.EmployeeRoleRepository employeeRoleRepository;
+    private EmployeeRoleRepository employeeRoleRepository;
 
     @Mock
-    private com.example.ems.employee.service.EmployeeCacheService cacheService;
+    private EmployeeCacheService cacheService;
 
     @InjectMocks
     private EmployeeService employeeService;
@@ -310,7 +314,7 @@ public class EmployeeIsolationApiTest {
         when(userRepository.findByWorkEmail("adminA@orga.com")).thenReturn(Optional.of(superAdminA));
         when(employeeRepository.findByOrganizationId(1001L)).thenReturn(List.of(empOrgA));
         when(cacheService.searchEmployees(anyString(), any())).thenAnswer(i -> {
-            java.util.function.Supplier<List<Employee>> supplier = i.getArgument(1);
+            Supplier<List<Employee>> supplier = i.getArgument(1);
             return supplier.get();
         });
 

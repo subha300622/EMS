@@ -27,7 +27,7 @@ public class GoalAssignmentController {
     @Operation(summary = "Assign Goal", description = "Assigns goal to organization, branch, department, team, employee, or project level")
     @PostMapping("/assign")
     @PreAuthorize("hasAuthority('GOAL_ASSIGN') or hasRole('ADMIN') or hasRole('MANAGER')")
-    public ResponseEntity<ApiResponse<Object>> assignGoal(
+    public ResponseEntity<ApiResponse<GoalAssignment>> assignGoal(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalAssignRequest request) {
         GoalAssignment assignment = assignmentService.assignGoal(goalId, request, 1L, "System", "ADMIN");
@@ -37,7 +37,7 @@ public class GoalAssignmentController {
     @Operation(summary = "Reassign Goal", description = "Reassigns goal and logs assignment history")
     @PostMapping("/reassign")
     @PreAuthorize("hasAuthority('GOAL_ASSIGN') or hasRole('ADMIN') or hasRole('MANAGER')")
-    public ResponseEntity<ApiResponse<Object>> reassignGoal(
+    public ResponseEntity<ApiResponse<GoalAssignment>> reassignGoal(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalAssignRequest request) {
         GoalAssignment assignment = assignmentService.reassignGoal(goalId, request, 1L, "System", "ADMIN");
@@ -47,7 +47,7 @@ public class GoalAssignmentController {
     @Operation(summary = "Get Goal Active Assignments", description = "Lists current active assignments for a goal")
     @GetMapping("/assignments")
     @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER') or hasRole('EMPLOYEE')")
-    public ResponseEntity<ApiResponse<Object>> getAssignments(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<List<GoalAssignment>>> getAssignments(@PathVariable("goalId") Long goalId) {
         List<GoalAssignment> assignments = assignmentService.getActiveAssignments(goalId);
         return ResponseEntity.ok(ApiResponse.success("Assignments retrieved successfully", assignments));
     }
@@ -55,7 +55,7 @@ public class GoalAssignmentController {
     @Operation(summary = "Get Goal Assignment History", description = "Lists historical assignment audit trail for a goal")
     @GetMapping("/assignment-history")
     @PreAuthorize("hasAuthority('GOAL_VIEW') or hasRole('ADMIN') or hasRole('MANAGER')")
-    public ResponseEntity<ApiResponse<Object>> getAssignmentHistory(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<List<GoalAssignmentHistory>>> getAssignmentHistory(@PathVariable("goalId") Long goalId) {
         List<GoalAssignmentHistory> history = assignmentService.getAssignmentHistory(goalId);
         return ResponseEntity.ok(ApiResponse.success("Assignment history retrieved successfully", history));
     }

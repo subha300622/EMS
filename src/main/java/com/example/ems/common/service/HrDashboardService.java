@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.recruitment.entity.JobStatus;
+import java.time.format.TextStyle;
 
 @Service
 public class HrDashboardService {
@@ -50,7 +52,7 @@ public class HrDashboardService {
         }
 
         long displayOpenPositions = jobRepository.findAll().stream()
-                .filter(j -> j.getStatus() == com.example.ems.recruitment.entity.JobStatus.PUBLISHED)
+                .filter(j -> j.getStatus() == JobStatus.PUBLISHED)
                 .count();
         if (displayOpenPositions == 0) {
             displayOpenPositions = 18L;
@@ -125,7 +127,7 @@ public class HrDashboardService {
 
     public Map<String, Object> getOpenPositionsStats() {
         long total = jobRepository.findAll().stream()
-                .filter(j -> j.getStatus() == com.example.ems.recruitment.entity.JobStatus.PUBLISHED)
+                .filter(j -> j.getStatus() == JobStatus.PUBLISHED)
                 .count();
         if (total == 0) {
             total = 18L;
@@ -154,7 +156,7 @@ public class HrDashboardService {
 
         for (int i = months - 1; i >= 0; i--) {
             LocalDate targetDate = now.minusMonths(i);
-            String label = targetDate.getMonth().getDisplayName(java.time.format.TextStyle.SHORT, Locale.ENGLISH);
+            String label = targetDate.getMonth().getDisplayName(TextStyle.SHORT, Locale.ENGLISH);
             labels.add(label);
 
             long base = currentHeadcount - (i * 15L);

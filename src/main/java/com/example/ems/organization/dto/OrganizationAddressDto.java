@@ -1,16 +1,27 @@
 package com.example.ems.organization.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
+@Schema(description = "Organization address details")
 public class OrganizationAddressDto {
+    @Schema(description = "Street address", example = "123 Business Way")
     @NotBlank(message = "Street is required")
     private String street;
+
+    @Schema(description = "City", example = "San Francisco")
     @NotBlank(message = "City is required")
     private String city;
+
+    @Schema(description = "State or Province", example = "CA")
     @NotBlank(message = "State is required")
     private String state;
+
+    @Schema(description = "Country", example = "United States")
     @NotBlank(message = "Country is required")
     private String country;
+
+    @Schema(description = "Zip or Postal Code", example = "94105")
     @NotBlank(message = "Zip code is required")
     private String zipCode;
 

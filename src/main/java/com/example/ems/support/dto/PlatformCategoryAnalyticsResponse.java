@@ -1,11 +1,20 @@
 package com.example.ems.support.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Platform Category Analytics Response")
 public class PlatformCategoryAnalyticsResponse {
+    @Schema(description = "Category Name", example = "Technical Support")
     private String category;
+    @Schema(description = "Total number of tickets", example = "45")
     private long ticketCount;
+    @Schema(description = "Percentage of total tickets", example = "45.0")
     private double percentage;
+    @Schema(description = "Average resolution time", example = "2.5 hours")
     private String avgResolutionTime;
+    @Schema(description = "Number of open tickets", example = "5")
     private long openTickets;
+    @Schema(description = "Number of closed tickets", example = "40")
     private long closedTickets;
 
     public PlatformCategoryAnalyticsResponse() {}

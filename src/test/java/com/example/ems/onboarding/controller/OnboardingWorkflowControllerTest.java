@@ -31,6 +31,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.example.ems.config.GlobalExceptionHandler;
+import org.springframework.test.util.ReflectionTestUtils;
 
 public class OnboardingWorkflowControllerTest {
 
@@ -62,11 +64,11 @@ public class OnboardingWorkflowControllerTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
         objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
-        org.springframework.test.util.ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
-        org.springframework.test.util.ReflectionTestUtils.setField(controller, "workflowService", service);
+        ReflectionTestUtils.setField(service, "objectMapper", objectMapper);
+        ReflectionTestUtils.setField(controller, "workflowService", service);
 
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new com.example.ems.config.GlobalExceptionHandler())
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
 

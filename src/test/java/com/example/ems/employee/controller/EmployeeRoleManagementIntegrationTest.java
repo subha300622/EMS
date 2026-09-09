@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.time.LocalDate;
 
 public class EmployeeRoleManagementIntegrationTest {
 
@@ -162,7 +163,7 @@ public class EmployeeRoleManagementIntegrationTest {
     public void testChangeEmployeeRolesSuccess() throws Exception {
         when(roleService.hasPermission(SUPER_ADMIN_EMAIL, "role.assign")).thenReturn(true);
 
-        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest(List.of(6L), java.time.LocalDate.parse("2026-09-01"), "Promoted to manager");
+        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest(List.of(6L), LocalDate.parse("2026-09-01"), "Promoted to manager");
         EmployeeRolesResponse.EmployeeRoleDto r = new EmployeeRolesResponse.EmployeeRoleDto(6L, "MANAGER", "ACTIVE");
         EmployeeRolesResponse response = new EmployeeRolesResponse(100L, List.of(r));
 
@@ -181,7 +182,7 @@ public class EmployeeRoleManagementIntegrationTest {
     public void testChangeLastSuperAdminRejected() throws Exception {
         when(roleService.hasPermission(SUPER_ADMIN_EMAIL, "role.assign")).thenReturn(true);
 
-        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest(List.of(6L), java.time.LocalDate.parse("2026-09-01"), "Demotion");
+        ChangeEmployeeRoleRequest request = new ChangeEmployeeRoleRequest(List.of(6L), LocalDate.parse("2026-09-01"), "Demotion");
         when(employeeService.changeEmployeeRoles(eq(100L), any(), any()))
                 .thenThrow(new IllegalArgumentException("LAST_SUPER_ADMIN_CANNOT_BE_REMOVED: The last Super Admin of an organization cannot be removed."));
 

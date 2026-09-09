@@ -2,6 +2,7 @@ package com.example.ems.asset.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.JdbcTypeCode;
 
 @Entity
 @Table(name = "asset_documents")
@@ -36,7 +37,7 @@ public class AssetDocument {
     @Column(name = "storage_key", length = 500)
     private String storageKey;
 
-    @org.hibernate.annotations.JdbcTypeCode(java.sql.Types.VARBINARY)
+    @JdbcTypeCode(java.sql.Types.VARBINARY)
     @Column(name = "file_data")
     private byte[] fileData;
 

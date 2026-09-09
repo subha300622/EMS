@@ -20,6 +20,9 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
+import com.example.ems.training.dto.TrainingAssignmentOptionsRequest;
+import com.example.ems.training.dto.TrainingEmployeeSummaryResponse;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/training/teams")
@@ -60,7 +63,7 @@ public class TeamTrainingController {
     }
 
     @GetMapping
-    public ResponseEntity<?> getTeamsWithSummary(
+public ResponseEntity<?> getTeamsWithSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null)
@@ -80,7 +83,7 @@ public class TeamTrainingController {
     }
 
     @GetMapping("/{teamId}")
-    public ResponseEntity<?> getTeamDetails(
+public ResponseEntity<?> getTeamDetails(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId) {
         User user = resolveUser(authHeader);
@@ -96,7 +99,7 @@ public class TeamTrainingController {
     }
 
     @GetMapping("/{teamId}/trainings")
-    public ResponseEntity<?> getTeamTrainings(
+public ResponseEntity<?> getTeamTrainings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId) {
         User user = resolveUser(authHeader);
@@ -112,11 +115,11 @@ public class TeamTrainingController {
     }
 
     @PostMapping("/{teamId}/trainings/{trainingId}")
-    public ResponseEntity<?> assignTrainingToTeam(
+public ResponseEntity<?> assignTrainingToTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId,
             @PathVariable Long trainingId,
-            @RequestBody(required = false) @jakarta.validation.Valid com.example.ems.training.dto.TrainingAssignmentOptionsRequest body) {
+            @RequestBody(required = false) @Valid TrainingAssignmentOptionsRequest body) {
         User user = resolveUser(authHeader);
         if (user == null)
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
@@ -135,7 +138,7 @@ public class TeamTrainingController {
     }
 
     @DeleteMapping("/{teamId}/trainings/{trainingId}")
-    public ResponseEntity<?> removeTeamTrainingAssignment(
+public ResponseEntity<?> removeTeamTrainingAssignment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId,
             @PathVariable Long trainingId) {
@@ -153,7 +156,7 @@ public class TeamTrainingController {
     }
 
     @GetMapping("/{teamId}/employees")
-    public ResponseEntity<?> getTeamEmployees(
+public ResponseEntity<?> getTeamEmployees(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId) {
         User user = resolveUser(authHeader);
@@ -161,20 +164,20 @@ public class TeamTrainingController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
 
         Long orgId = trainingService.resolveOrganizationId(user);
-        List<Map<String, Object>> employees = employeeRepository.findByOrganizationId(orgId).stream()
+        List<TrainingEmployeeSummaryResponse> employees = employeeRepository.findByOrganizationId(orgId).stream()
                 .filter(e -> e.getTeam() != null && e.getTeam().getId().equals(teamId))
-                .map(e -> Map.of(
-                        "id", (Object) e.getId(),
-                        "employeeId", e.getEmployeeId() != null ? e.getEmployeeId() : "",
-                        "fullName", e.getFullName() != null ? e.getFullName() : "",
-                        "email", e.getEmail() != null ? e.getEmail() : ""))
+                .map(e -> new TrainingEmployeeSummaryResponse(
+                        e.getId(),
+                        e.getEmployeeId() != null ? e.getEmployeeId() : "",
+                        e.getFullName() != null ? e.getFullName() : "",
+                        e.getEmail() != null ? e.getEmail() : ""))
                 .toList();
 
         return ResponseEntity.ok(employees);
     }
 
     @GetMapping("/{teamId}/progress")
-    public ResponseEntity<?> getTeamProgress(
+public ResponseEntity<?> getTeamProgress(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId) {
         User user = resolveUser(authHeader);

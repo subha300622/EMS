@@ -10,6 +10,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.stream.Collectors;
+import com.example.ems.attendance.exception.DuplicateCheckInException;
+import com.example.ems.common.exception.ConflictException;
+import com.example.ems.common.exception.ResourceNotFoundException;
+import com.example.ems.onboarding.exception.InvalidOnboardingTransitionException;
+import java.util.List;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -22,7 +30,7 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .collect(Collectors.joining(", "));
 
-        java.util.List<ErrorResponse.ErrorDetails.Detail> details = ex.getBindingResult().getFieldErrors().stream()
+        List<ErrorResponse.ErrorDetails.Detail> details = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> new ErrorResponse.ErrorDetails.Detail(error.getField(), error.getRejectedValue()))
                 .collect(Collectors.toList());
 
@@ -39,37 +47,37 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(message, "VAL_002"));
     }
 
-    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
-            org.springframework.http.converter.HttpMessageNotReadableException ex) {
+            HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.error("Malformed JSON request body: " + ex.getMessage(), "VAL_003"));
     }
 
-    @ExceptionHandler(com.example.ems.attendance.exception.DuplicateCheckInException.class)
+    @ExceptionHandler(DuplicateCheckInException.class)
     public ResponseEntity<ErrorResponse> handleDuplicateCheckIn(
-            com.example.ems.attendance.exception.DuplicateCheckInException ex) {
+            DuplicateCheckInException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.error(ex.getMessage(), "ATT_002"));
     }
 
-    @ExceptionHandler(com.example.ems.common.exception.ResourceNotFoundException.class)
+    @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
-            com.example.ems.common.exception.ResourceNotFoundException ex) {
+            ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.error(ex.getMessage(), "RES_404"));
     }
 
-    @ExceptionHandler(com.example.ems.onboarding.exception.InvalidOnboardingTransitionException.class)
+    @ExceptionHandler(InvalidOnboardingTransitionException.class)
     public ResponseEntity<ErrorResponse> handleInvalidOnboardingTransition(
-            com.example.ems.onboarding.exception.InvalidOnboardingTransitionException ex) {
+            InvalidOnboardingTransitionException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.error(ex.getMessage(), "ONB_400"));
     }
 
-    @ExceptionHandler(com.example.ems.common.exception.ConflictException.class)
+    @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflictException(
-            com.example.ems.common.exception.ConflictException ex) {
+            ConflictException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponse.error(ex.getMessage(), "CON_409"));
     }
@@ -92,15 +100,15 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(ex.getMessage(), "AUTH_002"));
     }
 
-    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error(ex.getMessage(), "AUTH_002"));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(Exception ex) throws Exception {
-        if (ex instanceof org.springframework.web.servlet.resource.NoResourceFoundException) {
+        if (ex instanceof NoResourceFoundException) {
             throw ex;
         }
         ex.printStackTrace();

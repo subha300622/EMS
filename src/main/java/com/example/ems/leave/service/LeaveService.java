@@ -18,6 +18,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 /**
  * Service for orchestrating Leave Management lifecycle operations.
@@ -592,8 +594,8 @@ public class LeaveService {
         return toggleLeaveTypeStatus(id, true);
     }
 
-    public org.springframework.data.domain.Page<LeaveApprovalResponseDto> getManagerLeaveApprovals(Employee manager, String status, Long employeeId, LocalDate fromDate, LocalDate toDate, org.springframework.data.domain.Pageable pageable) {
-        org.springframework.data.domain.Page<Leave> page = leaveRepository.findManagerLeaveApprovals(manager.getId(), status, employeeId, fromDate, toDate, pageable);
+    public Page<LeaveApprovalResponseDto> getManagerLeaveApprovals(Employee manager, String status, Long employeeId, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
+        Page<Leave> page = leaveRepository.findManagerLeaveApprovals(manager.getId(), status, employeeId, fromDate, toDate, pageable);
         return page.map(l -> new LeaveApprovalResponseDto(
                 l.getId(),
                 l.getEmployee() != null ? l.getEmployee().getId() : null,
@@ -715,6 +717,31 @@ public class LeaveService {
         dashboard.put("leaveTypeDistribution", byType);
         dashboard.put("departmentDistribution", byDept);
         return dashboard;
+    }
+
+    @Transactional(readOnly = true)
+    public LeaveDashboardMetricsDto getStructuredDashboardMetrics(Long orgId) {
+        List<Leave> allLeaves = leaveRepository.findFilteredLeaves(orgId, null, null, null, null, null, null);
+        long total = allLeaves.size();
+        long pending = allLeaves.stream().filter(l -> "PENDING".equalsIgnoreCase(l.getStatus())).count();
+        long approved = allLeaves.stream().filter(l -> "APPROVED".equalsIgnoreCase(l.getStatus())).count();
+        long rejected = allLeaves.stream().filter(l -> "REJECTED".equalsIgnoreCase(l.getStatus())).count();
+        long cancelled = allLeaves.stream().filter(l -> "CANCELLED".equalsIgnoreCase(l.getStatus())).count();
+
+        LeaveDashboardMetricsDto.LeaveSummaryCountsDto summary =
+                new LeaveDashboardMetricsDto.LeaveSummaryCountsDto(
+                        total, pending, approved, rejected, cancelled
+                );
+
+        Map<String, Long> byType = allLeaves.stream()
+                .filter(l -> l.getLeaveType() != null && l.getLeaveType().getName() != null)
+                .collect(Collectors.groupingBy(l -> l.getLeaveType().getName(), Collectors.counting()));
+
+        Map<String, Long> byDept = allLeaves.stream()
+                .filter(l -> l.getEmployee() != null && l.getEmployee().getDepartment() != null)
+                .collect(Collectors.groupingBy(l -> l.getEmployee().getDepartment(), Collectors.counting()));
+
+        return new LeaveDashboardMetricsDto(summary, byType, byDept);
     }
 }
 

@@ -13,6 +13,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 
 @Repository
 public interface ApprovalTaskRepository extends JpaRepository<ApprovalTask, Long>, JpaSpecificationExecutor<ApprovalTask> {
@@ -20,7 +22,7 @@ public interface ApprovalTaskRepository extends JpaRepository<ApprovalTask, Long
     @Query("SELECT t FROM ApprovalTask t LEFT JOIN FETCH t.approver LEFT JOIN FETCH t.workflowInstance LEFT JOIN FETCH t.step WHERE t.approvalTaskId = :approvalTaskId")
     Optional<ApprovalTask> findByApprovalTaskId(@Param("approvalTaskId") String approvalTaskId);
 
-    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT t FROM ApprovalTask t LEFT JOIN FETCH t.approver LEFT JOIN FETCH t.workflowInstance LEFT JOIN FETCH t.step WHERE t.approvalTaskId = :approvalTaskId")
     Optional<ApprovalTask> findByApprovalTaskIdWithLock(@Param("approvalTaskId") String approvalTaskId);
 
@@ -45,7 +47,7 @@ public interface ApprovalTaskRepository extends JpaRepository<ApprovalTask, Long
     @Query("SELECT t FROM ApprovalTask t WHERE t.workflowType = :workflowType " +
            "AND t.businessReferenceType = :businessReferenceType " +
            "AND t.businessReferenceId = :businessReferenceId " +
-           "AND t.status = com.example.ems.approval.entity.ApprovalStatus.PENDING")
+           "AND t.status = ApprovalStatus.PENDING")
     List<ApprovalTask> findActiveTasksForBusinessRef(
             @Param("workflowType") WorkflowType workflowType,
             @Param("businessReferenceType") String businessReferenceType,

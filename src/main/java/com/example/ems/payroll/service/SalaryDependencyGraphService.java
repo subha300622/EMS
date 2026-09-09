@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.payroll.entity.SalaryComponentType;
 
 @Service
 public class SalaryDependencyGraphService {
@@ -41,7 +42,7 @@ public class SalaryDependencyGraphService {
             } else if (ssc.getCalculationType() == CalculationType.PERCENTAGE
                     && ssc.getCalculationBaseType() == CalculationBaseType.GROSS) {
                 for (SalaryStructureComponent other : components) {
-                    if (other.getSalaryComponent().getComponentType() == com.example.ems.payroll.entity.SalaryComponentType.EARNING
+                    if (other.getSalaryComponent().getComponentType() == SalaryComponentType.EARNING
                             && !other.getSalaryComponent().getId().equals(compId)) {
                         Long earnId = other.getSalaryComponent().getId();
                         node.getDependencies().add(earnId);

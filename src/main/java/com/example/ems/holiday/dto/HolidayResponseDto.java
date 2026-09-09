@@ -1,14 +1,25 @@
 package com.example.ems.holiday.dto;
 
 import com.example.ems.holiday.entity.HolidayStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDate;
 
+@Schema(description = "Holiday details response payload")
 public class HolidayResponseDto {
 
+    @Schema(description = "Unique Holiday Identifier", example = "HOL-2026-001")
     private String holidayId;
+
+    @Schema(description = "Name of the holiday", example = "Christmas Day")
     private String name;
+
+    @Schema(description = "Date of the holiday (YYYY-MM-DD)", example = "2026-12-25")
     private LocalDate holidayDate;
+
+    @Schema(description = "Description or notes for the holiday", example = "Public holiday celebration")
     private String description;
+
+    @Schema(description = "Holiday status", example = "ACTIVE")
     private HolidayStatus status;
 
     public HolidayResponseDto() {}

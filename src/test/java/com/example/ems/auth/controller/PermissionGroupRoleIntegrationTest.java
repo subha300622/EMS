@@ -25,6 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.example.ems.config.DatabaseSeeder;
 
 @SpringBootTest
 @Transactional
@@ -49,7 +50,7 @@ public class PermissionGroupRoleIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private com.example.ems.config.DatabaseSeeder databaseSeeder;
+    private DatabaseSeeder databaseSeeder;
 
     private Organization orgA;
     private Organization orgB;

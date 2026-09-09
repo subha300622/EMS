@@ -24,7 +24,7 @@ public class GoalCommentController {
 
     @Operation(summary = "Add Comment", description = "Adds a comment to a goal")
     @PostMapping
-    public ResponseEntity<ApiResponse<Object>> addComment(
+    public ResponseEntity<ApiResponse<GoalComment>> addComment(
             @PathVariable("goalId") Long goalId,
             @Valid @RequestBody GoalCommentRequest request) {
         GoalComment comment = commentService.addComment(goalId, request, 1L, "User", "EMPLOYEE");
@@ -33,7 +33,7 @@ public class GoalCommentController {
 
     @Operation(summary = "Add Reply to Comment", description = "Adds a threaded reply to an existing comment")
     @PostMapping("/{commentId}/replies")
-    public ResponseEntity<ApiResponse<Object>> addReply(
+    public ResponseEntity<ApiResponse<GoalComment>> addReply(
             @PathVariable("goalId") Long goalId,
             @PathVariable("commentId") Long commentId,
             @Valid @RequestBody GoalCommentRequest request) {
@@ -44,7 +44,7 @@ public class GoalCommentController {
 
     @Operation(summary = "Update Comment", description = "Updates content of an existing comment")
     @PutMapping("/{commentId}")
-    public ResponseEntity<ApiResponse<Object>> updateComment(
+    public ResponseEntity<ApiResponse<GoalComment>> updateComment(
             @PathVariable("goalId") Long goalId,
             @PathVariable("commentId") Long commentId,
             @Valid @RequestBody GoalCommentRequest request) {
@@ -54,14 +54,14 @@ public class GoalCommentController {
 
     @Operation(summary = "Get Goal Comments", description = "Lists comments for a goal")
     @GetMapping
-    public ResponseEntity<ApiResponse<Object>> getComments(@PathVariable("goalId") Long goalId) {
+    public ResponseEntity<ApiResponse<List<GoalComment>>> getComments(@PathVariable("goalId") Long goalId) {
         List<GoalComment> comments = commentService.getComments(goalId);
         return ResponseEntity.ok(ApiResponse.success("Comments retrieved successfully", comments));
     }
 
     @Operation(summary = "Delete Comment", description = "Soft deletes a comment")
     @DeleteMapping("/{commentId}")
-    public ResponseEntity<ApiResponse<Object>> deleteComment(
+    public ResponseEntity<ApiResponse<Void>> deleteComment(
             @PathVariable("goalId") Long goalId,
             @PathVariable("commentId") Long commentId) {
         commentService.deleteComment(commentId, 1L, "User", "EMPLOYEE");

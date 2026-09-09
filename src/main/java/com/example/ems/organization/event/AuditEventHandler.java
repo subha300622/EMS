@@ -5,6 +5,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Decoupled event handler for system audit logging of gateway success confirmations.
@@ -14,8 +17,8 @@ public class AuditEventHandler {
 
     private static final Logger log = LoggerFactory.getLogger(AuditEventHandler.class);
 
-    @org.springframework.scheduling.annotation.Async
-    @org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Async
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handlePaymentSucceeded(PaymentSucceededEvent event) {
         log.info("[AuditEventHandler] Audited event: {} | PaymentId: {}, GatewayPaymentId: {}, InvoiceId: {}, SubscriptionId: {}",

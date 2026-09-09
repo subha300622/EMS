@@ -6,7 +6,6 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
@@ -65,15 +64,15 @@ public class AppraisalIncrementController {
 
     @Operation(summary = "Calculate and Preview Appraisal Increment Proposal")
     @GetMapping("/{appraisalId}/increment/preview")
-    public ResponseEntity<?> previewIncrement(
+    public ResponseEntity<ApiResponse<IncrementCalculationPreviewDto>> previewIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long appraisalId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_INCREMENT_VIEW") && !hasPermission(user, "APPRAISAL_VIEW") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing permission to view increment proposal", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing permission to view increment proposal", "AUTH_002"));
         }
 
         IncrementCalculationPreviewDto preview = incrementService.calculateIncrementPreview(appraisalId);
@@ -82,16 +81,16 @@ public class AppraisalIncrementController {
 
     @Operation(summary = "Approve Appraisal Increment Proposal")
     @PostMapping("/{appraisalId}/increment/approve")
-    public ResponseEntity<?> approveIncrement(
+    public ResponseEntity<ApiResponse<AppraisalIncrementResponseDto>> approveIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long appraisalId,
             @Valid @RequestBody ApproveIncrementRequestDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_INCREMENT_APPROVE") && !hasPermission(user, "APPRAISAL_APPROVE") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_INCREMENT_APPROVE permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_INCREMENT_APPROVE permission", "AUTH_002"));
         }
 
         Employee approver = resolveEmployee(user);
@@ -101,16 +100,16 @@ public class AppraisalIncrementController {
 
     @Operation(summary = "Apply Approved Appraisal Increment to Payroll")
     @PostMapping("/{appraisalId}/increment/apply")
-    public ResponseEntity<?> applyIncrement(
+    public ResponseEntity<ApiResponse<AppraisalIncrementResponseDto>> applyIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long appraisalId,
             @Valid @RequestBody(required = false) ApplyIncrementRequestDto dto) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_INCREMENT_APPLY") && !hasPermission(user, "SALARY_MANAGE") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_INCREMENT_APPLY permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_INCREMENT_APPLY permission", "AUTH_002"));
         }
 
         Employee actor = resolveEmployee(user);
@@ -121,12 +120,12 @@ public class AppraisalIncrementController {
 
     @Operation(summary = "Get Appraisal Increment Details")
     @GetMapping("/{appraisalId}/increment")
-    public ResponseEntity<?> getIncrement(
+    public ResponseEntity<ApiResponse<AppraisalIncrementResponseDto>> getIncrement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long appraisalId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         AppraisalIncrementResponseDto result = incrementService.getIncrementByAppraisalId(appraisalId);
@@ -135,15 +134,15 @@ public class AppraisalIncrementController {
 
     @Operation(summary = "Get Appraisal Increment History")
     @GetMapping("/increments/history")
-    public ResponseEntity<?> getIncrementHistory(
+    public ResponseEntity<ApiResponse<List<AppraisalIncrementResponseDto>>> getIncrementHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) Long employeeId) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!hasPermission(user, "APPRAISAL_INCREMENT_VIEW") && !hasPermission(user, "APPRAISAL_VIEW") && !hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ErrorResponse.error("Access Denied: Missing APPRAISAL_INCREMENT_VIEW permission", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing APPRAISAL_INCREMENT_VIEW permission", "AUTH_002"));
         }
 
         List<AppraisalIncrementResponseDto> history = incrementService.getIncrementHistory(employeeId);

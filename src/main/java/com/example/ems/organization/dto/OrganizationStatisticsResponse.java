@@ -1,12 +1,28 @@
 package com.example.ems.organization.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Organization statistics response")
 public class OrganizationStatisticsResponse {
+    @Schema(description = "Total Employees Count", example = "100")
     private long employees;
+
+    @Schema(description = "Total Departments Count", example = "8")
     private long departments;
+
+    @Schema(description = "Total Organization Admins Count", example = "2")
     private long admins;
+
+    @Schema(description = "Total Active Users Count", example = "95")
     private long activeUsers;
+
+    @Schema(description = "Monthly Revenue Generated", example = "499.0")
     private double monthlyRevenue;
+
+    @Schema(description = "Cloud Storage Used in GB", example = "12.5")
     private double storageUsedGB;
+
+    @Schema(description = "Last Login Timestamp", example = "2026-07-01T10:00:00Z")
     private String lastLogin;
 
     public OrganizationStatisticsResponse() {}

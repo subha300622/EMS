@@ -30,6 +30,9 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.example.ems.attendance.entity.Attendance;
+import com.example.ems.attendance.repository.AttendanceRepository;
+import com.example.ems.holiday.service.HolidayAttendanceWorker;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -57,10 +60,10 @@ public class HolidayModuleIntegrationTest {
     private HolidayRepository holidayRepository;
 
     @Autowired
-    private com.example.ems.holiday.service.HolidayAttendanceWorker holidayAttendanceWorker;
+    private HolidayAttendanceWorker holidayAttendanceWorker;
 
     @Autowired
-    private com.example.ems.attendance.repository.AttendanceRepository attendanceRepository;
+    private AttendanceRepository attendanceRepository;
 
     @Autowired
     private JwtService jwtService;
@@ -326,7 +329,7 @@ public class HolidayModuleIntegrationTest {
         employeeRepository.save(empInactive);
 
         // Pre-existing finalized attendance for emp1 (PRESENT)
-        com.example.ems.attendance.entity.Attendance existingAtt = new com.example.ems.attendance.entity.Attendance();
+        Attendance existingAtt = new Attendance();
         existingAtt.setEmployee(emp1);
         existingAtt.setDate(holidayDate);
         existingAtt.setStatus("PRESENT");
@@ -337,7 +340,7 @@ public class HolidayModuleIntegrationTest {
         holidayAttendanceWorker.processDailyHolidays(holidayDate);
 
         // Emp1 attendance must remain PRESENT (precedence rule)
-        com.example.ems.attendance.entity.Attendance emp1Att = attendanceRepository.findByEmployeeIdAndDate(emp1.getId(), holidayDate).orElseThrow();
+        Attendance emp1Att = attendanceRepository.findByEmployeeIdAndDate(emp1.getId(), holidayDate).orElseThrow();
         assertEquals("PRESENT", emp1Att.getStatus());
 
         // EmpInactive must NOT have attendance created (active employee filter)
@@ -359,7 +362,7 @@ public class HolidayModuleIntegrationTest {
         // Worker runs and marks HOLIDAY
         holidayAttendanceWorker.processDailyHolidays(holidayDate);
 
-        com.example.ems.attendance.entity.Attendance emp1AttBefore = attendanceRepository.findByEmployeeIdAndDate(emp1.getId(), holidayDate).orElseThrow();
+        Attendance emp1AttBefore = attendanceRepository.findByEmployeeIdAndDate(emp1.getId(), holidayDate).orElseThrow();
         assertEquals("HOLIDAY", emp1AttBefore.getStatus());
 
         // Admin deactivates holiday (soft delete)
@@ -369,7 +372,7 @@ public class HolidayModuleIntegrationTest {
                 .andExpect(jsonPath("$.data.status", is("INACTIVE")));
 
         // Historical attendance record remains HOLIDAY and unchanged
-        com.example.ems.attendance.entity.Attendance emp1AttAfter = attendanceRepository.findByEmployeeIdAndDate(emp1.getId(), holidayDate).orElseThrow();
+        Attendance emp1AttAfter = attendanceRepository.findByEmployeeIdAndDate(emp1.getId(), holidayDate).orElseThrow();
         assertEquals("HOLIDAY", emp1AttAfter.getStatus());
     }
 }

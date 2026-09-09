@@ -20,28 +20,28 @@ public class GoalDashboardController {
 
     @Operation(summary = "Organization Goal Dashboard", description = "Calculates organization-wide goal metrics from transactional data")
     @GetMapping("/organization")
-    public ResponseEntity<ApiResponse<Object>> getOrganizationDashboard() {
+    public ResponseEntity<ApiResponse<GoalDashboardResponse>> getOrganizationDashboard() {
         GoalDashboardResponse response = dashboardService.getOrganizationDashboard();
         return ResponseEntity.ok(ApiResponse.success("Organization dashboard retrieved successfully", response));
     }
 
     @Operation(summary = "Department Goal Dashboard", description = "Calculates department-level goal metrics")
     @GetMapping("/departments/{departmentId}")
-    public ResponseEntity<ApiResponse<Object>> getDepartmentDashboard(@PathVariable("departmentId") Long departmentId) {
+    public ResponseEntity<ApiResponse<GoalDashboardResponse>> getDepartmentDashboard(@PathVariable("departmentId") Long departmentId) {
         GoalDashboardResponse response = dashboardService.getOrganizationDashboard();
         return ResponseEntity.ok(ApiResponse.success("Department dashboard retrieved successfully", response));
     }
 
     @Operation(summary = "Team Goal Dashboard", description = "Calculates team-level goal metrics")
     @GetMapping("/teams/{teamId}")
-    public ResponseEntity<ApiResponse<Object>> getTeamDashboard(@PathVariable("teamId") Long teamId) {
+    public ResponseEntity<ApiResponse<GoalDashboardResponse>> getTeamDashboard(@PathVariable("teamId") Long teamId) {
         GoalDashboardResponse response = dashboardService.getOrganizationDashboard();
         return ResponseEntity.ok(ApiResponse.success("Team dashboard retrieved successfully", response));
     }
 
     @Operation(summary = "My Goal Dashboard Summary", description = "Calculates personal goal metrics summary")
     @GetMapping("/my")
-    public ResponseEntity<ApiResponse<Object>> getMyDashboardSummary() {
+    public ResponseEntity<ApiResponse<GoalDashboardResponse>> getMyDashboardSummary() {
         GoalDashboardResponse response = dashboardService.getEmployeeDashboard(1L);
         return ResponseEntity.ok(ApiResponse.success("Dashboard summary retrieved successfully", response));
     }

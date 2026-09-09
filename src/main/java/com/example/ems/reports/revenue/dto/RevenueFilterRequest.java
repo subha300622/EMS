@@ -1,26 +1,65 @@
 package com.example.ems.reports.revenue.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 
+@Schema(description = "Revenue reporting filter criteria")
 public class RevenueFilterRequest {
+    @Schema(description = "Start Date (YYYY-MM-DD)", example = "2026-01-01")
     private String from;
+
+    @Schema(description = "End Date (YYYY-MM-DD)", example = "2026-12-31")
     private String to;
+
+    @Schema(description = "Organization ID", example = "10")
     private Long organizationId;
+
+    @Schema(description = "Subscription Plan Name", example = "ENTERPRISE")
     private String subscriptionPlan;
+
+    @Schema(description = "Payment Status", example = "SUCCESS")
     private String paymentStatus;
+
+    @Schema(description = "Invoice Status", example = "PAID")
     private String invoiceStatus;
+
+    @Schema(description = "Currency Code", example = "USD")
     private String currency;
+
+    @Schema(description = "Payment Gateway", example = "RAZORPAY")
     private String gateway;
+
+    @Schema(description = "Payment Method", example = "CREDIT_CARD")
     private String paymentMethod;
+
+    @Schema(description = "Billing Cycle", example = "ANNUAL")
     private String billingCycle;
+
+    @Schema(description = "Country", example = "United States")
     private String country;
+
+    @Schema(description = "Industry", example = "Technology")
     private String industry;
+
+    @Schema(description = "Auto Renewal Flag", example = "true")
     private Boolean autoRenewal;
+
+    @Schema(description = "Minimum Transaction Amount", example = "10.00")
     private BigDecimal minAmount;
+
+    @Schema(description = "Maximum Transaction Amount", example = "10000.00")
     private BigDecimal maxAmount;
+
+    @Schema(description = "Pagination page index (0-based)", example = "0")
     private int page = 0;
+
+    @Schema(description = "Pagination page size", example = "10")
     private int size = 10;
+
+    @Schema(description = "Sort By field", example = "id")
     private String sortBy;
+
+    @Schema(description = "Sort direction (asc/desc)", example = "desc")
     private String direction;
 
     public RevenueFilterRequest() {}

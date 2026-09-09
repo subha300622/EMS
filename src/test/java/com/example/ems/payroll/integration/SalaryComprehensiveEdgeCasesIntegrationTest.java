@@ -33,6 +33,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import com.example.ems.config.GlobalExceptionHandler;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -75,7 +76,7 @@ public class SalaryComprehensiveEdgeCasesIntegrationTest {
 
     @BeforeEach
     void setUp() {
-        com.example.ems.config.GlobalExceptionHandler exceptionHandler = new com.example.ems.config.GlobalExceptionHandler();
+        GlobalExceptionHandler exceptionHandler = new GlobalExceptionHandler();
         salaryComponentMockMvc = MockMvcBuilders.standaloneSetup(salaryComponentController).setControllerAdvice(exceptionHandler).build();
         salaryStructureMockMvc = MockMvcBuilders.standaloneSetup(salaryStructureController).setControllerAdvice(exceptionHandler).build();
         salaryAssignmentMockMvc = MockMvcBuilders.standaloneSetup(employeeSalaryAssignmentController).setControllerAdvice(exceptionHandler).build();

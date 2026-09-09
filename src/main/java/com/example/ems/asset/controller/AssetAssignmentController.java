@@ -17,6 +17,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import com.example.ems.security.dto.AuthPrincipal;
+import org.springframework.security.core.Authentication;
 
 @RestController
 @RequestMapping("/api/v1/assets")
@@ -45,8 +47,8 @@ public class AssetAssignmentController {
             }
         }
         if (SecurityContextHolder.getContext().getAuthentication() != null) {
-            org.springframework.security.core.Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth.getPrincipal() instanceof com.example.ems.security.dto.AuthPrincipal p) {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth.getPrincipal() instanceof AuthPrincipal p) {
                 if (p.getEmail() != null) {
                     User u = userRepository.findByWorkEmail(p.getEmail()).orElseGet(() -> userRepository.findByUserId(p.getEmail()).orElse(null));
                     if (u != null) return u;

@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
+import com.example.ems.subscription.service.SubscriptionAnalyticsService;
 
 /**
  * Event listener coordinating invoice payment and subscription activation within the parent database transaction context.
@@ -19,7 +20,7 @@ public class CoreBillingStateEventHandler {
     private BillingCommandService billingCommandService;
 
     @Autowired
-    private com.example.ems.subscription.service.SubscriptionAnalyticsService analyticsService;
+    private SubscriptionAnalyticsService analyticsService;
 
     /**
      * Listens for payment succeeded events synchronously. Runs in the same transaction as verifyPayment.

@@ -37,6 +37,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -282,13 +284,13 @@ public class DetailedAuthFlowIntegrationTest {
     @Test
     public void testActivateAccountSuccessFlow() throws Exception {
         // 1. Create a dummy invitation in database
-        String token = java.util.UUID.randomUUID().toString();
+        String token = UUID.randomUUID().toString();
         Invitation invitation = new Invitation();
         invitation.setName("Activate User");
         invitation.setEmail("activateflow@company.com");
         invitation.setRole("EMPLOYEE");
         invitation.setInvitationToken(token);
-        invitation.setExpiredAt(java.time.LocalDateTime.now().plusHours(24));
+        invitation.setExpiredAt(LocalDateTime.now().plusHours(24));
         invitationRepository.save(invitation);
 
         // 2. Perform /activate call

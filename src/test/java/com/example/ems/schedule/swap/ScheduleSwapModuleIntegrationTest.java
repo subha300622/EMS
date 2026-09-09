@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import java.util.UUID;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -92,7 +93,7 @@ public class ScheduleSwapModuleIntegrationTest {
 
         testOrg = new Organization();
         testOrg.setName("Swap Test Org");
-        testOrg.setOrganizationCode("ORG-SWAP-" + java.util.UUID.randomUUID().toString().substring(0, 8));
+        testOrg.setOrganizationCode("ORG-SWAP-" + UUID.randomUUID().toString().substring(0, 8));
         testOrg = organizationRepository.save(testOrg);
 
         Role superAdminRole = roleRepository.findByName("SUPER_ADMIN")
@@ -103,12 +104,14 @@ public class ScheduleSwapModuleIntegrationTest {
                     return roleRepository.save(r);
                 });
 
+        String suffix = UUID.randomUUID().toString().substring(0, 8);
+
         // Emp 3 (Manager)
         emp3 = new Employee();
         emp3.setFirstName("Manager");
         emp3.setLastName("Boss");
-        emp3.setEmployeeId("EMP-0003");
-        emp3.setEmail("manager@swaptest.com");
+        emp3.setEmployeeId("EMP-SWP3-" + suffix);
+        emp3.setEmail("manager-" + suffix + "@swaptest.com");
         emp3.setOrganization(testOrg);
         emp3 = employeeRepository.save(emp3);
 
@@ -125,8 +128,8 @@ public class ScheduleSwapModuleIntegrationTest {
         emp1 = new Employee();
         emp1.setFirstName("John");
         emp1.setLastName("Doe");
-        emp1.setEmployeeId("EMP-0001");
-        emp1.setEmail("john.doe@swaptest.com");
+        emp1.setEmployeeId("EMP-SWP1-" + suffix);
+        emp1.setEmail("john.doe-" + suffix + "@swaptest.com");
         emp1.setOrganization(testOrg);
         emp1.setManager(emp3);
         emp1 = employeeRepository.save(emp1);
@@ -144,8 +147,8 @@ public class ScheduleSwapModuleIntegrationTest {
         emp2 = new Employee();
         emp2.setFirstName("Jane");
         emp2.setLastName("Smith");
-        emp2.setEmployeeId("EMP-0002");
-        emp2.setEmail("jane.smith@swaptest.com");
+        emp2.setEmployeeId("EMP-SWP2-" + suffix);
+        emp2.setEmail("jane.smith-" + suffix + "@swaptest.com");
         emp2.setOrganization(testOrg);
         emp2.setManager(emp3);
         emp2 = employeeRepository.save(emp2);
@@ -184,9 +187,9 @@ public class ScheduleSwapModuleIntegrationTest {
                     return workflowDefinitionRepository.save(def);
                 });
 
-        schId1 = "SCH-0001-" + java.util.UUID.randomUUID().toString().substring(0, 8);
-        schId2 = "SCH-0002-" + java.util.UUID.randomUUID().toString().substring(0, 8);
-        schId5 = "SCH-0005-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+        schId1 = "SCH-0001-" + UUID.randomUUID().toString().substring(0, 8);
+        schId2 = "SCH-0002-" + UUID.randomUUID().toString().substring(0, 8);
+        schId5 = "SCH-0005-" + UUID.randomUUID().toString().substring(0, 8);
 
         // Create Schedules
         sch1 = new Schedule();

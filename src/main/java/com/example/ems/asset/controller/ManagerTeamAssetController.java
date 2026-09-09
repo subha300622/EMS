@@ -24,13 +24,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
+import io.swagger.v3.oas.annotations.Hidden;
 
 @RestController
 @RequestMapping({"/api/v1/assets/team", "/api/v1/manager/team-assets"})
 @CrossOrigin("*")
 @Tag(name = "Manager Self Service - Team Assets (Deprecated)")
 @Deprecated
-@io.swagger.v3.oas.annotations.Hidden
+@Hidden
 public class ManagerTeamAssetController {
 
     @Autowired
@@ -88,13 +89,12 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Get Team Assets Dashboard Summary", description = "Retrieves count statistics for the manager's team assets.")
     @Deprecated
     @GetMapping("/dashboard")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getDashboard(
+public ResponseEntity<?> getDashboard(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -105,8 +105,7 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Get Team Assets Inventory List", description = "Retrieves a paginated list of assets assigned to the manager's team.")
     @Deprecated
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getTeamAssets(
+public ResponseEntity<?> getTeamAssets(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) Long employeeId,
@@ -116,7 +115,7 @@ public class ManagerTeamAssetController {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -132,14 +131,13 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Get Team Asset Details", description = "Retrieves detailed information for a specific asset assigned to a team member.")
     @Deprecated
     @GetMapping("/{assetId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getTeamAssetDetails(
+public ResponseEntity<?> getTeamAssetDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long assetId) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -147,10 +145,10 @@ public class ManagerTeamAssetController {
             TeamAssetDtos.DetailResponse response = teamAssetService.getTeamAssetDetails(manager, assetId);
             return ResponseEntity.ok(ApiResponse.success("Asset details retrieved successfully", response));
         } catch (SecurityException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error(e.getMessage(), "AST_403"));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.error(e.getMessage(), "AST_404"));
         }
     }
@@ -158,14 +156,13 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Get Team Asset Timeline", description = "Retrieves the lifecycle event history log for a specific team asset.")
     @Deprecated
     @GetMapping("/{assetId}/timeline")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getTeamAssetTimeline(
+public ResponseEntity<?> getTeamAssetTimeline(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long assetId) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -173,10 +170,10 @@ public class ManagerTeamAssetController {
             List<TeamAssetDtos.TimelineEvent> response = teamAssetService.getTeamAssetTimeline(manager, assetId);
             return ResponseEntity.ok(ApiResponse.success("Timeline retrieved successfully", response));
         } catch (SecurityException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error(e.getMessage(), "AST_403"));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.error(e.getMessage(), "AST_404"));
         }
     }
@@ -184,15 +181,14 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Get Pending Team Asset Requests", description = "Retrieves a paginated list of pending asset requests from the manager's team.")
     @Deprecated
     @GetMapping("/requests")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getPendingAssetRequests(
+public ResponseEntity<?> getPendingAssetRequests(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -204,15 +200,14 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Approve Asset Request", description = "Approves a team member's asset request.")
     @Deprecated
     @PutMapping("/requests/{requestId}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveAssetRequest(
+public ResponseEntity<?> approveAssetRequest(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long requestId,
             @RequestBody(required = false) TeamAssetDtos.ApprovalRequest request) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -222,13 +217,13 @@ public class ManagerTeamAssetController {
             teamAssetService.approveAssetRequest(manager, requestId, remarks);
             return ResponseEntity.ok(ApiResponse.success("Asset request approved"));
         } catch (SecurityException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error(e.getMessage(), "AST_403"));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.error(e.getMessage(), "AST_404"));
         } catch (IllegalStateException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.error(e.getMessage(), "AST_400"));
         }
     }
@@ -236,15 +231,14 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Reject Asset Request", description = "Rejects a team member's asset request.")
     @Deprecated
     @PutMapping("/requests/{requestId}/reject")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectAssetRequest(
+public ResponseEntity<?> rejectAssetRequest(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long requestId,
             @RequestBody(required = false) TeamAssetDtos.ApprovalRequest request) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -254,13 +248,13 @@ public class ManagerTeamAssetController {
             teamAssetService.rejectAssetRequest(manager, requestId, remarks);
             return ResponseEntity.ok(ApiResponse.success("Asset request rejected"));
         } catch (SecurityException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error(e.getMessage(), "AST_403"));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.error(e.getMessage(), "AST_404"));
         } catch (IllegalStateException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.error(e.getMessage(), "AST_400"));
         }
     }
@@ -268,15 +262,14 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Get Pending Team Return Requests", description = "Retrieves a paginated list of pending asset returns from the manager's team.")
     @Deprecated
     @GetMapping("/returns")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getPendingReturnRequests(
+public ResponseEntity<?> getPendingReturnRequests(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -288,15 +281,14 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Approve Asset Return", description = "Approves a team member's asset return request.")
     @Deprecated
     @PutMapping("/returns/{returnRequestId}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveReturnRequest(
+public ResponseEntity<?> approveReturnRequest(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long returnRequestId,
             @RequestBody(required = false) TeamAssetDtos.ReturnApprovalRequest request) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
@@ -306,13 +298,13 @@ public class ManagerTeamAssetController {
             teamAssetService.approveReturnRequest(manager, returnRequestId, remarks);
             return ResponseEntity.ok(ApiResponse.success("Asset return approved"));
         } catch (SecurityException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                 .body(ErrorResponse.error(e.getMessage(), "AST_403"));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponse.error(e.getMessage(), "AST_404"));
         } catch (IllegalStateException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ErrorResponse.error(e.getMessage(), "AST_400"));
         }
     }
@@ -320,13 +312,12 @@ public class ManagerTeamAssetController {
     @Operation(summary = "Get Manager Team Asset Analytics", description = "Retrieves category inventory metrics and value metrics for the manager's team.")
     @Deprecated
     @GetMapping("/analytics")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getAnalytics(
+public ResponseEntity<?> getAnalytics(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         
         ResponseEntity<?> validation = validateManagerAndPermission(authHeader);
         if (validation.getStatusCode() != HttpStatus.OK) {
-            return (ResponseEntity) validation;
+            return validation;
         }
 
         Employee manager = (Employee) validation.getBody();
