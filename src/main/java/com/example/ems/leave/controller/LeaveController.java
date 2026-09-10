@@ -349,8 +349,12 @@ public class LeaveController {
 
         Employee approver = resolveEmployee(user);
         String comment = request != null ? request.getComment() : null;
-        ManagerApprovalActionResponseDto result = leaveService.approveLeaveWithComment(leaveRequestId, comment, approver);
-        return ResponseEntity.ok(ApiResponse.success("Leave request approved successfully", result));
+        try {
+            ManagerApprovalActionResponseDto result = leaveService.approveLeaveWithComment(leaveRequestId, comment, approver);
+            return ResponseEntity.ok(ApiResponse.success("Leave request approved successfully", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage(), "LEAVE_404"));
+        }
     }
 
     @Operation(summary = "Reject Leave Request")
@@ -364,8 +368,12 @@ public class LeaveController {
 
         Employee approver = resolveEmployee(user);
         String comment = request != null ? request.getComment() : null;
-        ManagerApprovalActionResponseDto result = leaveService.rejectLeaveWithComment(leaveRequestId, comment, approver);
-        return ResponseEntity.ok(ApiResponse.success("Leave request rejected successfully", result));
+        try {
+            ManagerApprovalActionResponseDto result = leaveService.rejectLeaveWithComment(leaveRequestId, comment, approver);
+            return ResponseEntity.ok(ApiResponse.success("Leave request rejected successfully", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage(), "LEAVE_404"));
+        }
     }
 
     @Operation(summary = "Send Back Leave Request")
@@ -379,8 +387,12 @@ public class LeaveController {
 
         Employee approver = resolveEmployee(user);
         String comment = request != null ? request.getComment() : null;
-        ManagerApprovalActionResponseDto result = leaveService.sendBackLeaveWithComment(leaveRequestId, comment, approver);
-        return ResponseEntity.ok(ApiResponse.success("Leave request sent back successfully", result));
+        try {
+            ManagerApprovalActionResponseDto result = leaveService.sendBackLeaveWithComment(leaveRequestId, comment, approver);
+            return ResponseEntity.ok(ApiResponse.success("Leave request sent back successfully", result));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage(), "LEAVE_404"));
+        }
     }
 
     @Operation(summary = "Cancel Leave Request")
@@ -392,8 +404,12 @@ public class LeaveController {
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
         Employee actor = resolveEmployee(user);
-        Leave leave = leaveService.cancelLeave(leaveRequestId, actor);
-        return ResponseEntity.ok(ApiResponse.success("Leave request cancelled successfully", leave));
+        try {
+            Leave leave = leaveService.cancelLeave(leaveRequestId, actor);
+            return ResponseEntity.ok(ApiResponse.success("Leave request cancelled successfully", leave));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error(e.getMessage(), "LEAVE_404"));
+        }
     }
 
     @Operation(summary = "Leave Request Audit History")

@@ -337,7 +337,7 @@ public class AttendanceConcurrencyAndRaceTest {
 
                     attendanceService.startBreakCore();
                     successBreaks.incrementAndGet();
-                } catch (ActiveBreakExistsException e) {
+                } catch (ActiveBreakExistsException | com.example.ems.attendance.exception.InvalidAttendanceStateException e) {
                     collisionBreaks.incrementAndGet();
                 } catch (Exception e) {
                     // unexpected

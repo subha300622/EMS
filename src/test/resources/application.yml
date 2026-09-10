@@ -13,7 +13,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
     defer-datasource-initialization: false
   sql:
     init:
@@ -87,6 +87,12 @@ razorpay:
 
 logging:
   level:
+    root: INFO
+    org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver: ERROR
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
+    org.springframework.test.context.support.AnnotationConfigContextLoaderUtils: WARN
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
     org.apache.kafka: ERROR
     org.apache.kafka.clients.NetworkClient: OFF
     org.springframework.kafka: ERROR

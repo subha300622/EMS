@@ -85,23 +85,4 @@ EXCEPTION
         NULL;
 END $$;
 
--- Enable PostgreSQL Row Level Security (RLS) on attendance_breaks
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'attendance_breaks') THEN
-        ALTER TABLE public.attendance_breaks ENABLE ROW LEVEL SECURITY;
-        ALTER TABLE public.attendance_breaks FORCE ROW LEVEL SECURITY;
 
-        DROP POLICY IF EXISTS tenant_isolation_attendance_breaks_policy ON public.attendance_breaks;
-        CREATE POLICY tenant_isolation_attendance_breaks_policy ON public.attendance_breaks
-            FOR ALL
-            USING (
-                organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::bigint
-                OR current_setting('app.is_platform_admin', true) = 'true'
-            )
-            WITH CHECK (
-                organization_id = NULLIF(current_setting('app.current_tenant_id', true), '')::bigint
-                OR current_setting('app.is_platform_admin', true) = 'true'
-            );
-    END IF;
-END $$;

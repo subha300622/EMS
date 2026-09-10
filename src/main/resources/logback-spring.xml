@@ -64,9 +64,14 @@
     <!-- Logger configurations -->
     <logger name="com.example.ems" level="INFO" />
     <logger name="org.springframework" level="INFO" />
+    <logger name="org.springframework.web.servlet.mvc.support.DefaultHandlerExceptionResolver" level="ERROR" />
+    <logger name="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver" level="ERROR" />
+    <logger name="org.springframework.test.context.support.AnnotationConfigContextLoaderUtils" level="WARN" />
     <logger name="org.hibernate.SQL" level="WARN" />
+    <logger name="org.hibernate.orm.jdbc.bind" level="WARN" />
     <logger name="org.flywaydb" level="INFO" />
     <logger name="org.apache.kafka" level="WARN" />
+    <logger name="org.apache.kafka.clients.NetworkClient" level="OFF" />
 
     <!-- Root Logger -->
     <root level="INFO">

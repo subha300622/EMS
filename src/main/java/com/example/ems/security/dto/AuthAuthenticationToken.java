@@ -47,6 +47,14 @@ public class AuthAuthenticationToken extends AbstractAuthenticationToken {
     }
 
     @Override
+    public String getName() {
+        if (this.principal instanceof AuthPrincipal p && p.getEmail() != null) {
+            return p.getEmail();
+        }
+        return super.getName();
+    }
+
+    @Override
     public void eraseCredentials() {
         super.eraseCredentials();
         this.credentials = null;

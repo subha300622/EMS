@@ -221,8 +221,13 @@ public class AttendanceAdjustmentService {
 
     private String resolveCurrentUserName() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null) {
-            return auth.getName();
+        if (auth != null) {
+            if (auth.getPrincipal() instanceof com.example.ems.security.dto.AuthPrincipal principal && principal.getEmail() != null) {
+                return principal.getEmail();
+            }
+            if (auth.getName() != null && !auth.getName().isBlank()) {
+                return auth.getName();
+            }
         }
         return "APPROVER";
     }

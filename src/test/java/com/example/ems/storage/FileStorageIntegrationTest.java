@@ -198,17 +198,6 @@ public class FileStorageIntegrationTest {
                         employeeRepository.saveAndFlush(emp);
                     });
         }
-        for (String empId : testEmployeeIds) {
-            employeeRepository.findAll().stream()
-                    .filter(e -> empId.equals(e.getEmployeeId()))
-                    .forEach(emp -> {
-                        try {
-                            employeeRepository.delete(emp);
-                        } catch (Exception e) {
-                            // Ignore if referenced by other test fixtures (e.g., expenses table)
-                        }
-                    });
-        }
     }
 
     private void deleteUserAndSessions(String email) {

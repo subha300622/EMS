@@ -108,13 +108,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 boolean isPlatformAdmin = "PLATFORM_ADMIN".equalsIgnoreCase(role);
 
                 // PLATFORM_ADMIN performs global (platform-scoped) writes with no org context —
-                // they are exempt from the mandatory X-Organization-Id header check.
-                if (isWriteMethod && headerOrgId == null && !isPlatformAdmin
+                // Tenant users obtain organization context automatically from their authenticated JWT/User entity.
+                if (isWriteMethod && headerOrgId == null && userOrgId == null && !isPlatformAdmin
                         && !path.startsWith("/api/v1/auth")
                         && !path.startsWith("/v3/api-docs") && !path.startsWith("/swagger-ui")) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"success\":false,\"errorCode\":\"BAD_REQUEST\",\"message\":\"Missing required header 'X-Organization-Id' for " + method + " operation.\"}");
+                    response.getWriter().write("{\"success\":false,\"errorCode\":\"BAD_REQUEST\",\"message\":\"Missing required organization context for " + method + " operation.\"}");
                     return;
                 }
 

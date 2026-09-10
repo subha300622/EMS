@@ -328,6 +328,12 @@ public class LeaveService {
         Leave leave = getLeaveById(leaveId)
                 .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveId));
 
+        if (employee != null && employee.getOrganization() != null && leave.getOrganization() != null) {
+            if (!employee.getOrganization().getId().equals(leave.getOrganization().getId())) {
+                throw new IllegalArgumentException("Leave request not found: " + leaveId);
+            }
+        }
+
         if (!"PENDING".equalsIgnoreCase(leave.getStatus())) {
             throw new IllegalStateException("Only leave requests in PENDING status can be edited");
         }
@@ -369,6 +375,12 @@ public class LeaveService {
     public Leave cancelLeave(Long leaveId, Employee actor) {
         Leave leave = getLeaveById(leaveId)
                 .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveId));
+
+        if (actor != null && actor.getOrganization() != null && leave.getOrganization() != null) {
+            if (!actor.getOrganization().getId().equals(leave.getOrganization().getId())) {
+                throw new IllegalArgumentException("Leave request not found: " + leaveId);
+            }
+        }
 
         String oldStatus = leave.getStatus();
         int year = leave.getStartDate().getYear();
@@ -541,6 +553,13 @@ public class LeaveService {
     public Leave approveLeave(Long leaveId, Employee approver) {
         Leave leave = getLeaveById(leaveId)
                 .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveId));
+
+        if (approver != null && approver.getOrganization() != null && leave.getOrganization() != null) {
+            if (!approver.getOrganization().getId().equals(leave.getOrganization().getId())) {
+                throw new IllegalArgumentException("Leave request not found: " + leaveId);
+            }
+        }
+
         int year = leave.getStartDate().getYear();
         String oldStatus = leave.getStatus();
         leave.setStatus("APPROVED");
@@ -566,6 +585,13 @@ public class LeaveService {
     public Leave rejectLeave(Long leaveId, Employee approver) {
         Leave leave = getLeaveById(leaveId)
                 .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveId));
+
+        if (approver != null && approver.getOrganization() != null && leave.getOrganization() != null) {
+            if (!approver.getOrganization().getId().equals(leave.getOrganization().getId())) {
+                throw new IllegalArgumentException("Leave request not found: " + leaveId);
+            }
+        }
+
         int year = leave.getStartDate().getYear();
         String oldStatus = leave.getStatus();
         leave.setStatus("REJECTED");
@@ -668,6 +694,12 @@ public class LeaveService {
     public ManagerApprovalActionResponseDto sendBackLeaveWithComment(Long leaveId, String comment, Employee approver) {
         Leave leave = getLeaveById(leaveId)
                 .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveId));
+
+        if (approver != null && approver.getOrganization() != null && leave.getOrganization() != null) {
+            if (!approver.getOrganization().getId().equals(leave.getOrganization().getId())) {
+                throw new IllegalArgumentException("Leave request not found: " + leaveId);
+            }
+        }
         int year = leave.getStartDate().getYear();
         String oldStatus = leave.getStatus();
         leave.setStatus("NEEDS_REVISION");
