@@ -61,6 +61,50 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(ex.getMessage(), "ATT_002"));
     }
 
+    @ExceptionHandler(com.example.ems.attendance.exception.AttendanceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleAttendanceNotFound(
+            com.example.ems.attendance.exception.AttendanceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.error(ex.getMessage(), "ATT_404"));
+    }
+
+    @ExceptionHandler(com.example.ems.attendance.exception.InvalidAttendanceStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidAttendanceState(
+            com.example.ems.attendance.exception.InvalidAttendanceStateException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), "ATT_400"));
+    }
+
+    @ExceptionHandler(com.example.ems.attendance.exception.ActiveBreakExistsException.class)
+    public ResponseEntity<ErrorResponse> handleActiveBreakExists(
+            com.example.ems.attendance.exception.ActiveBreakExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error(ex.getMessage(), "ATT_409"));
+    }
+
+    @ExceptionHandler(com.example.ems.attendance.exception.ActiveBreakNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleActiveBreakNotFound(
+            com.example.ems.attendance.exception.ActiveBreakNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), "ATT_400"));
+    }
+
+    @ExceptionHandler(com.example.ems.attendance.exception.EmployeeNotActiveException.class)
+    public ResponseEntity<ErrorResponse> handleEmployeeNotActive(
+            com.example.ems.attendance.exception.EmployeeNotActiveException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), "EMP_INACTIVE"));
+    }
+
+    @ExceptionHandler({
+        org.springframework.orm.ObjectOptimisticLockingFailureException.class,
+        jakarta.persistence.OptimisticLockException.class
+    })
+    public ResponseEntity<ErrorResponse> handleOptimisticLockFailure(Exception ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.error("Concurrent update conflict detected. Please retry your request.", "ATT_CONCURRENCY_CONFLICT"));
+    }
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFound(
             ResourceNotFoundException ex) {

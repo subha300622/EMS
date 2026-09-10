@@ -6,5 +6,8 @@ public enum AttendanceStatus {
     ABSENT,
     LEAVE,
     HALF_DAY,
-    HOLIDAY
+    HOLIDAY,
+    WORKING,
+    ON_BREAK,
+    COMPLETED
 }

@@ -1,23 +1,36 @@
 package com.example.ems.attendance.entity;
 
 import com.example.ems.employee.entity.Employee;
-
+import com.example.ems.organization.entity.Organization;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
+
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.Duration;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Table(name = "attendance", uniqueConstraints = {
-    @UniqueConstraint(name = "unique_employee_date", columnNames = {"employee_id", "date"})
+    @UniqueConstraint(name = "unique_employee_date", columnNames = {"employee_id", "date"}),
+    @UniqueConstraint(name = "uk_attendance_org_employee_date", columnNames = {"organization_id", "employee_id", "date"})
+}, indexes = {
+    @Index(name = "idx_attendance_org_emp_date", columnList = "organization_id, employee_id, date")
 })
 public class Attendance {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    @JsonIgnore
+    private Organization organization;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
@@ -30,12 +43,30 @@ public class Attendance {
     @Convert(converter = AttendanceStatusConverter.class)
     private AttendanceStatus status;
 
+    @Column(name = "check_in_time")
+    private Instant checkInTime;
+
+    @Column(name = "check_out_time")
+    private Instant checkOutTime;
+
+    @Column(name = "total_break_minutes")
+    private Integer totalBreakMinutes = 0;
+
+    @Column(name = "total_working_minutes")
+    private Integer totalWorkingMinutes;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    private Long version;
+
+    @OneToMany(mappedBy = "attendance", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("breakStartTime ASC")
+    private List<AttendanceBreak> breaks = new ArrayList<>();
+
+    // Legacy fields preserved for reporting & backwards compatibility
     private LocalTime punchInTime;
-
     private LocalTime punchOutTime;
-
     private LocalTime originalPunchInTime;
-
     private LocalTime originalPunchOutTime;
 
     @Column(columnDefinition = "TEXT")
@@ -55,8 +86,60 @@ public class Attendance {
     @Column(name = "late_by")
     private String lateBy;
 
+    @Column(name = "late_by_minutes")
+    private Integer lateByMinutes = 0;
+
+    @Column(name = "is_early_checkout")
+    private Boolean isEarlyCheckout = false;
+
+    @Column(name = "early_by")
+    private String earlyBy = "00:00";
+
+    @Column(name = "early_by_minutes")
+    private Integer earlyByMinutes = 0;
+
+    @Column(name = "is_half_day")
+    private Boolean isHalfDay = false;
+
+    @Column(name = "created_at")
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @PrePersist
+    public void onCreate() {
+        if (this.createdAt == null) {
+            this.createdAt = Instant.now();
+        }
+        this.updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
+
+    // Helper methods for breaks
+    public void addBreak(AttendanceBreak attendanceBreak) {
+        if (attendanceBreak != null) {
+            this.breaks.add(attendanceBreak);
+            attendanceBreak.setAttendance(this);
+            if (this.organization != null && attendanceBreak.getOrganizationId() == null) {
+                attendanceBreak.setOrganizationId(this.organization.getId());
+            }
+        }
+    }
+
+    public Optional<AttendanceBreak> getActiveBreak() {
+        return breaks.stream().filter(AttendanceBreak::isActive).findFirst();
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
+
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 
     public Employee getEmployee() { return employee; }
     public void setEmployee(Employee employee) { this.employee = employee; }
@@ -66,6 +149,10 @@ public class Attendance {
 
     public String getStatus() {
         return status != null ? status.name() : null;
+    }
+
+    public AttendanceStatus getAttendanceStatus() {
+        return status;
     }
 
     public void setStatus(String status) {
@@ -91,6 +178,24 @@ public class Attendance {
     public void setStatus(AttendanceStatus status) {
         this.status = status;
     }
+
+    public Instant getCheckInTime() { return checkInTime; }
+    public void setCheckInTime(Instant checkInTime) { this.checkInTime = checkInTime; }
+
+    public Instant getCheckOutTime() { return checkOutTime; }
+    public void setCheckOutTime(Instant checkOutTime) { this.checkOutTime = checkOutTime; }
+
+    public Integer getTotalBreakMinutes() { return totalBreakMinutes; }
+    public void setTotalBreakMinutes(Integer totalBreakMinutes) { this.totalBreakMinutes = totalBreakMinutes; }
+
+    public Integer getTotalWorkingMinutes() { return totalWorkingMinutes; }
+    public void setTotalWorkingMinutes(Integer totalWorkingMinutes) { this.totalWorkingMinutes = totalWorkingMinutes; }
+
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
+
+    public List<AttendanceBreak> getBreaks() { return breaks; }
+    public void setBreaks(List<AttendanceBreak> breaks) { this.breaks = breaks; }
 
     public LocalTime getPunchInTime() { return punchInTime; }
     public void setPunchInTime(LocalTime punchInTime) { this.punchInTime = punchInTime; }
@@ -122,6 +227,12 @@ public class Attendance {
     public String getLateBy() { return lateBy; }
     public void setLateBy(String lateBy) { this.lateBy = lateBy; }
 
+    public Instant getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public Instant getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
+
     @Transient
     @JsonProperty("regularizationStatus")
     private String regularizationStatus;
@@ -132,6 +243,12 @@ public class Attendance {
     @Transient
     @JsonProperty("workingHours")
     public String getWorkingHours() {
+        if (checkInTime != null && checkOutTime != null) {
+            long totalMins = totalWorkingMinutes != null ? totalWorkingMinutes : Duration.between(checkInTime, checkOutTime).toMinutes();
+            long hours = totalMins / 60;
+            long minutes = totalMins % 60;
+            return String.format("%02d:%02d", hours, minutes);
+        }
         if (punchInTime == null || punchOutTime == null) {
             return null;
         }
@@ -140,6 +257,21 @@ public class Attendance {
         long minutes = duration.toMinutesPart();
         return String.format("%02d:%02d", hours, minutes);
     }
+
+    public Integer getLateByMinutes() { return lateByMinutes != null ? lateByMinutes : 0; }
+    public void setLateByMinutes(Integer lateByMinutes) { this.lateByMinutes = lateByMinutes; }
+
+    public Boolean getIsEarlyCheckout() { return isEarlyCheckout != null ? isEarlyCheckout : false; }
+    public void setIsEarlyCheckout(Boolean isEarlyCheckout) { this.isEarlyCheckout = isEarlyCheckout; }
+
+    public String getEarlyBy() { return earlyBy; }
+    public void setEarlyBy(String earlyBy) { this.earlyBy = earlyBy; }
+
+    public Integer getEarlyByMinutes() { return earlyByMinutes != null ? earlyByMinutes : 0; }
+    public void setEarlyByMinutes(Integer earlyByMinutes) { this.earlyByMinutes = earlyByMinutes; }
+
+    public Boolean getIsHalfDay() { return isHalfDay != null ? isHalfDay : false; }
+    public void setIsHalfDay(Boolean isHalfDay) { this.isHalfDay = isHalfDay; }
 
     @Transient
     @JsonProperty("overtime")
