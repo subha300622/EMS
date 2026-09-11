@@ -64,6 +64,18 @@ public class PayrollRun {
     @Column(name = "finalized_at")
     private LocalDateTime finalizedAt;
 
+    @Column(name = "approval_instance_id")
+    private String approvalInstanceId;
+
+    @Column(name = "approved_by")
+    private Long approvedBy;
+
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -229,6 +241,38 @@ public class PayrollRun {
 
     public void setFinalizedAt(LocalDateTime finalizedAt) {
         this.finalizedAt = finalizedAt;
+    }
+
+    public String getApprovalInstanceId() {
+        return approvalInstanceId;
+    }
+
+    public void setApprovalInstanceId(String approvalInstanceId) {
+        this.approvalInstanceId = approvalInstanceId;
+    }
+
+    public Long getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(Long approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+
+    public LocalDateTime getApprovedAt() {
+        return approvedAt;
+    }
+
+    public void setApprovedAt(LocalDateTime approvedAt) {
+        this.approvedAt = approvedAt;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 
     public LocalDateTime getCreatedAt() {

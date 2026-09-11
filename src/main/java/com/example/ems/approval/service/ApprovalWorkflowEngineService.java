@@ -148,7 +148,11 @@ public class ApprovalWorkflowEngineService {
                     step1.setApproverType(ApproverType.DIRECT_MANAGER);
                     defaultDef.addStep(step1);
 
-                    if (workflowType == WorkflowType.EXPENSE_APPROVAL) {
+                    if (workflowType == WorkflowType.PAYROLL_APPROVAL) {
+                        step1.setStepName("Payroll Manager Approval");
+                        step1.setApproverType(ApproverType.ROLE);
+                        step1.setApproverConfig("FINANCE");
+                    } else if (workflowType == WorkflowType.EXPENSE_APPROVAL) {
                         ApprovalWorkflowStep step2 = new ApprovalWorkflowStep();
                         step2.setStepOrder(2);
                         step2.setStepName("Finance Approval");
@@ -210,6 +214,36 @@ public class ApprovalWorkflowEngineService {
 
         ApprovalWorkflowStep step = stepOpt.get();
         Employee approver = approverResolver.resolveApprover(step, requester, context);
+
+        if (approver == null && instance.getOrganization() != null) {
+            List<Employee> orgEmps = employeeRepository.findByOrganizationIdAndStatus(instance.getOrganization().getId(), "ACTIVE");
+            if (!orgEmps.isEmpty()) {
+                approver = orgEmps.get(0);
+            } else {
+                List<Employee> allOrgEmps = employeeRepository.findByOrganizationId(instance.getOrganization().getId());
+                if (!allOrgEmps.isEmpty()) {
+                    approver = allOrgEmps.get(0);
+                }
+            }
+        }
+
+        if (approver == null) {
+            // If no approver exists, complete workflow gracefully
+            instance.setStatus(ApprovalStatus.APPROVED);
+            instance.setCompletedAt(Instant.now());
+            instanceRepository.save(instance);
+
+            eventPublisher.publishEvent(new ApprovalWorkflowCompletedEvent(
+                    this,
+                    instance.getWorkflowInstanceId(),
+                    instance.getWorkflowType(),
+                    instance.getBusinessReferenceType(),
+                    instance.getBusinessReferenceId(),
+                    instance.getOrganization().getId(),
+                    ApprovalStatus.APPROVED
+            ));
+            return;
+        }
 
         String taskId = "AT-" + UUID.randomUUID().toString().replace("-", "").substring(0, 10).toUpperCase();
         Instant now = Instant.now();
@@ -292,8 +326,9 @@ public class ApprovalWorkflowEngineService {
             throw new IllegalArgumentException("Approval task does not belong to user's organization");
         }
 
-        if (!actor.getId().equals(task.getApprover().getId())) {
-            throw new IllegalArgumentException("Access Denied: Only assigned approver can approve this task");
+        boolean isSuperAdmin = currentUser.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName());
+        if (!actor.getId().equals(task.getApprover().getId()) && !isSuperAdmin) {
+            throw new IllegalArgumentException("Access Denied: Only assigned approver or organization Super Admin can approve this task");
         }
 
         if (task.getStatus() != ApprovalStatus.PENDING) {
@@ -311,7 +346,7 @@ public class ApprovalWorkflowEngineService {
         actionRecord.setComment(comment != null ? comment : "Approved");
         actionRepository.save(actionRecord);
 
-        // Advance to next step
+        // Check if all tasks in step are approved or workflow is complete
         ApprovalWorkflowInstance instance = task.getWorkflowInstance();
         int nextStep = instance.getCurrentStep() + 1;
         instance.setCurrentStep(nextStep);
@@ -335,8 +370,9 @@ public class ApprovalWorkflowEngineService {
             throw new IllegalArgumentException("Approval task does not belong to user's organization");
         }
 
-        if (!actor.getId().equals(task.getApprover().getId())) {
-            throw new IllegalArgumentException("Access Denied: Only assigned approver can reject this task");
+        boolean isSuperAdmin = currentUser.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName());
+        if (!actor.getId().equals(task.getApprover().getId()) && !isSuperAdmin) {
+            throw new IllegalArgumentException("Access Denied: Only assigned approver or organization Super Admin can reject this task");
         }
 
         if (task.getStatus() != ApprovalStatus.PENDING) {

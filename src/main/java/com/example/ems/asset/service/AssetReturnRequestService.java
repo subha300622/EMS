@@ -103,6 +103,8 @@ public class AssetReturnRequestService {
         return new AssetActionResultResponse(requestId, null, "SUBMIT_RETURN", "SUBMITTED", false, null, "Return request submitted successfully");
     }
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AssetReturnRequestService.class);
+
     @Autowired
     private UserRepository userRepository;
 
@@ -117,7 +119,9 @@ public class AssetReturnRequestService {
                 if (actor != null) {
                     approvalEngineService.approveInstanceTask(actor, requestId.toString(), comment);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.warn("Failed to process approval instance task for return request {}: {}", requestId, e.getMessage());
+            }
         }
         request.setStatus("APPROVED");
         request.setComments(comment);
@@ -136,7 +140,9 @@ public class AssetReturnRequestService {
                 if (actor != null) {
                     approvalEngineService.rejectInstanceTask(actor, requestId.toString(), comment);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.warn("Failed to process rejection instance task for return request {}: {}", requestId, e.getMessage());
+            }
         }
         request.setStatus("REJECTED");
         request.setComments(comment);
@@ -155,7 +161,9 @@ public class AssetReturnRequestService {
                 if (actor != null) {
                     approvalEngineService.requestChanges(actor, requestId.toString(), comment);
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.warn("Failed to process send back instance task for return request {}: {}", requestId, e.getMessage());
+            }
         }
         request.setStatus("CHANGES_REQUESTED");
         request.setComments(comment);

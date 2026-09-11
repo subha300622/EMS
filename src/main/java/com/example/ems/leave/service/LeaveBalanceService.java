@@ -48,6 +48,12 @@ public class LeaveBalanceService {
     }
 
     @Transactional
+    public LeaveBalance saveBalance(LeaveBalance balance) {
+        balance.setUpdatedAt(LocalDateTime.now());
+        return leaveBalanceRepository.save(balance);
+    }
+
+    @Transactional
     public void reserveBalance(Employee employee, LeaveType leaveType, Integer year, Double days) {
         LeaveBalance balance = getOrCreateBalance(employee, leaveType, year);
         balance.setPendingBalance(balance.getPendingBalance() + days);

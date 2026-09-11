@@ -253,7 +253,7 @@ public class OnboardingWorkflowService {
             documents = (template.getDocumentsJson() != null && !template.getDocumentsJson().isBlank())
                     ? objectMapper.readValue(template.getDocumentsJson(), new TypeReference<List<OnboardingTemplateCreateRequest.DocumentRequest>>() {})
                     : Collections.emptyList();
-        } catch (Exception e) {
+        } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
             sections = Collections.emptyList();
             documents = Collections.emptyList();
         }

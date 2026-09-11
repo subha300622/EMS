@@ -13,12 +13,14 @@ import com.example.ems.security.service.JwtService;
 import com.example.ems.audit.service.AuditLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import com.example.ems.common.util.ClientIpResolver;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -28,6 +30,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @CrossOrigin("*")
 @Tag(name = "Platform Revenue Dashboard", description = "Revenue dashboard analytics for platform admins")
 public class PlatformRevenueDashboardController {
+
+    private static final Logger log = LoggerFactory.getLogger(PlatformRevenueDashboardController.class);
 
     @Autowired
     private RevenueDashboardFacade dashboardFacade;
@@ -81,7 +85,9 @@ public class PlatformRevenueDashboardController {
                 if (attrs != null) {
                     clientIp = ClientIpResolver.getClientIp(attrs.getRequest());
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.debug("Could not resolve client IP for audit log: {}", e.getMessage());
+            }
             auditLogService.logAction(
                     user.getEmployeeId(), 
                     user.getWorkEmail(), 
@@ -102,15 +108,15 @@ public class PlatformRevenueDashboardController {
         if (accessCheck != null) return accessCheck;
 
         dashboardFacade.refreshMaterializedViews();
-        RevenueSummaryResponse summary = dashboardFacade.getSummary();
-        List<RevenueTrendResponse> trends = dashboardFacade.getTrends();
-        List<RevenueGrowthResponse> growth = dashboardFacade.getGrowth();
-        RevenueForecastResponse forecast = dashboardFacade.getForecast(6);
-
-        RevenueDashboardResponse dashboard = new RevenueDashboardResponse(summary, trends, growth, forecast);
         logAuditEvent(authHeader, "REVENUE_DASHBOARD_VIEWED", "Revenue Dashboard Viewed");
 
-        return ResponseEntity.ok(ApiResponse.success("Revenue dashboard metrics loaded successfully", dashboard));
+        return ResponseEntity.ok(ApiResponse.success("Revenue dashboard metrics loaded successfully",
+                new RevenueDashboardResponse(
+                        dashboardFacade.getSummary(),
+                        dashboardFacade.getTrends(),
+                        dashboardFacade.getGrowth(),
+                        dashboardFacade.getForecast(6)
+                )));
     }
 
     @Operation(summary = "Get revenue summary cards")
@@ -121,9 +127,8 @@ public class PlatformRevenueDashboardController {
         if (accessCheck != null) return accessCheck;
 
         dashboardFacade.refreshMaterializedViews();
-        RevenueSummaryResponse data = dashboardFacade.getSummary();
         logAuditEvent(authHeader, "REVENUE_SUMMARY_VIEWED", "Revenue Summary Cards Viewed");
-        return ResponseEntity.ok(ApiResponse.success("Revenue summary cards loaded successfully", data));
+        return ResponseEntity.ok(ApiResponse.success("Revenue summary cards loaded successfully", dashboardFacade.getSummary()));
     }
 
     @Operation(summary = "Get revenue KPIs (alias for summary)")
@@ -134,9 +139,8 @@ public class PlatformRevenueDashboardController {
         if (accessCheck != null) return accessCheck;
 
         dashboardFacade.refreshMaterializedViews();
-        RevenueSummaryResponse data = dashboardFacade.getSummary();
         logAuditEvent(authHeader, "REVENUE_KPIS_VIEWED", "Revenue KPIs Viewed");
-        return ResponseEntity.ok(ApiResponse.success("Revenue KPIs loaded successfully", data));
+        return ResponseEntity.ok(ApiResponse.success("Revenue KPIs loaded successfully", dashboardFacade.getSummary()));
     }
 
     @Operation(summary = "Get monthly revenue trends")
@@ -147,9 +151,8 @@ public class PlatformRevenueDashboardController {
         if (accessCheck != null) return accessCheck;
 
         dashboardFacade.refreshMaterializedViews();
-        List<RevenueTrendResponse> data = dashboardFacade.getTrends();
         logAuditEvent(authHeader, "REVENUE_TRENDS_VIEWED", "Revenue Trends Viewed");
-        return ResponseEntity.ok(ApiResponse.success("Revenue trends loaded successfully", data));
+        return ResponseEntity.ok(ApiResponse.success("Revenue trends loaded successfully", dashboardFacade.getTrends()));
     }
 
     @Operation(summary = "Get revenue growth statistics")
@@ -160,9 +163,8 @@ public class PlatformRevenueDashboardController {
         if (accessCheck != null) return accessCheck;
 
         dashboardFacade.refreshMaterializedViews();
-        List<RevenueGrowthResponse> data = dashboardFacade.getGrowth();
         logAuditEvent(authHeader, "REVENUE_GROWTH_VIEWED", "Revenue Growth Viewed");
-        return ResponseEntity.ok(ApiResponse.success("Revenue growth statistics loaded successfully", data));
+        return ResponseEntity.ok(ApiResponse.success("Revenue growth statistics loaded successfully", dashboardFacade.getGrowth()));
     }
 
     @Operation(summary = "Get revenue forecast projections")
@@ -174,8 +176,7 @@ public class PlatformRevenueDashboardController {
         if (accessCheck != null) return accessCheck;
 
         reportValidator.validateHorizon(horizon);
-        RevenueForecastResponse data = dashboardFacade.getForecast(horizon);
         logAuditEvent(authHeader, "REVENUE_FORECAST_VIEWED", "Revenue Forecast Viewed for horizon: " + horizon);
-        return ResponseEntity.ok(ApiResponse.success("Revenue forecast loaded successfully", data));
+        return ResponseEntity.ok(ApiResponse.success("Revenue forecast loaded successfully", dashboardFacade.getForecast(horizon)));
     }
 }

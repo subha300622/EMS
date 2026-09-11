@@ -10,4 +10,5 @@ import java.util.List;
 public interface LeaveAccrualTransactionRepository extends JpaRepository<LeaveAccrualTransaction, Long> {
     List<LeaveAccrualTransaction> findByEmployeeId(Long employeeId);
     List<LeaveAccrualTransaction> findByOrganizationId(Long organizationId);
+    boolean existsByEmployeeIdAndLeaveTypeIdAndPeriod(Long employeeId, Long leaveTypeId, String period);
 }

@@ -5,6 +5,14 @@ public class CreateEncashmentRequest {
     private Double daysEncashed;
     private String reason;
 
+    public CreateEncashmentRequest() {}
+
+    public CreateEncashmentRequest(Long leaveTypeId, Double daysEncashed, String reason) {
+        this.leaveTypeId = leaveTypeId;
+        this.daysEncashed = daysEncashed;
+        this.reason = reason;
+    }
+
     public Long getLeaveTypeId() { return leaveTypeId; }
     public void setLeaveTypeId(Long leaveTypeId) { this.leaveTypeId = leaveTypeId; }
 

@@ -33,6 +33,11 @@ public class LeaveRule {
     private boolean allowNegativeBalance = false;
     private Integer maxCarryForwardDays = 5;
 
+    private boolean allowLop = true;
+    private boolean allowEncashment = false;
+    private Double maxEncashmentDays = 0.0;
+    private Double minBalanceRetained = 0.0;
+
     private boolean active = true;
 
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -72,6 +77,18 @@ public class LeaveRule {
 
     public Integer getMaxCarryForwardDays() { return maxCarryForwardDays; }
     public void setMaxCarryForwardDays(Integer maxCarryForwardDays) { this.maxCarryForwardDays = maxCarryForwardDays; }
+
+    public boolean isAllowLop() { return allowLop; }
+    public void setAllowLop(boolean allowLop) { this.allowLop = allowLop; }
+
+    public boolean isAllowEncashment() { return allowEncashment; }
+    public void setAllowEncashment(boolean allowEncashment) { this.allowEncashment = allowEncashment; }
+
+    public Double getMaxEncashmentDays() { return maxEncashmentDays; }
+    public void setMaxEncashmentDays(Double maxEncashmentDays) { this.maxEncashmentDays = maxEncashmentDays; }
+
+    public Double getMinBalanceRetained() { return minBalanceRetained; }
+    public void setMinBalanceRetained(Double minBalanceRetained) { this.minBalanceRetained = minBalanceRetained; }
 
     public boolean isActive() { return active; }
     public void setActive(boolean active) { this.active = active; }

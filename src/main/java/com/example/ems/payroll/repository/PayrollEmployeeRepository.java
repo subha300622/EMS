@@ -14,6 +14,8 @@ public interface PayrollEmployeeRepository extends JpaRepository<PayrollEmployee
 
     List<PayrollEmployee> findByPayrollRunIdAndOrganizationIdOrderByIdAsc(Long payrollRunId, Long organizationId);
 
+    long countByPayrollRunIdAndOrganizationId(Long payrollRunId, Long organizationId);
+
     Optional<PayrollEmployee> findByPayrollRunIdAndEmployeeIdAndOrganizationId(Long payrollRunId, Long employeeId, Long organizationId);
 
     List<PayrollEmployee> findByEmployeeIdAndOrganizationIdOrderByCalculationDateDesc(Long employeeId, Long organizationId);

@@ -60,6 +60,15 @@ public class LeaveService {
     @Autowired
     private LeaveBalanceService balanceService;
 
+    @Autowired
+    private com.example.ems.employee.repository.EmployeeRepository employeeRepository;
+
+    @Autowired
+    private EmployeeLeavePolicyRepository employeeLeavePolicyRepository;
+
+    @Autowired
+    private LeaveEncashmentRepository leaveEncashmentRepository;
+
     // == 1. LEAVE TYPES ============================================================
     @Transactional
     public LeaveType createLeaveType(Employee admin, LeaveTypeRequest request) {
@@ -155,6 +164,44 @@ public class LeaveService {
         return leavePolicyRepository.save(p);
     }
 
+    @Transactional
+    public LeavePolicy assignPolicy(Long policyId, AssignLeavePolicyRequest request, Employee admin) {
+        LeavePolicy policy = getLeavePolicyById(policyId);
+        Long orgId = policy.getOrganization() != null ? policy.getOrganization().getId() : (admin != null && admin.getOrganization() != null ? admin.getOrganization().getId() : null);
+
+        List<Employee> targetEmployees = new ArrayList<>();
+        if (request != null && request.employeeIds() != null && !request.employeeIds().isEmpty()) {
+            targetEmployees.addAll(employeeRepository.findAllById(request.employeeIds()));
+        } else if (request != null && request.departmentId() != null) {
+            String deptStr = String.valueOf(request.departmentId());
+            targetEmployees.addAll(employeeRepository.findAll().stream()
+                    .filter(e -> (orgId == null || e.getOrganization() == null || orgId.equals(e.getOrganization().getId()))
+                            && deptStr.equalsIgnoreCase(e.getDepartment()))
+                    .toList());
+        }
+
+        int currentYear = LocalDate.now().getYear();
+        for (Employee emp : targetEmployees) {
+            if (emp.getOrganization() != null && orgId != null && !orgId.equals(emp.getOrganization().getId())) {
+                continue;
+            }
+            EmployeeLeavePolicy assignment = employeeLeavePolicyRepository.findByEmployeeIdAndLeavePolicyId(emp.getId(), policy.getId())
+                    .orElseGet(() -> new EmployeeLeavePolicy(emp, policy, emp.getOrganization() != null ? emp.getOrganization() : policy.getOrganization()));
+            assignment.setActive(true);
+            employeeLeavePolicyRepository.save(assignment);
+
+            // Ensure LeaveBalance exists with appropriate entitlement
+            if (policy.getLeaveType() != null) {
+                LeaveBalance balance = balanceService.getOrCreateBalance(emp, policy.getLeaveType(), currentYear);
+                if (policy.getCarryingLimit() != null && policy.getCarryingLimit() > 0 && (balance.getTotalEntitlement() == null || balance.getTotalEntitlement() == 0.0)) {
+                    balance.setTotalEntitlement(policy.getCarryingLimit().doubleValue());
+                    balanceService.saveBalance(balance);
+                }
+            }
+        }
+        return policy;
+    }
+
     // == 3. LEAVE RULES ============================================================
     @Transactional
     public LeaveRule createLeaveRule(Employee admin, CreateLeaveRuleRequest request) {
@@ -170,6 +217,10 @@ public class LeaveService {
         rule.setNoticePeriodDays(request.getNoticePeriodDays());
         rule.setAllowNegativeBalance(request.isAllowNegativeBalance());
         rule.setMaxCarryForwardDays(request.getMaxCarryForwardDays());
+        rule.setAllowLop(request.getAllowLop() != null ? request.getAllowLop() : true);
+        rule.setAllowEncashment(request.getAllowEncashment() != null ? request.getAllowEncashment() : false);
+        rule.setMaxEncashmentDays(request.getMaxEncashmentDays() != null ? request.getMaxEncashmentDays() : 0.0);
+        rule.setMinBalanceRetained(request.getMinBalanceRetained() != null ? request.getMinBalanceRetained() : 0.0);
         rule.setActive(true);
         return leaveRuleRepository.save(rule);
     }
@@ -196,6 +247,10 @@ public class LeaveService {
         if (request.getNoticePeriodDays() != null) r.setNoticePeriodDays(request.getNoticePeriodDays());
         r.setAllowNegativeBalance(request.isAllowNegativeBalance());
         if (request.getMaxCarryForwardDays() != null) r.setMaxCarryForwardDays(request.getMaxCarryForwardDays());
+        if (request.getAllowLop() != null) r.setAllowLop(request.getAllowLop());
+        if (request.getAllowEncashment() != null) r.setAllowEncashment(request.getAllowEncashment());
+        if (request.getMaxEncashmentDays() != null) r.setMaxEncashmentDays(request.getMaxEncashmentDays());
+        if (request.getMinBalanceRetained() != null) r.setMinBalanceRetained(request.getMinBalanceRetained());
         return leaveRuleRepository.save(r);
     }
 
@@ -258,7 +313,7 @@ public class LeaveService {
         // Validate Leave Rules
         leaveRuleValidationService.validateLeaveRequest(employee, leaveType, request);
 
-        // Fetch Leave Rule to compute exact duration
+        // Fetch Leave Rule to compute exact duration & paid/lop split
         Long orgId = employee.getOrganization() != null ? employee.getOrganization().getId() : 1L;
         LeaveRule rule = leaveRuleRepository.findByLeaveTypeIdAndOrganizationId(leaveType.getId(), orgId)
                 .or(() -> leaveRuleRepository.findByLeaveTypeId(leaveType.getId()))
@@ -266,9 +321,15 @@ public class LeaveService {
 
         Double durationDays = leaveRuleValidationService.calculateLeaveDays(rule, request.getStartDate(), request.getEndDate(), request.getDurationType(), orgId);
 
-        // Reserve Pending Balance
+        LeaveRuleValidationService.PaidAndLopSplit split = leaveRuleValidationService.calculatePaidAndLopDays(
+                employee, leaveType, rule, request.getStartDate(), durationDays
+        );
+
+        // Reserve Pending Balance ONLY for paid days (LOP days do not reduce leave balance)
         int year = request.getStartDate().getYear();
-        balanceService.reserveBalance(employee, leaveType, year, durationDays);
+        if (split.paidDays() > 0) {
+            balanceService.reserveBalance(employee, leaveType, year, split.paidDays());
+        }
 
         Leave leave = new Leave();
         leave.setEmployee(employee);
@@ -278,6 +339,8 @@ public class LeaveService {
         leave.setEndDate(request.getEndDate());
         leave.setDurationType(request.getDurationType());
         leave.setDurationDays(durationDays);
+        leave.setPaidDays(split.paidDays());
+        leave.setLopDays(split.lopDays());
         leave.setReason(request.getReason());
         leave.setStatus("PENDING");
         leave.setApprover(employee.getManager());
@@ -291,6 +354,8 @@ public class LeaveService {
         context.put("requesterId", employee.getId());
         context.put("leaveId", savedLeave.getId());
         context.put("durationDays", durationDays);
+        context.put("paidDays", split.paidDays());
+        context.put("lopDays", split.lopDays());
 
         try {
             ApprovalWorkflowInstance instance = approvalWorkflowEngineService.startWorkflow(
@@ -338,9 +403,12 @@ public class LeaveService {
             throw new IllegalStateException("Only leave requests in PENDING status can be edited");
         }
 
-        // Release old pending balance
+        // Release old pending balance (only paidDays)
         int oldYear = leave.getStartDate().getYear();
-        balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), oldYear, leave.getDurationDays());
+        double oldPaid = leave.getPaidDays() != null ? leave.getPaidDays() : leave.getDurationDays();
+        if (oldPaid > 0) {
+            balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), oldYear, oldPaid);
+        }
 
         // Validate new dates/rules
         LeaveType newLt = getLeaveTypeById(request.getLeaveTypeId());
@@ -350,8 +418,14 @@ public class LeaveService {
         LeaveRule rule = leaveRuleRepository.findByLeaveTypeIdAndOrganizationId(newLt.getId(), orgId).orElse(null);
         Double newDuration = leaveRuleValidationService.calculateLeaveDays(rule, request.getStartDate(), request.getEndDate(), request.getDurationType(), orgId);
 
-        // Reserve new pending balance
-        balanceService.reserveBalance(employee, newLt, request.getStartDate().getYear(), newDuration);
+        LeaveRuleValidationService.PaidAndLopSplit split = leaveRuleValidationService.calculatePaidAndLopDays(
+                employee, newLt, rule, request.getStartDate(), newDuration
+        );
+
+        // Reserve new pending balance (only paidDays)
+        if (split.paidDays() > 0) {
+            balanceService.reserveBalance(employee, newLt, request.getStartDate().getYear(), split.paidDays());
+        }
 
         String oldStatus = leave.getStatus();
         leave.setLeaveType(newLt);
@@ -359,6 +433,8 @@ public class LeaveService {
         leave.setEndDate(request.getEndDate());
         leave.setDurationType(request.getDurationType());
         leave.setDurationDays(newDuration);
+        leave.setPaidDays(split.paidDays());
+        leave.setLopDays(split.lopDays());
         leave.setReason(request.getReason());
         leave.setUpdatedAt(LocalDateTime.now());
 
@@ -384,11 +460,16 @@ public class LeaveService {
 
         String oldStatus = leave.getStatus();
         int year = leave.getStartDate().getYear();
+        double paidDays = leave.getPaidDays() != null ? leave.getPaidDays() : leave.getDurationDays();
 
         if ("PENDING".equalsIgnoreCase(oldStatus)) {
-            balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, leave.getDurationDays());
+            if (paidDays > 0) {
+                balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, paidDays);
+            }
         } else if ("APPROVED".equalsIgnoreCase(oldStatus)) {
-            balanceService.refundApprovedBalance(leave.getEmployee(), leave.getLeaveType(), year, leave.getDurationDays());
+            if (paidDays > 0) {
+                balanceService.refundApprovedBalance(leave.getEmployee(), leave.getLeaveType(), year, paidDays);
+            }
         }
 
         leave.setStatus("CANCELLED");
@@ -568,7 +649,10 @@ public class LeaveService {
         leave.setUpdatedAt(LocalDateTime.now());
         Leave saved = leaveRepository.save(leave);
 
-        balanceService.commitBalance(saved.getEmployee(), saved.getLeaveType(), year, saved.getDurationDays());
+        double paidDays = saved.getPaidDays() != null ? saved.getPaidDays() : saved.getDurationDays();
+        if (paidDays > 0) {
+            balanceService.commitBalance(saved.getEmployee(), saved.getLeaveType(), year, paidDays);
+        }
 
         historyRepository.save(new LeaveRequestHistory(
                 saved, "APPROVED", approver, oldStatus, "APPROVED", "Approved directly"
@@ -600,7 +684,10 @@ public class LeaveService {
         leave.setUpdatedAt(LocalDateTime.now());
         leaveRepository.save(leave);
 
-        balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, leave.getDurationDays());
+        double paidDays = leave.getPaidDays() != null ? leave.getPaidDays() : leave.getDurationDays();
+        if (paidDays > 0) {
+            balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, paidDays);
+        }
 
         historyRepository.save(new LeaveRequestHistory(
                 leave, "REJECTED", approver, oldStatus, "REJECTED", "Rejected directly"
@@ -707,7 +794,10 @@ public class LeaveService {
         leave.setUpdatedAt(LocalDateTime.now());
         leaveRepository.save(leave);
 
-        balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, leave.getDurationDays());
+        double paidDays = leave.getPaidDays() != null ? leave.getPaidDays() : leave.getDurationDays();
+        if (paidDays > 0) {
+            balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, paidDays);
+        }
 
         historyRepository.save(new LeaveRequestHistory(
                 leave, "SENT_BACK", approver, oldStatus, "NEEDS_REVISION", comment != null ? comment : "Sent back for revision"
@@ -774,6 +864,40 @@ public class LeaveService {
                 .collect(Collectors.groupingBy(l -> l.getEmployee().getDepartment(), Collectors.counting()));
 
         return new LeaveDashboardMetricsDto(summary, byType, byDept);
+    }
+
+    @Transactional(readOnly = true)
+    public LeavePeriodSummaryDto getLeavePeriodSummary(Long employeeId, LocalDate periodStart, LocalDate periodEnd) {
+        List<Leave> approvedLeaves = leaveRepository.findApprovedLeavesInPeriod(employeeId, periodStart, periodEnd);
+        double totalPaidDays = 0.0;
+        double totalLopDays = 0.0;
+
+        for (Leave leave : approvedLeaves) {
+            totalPaidDays += (leave.getPaidDays() != null ? leave.getPaidDays() : 0.0);
+            totalLopDays += (leave.getLopDays() != null ? leave.getLopDays() : 0.0);
+        }
+
+        LocalDateTime startDateTime = periodStart.atStartOfDay();
+        LocalDateTime endDateTime = periodEnd.atTime(23, 59, 59);
+        List<LeaveEncashment> approvedEncashments = leaveEncashmentRepository.findApprovedEncashmentsInPeriod(employeeId, startDateTime, endDateTime);
+        double totalEncashmentDays = 0.0;
+        for (LeaveEncashment enc : approvedEncashments) {
+            totalEncashmentDays += (enc.getDaysEncashed() != null ? enc.getDaysEncashed() : 0.0);
+        }
+
+        return new LeavePeriodSummaryDto(totalPaidDays, totalLopDays, totalEncashmentDays);
+    }
+
+    @Transactional
+    public void markEncashmentsAsProcessed(Long employeeId, LocalDate periodStart, LocalDate periodEnd) {
+        LocalDateTime startDateTime = periodStart.atStartOfDay();
+        LocalDateTime endDateTime = periodEnd.atTime(23, 59, 59);
+        List<LeaveEncashment> approvedEncashments = leaveEncashmentRepository.findApprovedEncashmentsInPeriod(employeeId, startDateTime, endDateTime);
+        for (LeaveEncashment enc : approvedEncashments) {
+            enc.setStatus("PROCESSED");
+            enc.setUpdatedAt(LocalDateTime.now());
+            leaveEncashmentRepository.save(enc);
+        }
     }
 }
 

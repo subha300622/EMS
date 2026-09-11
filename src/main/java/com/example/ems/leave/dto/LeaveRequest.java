@@ -35,6 +35,14 @@ public class LeaveRequest {
         this.reason = reason;
     }
 
+    public LeaveRequest(Long leaveTypeId, LocalDate startDate, LocalDate endDate, String durationType, String reason) {
+        this.leaveTypeId = leaveTypeId;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.durationType = durationType;
+        this.reason = reason;
+    }
+
     public Long getLeaveTypeId() { return leaveTypeId; }
     public void setLeaveTypeId(Long leaveTypeId) { this.leaveTypeId = leaveTypeId; }
 

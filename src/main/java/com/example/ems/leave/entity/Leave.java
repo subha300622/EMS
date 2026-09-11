@@ -42,6 +42,12 @@ public class Leave {
     @Column(nullable = false)
     private Double durationDays = 1.0;
 
+    @Column(name = "paid_days", nullable = false)
+    private Double paidDays = 0.0;
+
+    @Column(name = "lop_days", nullable = false)
+    private Double lopDays = 0.0;
+
     private String reason;
 
     @Column(nullable = false)
@@ -110,6 +116,12 @@ public class Leave {
 
     public Double getDurationDays() { return durationDays; }
     public void setDurationDays(Double durationDays) { this.durationDays = durationDays; }
+
+    public Double getPaidDays() { return paidDays; }
+    public void setPaidDays(Double paidDays) { this.paidDays = paidDays; }
+
+    public Double getLopDays() { return lopDays; }
+    public void setLopDays(Double lopDays) { this.lopDays = lopDays; }
 
     public String getReason() { return reason; }
     public void setReason(String reason) { this.reason = reason; }

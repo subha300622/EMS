@@ -119,6 +119,13 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(ex.getMessage(), "ONB_400"));
     }
 
+    @ExceptionHandler(com.example.ems.common.exception.BadRequestException.class)
+    public ResponseEntity<ErrorResponse> handleBadRequestException(
+            com.example.ems.common.exception.BadRequestException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), "BAD_REQUEST"));
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflictException(
             ConflictException ex) {

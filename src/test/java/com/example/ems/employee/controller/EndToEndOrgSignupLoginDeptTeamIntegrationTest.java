@@ -70,6 +70,9 @@ public class EndToEndOrgSignupLoginDeptTeamIntegrationTest {
         @Autowired
         private EmailVerificationRepository verificationRepository;
 
+        @Autowired
+        private org.springframework.jdbc.core.JdbcTemplate jdbcTemplate;
+
         private final ObjectMapper objectMapper = new ObjectMapper();
 
         private static final String TEST_EMAIL = "admin@acmeglobal.com";
@@ -88,6 +91,22 @@ public class EndToEndOrgSignupLoginDeptTeamIntegrationTest {
                 mockMvcTeam = MockMvcBuilders.standaloneSetup(teamController)
                                 .setControllerAdvice(new GlobalExceptionHandler())
                                 .build();
+
+                // Clean up any dependent payroll/assignment records before deleting employees
+                try {
+                        jdbcTemplate.execute("DELETE FROM payroll_items WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");
+                        jdbcTemplate.execute("DELETE FROM payroll_employees WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");
+                        jdbcTemplate.execute("DELETE FROM payroll_runs WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");
+                        jdbcTemplate.execute("DELETE FROM employee_salary_assignments WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");
+                        jdbcTemplate.execute("DELETE FROM employee_salary_component_values WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");
+                        jdbcTemplate.execute("DELETE FROM employee_payment_accounts WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");
+
+                        jdbcTemplate.execute("DELETE FROM payroll_items WHERE payroll_employee_id IN (SELECT id FROM payroll_employees WHERE employee_id IN (SELECT id FROM employees WHERE email = '" + TEST_EMAIL + "'))");
+                        jdbcTemplate.execute("DELETE FROM payroll_employees WHERE employee_id IN (SELECT id FROM employees WHERE email = '" + TEST_EMAIL + "')");
+                        jdbcTemplate.execute("DELETE FROM employee_salary_assignments WHERE employee_id IN (SELECT id FROM employees WHERE email = '" + TEST_EMAIL + "')");
+                        jdbcTemplate.execute("DELETE FROM employee_salary_component_values WHERE employee_id IN (SELECT id FROM employees WHERE email = '" + TEST_EMAIL + "')");
+                        jdbcTemplate.execute("DELETE FROM employee_payment_accounts WHERE employee_id IN (SELECT id FROM employees WHERE email = '" + TEST_EMAIL + "')");
+                } catch (Exception ignored) {}
 
                 // Clean up test organization and data if existing
                 departmentRepository.findAll().stream()
@@ -109,10 +128,10 @@ public class EndToEndOrgSignupLoginDeptTeamIntegrationTest {
                                                         o.getId())
                                                         .forEach(teamRepository::delete);
                                         departmentRepository.findByOrganizationId(o.getId()).forEach(dept -> {
-                                                teamRepository.findByDepartmentIdAndOrganizationIdAndDeletedFalse(
-                                                                dept.getId(), o.getId())
-                                                                .forEach(teamRepository::delete);
-                                                departmentRepository.delete(dept);
+                                                 teamRepository.findByDepartmentIdAndOrganizationIdAndDeletedFalse(
+                                                                 dept.getId(), o.getId())
+                                                                 .forEach(teamRepository::delete);
+                                                 departmentRepository.delete(dept);
                                         });
                                         employeeRepository.findAll().stream()
                                                         .filter(e -> o.getId()

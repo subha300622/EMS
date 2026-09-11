@@ -5,8 +5,13 @@ import com.example.ems.common.exception.ConflictException;
 import com.example.ems.common.exception.ResourceNotFoundException;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.leave.service.LeaveService;
 import com.example.ems.payroll.dto.*;
 import com.example.ems.payroll.entity.*;
+import com.example.ems.payroll.integration.BonusPayrollAdapter;
+import com.example.ems.payroll.integration.IncentivePayrollAdapter;
+import com.example.ems.payroll.integration.OvertimePayrollAdapter;
+import com.example.ems.payroll.integration.ReimbursementPayrollAdapter;
 import com.example.ems.payroll.repository.PayrollEmployeeRepository;
 import com.example.ems.payroll.repository.PayrollItemRepository;
 import com.example.ems.payroll.repository.PayrollRunRepository;
@@ -46,6 +51,27 @@ public class PayrollRunServiceTest {
 
     @Mock
     private SalaryCalculationService salaryCalculationService;
+
+    @Mock
+    private PayrollService payrollService;
+
+    @Mock
+    private LeaveService leaveService;
+
+    @Mock
+    private OvertimePayrollAdapter overtimePayrollAdapter;
+
+    @Mock
+    private IncentivePayrollAdapter incentivePayrollAdapter;
+
+    @Mock
+    private BonusPayrollAdapter bonusPayrollAdapter;
+
+    @Mock
+    private ReimbursementPayrollAdapter reimbursementPayrollAdapter;
+
+    @Mock
+    private com.example.ems.payroll.statutory.StatutoryEngineService statutoryEngineService;
 
     @InjectMocks
     private PayrollRunService payrollRunService;

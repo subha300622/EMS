@@ -136,9 +136,38 @@ public class LeaveRuleValidationService {
 
         double available = balanceOpt.map(LeaveBalance::getAvailableBalance).orElse((double) leaveType.getDefaultDays());
         boolean allowNeg = rule != null && rule.isAllowNegativeBalance();
+        boolean allowLop = rule != null && rule.isAllowLop();
 
-        if (!allowNeg && durationDays > available) {
-            throw new IllegalArgumentException("Insufficient leave balance. Available: " + available + " days, Requested: " + durationDays + " days");
+        if (!allowNeg && !allowLop && durationDays > available) {
+            throw new IllegalArgumentException("Insufficient leave balance. Available: " + available + " days, Requested: " + durationDays + " days. Loss of Pay (LOP) is not permitted for this leave policy.");
         }
     }
+
+    public PaidAndLopSplit calculatePaidAndLopDays(Employee employee, LeaveType leaveType, LeaveRule rule, LocalDate startDate, Double durationDays) {
+        Optional<LeaveBalance> balanceOpt = leaveBalanceRepository.findByEmployeeIdAndLeaveTypeIdAndYear(
+                employee.getId(), leaveType.getId(), startDate.getYear());
+
+        double available = balanceOpt.map(LeaveBalance::getAvailableBalance).orElse((double) (leaveType.getDefaultDays() != null ? leaveType.getDefaultDays() : 0));
+        boolean allowNeg = rule != null && rule.isAllowNegativeBalance();
+        boolean allowLop = rule != null ? rule.isAllowLop() : true;
+
+        if (durationDays <= available) {
+            return new PaidAndLopSplit(durationDays, 0.0);
+        }
+
+        if (allowNeg) {
+            // Negative balance allows all requested days as paid, bringing balance below zero
+            return new PaidAndLopSplit(durationDays, 0.0);
+        }
+
+        if (allowLop) {
+            double paid = Math.max(0.0, available);
+            double lop = durationDays - paid;
+            return new PaidAndLopSplit(paid, lop);
+        }
+
+        return new PaidAndLopSplit(durationDays, 0.0);
+    }
+
+    public record PaidAndLopSplit(Double paidDays, Double lopDays) {}
 }

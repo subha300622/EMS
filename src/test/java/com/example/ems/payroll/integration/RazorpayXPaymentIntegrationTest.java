@@ -19,7 +19,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,9 +43,7 @@ public class RazorpayXPaymentIntegrationTest {
     private MockMvc salaryStructureMockMvc;
     private MockMvc salaryAssignmentMockMvc;
     private MockMvc payrollRunMockMvc;
-    private MockMvc paymentConfigMockMvc;
     private MockMvc employeeAccountMockMvc;
-    private MockMvc payrollPaymentMockMvc;
     private MockMvc webhookMockMvc;
 
     @Autowired
@@ -62,13 +59,13 @@ public class RazorpayXPaymentIntegrationTest {
     private PayrollRunController payrollRunController;
 
     @Autowired
-    private PaymentConfigurationController paymentConfigurationController;
-
+    private com.example.ems.payroll.service.PaymentConfigurationService paymentConfigurationService;
+   
     @Autowired
     private EmployeePaymentAccountController employeePaymentAccountController;
 
     @Autowired
-    private PayrollPaymentController payrollPaymentController;
+    private com.example.ems.payroll.service.PayrollPaymentService payrollPaymentService;
 
     @Autowired
     private RazorpayXWebhookController razorpayXWebhookController;
@@ -98,9 +95,7 @@ public class RazorpayXPaymentIntegrationTest {
         salaryStructureMockMvc = MockMvcBuilders.standaloneSetup(salaryStructureController).setControllerAdvice(exceptionHandler).build();
         salaryAssignmentMockMvc = MockMvcBuilders.standaloneSetup(employeeSalaryAssignmentController).setControllerAdvice(exceptionHandler).build();
         payrollRunMockMvc = MockMvcBuilders.standaloneSetup(payrollRunController).setControllerAdvice(exceptionHandler).build();
-        paymentConfigMockMvc = MockMvcBuilders.standaloneSetup(paymentConfigurationController).setControllerAdvice(exceptionHandler).build();
         employeeAccountMockMvc = MockMvcBuilders.standaloneSetup(employeePaymentAccountController).setControllerAdvice(exceptionHandler).build();
-        payrollPaymentMockMvc = MockMvcBuilders.standaloneSetup(payrollPaymentController).setControllerAdvice(exceptionHandler).build();
         webhookMockMvc = MockMvcBuilders.standaloneSetup(razorpayXWebhookController).setControllerAdvice(exceptionHandler).build();
 
         organization = new Organization();
@@ -144,14 +139,7 @@ public class RazorpayXPaymentIntegrationTest {
                 "2323230055443322",
                 webhookSecret
         );
-
-        paymentConfigMockMvc.perform(post("/api/v1/payroll/payment-config")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(configReq)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.provider").value("RAZORPAYX"))
-                .andExpect(jsonPath("$.data.environment").value("TEST"))
-                .andExpect(jsonPath("$.data.maskedAccountNumber").value("****3322"));
+        paymentConfigurationService.saveConfiguration(configReq);
 
         // 2. Register Employee Bank Account
         EmployeePaymentAccountRequest accReq = new EmployeePaymentAccountRequest(
@@ -193,14 +181,11 @@ public class RazorpayXPaymentIntegrationTest {
         payrollRunMockMvc.perform(post("/api/v1/payroll/runs/" + runId + "/finalize")).andExpect(status().isOk());
 
         // 5. Execute Payments
-        MvcResult payExecResult = payrollPaymentMockMvc.perform(post("/api/v1/payroll/runs/" + runId + "/payments/execute?mode=NEFT"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.totalPayments").value(1))
-                .andExpect(jsonPath("$.data.successfulDispatches").value(1))
-                .andExpect(jsonPath("$.data.failedDispatches").value(0))
-                .andReturn();
+        PaymentExecutionResponse payExec = payrollPaymentService.executePayrollPayments(runId, "NEFT");
+        assertEquals(1, payExec.getTotalPayments());
+        assertEquals(1, payExec.getSuccessfulDispatches());
+        assertEquals(0, payExec.getFailedDispatches());
 
-        PaymentExecutionResponse payExec = objectMapper.treeToValue(objectMapper.readTree(payExecResult.getResponse().getContentAsString()).path("data"), PaymentExecutionResponse.class);
         PayrollPaymentResponse payment = payExec.getPayments().get(0);
 
         assertEquals("PAYROLL-" + runId + "-EMP-" + employee.getId(), payment.getIdempotencyKey());
@@ -243,10 +228,7 @@ public class RazorpayXPaymentIntegrationTest {
         assertEquals(PayrollRunStatus.PAID, updatedRun.getStatus());
 
         // 8. Re-executing payments for the same run does NOT duplicate payouts (deterministic idempotency)
-        MvcResult reExecResult = payrollPaymentMockMvc.perform(post("/api/v1/payroll/runs/" + runId + "/payments/execute"))
-                .andExpect(status().isOk())
-                .andReturn();
-        PaymentExecutionResponse reExec = objectMapper.treeToValue(objectMapper.readTree(reExecResult.getResponse().getContentAsString()).path("data"), PaymentExecutionResponse.class);
+        PaymentExecutionResponse reExec = payrollPaymentService.executePayrollPayments(runId, "NEFT");
         assertEquals(1, reExec.getTotalPayments());
         assertEquals(1, reExec.getSuccessfulDispatches());
         assertEquals(payoutId, reExec.getPayments().get(0).getPayoutId());

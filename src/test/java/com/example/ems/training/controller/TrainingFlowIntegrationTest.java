@@ -21,7 +21,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(classes = com.example.ems.EmsBackendApplication.class)
 @Transactional
 public class TrainingFlowIntegrationTest {
 

@@ -129,14 +129,18 @@ public class OfferService {
         Offer saved = offerRepository.save(offer);
 
         Application app = offer.getApplication();
-        if (app != null && app.getStatus().isValidTransition(ApplicationStatus.OFFER_ACCEPTED)) {
+        if (app != null && app.getStatus() != null && app.getStatus().isValidTransition(ApplicationStatus.OFFER_ACCEPTED)) {
             ApplicationStatus oldStatus = app.getStatus();
             app.setStatus(ApplicationStatus.OFFER_ACCEPTED);
             applicationRepository.save(app);
             applicationService.recordStatusHistory(app, oldStatus, ApplicationStatus.OFFER_ACCEPTED, "CANDIDATE", "Candidate accepted offer online");
         }
 
-        auditLogService.logAction("CANDIDATE", app.getCandidate().getEmail(), "ACCEPT_OFFER", "Offer",
+        String candidateEmail = (app != null && app.getCandidate() != null && app.getCandidate().getEmail() != null)
+                ? app.getCandidate().getEmail()
+                : "CANDIDATE";
+
+        auditLogService.logAction("CANDIDATE", candidateEmail, "ACCEPT_OFFER", "Offer",
                 saved.getId().toString(), getCurrentClientIp(), "Candidate accepted offer " + saved.getOfferNumber());
 
         return new OfferResponse(saved);

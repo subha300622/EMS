@@ -14,10 +14,15 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.LocalDateTime;
 
 @Component
 public class AppraisalApprovalEventListener {
+
+    private static final Logger log = LoggerFactory.getLogger(AppraisalApprovalEventListener.class);
 
     @Autowired
     private AppraisalRequestRepository requestRepository;
@@ -69,7 +74,9 @@ public class AppraisalApprovalEventListener {
                     );
                 }
             });
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("Failed to process approval workflow completion for request {}: {}", event.getBusinessReferenceId(), e.getMessage());
+        }
     }
 
     @EventListener
@@ -87,6 +94,8 @@ public class AppraisalApprovalEventListener {
                 request.setUpdatedAt(LocalDateTime.now());
                 requestRepository.save(request);
             });
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("Failed to process approval workflow rejection for request {}: {}", event.getBusinessReferenceId(), e.getMessage());
+        }
     }
 }

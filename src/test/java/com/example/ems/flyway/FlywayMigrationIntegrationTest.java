@@ -91,7 +91,7 @@ public class FlywayMigrationIntegrationTest {
                 "attendance_adjustments",
                 "attendance_breaks",
                 "holidays",
-                "leave_requests",
+                "leaves",
                 "leave_policies",
                 "leave_types",
                 "leave_balances",

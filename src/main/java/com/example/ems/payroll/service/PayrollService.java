@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -57,6 +58,12 @@ public class PayrollService {
     @Autowired
     private TaxSlabRepository taxSlabRepository;
 
+    @Autowired
+    private com.example.ems.leave.service.LeaveService leaveService;
+
+    @Autowired
+    private com.example.ems.holiday.repository.HolidayRepository holidayRepository;
+
     @Transactional
     public void seedCorePayrollData() {
         if (payrollSettingRepository.count() == 0) {
@@ -86,11 +93,14 @@ public class PayrollService {
 
     @Transactional
     public SalaryStructure saveSalaryStructure(SalaryStructureRequest request) {
-        if (!employeeRepository.existsById(request.getEmployeeId())) {
-            throw new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId());
-        }
+        Employee emp = employeeRepository.findById(request.getEmployeeId())
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + request.getEmployeeId()));
         Optional<SalaryStructure> existing = salaryStructureRepository.findByEmployeeId(request.getEmployeeId());
         SalaryStructure ss = existing.orElseGet(SalaryStructure::new);
+        Long orgId = emp.getOrganization() != null ? emp.getOrganization().getId() : 1L;
+        ss.setOrganizationId(orgId);
+        if (ss.getName() == null) ss.setName("Salary Structure for " + emp.getFullName());
+        if (ss.getCode() == null) ss.setCode("SAL_EMP_" + emp.getId() + "_" + System.currentTimeMillis());
         ss.setEmployeeId(request.getEmployeeId());
         ss.setBasicSalary(request.getBasicSalary() != null ? request.getBasicSalary() : BigDecimal.ZERO);
         ss.setHra(request.getHra() != null ? request.getHra() : BigDecimal.ZERO);
@@ -138,6 +148,22 @@ public class PayrollService {
 
     // ── PAYROLL PROCESSING ───────────────────────────────────────────────────
 
+    public int calculateWorkingDays(Long organizationId, LocalDate periodStart, LocalDate periodEnd) {
+        List<com.example.ems.holiday.entity.Holiday> holidays = holidayRepository.findByOrganizationIdAndStatusAndHolidayDateBetweenOrderByHolidayDateAsc(
+                organizationId, com.example.ems.holiday.entity.HolidayStatus.ACTIVE, periodStart, periodEnd);
+        Set<LocalDate> holidayDates = holidays.stream()
+                .map(com.example.ems.holiday.entity.Holiday::getHolidayDate)
+                .collect(Collectors.toSet());
+
+        int workingDays = 0;
+        for (LocalDate d = periodStart; !d.isAfter(periodEnd); d = d.plusDays(1)) {
+            if (!holidayDates.contains(d) && d.getDayOfWeek() != java.time.DayOfWeek.SATURDAY && d.getDayOfWeek() != java.time.DayOfWeek.SUNDAY) {
+                workingDays++;
+            }
+        }
+        return workingDays > 0 ? workingDays : 22;
+    }
+
     @Transactional
     public Map<String, Object> processPayrollRun(String monthStr, Long departmentId) {
         // monthStr is expected to be e.g. "2026-06"
@@ -150,6 +176,9 @@ public class PayrollService {
                 month = Integer.parseInt(parts[1]);
             } catch (Exception ignored) {}
         }
+
+        LocalDate periodStart = LocalDate.of(year, month, 1);
+        LocalDate periodEnd = periodStart.plusMonths(1).minusDays(1);
 
         List<Employee> employees = employeeRepository.findAll().stream()
                 .filter(e -> "ACTIVE".equalsIgnoreCase(e.getStatus()))
@@ -175,17 +204,29 @@ public class PayrollService {
             BigDecimal allowances = ss.getAllowances();
             BigDecimal gross = basic.add(hra).add(allowances);
 
+            Long orgId = emp.getOrganization() != null ? emp.getOrganization().getId() : 1L;
+            int workingDays = calculateWorkingDays(orgId, periodStart, periodEnd);
+
+            com.example.ems.leave.dto.LeavePeriodSummaryDto leaveSummary = leaveService.getLeavePeriodSummary(emp.getId(), periodStart, periodEnd);
+            double lopDays = leaveSummary != null && leaveSummary.getLopDays() != null ? leaveSummary.getLopDays() : 0.0;
+            double encashmentDays = leaveSummary != null && leaveSummary.getEncashmentDays() != null ? leaveSummary.getEncashmentDays() : 0.0;
+
+            BigDecimal dailyRate = gross.divide(BigDecimal.valueOf(workingDays), 2, RoundingMode.HALF_UP);
+            BigDecimal leaveDeduction = dailyRate.multiply(BigDecimal.valueOf(lopDays)).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal encashmentAddition = dailyRate.multiply(BigDecimal.valueOf(encashmentDays)).setScale(2, RoundingMode.HALF_UP);
+
             // Deductions
             BigDecimal pf = BigDecimal.valueOf(1800);
             BigDecimal tax = BigDecimal.valueOf(5000);
             BigDecimal esi = BigDecimal.valueOf(500);
-            BigDecimal leaveDeduction = gross.divide(BigDecimal.valueOf(22), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(2));
 
             BigDecimal deductions = pf.add(tax).add(esi).add(leaveDeduction);
-            BigDecimal netPay = gross.subtract(deductions);
+            BigDecimal netPay = gross.add(encashmentAddition).subtract(deductions);
             if (netPay.compareTo(BigDecimal.ZERO) < 0) {
                 netPay = BigDecimal.ZERO;
             }
+
+            int paidDays = (int) Math.max(0, Math.round(workingDays - lopDays));
 
             Optional<Payroll> existingOpt = payrollRepository.findByEmployeeIdAndMonthAndYear(emp.getId(), month, year);
             Payroll p = existingOpt.orElseGet(Payroll::new);
@@ -194,17 +235,23 @@ public class PayrollService {
             p.setYear(year);
             p.setBasicSalary(basic);
             p.setHra(hra);
-            p.setAllowances(allowances.add(hra)); // sum of allowances
+            p.setAllowances(allowances.add(hra).add(encashmentAddition)); // sum of allowances + encashment
             p.setDeductions(deductions);
             p.setNetPay(netPay);
             p.setProvidentFund(pf);
             p.setIncomeTax(tax);
             p.setStatus("PROCESSED");
             p.setProcessedAt(LocalDateTime.now());
-            p.setWorkingDays(22);
-            p.setPaidDays(20);
+            p.setWorkingDays(workingDays);
+            p.setPaidDays(paidDays);
 
             payrollRepository.save(p);
+
+            // Mark encashments as processed so they are not consumed again
+            if (encashmentDays > 0) {
+                leaveService.markEncashmentsAsProcessed(emp.getId(), periodStart, periodEnd);
+            }
+
             processed++;
         }
 
@@ -221,14 +268,35 @@ public class PayrollService {
         BigDecimal gross = ss.getBasicSalary().add(ss.getHra()).add(ss.getAllowances());
         BigDecimal pf = BigDecimal.valueOf(1800);
         BigDecimal tax = BigDecimal.valueOf(5000);
-        BigDecimal leaveDeduction = gross.divide(BigDecimal.valueOf(22), 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(2));
-        BigDecimal net = gross.subtract(pf).subtract(tax).subtract(BigDecimal.valueOf(500)).subtract(leaveDeduction);
+        BigDecimal esi = BigDecimal.valueOf(500);
+
+        Employee emp = employeeRepository.findById(employeeId).orElse(null);
+        Long orgId = emp != null && emp.getOrganization() != null ? emp.getOrganization().getId() : 1L;
+
+        LocalDate now = LocalDate.now();
+        LocalDate periodStart = LocalDate.of(now.getYear(), now.getMonthValue(), 1);
+        LocalDate periodEnd = periodStart.plusMonths(1).minusDays(1);
+
+        int workingDays = calculateWorkingDays(orgId, periodStart, periodEnd);
+        com.example.ems.leave.dto.LeavePeriodSummaryDto leaveSummary = leaveService.getLeavePeriodSummary(employeeId, periodStart, periodEnd);
+        double lopDays = leaveSummary != null && leaveSummary.getLopDays() != null ? leaveSummary.getLopDays() : 0.0;
+        double encashmentDays = leaveSummary != null && leaveSummary.getEncashmentDays() != null ? leaveSummary.getEncashmentDays() : 0.0;
+
+        BigDecimal dailyRate = gross.divide(BigDecimal.valueOf(workingDays), 2, RoundingMode.HALF_UP);
+        BigDecimal leaveDeduction = dailyRate.multiply(BigDecimal.valueOf(lopDays)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal encashmentAddition = dailyRate.multiply(BigDecimal.valueOf(encashmentDays)).setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal net = gross.add(encashmentAddition).subtract(pf).subtract(tax).subtract(esi).subtract(leaveDeduction);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("grossSalary", gross);
         response.put("pf", pf);
         response.put("tax", tax);
         response.put("leaveDeduction", leaveDeduction);
+        response.put("encashmentAddition", encashmentAddition);
+        response.put("workingDays", workingDays);
+        response.put("lopDays", lopDays);
+        response.put("paidDays", Math.max(0, Math.round(workingDays - lopDays)));
         response.put("netSalary", net.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : net);
         return response;
     }

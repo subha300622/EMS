@@ -78,7 +78,22 @@ public class LeaveAccrualService {
         return txns;
     }
 
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(LeaveAccrualService.class);
+
     private LeaveAccrualTransaction accrueForEmployeeAndRule(Employee employee, LeaveAccrualRule rule) {
+        if (rule.getLeaveType() == null || employee == null) {
+            return null;
+        }
+
+        String periodStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+
+        // Idempotency check: Skip if already accrued for this employee + leave type + period
+        if (transactionRepository.existsByEmployeeIdAndLeaveTypeIdAndPeriod(employee.getId(), rule.getLeaveType().getId(), periodStr)) {
+            log.info("[LeaveAccrualService] Accrual already processed for employee {} leave type {} in period {}. Skipping.",
+                    employee.getId(), rule.getLeaveType().getName(), periodStr);
+            return null;
+        }
+
         Double credit = rule.getCreditAmount() != null ? rule.getCreditAmount() : 1.0;
         int currentYear = LocalDate.now().getYear();
 
@@ -86,8 +101,6 @@ public class LeaveAccrualService {
         balance.setTotalEntitlement(balance.getTotalEntitlement() + credit);
         balance.setUpdatedAt(LocalDateTime.now());
         balanceRepository.save(balance);
-
-        String periodStr = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
         LeaveAccrualTransaction txn = new LeaveAccrualTransaction();
         txn.setEmployee(employee);
@@ -97,7 +110,13 @@ public class LeaveAccrualService {
         txn.setPeriod(periodStr);
         txn.setAccruedAt(LocalDateTime.now());
 
-        return transactionRepository.save(txn);
+        try {
+            return transactionRepository.save(txn);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            log.warn("[LeaveAccrualService] Concurrent accrual execution collision caught for employee {} in period {}: {}",
+                    employee.getId(), periodStr, e.getMessage());
+            return null;
+        }
     }
 
     public List<LeaveAccrualTransaction> getAccrualHistory(Long organizationId) {

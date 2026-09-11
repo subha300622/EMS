@@ -38,12 +38,12 @@ public class SalaryCalculationService {
     @Autowired
     private SalaryCalculationEngine salaryCalculationEngine;
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, noRollbackFor = {Exception.class})
     public SalaryCalculationResponse calculateCurrentSalary(Long employeeId) {
         return calculateSalaryForDate(employeeId, LocalDate.now(), null);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, noRollbackFor = {Exception.class})
     public SalaryCalculationResponse previewSalaryCalculation(Long employeeId, SalaryCalculationPreviewRequest request) {
         LocalDate targetDate = (request != null && request.getEffectiveDate() != null)
                 ? request.getEffectiveDate()
@@ -53,12 +53,12 @@ public class SalaryCalculationService {
         return calculateSalaryForDate(employeeId, targetDate, adHocOverrides);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, noRollbackFor = {Exception.class})
     public SalaryCalculationResponse calculateSalaryForDate(Long employeeId, LocalDate effectiveDate) {
         return calculateSalaryForDate(employeeId, effectiveDate, null);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true, noRollbackFor = {Exception.class})
     public SalaryCalculationResponse calculateSalaryForDate(
             Long employeeId, LocalDate effectiveDate, List<EmployeeSalaryComponentValueRequest> adHocOverrides) {
 

@@ -91,7 +91,10 @@ public class IncrementImplementationService {
                     rec.getIncrementAmount(),
                     rec.getEffectiveDate()
             ));
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            org.slf4j.LoggerFactory.getLogger(IncrementImplementationService.class)
+                    .warn("Failed to publish SalaryRevisionCreatedEvent for recommendation {}: {}", rec.getId(), e.getMessage());
+        }
 
         return recommendationService.mapToResponse(updatedRec);
     }

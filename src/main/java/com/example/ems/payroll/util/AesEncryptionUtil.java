@@ -86,7 +86,7 @@ public final class AesEncryptionUtil {
 
             byte[] plainText = cipher.doFinal(cipherText);
             return new String(plainText, StandardCharsets.UTF_8);
-        } catch (Exception e) {
+        } catch (java.security.GeneralSecurityException | IllegalArgumentException e) {
             // Fallback for non-encrypted test strings
             return ciphertext;
         }

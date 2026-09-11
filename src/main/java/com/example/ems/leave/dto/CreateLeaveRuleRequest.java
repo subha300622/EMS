@@ -10,6 +10,10 @@ public class CreateLeaveRuleRequest {
     private Integer noticePeriodDays = 0;
     private boolean allowNegativeBalance = false;
     private Integer maxCarryForwardDays = 5;
+    private Boolean allowLop = true;
+    private Boolean allowEncashment = false;
+    private Double maxEncashmentDays = 0.0;
+    private Double minBalanceRetained = 0.0;
 
     public Long getLeaveTypeId() { return leaveTypeId; }
     public void setLeaveTypeId(Long leaveTypeId) { this.leaveTypeId = leaveTypeId; }
@@ -37,4 +41,16 @@ public class CreateLeaveRuleRequest {
 
     public Integer getMaxCarryForwardDays() { return maxCarryForwardDays; }
     public void setMaxCarryForwardDays(Integer maxCarryForwardDays) { this.maxCarryForwardDays = maxCarryForwardDays; }
+
+    public Boolean getAllowLop() { return allowLop; }
+    public void setAllowLop(Boolean allowLop) { this.allowLop = allowLop; }
+
+    public Boolean getAllowEncashment() { return allowEncashment; }
+    public void setAllowEncashment(Boolean allowEncashment) { this.allowEncashment = allowEncashment; }
+
+    public Double getMaxEncashmentDays() { return maxEncashmentDays; }
+    public void setMaxEncashmentDays(Double maxEncashmentDays) { this.maxEncashmentDays = maxEncashmentDays; }
+
+    public Double getMinBalanceRetained() { return minBalanceRetained; }
+    public void setMinBalanceRetained(Double minBalanceRetained) { this.minBalanceRetained = minBalanceRetained; }
 }

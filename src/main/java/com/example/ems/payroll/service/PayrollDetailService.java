@@ -101,4 +101,39 @@ public class PayrollDetailService {
                 items
         );
     }
+
+    public List<PayslipDetailResponse> getPayslips(Long runId) {
+        Long organizationId = TenantContext.requireOrganizationId();
+        PayrollRun run = payrollRunRepository.findByIdAndOrganizationId(runId, organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payroll run not found with id: " + runId));
+
+        List<PayrollEmployee> employees = payrollEmployeeRepository
+                .findByPayrollRunIdAndOrganizationIdOrderByIdAsc(runId, organizationId);
+
+        return employees.stream().map(pe -> {
+            List<PayrollItemResponse> items = payrollItemRepository
+                    .findByPayrollEmployeeIdAndOrganizationIdOrderByIdAsc(pe.getId(), organizationId)
+                    .stream()
+                    .map(PayrollItemResponse::fromEntity)
+                    .toList();
+
+            return new PayslipDetailResponse(
+                    run.getId(),
+                    pe.getId(),
+                    pe.getEmployeeId(),
+                    pe.getEmployeeName(),
+                    pe.getEmployeeCode(),
+                    run.getPeriodStart(),
+                    run.getPeriodEnd(),
+                    pe.getCurrency(),
+                    pe.getGrossAmount(),
+                    pe.getBenefitsAmount(),
+                    pe.getDeductionsAmount(),
+                    pe.getNetAmount(),
+                    pe.getStatus().name(),
+                    pe.getCalculationDate(),
+                    items
+            );
+        }).toList();
+    }
 }

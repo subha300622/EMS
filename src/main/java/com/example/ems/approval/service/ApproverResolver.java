@@ -23,86 +23,121 @@ public class ApproverResolver {
             throw new IllegalArgumentException("Approver type is required for step " + step.getStepName());
         }
 
-        switch (type) {
-            case TARGET_EMPLOYEE:
-            case EMPLOYEE:
+        Employee resolved = switch (type) {
+            case TARGET_EMPLOYEE, EMPLOYEE -> {
                 if (context != null && context.containsKey("targetEmployeeId")) {
                     Object targetEmpIdObj = context.get("targetEmployeeId");
                     if (targetEmpIdObj instanceof Long) {
-                        return employeeRepository.findById((Long) targetEmpIdObj)
-                                .orElseThrow(() -> new IllegalArgumentException("Target employee not found with ID: " + targetEmpIdObj));
+                        yield employeeRepository.findById((Long) targetEmpIdObj)
+                                .orElse(null);
                     } else if (targetEmpIdObj != null) {
                         String empIdStr = targetEmpIdObj.toString();
                         try {
                             Long numId = Long.parseLong(empIdStr);
                             Optional<Employee> opt = employeeRepository.findById(numId);
-                            if (opt.isPresent()) return opt.get();
+                            if (opt.isPresent()) yield opt.get();
                         } catch (NumberFormatException ignored) {}
-                        return employeeRepository.findByEmployeeId(empIdStr)
-                                .orElseThrow(() -> new IllegalArgumentException("Target employee not found with ID: " + empIdStr));
+                        yield employeeRepository.findByEmployeeId(empIdStr).orElse(null);
                     }
                 }
-                if (requester != null) return requester;
-                throw new IllegalArgumentException("targetEmployeeId context missing for TARGET_EMPLOYEE step");
+                yield requester;
+            }
 
-            case DIRECT_MANAGER:
-            case REPORTING_MANAGER:
+            case DIRECT_MANAGER, REPORTING_MANAGER -> {
                 if (requester != null && requester.getManager() != null) {
-                    return requester.getManager();
+                    yield requester.getManager();
                 }
                 if (context != null && context.containsKey("requesterId")) {
                     Object reqIdObj = context.get("requesterId");
                     Long reqNumId = reqIdObj instanceof Long ? (Long) reqIdObj : Long.parseLong(reqIdObj.toString());
                     Employee reqEmp = employeeRepository.findById(reqNumId).orElse(null);
                     if (reqEmp != null && reqEmp.getManager() != null) {
-                        return reqEmp.getManager();
+                        yield reqEmp.getManager();
                     }
                 }
-                // Fallback to requester if no direct manager is assigned
-                return requester;
+                yield requester;
+            }
 
-            case SPECIFIC_USER:
+            case SPECIFIC_USER -> {
                 if (step.getApproverConfig() != null && !step.getApproverConfig().trim().isEmpty()) {
                     String specIdStr = step.getApproverConfig().trim();
                     try {
                         Long numId = Long.parseLong(specIdStr);
                         Optional<Employee> opt = employeeRepository.findById(numId);
-                        if (opt.isPresent()) return opt.get();
+                        if (opt.isPresent()) yield opt.get();
                     } catch (NumberFormatException ignored) {}
-                    return employeeRepository.findByEmployeeId(specIdStr)
-                            .orElseThrow(() -> new IllegalArgumentException("Specific approver employee not found: " + specIdStr));
+                    yield employeeRepository.findByEmployeeId(specIdStr).orElse(null);
                 }
-                throw new IllegalArgumentException("Approver config required for SPECIFIC_USER step");
+                yield requester;
+            }
 
-            case DEPARTMENT_HEAD:
-            case DEPARTMENT:
-            case ROLE:
-            case CUSTOM_ROLE:
+            case DEPARTMENT_HEAD, DEPARTMENT, ROLE, CUSTOM_ROLE -> {
+                Long targetOrgId = (requester != null && requester.getOrganization() != null)
+                        ? requester.getOrganization().getId()
+                        : (context != null && context.get("organizationId") instanceof Long ? (Long) context.get("organizationId") : null);
+
                 if (context != null && context.containsKey("financeApproverId")) {
                     Object finIdObj = context.get("financeApproverId");
                     if (finIdObj instanceof Long) {
-                        return employeeRepository.findById((Long) finIdObj).orElse(requester);
+                        yield employeeRepository.findById((Long) finIdObj).orElse(requester);
                     }
                 }
-                List<Employee> financeEmps = employeeRepository.findByDepartment("Finance");
-                if (financeEmps != null && !financeEmps.isEmpty()) {
-                    return financeEmps.get(0);
+                if (targetOrgId != null) {
+                    List<Employee> financeEmps = employeeRepository.findByOrganizationIdAndDepartment(targetOrgId, "Finance");
+                    if (financeEmps != null && !financeEmps.isEmpty()) {
+                        yield financeEmps.get(0);
+                    }
+                    List<Employee> acctEmps = employeeRepository.findByOrganizationIdAndDepartment(targetOrgId, "Accounting");
+                    if (acctEmps != null && !acctEmps.isEmpty()) {
+                        yield acctEmps.get(0);
+                    }
+                } else {
+                    List<Employee> financeEmps = employeeRepository.findByDepartment("Finance");
+                    if (financeEmps != null && !financeEmps.isEmpty()) {
+                        yield financeEmps.get(0);
+                    }
+                    List<Employee> acctEmps = employeeRepository.findByDepartment("Accounting");
+                    if (acctEmps != null && !acctEmps.isEmpty()) {
+                        yield acctEmps.get(0);
+                    }
                 }
-                List<Employee> acctEmps = employeeRepository.findByDepartment("Accounting");
-                if (acctEmps != null && !acctEmps.isEmpty()) {
-                    return acctEmps.get(0);
-                }
-                // Fallback: If manager exists use manager, otherwise return requester
                 if (requester != null && requester.getManager() != null) {
-                    return requester.getManager();
+                    yield requester.getManager();
                 }
-                return requester;
+                yield requester;
+            }
 
-            default:
-                if (requester != null && requester.getManager() != null) {
-                    return requester.getManager();
-                }
-                return requester;
+            default -> (requester != null && requester.getManager() != null) ? requester.getManager() : requester;
+        };
+
+        if (resolved != null) {
+            return resolved;
         }
+
+        // Multi-tenant fallback: Find an active employee within the organization
+        Long orgId = null;
+        if (context != null && context.containsKey("organizationId")) {
+            Object o = context.get("organizationId");
+            if (o instanceof Long) orgId = (Long) o;
+            else if (o != null) {
+                try { orgId = Long.parseLong(o.toString()); } catch (Exception ignored) {}
+            }
+        }
+        if (orgId == null) {
+            orgId = com.example.ems.security.context.TenantContext.getOrganizationId();
+        }
+
+        if (orgId != null) {
+            List<Employee> activeEmps = employeeRepository.findByOrganizationIdAndStatus(orgId, "ACTIVE");
+            if (!activeEmps.isEmpty()) {
+                return activeEmps.get(0);
+            }
+            List<Employee> allEmps = employeeRepository.findByOrganizationId(orgId);
+            if (!allEmps.isEmpty()) {
+                return allEmps.get(0);
+            }
+        }
+
+        return null;
     }
 }

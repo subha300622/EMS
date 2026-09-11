@@ -33,5 +33,17 @@ public interface ExpenseRepository extends JpaRepository<Expense, Long> {
         @Param("toDate") LocalDate toDate,
         Pageable pageable
     );
+    @Query("SELECT e FROM Expense e WHERE e.employee.id = :employeeId " +
+           "AND e.status = :status " +
+           "AND (e.reimbursementStatus = :reimbursementStatus OR e.reimbursementStatus IS NULL) " +
+           "AND (e.paymentMode = :paymentMode OR e.paymentMode IS NULL) " +
+           "AND e.expenseDate <= :periodEnd")
+    List<Expense> findEligibleSalaryReimbursements(
+        @Param("employeeId") Long employeeId,
+        @Param("status") ExpenseStatus status,
+        @Param("reimbursementStatus") String reimbursementStatus,
+        @Param("paymentMode") String paymentMode,
+        @Param("periodEnd") LocalDate periodEnd
+    );
 }
 

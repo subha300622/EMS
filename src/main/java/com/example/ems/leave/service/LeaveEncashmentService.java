@@ -31,6 +31,9 @@ public class LeaveEncashmentService {
     @Autowired
     private LeaveBalanceRepository balanceRepository;
 
+    @Autowired
+    private com.example.ems.leave.repository.LeaveRuleRepository leaveRuleRepository;
+
     @Transactional
     public LeaveEncashment requestEncashment(Employee requester, CreateEncashmentRequest request) {
         LeaveType lt = leaveTypeRepository.findById(request.getLeaveTypeId())
@@ -41,9 +44,33 @@ public class LeaveEncashmentService {
             throw new IllegalArgumentException("Encashment days must be greater than zero");
         }
 
+        // Fetch Rule
+        Long orgId = requester.getOrganization() != null ? requester.getOrganization().getId() : 1L;
+        com.example.ems.leave.entity.LeaveRule rule = leaveRuleRepository.findByLeaveTypeIdAndOrganizationId(lt.getId(), orgId)
+                .or(() -> leaveRuleRepository.findByLeaveTypeId(lt.getId()))
+                .orElse(null);
+
+        if (rule != null) {
+            if (!rule.isAllowEncashment()) {
+                throw new IllegalArgumentException("Leave encashment is not permitted for leave type: " + lt.getName());
+            }
+            if (rule.getMaxEncashmentDays() != null && rule.getMaxEncashmentDays() > 0 && days > rule.getMaxEncashmentDays()) {
+                throw new IllegalArgumentException("Requested encashment (" + days + " days) exceeds the maximum allowable limit of " + rule.getMaxEncashmentDays() + " days");
+            }
+        }
+
         LeaveBalance balance = balanceService.getOrCreateBalance(requester, lt, LocalDate.now().getYear());
-        if (balance.getAvailableBalance() < days) {
-            throw new IllegalArgumentException("Insufficient available balance for encashment. Available: " + balance.getAvailableBalance() + " days");
+        double available = balance.getAvailableBalance();
+
+        if (available < days) {
+            throw new IllegalArgumentException("Insufficient available balance for encashment. Available: " + available + " days, Requested: " + days + " days");
+        }
+
+        if (rule != null && rule.getMinBalanceRetained() != null && rule.getMinBalanceRetained() > 0) {
+            double remaining = available - days;
+            if (remaining < rule.getMinBalanceRetained()) {
+                throw new IllegalArgumentException("Encashment would violate the minimum balance retention requirement of " + rule.getMinBalanceRetained() + " days. Remaining would be: " + remaining + " days");
+            }
         }
 
         // Reserve encashment balance

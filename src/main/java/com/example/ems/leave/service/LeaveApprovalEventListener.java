@@ -48,6 +48,8 @@ public class LeaveApprovalEventListener {
 
         int year = leave.getStartDate().getYear();
 
+        double paidDays = leave.getPaidDays() != null ? leave.getPaidDays() : leave.getDurationDays();
+
         if (event.getStatus() == ApprovalStatus.APPROVED) {
             String oldStatus = leave.getStatus();
             leave.setStatus("APPROVED");
@@ -55,8 +57,10 @@ public class LeaveApprovalEventListener {
             leave.setUpdatedAt(LocalDateTime.now());
             leaveRepository.save(leave);
 
-            // Permanently commit/deduct balance from reserved pending balance
-            balanceService.commitBalance(leave.getEmployee(), leave.getLeaveType(), year, leave.getDurationDays());
+            // Permanently commit/deduct balance from reserved pending balance (only paidDays)
+            if (paidDays > 0) {
+                balanceService.commitBalance(leave.getEmployee(), leave.getLeaveType(), year, paidDays);
+            }
 
             // Record audit history
             historyRepository.save(new LeaveRequestHistory(
@@ -69,8 +73,10 @@ public class LeaveApprovalEventListener {
             leave.setUpdatedAt(LocalDateTime.now());
             leaveRepository.save(leave);
 
-            // Release reserved pending balance
-            balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, leave.getDurationDays());
+            // Release reserved pending balance (only paidDays)
+            if (paidDays > 0) {
+                balanceService.releasePendingBalance(leave.getEmployee(), leave.getLeaveType(), year, paidDays);
+            }
 
             // Record audit history
             historyRepository.save(new LeaveRequestHistory(

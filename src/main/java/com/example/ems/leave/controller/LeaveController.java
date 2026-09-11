@@ -262,7 +262,8 @@ public class LeaveController {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
 
-        LeavePolicy policy = leaveService.getLeavePolicyById(policyId);
+        Employee admin = resolveEmployee(user);
+        LeavePolicy policy = leaveService.assignPolicy(policyId, payload, admin);
         return ResponseEntity.ok(ApiResponse.success("Policy assigned successfully to target employees", policy));
     }
 

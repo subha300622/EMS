@@ -24,6 +24,10 @@ public class PayrollRunResponse {
     private Long createdBy;
     private Long updatedBy;
     private LocalDateTime finalizedAt;
+    private String approvalInstanceId;
+    private Long approvedBy;
+    private LocalDateTime approvedAt;
+    private String rejectionReason;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -47,6 +51,10 @@ public class PayrollRunResponse {
         res.setCreatedBy(run.getCreatedBy());
         res.setUpdatedBy(run.getUpdatedBy());
         res.setFinalizedAt(run.getFinalizedAt());
+        res.setApprovalInstanceId(run.getApprovalInstanceId());
+        res.setApprovedBy(run.getApprovedBy());
+        res.setApprovedAt(run.getApprovedAt());
+        res.setRejectionReason(run.getRejectionReason());
         res.setCreatedAt(run.getCreatedAt());
         res.setUpdatedAt(run.getUpdatedAt());
         return res;
@@ -170,6 +178,38 @@ public class PayrollRunResponse {
 
     public void setFinalizedAt(LocalDateTime finalizedAt) {
         this.finalizedAt = finalizedAt;
+    }
+
+    public String getApprovalInstanceId() {
+        return approvalInstanceId;
+    }
+
+    public void setApprovalInstanceId(String approvalInstanceId) {
+        this.approvalInstanceId = approvalInstanceId;
+    }
+
+    public Long getApprovedBy() {
+        return approvedBy;
+    }
+
+    public void setApprovedBy(Long approvedBy) {
+        this.approvedBy = approvedBy;
+    }
+
+    public LocalDateTime getApprovedAt() {
+        return approvedAt;
+    }
+
+    public void setApprovedAt(LocalDateTime approvedAt) {
+        this.approvedAt = approvedAt;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
     }
 
     public LocalDateTime getCreatedAt() {
