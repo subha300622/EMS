@@ -46,14 +46,14 @@ public class AppraisalEvaluationService {
     @Transactional
     public SelfAssessmentDto saveSelfAssessment(Long appraisalId, SelfAssessmentDto dto, Employee employee) {
         Long orgId = TenantContext.requireOrganizationId();
-        Appraisal appraisal = appraisalRepository.findByIdAndOrganizationId(appraisalId, orgId)
+        Appraisal appraisal = appraisalRepository.findByIdAndOrganizationIdForUpdate(appraisalId, orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal not found with ID: " + appraisalId));
 
         if (!appraisal.getEmployee().getId().equals(employee.getId())) {
             throw new SecurityException("You are not authorized to submit self-assessment for this appraisal.");
         }
 
-        if (appraisal.getStatus() == AppraisalStatus.COMPLETED || appraisal.getStatus() == AppraisalStatus.PUBLISHED) {
+        if (appraisal.getStatus() == AppraisalStatus.STAGE_REVIEW || appraisal.getStatus() == AppraisalStatus.COMPLETED || appraisal.getStatus() == AppraisalStatus.PUBLISHED) {
             throw new IllegalStateException("Cannot edit or submit self-assessment for completed or published appraisal.");
         }
 
@@ -93,22 +93,43 @@ public class AppraisalEvaluationService {
     @Transactional
     public SelfAssessmentDto submitSelfAssessment(Long appraisalId, SelfAssessmentDto dto, Employee employee) {
         Long orgId = TenantContext.requireOrganizationId();
-        Appraisal appraisal = appraisalRepository.findByIdAndOrganizationId(appraisalId, orgId)
+        Appraisal appraisal = appraisalRepository.findByIdAndOrganizationIdForUpdate(appraisalId, orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal not found with ID: " + appraisalId));
 
         if (appraisal.getStatus() == AppraisalStatus.STAGE_REVIEW || appraisal.getStatus() == AppraisalStatus.COMPLETED || appraisal.getStatus() == AppraisalStatus.PUBLISHED) {
             throw new IllegalStateException("Self-assessment has already been submitted or completed.");
         }
 
-        saveSelfAssessment(appraisalId, dto, employee);
+        if (!appraisal.getEmployee().getId().equals(employee.getId())) {
+            throw new SecurityException("You are not authorized to submit self-assessment for this appraisal.");
+        }
+
+        if (dto.getOverallRating() == null) {
+            throw new IllegalArgumentException("Overall rating is required");
+        }
+        if (dto.getOverallRating() < 1.0 || dto.getOverallRating() > 5.0) {
+            throw new IllegalArgumentException("Rating must be between 1.0 and 5.0");
+        }
 
         AppraisalAssessment assessment = assessmentRepository.findByAppraisalId(appraisalId)
-                .orElseThrow(() -> new IllegalStateException("Self assessment not found"));
+                .orElseGet(() -> {
+                    AppraisalAssessment a = new AppraisalAssessment();
+                    a.setAppraisal(appraisal);
+                    a.setCreatedAt(LocalDateTime.now());
+                    return a;
+                });
 
+        assessment.setOverallRating(dto.getOverallRating());
+        assessment.setStrengths(dto.getStrengths());
+        assessment.setAchievements(dto.getAchievements());
+        assessment.setDevelopmentAreas(dto.getDevelopmentAreas());
         assessment.setSubmittedAt(LocalDateTime.now());
-        assessmentRepository.save(assessment);
+        assessment.setUpdatedAt(LocalDateTime.now());
+        assessment = assessmentRepository.save(assessment);
 
         AppraisalStatus oldStatus = appraisal.getStatus();
+        appraisal.setSelfRating(dto.getOverallRating());
+        appraisal.setSelfReview(dto.getAchievements());
         appraisal.setStatus(AppraisalStatus.STAGE_REVIEW);
         appraisal.setCurrentStageOrder(1);
         appraisal.setSelfReviewSubmittedAt(LocalDateTime.now());
@@ -136,7 +157,7 @@ public class AppraisalEvaluationService {
     @Transactional
     public ReviewStageDto submitReview(Long appraisalId, ReviewStageDto dto, Employee reviewer, User currentUser) {
         Long orgId = TenantContext.requireOrganizationId();
-        Appraisal appraisal = appraisalRepository.findByIdAndOrganizationId(appraisalId, orgId)
+        Appraisal appraisal = appraisalRepository.findByIdAndOrganizationIdForUpdate(appraisalId, orgId)
                 .orElseThrow(() -> new IllegalArgumentException("Appraisal not found with ID: " + appraisalId));
 
         if (appraisal.getEmployee().getId().equals(reviewer.getId())) {

@@ -11,6 +11,9 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -20,6 +23,11 @@ public interface AppraisalRepository extends JpaRepository<Appraisal, Long> {
     List<Appraisal> findByOrganizationId(Long organizationId);
     List<Appraisal> findByOrganizationIdAndEmployeeId(Long organizationId, Long employeeId);
     Optional<Appraisal> findByIdAndOrganizationId(Long id, Long organizationId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT a FROM Appraisal a WHERE a.id = :id AND a.organization.id = :organizationId")
+    Optional<Appraisal> findByIdAndOrganizationIdForUpdate(@Param("id") Long id, @Param("organizationId") Long organizationId);
+
     List<Appraisal> findByCycleId(Long cycleId);
     Page<Appraisal> findByCycleId(Long cycleId, Pageable pageable);
     List<Appraisal> findByStatus(AppraisalStatus status);

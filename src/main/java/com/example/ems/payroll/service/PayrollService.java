@@ -208,8 +208,16 @@ public class PayrollService {
             int workingDays = calculateWorkingDays(orgId, periodStart, periodEnd);
 
             com.example.ems.leave.dto.LeavePeriodSummaryDto leaveSummary = leaveService.getLeavePeriodSummary(emp.getId(), periodStart, periodEnd);
-            double lopDays = leaveSummary != null && leaveSummary.getLopDays() != null ? leaveSummary.getLopDays() : 0.0;
-            double encashmentDays = leaveSummary != null && leaveSummary.getEncashmentDays() != null ? leaveSummary.getEncashmentDays() : 0.0;
+            double lopDays = 0.0;
+            double encashmentDays = 0.0;
+            if (leaveSummary != null) {
+                if (leaveSummary.getLopDays() != null) {
+                    lopDays = leaveSummary.getLopDays();
+                }
+                if (leaveSummary.getEncashmentDays() != null) {
+                    encashmentDays = leaveSummary.getEncashmentDays();
+                }
+            }
 
             BigDecimal dailyRate = gross.divide(BigDecimal.valueOf(workingDays), 2, RoundingMode.HALF_UP);
             BigDecimal leaveDeduction = dailyRate.multiply(BigDecimal.valueOf(lopDays)).setScale(2, RoundingMode.HALF_UP);
@@ -279,8 +287,16 @@ public class PayrollService {
 
         int workingDays = calculateWorkingDays(orgId, periodStart, periodEnd);
         com.example.ems.leave.dto.LeavePeriodSummaryDto leaveSummary = leaveService.getLeavePeriodSummary(employeeId, periodStart, periodEnd);
-        double lopDays = leaveSummary != null && leaveSummary.getLopDays() != null ? leaveSummary.getLopDays() : 0.0;
-        double encashmentDays = leaveSummary != null && leaveSummary.getEncashmentDays() != null ? leaveSummary.getEncashmentDays() : 0.0;
+        double lopDays = 0.0;
+        double encashmentDays = 0.0;
+        if (leaveSummary != null) {
+            if (leaveSummary.getLopDays() != null) {
+                lopDays = leaveSummary.getLopDays();
+            }
+            if (leaveSummary.getEncashmentDays() != null) {
+                encashmentDays = leaveSummary.getEncashmentDays();
+            }
+        }
 
         BigDecimal dailyRate = gross.divide(BigDecimal.valueOf(workingDays), 2, RoundingMode.HALF_UP);
         BigDecimal leaveDeduction = dailyRate.multiply(BigDecimal.valueOf(lopDays)).setScale(2, RoundingMode.HALF_UP);

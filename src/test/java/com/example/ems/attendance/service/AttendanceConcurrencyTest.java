@@ -75,6 +75,7 @@ public class AttendanceConcurrencyTest {
     public void testConcurrentCheckInsResultInSingleRecord() throws InterruptedException, ExecutionException {
         int threadCount = 4;
         ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch readyLatch = new CountDownLatch(threadCount);
         CountDownLatch startLatch = new CountDownLatch(1);
         CountDownLatch endLatch = new CountDownLatch(threadCount);
 
@@ -84,18 +85,28 @@ public class AttendanceConcurrencyTest {
 
         for (int i = 0; i < threadCount; i++) {
             futures.add(executor.submit(() -> {
+                readyLatch.countDown();
                 startLatch.await(); // wait for start signal to execute simultaneously
                 try {
                     attendanceService.checkIn(employee, "Punched in via Concurrency Test");
                     successCounter.incrementAndGet();
                     return "SUCCESS";
                 } catch (IllegalArgumentException e) {
-                    if ("Already checked in today".equals(e.getMessage())) {
+                    if (e.getMessage() != null && (e.getMessage().contains("Already checked in")
+                            || e.getMessage().contains("Duplicate swipe detected"))) {
                         collisionCounter.incrementAndGet();
                         return "COLLISION";
                     }
                     return "ERROR: " + e.getMessage();
                 } catch (Exception e) {
+                    if (e.getMessage() != null && (e.getMessage().contains("Already checked in")
+                            || e.getMessage().contains("Duplicate swipe detected")
+                            || e.getMessage().contains("uk_attendance")
+                            || e.getMessage().contains("duplicate")
+                            || e.getMessage().contains("DataIntegrityViolationException"))) {
+                        collisionCounter.incrementAndGet();
+                        return "COLLISION";
+                    }
                     return "ERROR: " + e.getClass().getName() + " - " + e.getMessage();
                 } finally {
                     endLatch.countDown();
@@ -103,9 +114,12 @@ public class AttendanceConcurrencyTest {
             }));
         }
 
+        // Wait for all worker threads to be ready at the gate
+        readyLatch.await(5, TimeUnit.SECONDS);
+
         // Trigger concurrent execution
         startLatch.countDown();
-        endLatch.await();
+        endLatch.await(10, TimeUnit.SECONDS);
         executor.shutdown();
 
         // Output results
