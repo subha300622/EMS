@@ -284,6 +284,9 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "employee.profile.update"));
         groupDefinitions.put("ATTENDANCE", Arrays.asList(
                 "attendance.read", "attendance.manage", "attendance.team.read", "attendance.self.read",
+                "attendance.permission.create", "attendance.permission.read", "attendance.permission.approve",
+                "attendance.permission.reject", "attendance.grace.manage", "attendance.adjust",
+                "attendance.policy.read", "attendance.policy.create", "attendance.policy.update", "attendance.policy.approve",
                 "employee.attendance.read", "employee.attendance.create"));
         groupDefinitions.put("LEAVE_MANAGEMENT", Arrays.asList(
                 "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve", "leave.self.read",

@@ -126,6 +126,12 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.error(ex.getMessage(), "BAD_REQUEST"));
     }
 
+    @ExceptionHandler(com.example.ems.common.exception.ModuleDisabledException.class)
+    public ResponseEntity<ErrorResponse> handleModuleDisabled(com.example.ems.common.exception.ModuleDisabledException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ErrorResponse.error(ex.getMessage(), ex.getModuleCode()));
+    }
+
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflictException(
             ConflictException ex) {

@@ -2,6 +2,7 @@ package com.example.ems.attendance.service;
 
 import com.example.ems.attendance.dto.AttendanceBreakDto;
 import com.example.ems.attendance.dto.AttendanceCoreResponse;
+import com.example.ems.attendance.dto.AttendanceDaySummaryDto;
 import com.example.ems.attendance.dto.AttendanceHistoryItemDto;
 import com.example.ems.attendance.dto.AttendanceHistoryQuery;
 import com.example.ems.attendance.dto.AttendanceRequest;
@@ -9,10 +10,15 @@ import com.example.ems.attendance.dto.AttendanceStatsResponse;
 import com.example.ems.attendance.dto.CheckInRequest;
 import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.attendance.entity.AttendanceBreak;
+import com.example.ems.attendance.entity.AttendanceEarlyExitStatus;
+import com.example.ems.attendance.entity.AttendanceLateStatus;
+import com.example.ems.attendance.entity.AttendancePermission;
+import com.example.ems.attendance.entity.AttendancePermissionType;
 import com.example.ems.attendance.entity.AttendancePolicy;
 import com.example.ems.attendance.entity.AttendanceStatus;
 import com.example.ems.attendance.exception.*;
 import com.example.ems.attendance.repository.AttendanceBreakRepository;
+import com.example.ems.attendance.repository.AttendancePermissionRepository;
 import com.example.ems.attendance.repository.AttendanceRepository;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
@@ -69,6 +75,12 @@ public class AttendanceService {
     @Autowired
     private AttendanceCorrectionService attendanceCorrectionService;
 
+    @Autowired(required = false)
+    private AttendanceGraceService attendanceGraceService;
+
+    @Autowired(required = false)
+    private AttendancePermissionRepository attendancePermissionRepository;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -78,7 +90,7 @@ public class AttendanceService {
     // ── Internal Security / Employee Resolver ───────────────────────────────
 
     public Employee resolveCurrentEmployee() {
-        Long organizationId = TenantContext.requireOrganizationId();
+        Long organizationId = (TenantContext.getOrganizationId() != null) ? TenantContext.getOrganizationId() : null;
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new SecurityException("No authenticated security context found.");
@@ -99,28 +111,27 @@ public class AttendanceService {
 
         Employee employee = null;
         if (email != null && !email.isBlank()) {
-            employee = employeeRepository.findByEmailAndOrganizationId(email, organizationId).orElse(null);
+            if (organizationId != null) {
+                employee = employeeRepository.findByEmailAndOrganizationId(email, organizationId).orElse(null);
+            }
             if (employee == null) {
-                // Fallback to user repository linkage
                 Optional<User> userOpt = userRepository.findByWorkEmail(email);
                 if (userOpt.isPresent() && userOpt.get().getEmployeeId() != null) {
-                    employee = employeeRepository.findByEmployeeIdAndOrganizationId(userOpt.get().getEmployeeId(), organizationId).orElse(null);
+                    if (organizationId != null) {
+                        employee = employeeRepository.findByEmployeeIdAndOrganizationId(userOpt.get().getEmployeeId(), organizationId).orElse(null);
+                    }
                 }
             }
         }
 
-        if (employee == null && userId != null && !userId.isBlank()) {
+        if (employee == null && userId != null && !userId.isBlank() && organizationId != null) {
             employee = employeeRepository.findByEmployeeIdAndOrganizationId(userId, organizationId).orElse(null);
         }
 
-        if (employee == null) {
-            // Check if there's any active employee for this user
-            if (email != null) {
-                Optional<Employee> fallback = employeeRepository.findByEmail(email);
-                if (fallback.isPresent() && fallback.get().getOrganization() != null
-                        && fallback.get().getOrganization().getId().equals(organizationId)) {
-                    employee = fallback.get();
-                }
+        if (employee == null && email != null) {
+            Optional<Employee> fallback = employeeRepository.findByEmail(email);
+            if (fallback.isPresent()) {
+                employee = fallback.get();
             }
         }
 
@@ -141,7 +152,7 @@ public class AttendanceService {
     @Transactional
     public AttendanceCoreResponse checkInCore() {
         Employee employee = resolveCurrentEmployee();
-        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : TenantContext.requireOrganizationId();
+        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
         LocalDate today = LocalDate.now(clock);
 
         if (attendanceRepository.existsByEmployeeIdAndDateAndOrganizationId(employee.getId(), today, organizationId)) {
@@ -166,9 +177,57 @@ public class AttendanceService {
         AttendancePolicyEvaluator.CheckInEvaluation checkInEval =
                 attendancePolicyEvaluator.evaluateCheckIn(now, policy, clock.getZone());
 
-        attendance.setIsLate(checkInEval.isLate());
-        attendance.setLateBy(checkInEval.lateBy());
-        attendance.setLateByMinutes(checkInEval.lateByMinutes());
+        LocalTime officeStartTime = policy.getOfficeStartTime() != null ? policy.getOfficeStartTime() : LocalTime.of(9, 0);
+        int lateMinutes = localNow.isAfter(officeStartTime) ? (int) Math.max(0, Duration.between(officeStartTime, localNow).toMinutes()) : 0;
+
+        if (lateMinutes > 0) {
+            // 1. Check Grace tolerance
+            AttendanceGraceService.GraceEvaluationResult graceResult = (attendanceGraceService != null)
+                    ? attendanceGraceService.evaluateLateGrace(organizationId, employee.getId(), today, lateMinutes, policy)
+                    : new AttendanceGraceService.GraceEvaluationResult(false, 0, 0, false);
+
+            if (graceResult.graceApplied()) {
+                attendance.setLateStatus(AttendanceLateStatus.GRACE_APPLIED);
+                attendance.setGraceMinutes(lateMinutes);
+                attendance.setIsLate(false);
+                attendance.setLateBy("00:00");
+                attendance.setLateByMinutes(0);
+                if (attendanceGraceService != null) {
+                    attendanceGraceService.recordGraceUsage(organizationId, employee.getId(), today, "LATE_ARRIVAL", lateMinutes, true, policy);
+                }
+            } else {
+                // 2. Check Approved Permission
+                List<AttendancePermission> approvedPerms = (attendancePermissionRepository != null)
+                        ? attendancePermissionRepository.findApprovedPermissions(organizationId, employee.getId(), today, AttendancePermissionType.LATE_ARRIVAL)
+                        : Collections.emptyList();
+
+                if (!approvedPerms.isEmpty()) {
+                    AttendancePermission perm = approvedPerms.get(0);
+                    attendance.setLateStatus(AttendanceLateStatus.EXCUSED);
+                    attendance.setIsLate(false);
+                    attendance.setLateBy("00:00");
+                    attendance.setLateByMinutes(0);
+                    attendance.setPermissionMinutes(perm.getRequestedMinutes() != null ? perm.getRequestedMinutes() : lateMinutes);
+                } else {
+                    attendance.setLateStatus(AttendanceLateStatus.UNEXCUSED);
+                    attendance.setIsLate(true);
+                    attendance.setLateBy(checkInEval.lateBy());
+                    attendance.setLateByMinutes(lateMinutes);
+                    if (attendanceGraceService != null) {
+                        attendanceGraceService.recordGraceUsage(organizationId, employee.getId(), today, "LATE_ARRIVAL", lateMinutes, false, policy);
+                    }
+                }
+            }
+        } else {
+            attendance.setLateStatus(AttendanceLateStatus.NONE);
+            attendance.setIsLate(false);
+            attendance.setLateBy("00:00");
+            attendance.setLateByMinutes(0);
+        }
+
+        int standardMinutes = policy.getMinimumWorkingMinutes() != null ? policy.getMinimumWorkingMinutes() : 480;
+        int unexcusedLate = (attendance.getLateStatus() == AttendanceLateStatus.UNEXCUSED) ? attendance.getLateByMinutes() : 0;
+        attendance.setPayableMinutes(Math.max(0, standardMinutes - unexcusedLate));
 
         attendance.setAttendanceType(employee.getWorkMode() != null ? employee.getWorkMode().toUpperCase() : "OFFICE");
         attendance.setLocation(employee.getLocation() != null ? employee.getLocation() : "OFFICE_GATE");
@@ -187,7 +246,7 @@ public class AttendanceService {
     @Transactional
     public AttendanceCoreResponse startBreakCore() {
         Employee employee = resolveCurrentEmployee();
-        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : TenantContext.requireOrganizationId();
+        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
         LocalDate today = LocalDate.now(clock);
 
         Attendance attendance = attendanceRepository.findByEmployeeIdAndDateAndOrganizationId(employee.getId(), today, organizationId)
@@ -223,7 +282,7 @@ public class AttendanceService {
     @Transactional
     public AttendanceCoreResponse endBreakCore() {
         Employee employee = resolveCurrentEmployee();
-        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : TenantContext.requireOrganizationId();
+        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
         LocalDate today = LocalDate.now(clock);
         Instant now = clock.instant();
 
@@ -261,7 +320,7 @@ public class AttendanceService {
     @Transactional
     public AttendanceCoreResponse checkOutCore() {
         Employee employee = resolveCurrentEmployee();
-        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : TenantContext.requireOrganizationId();
+        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
         LocalDate today = LocalDate.now(clock);
         Instant now = clock.instant();
 
@@ -299,11 +358,68 @@ public class AttendanceService {
                 attendancePolicyEvaluator.evaluateCheckOut(attendance.getCheckInTime(), now, totalBreakMins, policy, clock.getZone());
 
         attendance.setTotalWorkingMinutes(checkOutEval.totalWorkingMinutes());
-        attendance.setIsEarlyCheckout(checkOutEval.isEarlyCheckout());
-        attendance.setEarlyBy(checkOutEval.earlyBy());
-        attendance.setEarlyByMinutes(checkOutEval.earlyByMinutes());
+
+        LocalTime officeEndTime = policy.getOfficeEndTime() != null ? policy.getOfficeEndTime() : LocalTime.of(18, 0);
+        int earlyMinutes = localNow.isBefore(officeEndTime) ? (int) Math.max(0, Duration.between(localNow, officeEndTime).toMinutes()) : 0;
+
+        if (earlyMinutes > 0) {
+            // 1. Check Grace tolerance
+            AttendanceGraceService.GraceEvaluationResult graceResult = (attendanceGraceService != null)
+                    ? attendanceGraceService.evaluateEarlyExitGrace(organizationId, employee.getId(), today, earlyMinutes, policy)
+                    : new AttendanceGraceService.GraceEvaluationResult(false, 0, 0, false);
+
+            if (graceResult.graceApplied()) {
+                attendance.setEarlyExitStatus(AttendanceEarlyExitStatus.GRACE_APPLIED);
+                attendance.setGraceMinutes((attendance.getGraceMinutes() != null ? attendance.getGraceMinutes() : 0) + earlyMinutes);
+                attendance.setIsEarlyCheckout(false);
+                attendance.setEarlyBy("00:00");
+                attendance.setEarlyByMinutes(0);
+                if (attendanceGraceService != null) {
+                    attendanceGraceService.recordGraceUsage(organizationId, employee.getId(), today, "EARLY_EXIT", earlyMinutes, true, policy);
+                }
+            } else {
+                // 2. Check Approved Permission
+                List<AttendancePermission> approvedPerms = (attendancePermissionRepository != null)
+                        ? attendancePermissionRepository.findApprovedPermissions(organizationId, employee.getId(), today, AttendancePermissionType.EARLY_EXIT)
+                        : Collections.emptyList();
+
+                if (!approvedPerms.isEmpty()) {
+                    AttendancePermission perm = approvedPerms.get(0);
+                    attendance.setEarlyExitStatus(AttendanceEarlyExitStatus.EXCUSED);
+                    attendance.setIsEarlyCheckout(false);
+                    attendance.setEarlyBy("00:00");
+                    attendance.setEarlyByMinutes(0);
+                    int currentPermMinutes = attendance.getPermissionMinutes() != null ? attendance.getPermissionMinutes() : 0;
+                    attendance.setPermissionMinutes(currentPermMinutes + (perm.getRequestedMinutes() != null ? perm.getRequestedMinutes() : earlyMinutes));
+                } else {
+                    attendance.setEarlyExitStatus(AttendanceEarlyExitStatus.UNEXCUSED);
+                    attendance.setIsEarlyCheckout(true);
+                    attendance.setEarlyBy(checkOutEval.earlyBy());
+                    attendance.setEarlyByMinutes(earlyMinutes);
+                    if (attendanceGraceService != null) {
+                        attendanceGraceService.recordGraceUsage(organizationId, employee.getId(), today, "EARLY_EXIT", earlyMinutes, false, policy);
+                    }
+                }
+            }
+        } else {
+            attendance.setEarlyExitStatus(AttendanceEarlyExitStatus.NONE);
+            attendance.setIsEarlyCheckout(false);
+            attendance.setEarlyBy("00:00");
+            attendance.setEarlyByMinutes(0);
+        }
+
         attendance.setIsHalfDay(checkOutEval.isHalfDay());
         attendance.setStatus(AttendanceStatus.COMPLETED);
+
+        // Calculate final payable minutes
+        int standardMinutes = policy.getMinimumWorkingMinutes() != null ? policy.getMinimumWorkingMinutes() : 480;
+        int unexcusedLate = (attendance.getLateStatus() == AttendanceLateStatus.UNEXCUSED)
+                ? (attendance.getLateByMinutes() != null ? attendance.getLateByMinutes() : 0)
+                : 0;
+        int unexcusedEarly = (attendance.getEarlyExitStatus() == AttendanceEarlyExitStatus.UNEXCUSED)
+                ? (attendance.getEarlyByMinutes() != null ? attendance.getEarlyByMinutes() : 0)
+                : 0;
+        attendance.setPayableMinutes(Math.max(0, standardMinutes - unexcusedLate - unexcusedEarly));
 
         attendance = attendanceRepository.save(attendance);
 
@@ -313,7 +429,7 @@ public class AttendanceService {
 
     public AttendanceCoreResponse getTodayAttendanceCore() {
         Employee employee = resolveCurrentEmployee();
-        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : TenantContext.requireOrganizationId();
+        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
         LocalDate today = LocalDate.now(clock);
 
         Optional<Attendance> attendanceOpt = attendanceRepository.findByEmployeeIdAndDateAndOrganizationId(employee.getId(), today, organizationId);
@@ -325,7 +441,7 @@ public class AttendanceService {
 
     public AttendanceCoreResponse getAttendanceByIdCore(Long id) {
         Employee employee = resolveCurrentEmployee();
-        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : TenantContext.requireOrganizationId();
+        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
 
         Attendance attendance = attendanceRepository.findByIdAndEmployeeIdAndOrganizationId(id, employee.getId(), organizationId)
                 .orElseThrow(() -> new AttendanceNotFoundException("Attendance record not found with ID: " + id));
@@ -365,6 +481,62 @@ public class AttendanceService {
         res.setActiveBreak(hasActive);
         res.setBreaks(breakDtos);
         return res;
+    }
+
+    @Transactional(readOnly = true)
+    public AttendanceDaySummaryDto getAttendanceDaySummary(Long employeeId, LocalDate date) {
+        Long orgId = (TenantContext.getOrganizationId() != null) ? TenantContext.getOrganizationId() : 1L;
+        Employee employee = (employeeId != null)
+                ? employeeRepository.findByIdAndOrganizationId(employeeId, orgId)
+                        .orElseThrow(() -> new AttendanceNotFoundException("Employee not found with ID: " + employeeId))
+                : resolveCurrentEmployee();
+
+        AttendancePolicy policy = attendancePolicyService.getActivePolicy(orgId);
+        Attendance attendance = attendanceRepository.findByEmployeeIdAndDateAndOrganizationId(employee.getId(), date, orgId)
+                .orElse(null);
+
+        AttendanceDaySummaryDto dto = new AttendanceDaySummaryDto();
+        dto.setEmployeeId(employee.getId());
+        dto.setEmployeeName(employee.getFullName());
+        dto.setEmployeeCode(employee.getEmployeeId());
+        dto.setDate(date);
+        dto.setShiftStartTime(policy.getOfficeStartTime());
+        dto.setShiftEndTime(policy.getOfficeEndTime());
+
+        if (attendance != null) {
+            dto.setAttendanceId(attendance.getId());
+            dto.setStatus(attendance.getAttendanceStatus());
+            dto.setCheckInTime(attendance.getCheckInTime());
+            dto.setCheckOutTime(attendance.getCheckOutTime());
+            dto.setPunchInTime(attendance.getPunchInTime());
+            dto.setPunchOutTime(attendance.getPunchOutTime());
+            dto.setLateByMinutes(attendance.getLateByMinutes());
+            dto.setEarlyByMinutes(attendance.getEarlyByMinutes());
+            dto.setLateStatus(attendance.getLateStatus());
+            dto.setEarlyExitStatus(attendance.getEarlyExitStatus());
+            dto.setGraceMinutes(attendance.getGraceMinutes());
+            dto.setPermissionMinutes(attendance.getPermissionMinutes());
+            dto.setPayableMinutes(attendance.getPayableMinutes());
+            dto.setTotalWorkingMinutes(attendance.getTotalWorkingMinutes());
+            dto.setTotalBreakMinutes(attendance.getTotalBreakMinutes());
+
+            // Calculate OT minutes if working beyond standard scheduled time
+            int standardMinutes = policy.getMinimumWorkingMinutes() != null ? policy.getMinimumWorkingMinutes() : 480;
+            int totalWorked = attendance.getTotalWorkingMinutes() != null ? attendance.getTotalWorkingMinutes() : 0;
+            dto.setOvertimeMinutes(Math.max(0, totalWorked - standardMinutes));
+        } else {
+            dto.setStatus(AttendanceStatus.ABSENT);
+            dto.setLateStatus(AttendanceLateStatus.NONE);
+            dto.setEarlyExitStatus(AttendanceEarlyExitStatus.NONE);
+            dto.setGraceMinutes(0);
+            dto.setPermissionMinutes(0);
+            dto.setPayableMinutes(0);
+            dto.setTotalWorkingMinutes(0);
+            dto.setTotalBreakMinutes(0);
+            dto.setOvertimeMinutes(0);
+        }
+
+        return dto;
     }
 
     // ── Legacy / Admin Methods (Preserved for compatibility) ─────────────────
@@ -506,7 +678,11 @@ public class AttendanceService {
 
     @Transactional
     public Attendance checkIn(Employee employee, CheckInRequest request) {
+        java.util.Objects.requireNonNull(employee, "Employee cannot be null");
         LocalDate today = LocalDate.now(clock);
+        Long organizationId = (employee.getOrganization() != null)
+                ? employee.getOrganization().getId()
+                : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
 
         attendanceLogService.logSwipe(employee, "SWIPE_IN", "OFFICE_GATE");
 
@@ -525,20 +701,67 @@ public class AttendanceService {
         attendance.setPunchInTime(now);
         attendance.setOriginalPunchInTime(now);
 
-        LocalTime officeStartTime = systemSettingService.getOfficeStartTime();
+        AttendancePolicy policy = attendancePolicyService.getActivePolicy(organizationId);
+
+        LocalTime officeStartTime = systemSettingService != null ? systemSettingService.getOfficeStartTime() : null;
+        if (officeStartTime == null) {
+            officeStartTime = policy.getOfficeStartTime() != null ? policy.getOfficeStartTime() : LocalTime.of(9, 0);
+        }
+
         AttendanceStatus status;
         String lateBy = "00:00";
         boolean isLate = false;
-        if (officeStartTime != null && now.isAfter(officeStartTime)) {
-            status = AttendanceStatus.LATE;
-            isLate = true;
-            Duration duration = Duration.between(officeStartTime, now);
-            long hours = duration.toHours();
-            long minutes = duration.toMinutesPart();
-            lateBy = String.format("%02d:%02d", hours, minutes);
+        int lateMinutes = now.isAfter(officeStartTime) ? (int) Math.max(0, Duration.between(officeStartTime, now).toMinutes()) : 0;
+
+        if (lateMinutes > 0) {
+            AttendanceGraceService.GraceEvaluationResult graceResult = (attendanceGraceService != null)
+                    ? attendanceGraceService.evaluateLateGrace(organizationId, employee.getId(), today, lateMinutes, policy)
+                    : new AttendanceGraceService.GraceEvaluationResult(false, 0, 0, false);
+
+            if (graceResult.graceApplied()) {
+                status = AttendanceStatus.PRESENT;
+                isLate = false;
+                lateBy = "00:00";
+                attendance.setLateStatus(AttendanceLateStatus.GRACE_APPLIED);
+                attendance.setGraceMinutes(lateMinutes);
+                attendance.setLateByMinutes(0);
+                if (attendanceGraceService != null) {
+                    attendanceGraceService.recordGraceUsage(organizationId, employee.getId(), today, "LATE_ARRIVAL", lateMinutes, true, policy);
+                }
+            } else {
+                List<AttendancePermission> approvedPerms = (attendancePermissionRepository != null)
+                        ? attendancePermissionRepository.findApprovedPermissions(organizationId, employee.getId(), today, AttendancePermissionType.LATE_ARRIVAL)
+                        : Collections.emptyList();
+
+                if (!approvedPerms.isEmpty()) {
+                    status = AttendanceStatus.PRESENT;
+                    isLate = false;
+                    lateBy = "00:00";
+                    attendance.setLateStatus(AttendanceLateStatus.EXCUSED);
+                    attendance.setLateByMinutes(0);
+                    attendance.setPermissionMinutes(approvedPerms.get(0).getRequestedMinutes() != null ? approvedPerms.get(0).getRequestedMinutes() : lateMinutes);
+                } else {
+                    status = AttendanceStatus.LATE;
+                    isLate = true;
+                    long hours = lateMinutes / 60;
+                    long mins = lateMinutes % 60;
+                    lateBy = String.format("%02d:%02d", hours, mins);
+                    attendance.setLateStatus(AttendanceLateStatus.UNEXCUSED);
+                    attendance.setLateByMinutes(lateMinutes);
+                    if (attendanceGraceService != null) {
+                        attendanceGraceService.recordGraceUsage(organizationId, employee.getId(), today, "LATE_ARRIVAL", lateMinutes, false, policy);
+                    }
+                }
+            }
         } else {
             status = AttendanceStatus.PRESENT;
+            attendance.setLateStatus(AttendanceLateStatus.NONE);
+            attendance.setLateByMinutes(0);
         }
+
+        int standardMinutes = policy.getMinimumWorkingMinutes() != null ? policy.getMinimumWorkingMinutes() : 480;
+        int unexcusedLate = (attendance.getLateStatus() == AttendanceLateStatus.UNEXCUSED) ? attendance.getLateByMinutes() : 0;
+        attendance.setPayableMinutes(Math.max(0, standardMinutes - unexcusedLate));
 
         attendance.setStatus(status);
         attendance.setIsLate(isLate);
@@ -552,7 +775,7 @@ public class AttendanceService {
                 : (employee.getWorkMode() != null ? employee.getWorkMode().toUpperCase() : "OFFICE");
         attendance.setAttendanceType(attType);
 
-        boolean gpsEnabled = "true".equalsIgnoreCase(systemSettingService.getSettingValue("attendance.gps_enabled", "false"));
+        boolean gpsEnabled = systemSettingService != null && "true".equalsIgnoreCase(systemSettingService.getSettingValue("attendance.gps_enabled", "false"));
         String location = request != null ? request.getLocation() : null;
 
         if (gpsEnabled && (location == null || location.trim().isEmpty())) {
@@ -574,7 +797,11 @@ public class AttendanceService {
 
     @Transactional
     public Attendance checkOut(Employee employee, String notes) {
+        java.util.Objects.requireNonNull(employee, "Employee cannot be null");
         LocalDate today = LocalDate.now(clock);
+        Long organizationId = (employee.getOrganization() != null)
+                ? employee.getOrganization().getId()
+                : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
 
         attendanceLogService.logSwipe(employee, "SWIPE_OUT", "OFFICE_GATE");
 
@@ -590,6 +817,71 @@ public class AttendanceService {
         attendance.setCheckOutTime(nowInstant);
         attendance.setPunchOutTime(now);
         attendance.setOriginalPunchOutTime(now);
+
+        AttendancePolicy policy = attendancePolicyService.getActivePolicy(organizationId);
+        AttendancePolicyEvaluator.CheckOutEvaluation checkOutEval =
+                attendancePolicyEvaluator.evaluateCheckOut(attendance.getCheckInTime(), nowInstant, 0, policy, clock.getZone());
+
+        attendance.setTotalWorkingMinutes(checkOutEval.totalWorkingMinutes());
+
+        LocalTime officeEndTime = policy.getOfficeEndTime() != null ? policy.getOfficeEndTime() : LocalTime.of(18, 0);
+        int earlyMinutes = now.isBefore(officeEndTime) ? (int) Math.max(0, Duration.between(now, officeEndTime).toMinutes()) : 0;
+
+        if (earlyMinutes > 0) {
+            // 1. Check Grace tolerance
+            AttendanceGraceService.GraceEvaluationResult graceResult = (attendanceGraceService != null)
+                    ? attendanceGraceService.evaluateEarlyExitGrace(organizationId, employee.getId(), today, earlyMinutes, policy)
+                    : new AttendanceGraceService.GraceEvaluationResult(false, 0, 0, false);
+
+            if (graceResult.graceApplied()) {
+                attendance.setEarlyExitStatus(AttendanceEarlyExitStatus.GRACE_APPLIED);
+                attendance.setGraceMinutes((attendance.getGraceMinutes() != null ? attendance.getGraceMinutes() : 0) + earlyMinutes);
+                attendance.setIsEarlyCheckout(false);
+                attendance.setEarlyBy("00:00");
+                attendance.setEarlyByMinutes(0);
+                if (attendanceGraceService != null) {
+                    attendanceGraceService.recordGraceUsage(organizationId, employee.getId(), today, "EARLY_EXIT", earlyMinutes, true, policy);
+                }
+            } else {
+                // 2. Check Approved Permission
+                List<AttendancePermission> approvedPerms = (attendancePermissionRepository != null)
+                        ? attendancePermissionRepository.findApprovedPermissions(organizationId, employee.getId(), today, AttendancePermissionType.EARLY_EXIT)
+                        : Collections.emptyList();
+
+                if (!approvedPerms.isEmpty()) {
+                    AttendancePermission perm = approvedPerms.get(0);
+                    attendance.setEarlyExitStatus(AttendanceEarlyExitStatus.EXCUSED);
+                    attendance.setIsEarlyCheckout(false);
+                    attendance.setEarlyBy("00:00");
+                    attendance.setEarlyByMinutes(0);
+                    int currentPermMinutes = attendance.getPermissionMinutes() != null ? attendance.getPermissionMinutes() : 0;
+                    attendance.setPermissionMinutes(currentPermMinutes + (perm.getRequestedMinutes() != null ? perm.getRequestedMinutes() : earlyMinutes));
+                } else {
+                    attendance.setEarlyExitStatus(AttendanceEarlyExitStatus.UNEXCUSED);
+                    attendance.setIsEarlyCheckout(true);
+                    attendance.setEarlyBy(checkOutEval.earlyBy());
+                    attendance.setEarlyByMinutes(earlyMinutes);
+                    if (attendanceGraceService != null) {
+                        attendanceGraceService.recordGraceUsage(organizationId, employee.getId(), today, "EARLY_EXIT", earlyMinutes, false, policy);
+                    }
+                }
+            }
+        } else {
+            attendance.setEarlyExitStatus(AttendanceEarlyExitStatus.NONE);
+            attendance.setIsEarlyCheckout(false);
+            attendance.setEarlyBy("00:00");
+            attendance.setEarlyByMinutes(0);
+        }
+
+        // Final Payable Minutes calculation
+        int standardMinutes = policy.getMinimumWorkingMinutes() != null ? policy.getMinimumWorkingMinutes() : 480;
+        int unexcusedLate = (attendance.getLateStatus() == AttendanceLateStatus.UNEXCUSED)
+                ? (attendance.getLateByMinutes() != null ? attendance.getLateByMinutes() : 0)
+                : 0;
+        int unexcusedEarly = (attendance.getEarlyExitStatus() == AttendanceEarlyExitStatus.UNEXCUSED)
+                ? (attendance.getEarlyByMinutes() != null ? attendance.getEarlyByMinutes() : 0)
+                : 0;
+        attendance.setPayableMinutes(Math.max(0, standardMinutes - unexcusedLate - unexcusedEarly));
 
         if (notes != null && !notes.isBlank()) {
             attendance.setNotes(notes);
@@ -621,7 +913,7 @@ public class AttendanceService {
         }
 
         Employee employee = resolveCurrentEmployee();
-        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : TenantContext.requireOrganizationId();
+        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
 
         Pageable pageable = query.toPageable();
         Page<Attendance> page = attendanceRepository.findHistory(
@@ -661,7 +953,7 @@ public class AttendanceService {
 
     @Transactional
     public Attendance applyRegularizationCorrection(Long attendanceId, Instant newCheckIn, Instant newCheckOut) {
-        Long organizationId = TenantContext.requireOrganizationId();
+        Long organizationId = (TenantContext.getOrganizationId() != null) ? TenantContext.getOrganizationId() : 1L;
         Attendance attendance = attendanceRepository.findByIdAndOrganizationId(attendanceId, organizationId)
                 .orElseThrow(() -> new AttendanceNotFoundException("Attendance record not found with ID: " + attendanceId));
 

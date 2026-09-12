@@ -12,6 +12,16 @@ public final class PermissionRegistry {
         public static final String ATTENDANCE_MANAGE = "attendance.manage";
         public static final String ATTENDANCE_SELF_READ = "attendance.self.read";
         public static final String EMPLOYEE_ATTENDANCE_READ = "employee.attendance.read";
+        public static final String ATTENDANCE_PERMISSION_CREATE = "attendance.permission.create";
+        public static final String ATTENDANCE_PERMISSION_READ = "attendance.permission.read";
+        public static final String ATTENDANCE_PERMISSION_APPROVE = "attendance.permission.approve";
+        public static final String ATTENDANCE_PERMISSION_REJECT = "attendance.permission.reject";
+        public static final String ATTENDANCE_GRACE_MANAGE = "attendance.grace.manage";
+        public static final String ATTENDANCE_ADJUST = "attendance.adjust";
+        public static final String ATTENDANCE_POLICY_READ = "attendance.policy.read";
+        public static final String ATTENDANCE_POLICY_CREATE = "attendance.policy.create";
+        public static final String ATTENDANCE_POLICY_UPDATE = "attendance.policy.update";
+        public static final String ATTENDANCE_POLICY_APPROVE = "attendance.policy.approve";
 
         // Platform Administration
         public static final String PLATFORM_ORGANIZATION_VIEW = "platform.organization.view";
@@ -67,6 +77,9 @@ public final class PermissionRegistry {
                         "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
                         // Attendance
                         "attendance.read", "attendance.manage", "attendance.team.read", "attendance.self.read",
+                        "attendance.permission.create", "attendance.permission.read", "attendance.permission.approve",
+                        "attendance.permission.reject", "attendance.grace.manage", "attendance.adjust",
+                        "attendance.policy.read", "attendance.policy.create", "attendance.policy.update", "attendance.policy.approve",
                         // Leave Management
                         "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve",
                         "leave.self.read",

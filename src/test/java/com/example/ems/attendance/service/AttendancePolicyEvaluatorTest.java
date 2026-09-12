@@ -30,6 +30,8 @@ public class AttendancePolicyEvaluatorTest {
         policy.setOfficeStartTime(LocalTime.of(9, 0));
         policy.setOfficeEndTime(LocalTime.of(18, 0));
         policy.setGracePeriodMinutes(15);
+        policy.setLateGraceMinutes(15);
+        policy.setEarlyExitGraceMinutes(15);
         policy.setMinimumWorkingMinutes(480);
         policy.setHalfDayThreshold(240);
         policy.setLateThreshold(15);

@@ -55,6 +55,23 @@ public class Attendance {
     @Column(name = "total_working_minutes")
     private Integer totalWorkingMinutes;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "late_status", nullable = false, length = 30)
+    private AttendanceLateStatus lateStatus = AttendanceLateStatus.NONE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "early_exit_status", nullable = false, length = 30)
+    private AttendanceEarlyExitStatus earlyExitStatus = AttendanceEarlyExitStatus.NONE;
+
+    @Column(name = "grace_minutes", nullable = false)
+    private Integer graceMinutes = 0;
+
+    @Column(name = "permission_minutes", nullable = false)
+    private Integer permissionMinutes = 0;
+
+    @Column(name = "payable_minutes", nullable = false)
+    private Integer payableMinutes = 0;
+
     @Version
     @Column(name = "version", nullable = false)
     private Long version;
@@ -113,6 +130,11 @@ public class Attendance {
             this.createdAt = Instant.now();
         }
         this.updatedAt = Instant.now();
+        if (this.lateStatus == null) this.lateStatus = AttendanceLateStatus.NONE;
+        if (this.earlyExitStatus == null) this.earlyExitStatus = AttendanceEarlyExitStatus.NONE;
+        if (this.graceMinutes == null) this.graceMinutes = 0;
+        if (this.permissionMinutes == null) this.permissionMinutes = 0;
+        if (this.payableMinutes == null) this.payableMinutes = 0;
     }
 
     @PreUpdate
@@ -191,6 +213,21 @@ public class Attendance {
     public Integer getTotalWorkingMinutes() { return totalWorkingMinutes; }
     public void setTotalWorkingMinutes(Integer totalWorkingMinutes) { this.totalWorkingMinutes = totalWorkingMinutes; }
 
+    public AttendanceLateStatus getLateStatus() { return lateStatus; }
+    public void setLateStatus(AttendanceLateStatus lateStatus) { this.lateStatus = lateStatus; }
+
+    public AttendanceEarlyExitStatus getEarlyExitStatus() { return earlyExitStatus; }
+    public void setEarlyExitStatus(AttendanceEarlyExitStatus earlyExitStatus) { this.earlyExitStatus = earlyExitStatus; }
+
+    public Integer getGraceMinutes() { return graceMinutes != null ? graceMinutes : 0; }
+    public void setGraceMinutes(Integer graceMinutes) { this.graceMinutes = graceMinutes; }
+
+    public Integer getPermissionMinutes() { return permissionMinutes != null ? permissionMinutes : 0; }
+    public void setPermissionMinutes(Integer permissionMinutes) { this.permissionMinutes = permissionMinutes; }
+
+    public Integer getPayableMinutes() { return payableMinutes != null ? payableMinutes : 0; }
+    public void setPayableMinutes(Integer payableMinutes) { this.payableMinutes = payableMinutes; }
+
     public Long getVersion() { return version; }
     public void setVersion(Long version) { this.version = version; }
 
@@ -215,6 +252,7 @@ public class Attendance {
     public String getAttendanceType() { return attendanceType; }
     public void setAttendanceType(String attendanceType) { this.attendanceType = attendanceType; }
 
+    public String location() { return location; }
     public String getLocation() { return location; }
     public void setLocation(String location) { this.location = location; }
 

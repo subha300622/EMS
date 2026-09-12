@@ -5,6 +5,8 @@ import com.example.ems.attendance.dto.policy.CreateAttendancePolicyRequest;
 import com.example.ems.attendance.dto.policy.UpdateAttendancePolicyRequest;
 import com.example.ems.attendance.entity.AttendancePolicy;
 import com.example.ems.attendance.entity.AttendancePolicyStatus;
+import com.example.ems.attendance.entity.ExceedGraceAction;
+import com.example.ems.attendance.entity.GracePeriodType;
 import com.example.ems.attendance.exception.AttendanceNotFoundException;
 import com.example.ems.attendance.repository.AttendancePolicyRepository;
 import com.example.ems.organization.entity.Organization;
@@ -66,6 +68,16 @@ public class AttendancePolicyService {
         policy.setLateThreshold(15);
         policy.setEarlyCheckoutThreshold(15);
         policy.setMaximumBreakMinutes(60);
+        policy.setLateGraceMinutes(10);
+        policy.setEarlyExitGraceMinutes(10);
+        policy.setGraceOccurrencesPerPeriod(3);
+        policy.setGracePeriodType(GracePeriodType.MONTHLY);
+        policy.setAllowLateGrace(true);
+        policy.setAllowEarlyExitGrace(true);
+        policy.setExceedGraceAction(ExceedGraceAction.MARK_LATE);
+        policy.setMaxMonthlyPermissions(4);
+        policy.setMaxDailyPermissionMinutes(120);
+        policy.setMaxMonthlyPermissionMinutes(480);
         policy.setStatus(AttendancePolicyStatus.ACTIVE);
         return policy;
     }
@@ -96,6 +108,18 @@ public class AttendancePolicyService {
         policy.setLateThreshold(request.getLateThreshold() != null ? request.getLateThreshold() : 15);
         policy.setEarlyCheckoutThreshold(request.getEarlyCheckoutThreshold() != null ? request.getEarlyCheckoutThreshold() : 15);
         policy.setMaximumBreakMinutes(request.getMaximumBreakMinutes() != null ? request.getMaximumBreakMinutes() : 60);
+
+        policy.setLateGraceMinutes(request.getLateGraceMinutes() != null ? request.getLateGraceMinutes() : 10);
+        policy.setEarlyExitGraceMinutes(request.getEarlyExitGraceMinutes() != null ? request.getEarlyExitGraceMinutes() : 10);
+        policy.setGraceOccurrencesPerPeriod(request.getGraceOccurrencesPerPeriod() != null ? request.getGraceOccurrencesPerPeriod() : 3);
+        policy.setGracePeriodType(request.getGracePeriodType() != null ? request.getGracePeriodType() : GracePeriodType.MONTHLY);
+        policy.setAllowLateGrace(request.getAllowLateGrace() != null ? request.getAllowLateGrace() : true);
+        policy.setAllowEarlyExitGrace(request.getAllowEarlyExitGrace() != null ? request.getAllowEarlyExitGrace() : true);
+        policy.setExceedGraceAction(request.getExceedGraceAction() != null ? request.getExceedGraceAction() : ExceedGraceAction.MARK_LATE);
+        policy.setMaxMonthlyPermissions(request.getMaxMonthlyPermissions() != null ? request.getMaxMonthlyPermissions() : 4);
+        policy.setMaxDailyPermissionMinutes(request.getMaxDailyPermissionMinutes() != null ? request.getMaxDailyPermissionMinutes() : 120);
+        policy.setMaxMonthlyPermissionMinutes(request.getMaxMonthlyPermissionMinutes() != null ? request.getMaxMonthlyPermissionMinutes() : 480);
+
         policy.setStatus(AttendancePolicyStatus.DRAFT);
 
         policy = attendancePolicyRepository.save(policy);
@@ -156,6 +180,17 @@ public class AttendancePolicyService {
         if (request.getLateThreshold() != null) policy.setLateThreshold(request.getLateThreshold());
         if (request.getEarlyCheckoutThreshold() != null) policy.setEarlyCheckoutThreshold(request.getEarlyCheckoutThreshold());
         if (request.getMaximumBreakMinutes() != null) policy.setMaximumBreakMinutes(request.getMaximumBreakMinutes());
+
+        if (request.getLateGraceMinutes() != null) policy.setLateGraceMinutes(request.getLateGraceMinutes());
+        if (request.getEarlyExitGraceMinutes() != null) policy.setEarlyExitGraceMinutes(request.getEarlyExitGraceMinutes());
+        if (request.getGraceOccurrencesPerPeriod() != null) policy.setGraceOccurrencesPerPeriod(request.getGraceOccurrencesPerPeriod());
+        if (request.getGracePeriodType() != null) policy.setGracePeriodType(request.getGracePeriodType());
+        if (request.getAllowLateGrace() != null) policy.setAllowLateGrace(request.getAllowLateGrace());
+        if (request.getAllowEarlyExitGrace() != null) policy.setAllowEarlyExitGrace(request.getAllowEarlyExitGrace());
+        if (request.getExceedGraceAction() != null) policy.setExceedGraceAction(request.getExceedGraceAction());
+        if (request.getMaxMonthlyPermissions() != null) policy.setMaxMonthlyPermissions(request.getMaxMonthlyPermissions());
+        if (request.getMaxDailyPermissionMinutes() != null) policy.setMaxDailyPermissionMinutes(request.getMaxDailyPermissionMinutes());
+        if (request.getMaxMonthlyPermissionMinutes() != null) policy.setMaxMonthlyPermissionMinutes(request.getMaxMonthlyPermissionMinutes());
 
         policy = attendancePolicyRepository.save(policy);
         return AttendancePolicyDto.fromEntity(policy);

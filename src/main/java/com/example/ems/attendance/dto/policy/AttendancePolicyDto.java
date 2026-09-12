@@ -2,6 +2,8 @@ package com.example.ems.attendance.dto.policy;
 
 import com.example.ems.attendance.entity.AttendancePolicy;
 import com.example.ems.attendance.entity.AttendancePolicyStatus;
+import com.example.ems.attendance.entity.ExceedGraceAction;
+import com.example.ems.attendance.entity.GracePeriodType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.Instant;
@@ -20,6 +22,18 @@ public class AttendancePolicyDto {
     private Integer lateThreshold;
     private Integer earlyCheckoutThreshold;
     private Integer maximumBreakMinutes;
+
+    private Integer lateGraceMinutes;
+    private Integer earlyExitGraceMinutes;
+    private Integer graceOccurrencesPerPeriod;
+    private GracePeriodType gracePeriodType;
+    private Boolean allowLateGrace;
+    private Boolean allowEarlyExitGrace;
+    private ExceedGraceAction exceedGraceAction;
+    private Integer maxMonthlyPermissions;
+    private Integer maxDailyPermissionMinutes;
+    private Integer maxMonthlyPermissionMinutes;
+
     private AttendancePolicyStatus status;
     private Long version;
     private Instant createdAt;
@@ -40,6 +54,18 @@ public class AttendancePolicyDto {
         dto.setLateThreshold(policy.getLateThreshold());
         dto.setEarlyCheckoutThreshold(policy.getEarlyCheckoutThreshold());
         dto.setMaximumBreakMinutes(policy.getMaximumBreakMinutes());
+
+        dto.setLateGraceMinutes(policy.getLateGraceMinutes());
+        dto.setEarlyExitGraceMinutes(policy.getEarlyExitGraceMinutes());
+        dto.setGraceOccurrencesPerPeriod(policy.getGraceOccurrencesPerPeriod());
+        dto.setGracePeriodType(policy.getGracePeriodType());
+        dto.setAllowLateGrace(policy.getAllowLateGrace());
+        dto.setAllowEarlyExitGrace(policy.getAllowEarlyExitGrace());
+        dto.setExceedGraceAction(policy.getExceedGraceAction());
+        dto.setMaxMonthlyPermissions(policy.getMaxMonthlyPermissions());
+        dto.setMaxDailyPermissionMinutes(policy.getMaxDailyPermissionMinutes());
+        dto.setMaxMonthlyPermissionMinutes(policy.getMaxMonthlyPermissionMinutes());
+
         dto.setStatus(policy.getStatus());
         dto.setVersion(policy.getVersion());
         dto.setCreatedAt(policy.getCreatedAt());
@@ -76,6 +102,36 @@ public class AttendancePolicyDto {
 
     public Integer getMaximumBreakMinutes() { return maximumBreakMinutes; }
     public void setMaximumBreakMinutes(Integer maximumBreakMinutes) { this.maximumBreakMinutes = maximumBreakMinutes; }
+
+    public Integer getLateGraceMinutes() { return lateGraceMinutes; }
+    public void setLateGraceMinutes(Integer lateGraceMinutes) { this.lateGraceMinutes = lateGraceMinutes; }
+
+    public Integer getEarlyExitGraceMinutes() { return earlyExitGraceMinutes; }
+    public void setEarlyExitGraceMinutes(Integer earlyExitGraceMinutes) { this.earlyExitGraceMinutes = earlyExitGraceMinutes; }
+
+    public Integer getGraceOccurrencesPerPeriod() { return graceOccurrencesPerPeriod; }
+    public void setGraceOccurrencesPerPeriod(Integer graceOccurrencesPerPeriod) { this.graceOccurrencesPerPeriod = graceOccurrencesPerPeriod; }
+
+    public GracePeriodType getGracePeriodType() { return gracePeriodType; }
+    public void setGracePeriodType(GracePeriodType gracePeriodType) { this.gracePeriodType = gracePeriodType; }
+
+    public Boolean getAllowLateGrace() { return allowLateGrace; }
+    public void setAllowLateGrace(Boolean allowLateGrace) { this.allowLateGrace = allowLateGrace; }
+
+    public Boolean getAllowEarlyExitGrace() { return allowEarlyExitGrace; }
+    public void setAllowEarlyExitGrace(Boolean allowEarlyExitGrace) { this.allowEarlyExitGrace = allowEarlyExitGrace; }
+
+    public ExceedGraceAction getExceedGraceAction() { return exceedGraceAction; }
+    public void setExceedGraceAction(ExceedGraceAction exceedGraceAction) { this.exceedGraceAction = exceedGraceAction; }
+
+    public Integer getMaxMonthlyPermissions() { return maxMonthlyPermissions; }
+    public void setMaxMonthlyPermissions(Integer maxMonthlyPermissions) { this.maxMonthlyPermissions = maxMonthlyPermissions; }
+
+    public Integer getMaxDailyPermissionMinutes() { return maxDailyPermissionMinutes; }
+    public void setMaxDailyPermissionMinutes(Integer maxDailyPermissionMinutes) { this.maxDailyPermissionMinutes = maxDailyPermissionMinutes; }
+
+    public Integer getMaxMonthlyPermissionMinutes() { return maxMonthlyPermissionMinutes; }
+    public void setMaxMonthlyPermissionMinutes(Integer maxMonthlyPermissionMinutes) { this.maxMonthlyPermissionMinutes = maxMonthlyPermissionMinutes; }
 
     public AttendancePolicyStatus getStatus() { return status; }
     public void setStatus(AttendancePolicyStatus status) { this.status = status; }

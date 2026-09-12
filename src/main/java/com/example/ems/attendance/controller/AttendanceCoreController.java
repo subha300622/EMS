@@ -1,19 +1,23 @@
 package com.example.ems.attendance.controller;
 
 import com.example.ems.attendance.dto.AttendanceCoreResponse;
+import com.example.ems.attendance.dto.AttendanceDaySummaryDto;
 import com.example.ems.attendance.service.AttendanceService;
 import com.example.ems.common.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 @RestController
 @RequestMapping("/api/v1/attendance")
 @CrossOrigin("*")
-@Tag(name = "Attendance Management Core", description = "Canonical Employee Attendance Lifecycle APIs: Check-In, Take Break, Resume Break, and Check-Out")
+@Tag(name = "Attendance Management Core", description = "Canonical Employee Attendance Lifecycle APIs: Check-In, Take Break, Resume Break, Check-Out, and Day Summary")
 public class AttendanceCoreController {
 
     @Autowired
@@ -53,6 +57,16 @@ public class AttendanceCoreController {
     public ResponseEntity<ApiResponse<AttendanceCoreResponse>> getTodayAttendance() {
         AttendanceCoreResponse response = attendanceService.getTodayAttendanceCore();
         return ResponseEntity.ok(ApiResponse.success("Today's attendance retrieved successfully", response));
+    }
+
+    @Operation(summary = "Get Attendance Day Summary", description = "Retrieves complete daily attendance calculation breakdown (audit timestamps, grace, permission, payable minutes, and overtime) for an employee on a given date.")
+    @GetMapping("/summary")
+    public ResponseEntity<ApiResponse<AttendanceDaySummaryDto>> getAttendanceDaySummary(
+            @RequestParam(value = "employeeId", required = false) Long employeeId,
+            @RequestParam(value = "date", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        LocalDate effectiveDate = (date != null) ? date : LocalDate.now();
+        AttendanceDaySummaryDto response = attendanceService.getAttendanceDaySummary(employeeId, effectiveDate);
+        return ResponseEntity.ok(ApiResponse.success("Attendance day summary retrieved successfully", response));
     }
 
     @Operation(summary = "Get Attendance By ID", description = "Retrieves an attendance record by ID, scoped to both current organization and authenticated employee.")

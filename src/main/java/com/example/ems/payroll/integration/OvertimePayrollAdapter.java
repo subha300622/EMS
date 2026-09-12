@@ -2,9 +2,14 @@ package com.example.ems.payroll.integration;
 
 import com.example.ems.attendance.entity.Attendance;
 import com.example.ems.attendance.repository.AttendanceRepository;
+import com.example.ems.overtime.entity.OvertimePayrollStatus;
+import com.example.ems.overtime.entity.OvertimeRecord;
+import com.example.ems.overtime.entity.OvertimeStatus;
+import com.example.ems.overtime.repository.OvertimeRecordRepository;
 import com.example.ems.payroll.dto.OvertimePeriodSummaryDto;
 import com.example.ems.payroll.dto.SalaryCalculatedComponentResponse;
 import com.example.ems.payroll.dto.SalaryCalculationResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,6 +22,12 @@ public class OvertimePayrollAdapter {
 
     private final AttendanceRepository attendanceRepository;
 
+    @Autowired(required = false)
+    private OvertimeRecordRepository overtimeRecordRepository;
+
+    @Autowired(required = false)
+    private com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService;
+
     public OvertimePayrollAdapter(AttendanceRepository attendanceRepository) {
         this.attendanceRepository = attendanceRepository;
     }
@@ -24,6 +35,47 @@ public class OvertimePayrollAdapter {
     public OvertimePeriodSummaryDto getOvertimeSummary(Long employeeId, Long organizationId,
                                                         LocalDate periodStart, LocalDate periodEnd,
                                                         int workingDays, SalaryCalculationResponse salaryCalc) {
+
+        // If overtime feature is disabled for the organization, return zero summary
+        if (compensationConfigService != null && !compensationConfigService.isOvertimeEnabled(organizationId)) {
+            return new OvertimePeriodSummaryDto(0.0, BigDecimal.ZERO, 1.5, BigDecimal.ZERO);
+        }
+
+        // 1. Check for modern approved OvertimeRecords first
+        if (overtimeRecordRepository != null) {
+            List<OvertimeRecord> approvedRecords = overtimeRecordRepository.findEligibleForPayroll(
+                    organizationId, employeeId, periodStart, periodEnd
+            );
+            if (!approvedRecords.isEmpty()) {
+                double totalHours = 0.0;
+                BigDecimal totalAmount = BigDecimal.ZERO;
+                BigDecimal weightedHourlyRate = BigDecimal.ZERO;
+                double defaultMultiplier = 1.5;
+
+                for (OvertimeRecord rec : approvedRecords) {
+                    int mins = rec.getApprovedOtMinutes() != null
+                            ? rec.getApprovedOtMinutes()
+                            : (rec.getAdjustedOtMinutes() != null ? rec.getAdjustedOtMinutes() : rec.getCalculatedOtMinutes());
+                    BigDecimal amt = rec.getApprovedAmount() != null
+                            ? rec.getApprovedAmount()
+                            : (rec.getAdjustedAmount() != null ? rec.getAdjustedAmount() : rec.getCalculatedAmount());
+
+                    totalHours += mins / 60.0;
+                    totalAmount = totalAmount.add(amt != null ? amt : BigDecimal.ZERO);
+                    if (rec.getHourlyRate() != null && rec.getHourlyRate().compareTo(BigDecimal.ZERO) > 0) {
+                        weightedHourlyRate = rec.getHourlyRate();
+                    }
+                    if (rec.getOtMultiplier() != null) {
+                        defaultMultiplier = rec.getOtMultiplier().doubleValue();
+                    }
+                }
+
+                totalHours = Math.round(totalHours * 100.0) / 100.0;
+                return new OvertimePeriodSummaryDto(totalHours, weightedHourlyRate, defaultMultiplier, totalAmount);
+            }
+        }
+
+        // 2. Legacy fallback to raw attendance overtime parsing
         List<Attendance> attendances = attendanceRepository.findByEmployeeIdAndDateBetweenAndOrganizationId(
                 employeeId, periodStart, periodEnd, organizationId
         );
@@ -84,5 +136,20 @@ public class OvertimePayrollAdapter {
             }
         }
         return BigDecimal.valueOf(50000); // Default sensible base
+    }
+
+    public void markOvertimeProcessed(Long employeeId, Long organizationId, LocalDate periodStart, Long payrollRunId) {
+        if (overtimeRecordRepository != null) {
+            LocalDate periodEnd = periodStart.plusMonths(1).minusDays(1);
+            List<OvertimeRecord> approvedRecords = overtimeRecordRepository.findEligibleForPayroll(
+                    organizationId, employeeId, periodStart, periodEnd
+            );
+            for (OvertimeRecord rec : approvedRecords) {
+                rec.setPayrollStatus(OvertimePayrollStatus.POSTED);
+                rec.setStatus(OvertimeStatus.POSTED_TO_PAYROLL);
+                rec.setPayrollRunId(payrollRunId);
+                overtimeRecordRepository.save(rec);
+            }
+        }
     }
 }

@@ -1,6 +1,11 @@
 package com.example.ems.payroll.integration;
 
+import com.example.ems.incentive.entity.IncentivePayrollStatus;
+import com.example.ems.incentive.entity.IncentiveRecord;
+import com.example.ems.incentive.entity.IncentiveStatus;
+import com.example.ems.incentive.repository.IncentiveRecordRepository;
 import com.example.ems.payroll.dto.IncentivePeriodSummaryDto;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -12,6 +17,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class IncentivePayrollAdapter {
+
+    @Autowired(required = false)
+    private IncentiveRecordRepository incentiveRecordRepository;
+
+    @Autowired(required = false)
+    private com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService;
 
     // Idempotency consumption registry: tracks consumed incentives per (organizationId:employeeId:periodKey)
     private final Map<String, Boolean> consumedIncentiveRegistry = new ConcurrentHashMap<>();
@@ -28,6 +39,31 @@ public class IncentivePayrollAdapter {
 
     public IncentivePeriodSummaryDto getIncentiveSummary(Long employeeId, Long organizationId,
                                                           LocalDate periodStart, LocalDate periodEnd) {
+        // If incentive feature is disabled for the organization, return zero summary
+        if (compensationConfigService != null && !compensationConfigService.isIncentiveEnabled(organizationId)) {
+            return new IncentivePeriodSummaryDto(BigDecimal.ZERO, new ArrayList<>(), "Incentive module disabled for organization");
+        }
+
+        // 1. Check for modern approved IncentiveRecords first
+        if (incentiveRecordRepository != null) {
+            List<IncentiveRecord> approvedRecords = incentiveRecordRepository.findEligibleForPayroll(
+                    organizationId, employeeId, periodStart, periodEnd
+            );
+            if (!approvedRecords.isEmpty()) {
+                BigDecimal totalAmount = BigDecimal.ZERO;
+                List<Long> recordIds = new ArrayList<>();
+
+                for (IncentiveRecord rec : approvedRecords) {
+                    BigDecimal amt = rec.getEffectiveAmount();
+                    totalAmount = totalAmount.add(amt != null ? amt : BigDecimal.ZERO);
+                    recordIds.add(rec.getId());
+                }
+
+                return new IncentivePeriodSummaryDto(totalAmount, recordIds, "Approved incentive records for period");
+            }
+        }
+
+        // 2. Legacy fallback
         String key = buildPeriodKey(organizationId, employeeId, periodStart);
 
         // Check if already consumed by a prior completed payroll run
@@ -45,6 +81,18 @@ public class IncentivePayrollAdapter {
     }
 
     public void markIncentivesProcessed(Long employeeId, Long organizationId, LocalDate periodStart, Long payrollRunId) {
+        if (incentiveRecordRepository != null) {
+            LocalDate periodEnd = periodStart.plusMonths(1).minusDays(1);
+            List<IncentiveRecord> approvedRecords = incentiveRecordRepository.findEligibleForPayroll(
+                    organizationId, employeeId, periodStart, periodEnd
+            );
+            for (IncentiveRecord rec : approvedRecords) {
+                rec.setPayrollStatus(IncentivePayrollStatus.POSTED);
+                rec.setStatus(IncentiveStatus.POSTED_TO_PAYROLL);
+                rec.setPayrollRunId(payrollRunId);
+                incentiveRecordRepository.save(rec);
+            }
+        }
         String key = buildPeriodKey(organizationId, employeeId, periodStart);
         consumedIncentiveRegistry.put(key, true);
     }

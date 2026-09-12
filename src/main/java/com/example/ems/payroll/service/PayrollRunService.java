@@ -52,7 +52,39 @@ public class PayrollRunService {
     private final StatutoryEngineService statutoryEngineService;
 
     @Autowired(required = false)
+    private PayrollVariableEarningsService variableEarningsService;
+
+    @Autowired(required = false)
     private ApprovalFacade approvalFacade;
+
+    @Autowired
+    public PayrollRunService(PayrollRunRepository payrollRunRepository,
+                             PayrollEmployeeRepository payrollEmployeeRepository,
+                             PayrollItemRepository payrollItemRepository,
+                             EmployeeRepository employeeRepository,
+                             SalaryCalculationService salaryCalculationService,
+                             PayrollService payrollService,
+                             LeaveService leaveService,
+                             OvertimePayrollAdapter overtimePayrollAdapter,
+                             IncentivePayrollAdapter incentivePayrollAdapter,
+                             BonusPayrollAdapter bonusPayrollAdapter,
+                             ReimbursementPayrollAdapter reimbursementPayrollAdapter,
+                             StatutoryEngineService statutoryEngineService,
+                             @Autowired(required = false) PayrollVariableEarningsService variableEarningsService) {
+        this.payrollRunRepository = payrollRunRepository;
+        this.payrollEmployeeRepository = payrollEmployeeRepository;
+        this.payrollItemRepository = payrollItemRepository;
+        this.employeeRepository = employeeRepository;
+        this.salaryCalculationService = salaryCalculationService;
+        this.payrollService = payrollService;
+        this.leaveService = leaveService;
+        this.overtimePayrollAdapter = overtimePayrollAdapter;
+        this.incentivePayrollAdapter = incentivePayrollAdapter;
+        this.bonusPayrollAdapter = bonusPayrollAdapter;
+        this.reimbursementPayrollAdapter = reimbursementPayrollAdapter;
+        this.statutoryEngineService = statutoryEngineService;
+        this.variableEarningsService = variableEarningsService;
+    }
 
     public PayrollRunService(PayrollRunRepository payrollRunRepository,
                              PayrollEmployeeRepository payrollEmployeeRepository,
@@ -66,18 +98,9 @@ public class PayrollRunService {
                              BonusPayrollAdapter bonusPayrollAdapter,
                              ReimbursementPayrollAdapter reimbursementPayrollAdapter,
                              StatutoryEngineService statutoryEngineService) {
-        this.payrollRunRepository = payrollRunRepository;
-        this.payrollEmployeeRepository = payrollEmployeeRepository;
-        this.payrollItemRepository = payrollItemRepository;
-        this.employeeRepository = employeeRepository;
-        this.salaryCalculationService = salaryCalculationService;
-        this.payrollService = payrollService;
-        this.leaveService = leaveService;
-        this.overtimePayrollAdapter = overtimePayrollAdapter;
-        this.incentivePayrollAdapter = incentivePayrollAdapter;
-        this.bonusPayrollAdapter = bonusPayrollAdapter;
-        this.reimbursementPayrollAdapter = reimbursementPayrollAdapter;
-        this.statutoryEngineService = statutoryEngineService;
+        this(payrollRunRepository, payrollEmployeeRepository, payrollItemRepository, employeeRepository,
+                salaryCalculationService, payrollService, leaveService, overtimePayrollAdapter,
+                incentivePayrollAdapter, bonusPayrollAdapter, reimbursementPayrollAdapter, statutoryEngineService, null);
     }
 
     public PayrollRunResponse createPayrollRun(PayrollRunCreateRequest request) {
@@ -159,37 +182,49 @@ public class PayrollRunService {
                 BigDecimal lopDeduction = dailyRate.multiply(BigDecimal.valueOf(lopDays)).setScale(2, RoundingMode.HALF_UP);
                 BigDecimal encashmentAddition = dailyRate.multiply(BigDecimal.valueOf(encashmentDays)).setScale(2, RoundingMode.HALF_UP);
 
-                // 3. Approved Overtime
-                OvertimePeriodSummaryDto otSummary = overtimePayrollAdapter != null ? overtimePayrollAdapter.getOvertimeSummary(
-                        employee.getId(), organizationId, run.getPeriodStart(), run.getPeriodEnd(), workingDays, calcResponse
-                ) : null;
-                BigDecimal otAmount = otSummary != null && otSummary.getAmount() != null ? otSummary.getAmount() : BigDecimal.ZERO;
+                // 3. Variable Earnings (Overtime, Incentive, Bonus) via PayrollVariableEarningsService
+                VariableEarningsSummaryDto varEarnings;
+                if (variableEarningsService != null) {
+                    varEarnings = variableEarningsService.calculateVariableEarnings(
+                            employee.getId(), organizationId, run.getPeriodStart(), run.getPeriodEnd(), workingDays, calcResponse
+                    );
+                } else {
+                    OvertimePeriodSummaryDto fallbackOt = overtimePayrollAdapter != null ? overtimePayrollAdapter.getOvertimeSummary(
+                            employee.getId(), organizationId, run.getPeriodStart(), run.getPeriodEnd(), workingDays, calcResponse
+                    ) : null;
+                    IncentivePeriodSummaryDto fallbackInc = incentivePayrollAdapter != null ? incentivePayrollAdapter.getIncentiveSummary(
+                            employee.getId(), organizationId, run.getPeriodStart(), run.getPeriodEnd()
+                    ) : null;
+                    BonusPeriodSummaryDto fallbackBonus = bonusPayrollAdapter != null ? bonusPayrollAdapter.getBonusSummary(
+                            employee.getId(), organizationId, run.getPeriodStart(), run.getPeriodEnd()
+                    ) : null;
+                    varEarnings = new VariableEarningsSummaryDto(
+                            fallbackOt != null && fallbackOt.getAmount() != null ? fallbackOt.getAmount() : BigDecimal.ZERO,
+                            fallbackInc != null && fallbackInc.getAmount() != null ? fallbackInc.getAmount() : BigDecimal.ZERO,
+                            fallbackBonus != null && fallbackBonus.getAmount() != null ? fallbackBonus.getAmount() : BigDecimal.ZERO,
+                            fallbackOt, fallbackInc, fallbackBonus
+                    );
+                }
 
-                // 4. Approved Incentive & Bonus
-                IncentivePeriodSummaryDto incentiveSummary = incentivePayrollAdapter != null ? incentivePayrollAdapter.getIncentiveSummary(
-                        employee.getId(), organizationId, run.getPeriodStart(), run.getPeriodEnd()
-                ) : null;
-                BigDecimal incentiveAmount = incentiveSummary != null && incentiveSummary.getAmount() != null ? incentiveSummary.getAmount() : BigDecimal.ZERO;
+                BigDecimal otAmount = varEarnings.getOvertimeAmount();
+                BigDecimal incentiveAmount = varEarnings.getIncentiveAmount();
+                BigDecimal bonusAmount = varEarnings.getBonusAmount();
+                OvertimePeriodSummaryDto otSummary = varEarnings.getOvertimeSummary();
 
-                BonusPeriodSummaryDto bonusSummary = bonusPayrollAdapter != null ? bonusPayrollAdapter.getBonusSummary(
-                        employee.getId(), organizationId, run.getPeriodStart(), run.getPeriodEnd()
-                ) : null;
-                BigDecimal bonusAmount = bonusSummary != null && bonusSummary.getAmount() != null ? bonusSummary.getAmount() : BigDecimal.ZERO;
-
-                // 5. Approved Expense Reimbursements (Tracked separately from Salary Gross)
+                // 4. Approved Expense Reimbursements (Tracked separately from Salary Gross)
                 ReimbursementPeriodSummaryDto reimbursementSummary = reimbursementPayrollAdapter != null ? reimbursementPayrollAdapter.getReimbursementSummary(
                         employee.getId(), organizationId, run.getPeriodStart(), run.getPeriodEnd()
                 ) : null;
                 BigDecimal reimbursementAmount = reimbursementSummary != null && reimbursementSummary.getAmount() != null ? reimbursementSummary.getAmount() : BigDecimal.ZERO;
 
-                // 6. Aggregate Adjusted Gross (Payroll Earnings)
+                // 5. Aggregate Adjusted Gross (Payroll Earnings)
                 BigDecimal variableAdditions = otAmount.add(incentiveAmount).add(bonusAmount).add(encashmentAddition);
                 BigDecimal adjustedGross = fixedGross.add(variableAdditions).subtract(lopDeduction);
                 if (adjustedGross.compareTo(BigDecimal.ZERO) < 0) {
                     adjustedGross = BigDecimal.ZERO;
                 }
 
-                // 7. Dynamic Statutory Calculations (PF, ESI, PT, TDS)
+                // 6. Dynamic Statutory Calculations (PF, ESI, PT, TDS)
                 boolean hasPfInDag = false;
                 boolean hasEsiInDag = false;
 
@@ -233,7 +268,7 @@ public class PayrollRunService {
                 );
                 pe = payrollEmployeeRepository.save(pe);
 
-                // 8. Save itemized PayrollItem snapshots
+                // 7. Save itemized PayrollItem snapshots
                 if (calcResponse.getComponents() != null) {
                     for (SalaryCalculatedComponentResponse item : calcResponse.getComponents()) {
                         PayrollItem pi = new PayrollItem(
@@ -270,7 +305,7 @@ public class PayrollRunService {
                 if (otAmount.compareTo(BigDecimal.ZERO) > 0) {
                     PayrollItem pi = new PayrollItem(
                             organizationId, pe.getId(), null, "OT", "Overtime",
-                            "EARNING", "HOURLY_RATE", otAmount, BigDecimal.valueOf(otSummary.getMultiplier()), "BASIC_HOURLY_RATE"
+                            "EARNING", "HOURLY_RATE", otAmount, otSummary != null ? BigDecimal.valueOf(otSummary.getMultiplier()) : null, "BASIC_HOURLY_RATE"
                     );
                     payrollItemRepository.save(pi);
                 }
@@ -322,17 +357,24 @@ public class PayrollRunService {
                     }
                 }
 
-                // 9. Consume upstream records for idempotency
-                if (encashmentDays > 0) {
+                // 8. Consume upstream records for idempotency
+                if (encashmentDays > 0 && leaveService != null) {
                     leaveService.markEncashmentsAsProcessed(employee.getId(), run.getPeriodStart(), run.getPeriodEnd());
                 }
-                if (incentiveAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    incentivePayrollAdapter.markIncentivesProcessed(employee.getId(), organizationId, run.getPeriodStart(), run.getId());
+                if (variableEarningsService != null) {
+                    variableEarningsService.markVariableEarningsPosted(employee.getId(), organizationId, run.getPeriodStart(), run.getId(), varEarnings);
+                } else {
+                    if (otAmount.compareTo(BigDecimal.ZERO) > 0 && overtimePayrollAdapter != null) {
+                        overtimePayrollAdapter.markOvertimeProcessed(employee.getId(), organizationId, run.getPeriodStart(), run.getId());
+                    }
+                    if (incentiveAmount.compareTo(BigDecimal.ZERO) > 0 && incentivePayrollAdapter != null) {
+                        incentivePayrollAdapter.markIncentivesProcessed(employee.getId(), organizationId, run.getPeriodStart(), run.getId());
+                    }
+                    if (bonusAmount.compareTo(BigDecimal.ZERO) > 0 && bonusPayrollAdapter != null) {
+                        bonusPayrollAdapter.markBonusesProcessed(employee.getId(), organizationId, run.getPeriodStart(), run.getId());
+                    }
                 }
-                if (bonusAmount.compareTo(BigDecimal.ZERO) > 0) {
-                    bonusPayrollAdapter.markBonusesProcessed(employee.getId(), organizationId, run.getPeriodStart(), run.getId());
-                }
-                if (reimbursementAmount.compareTo(BigDecimal.ZERO) > 0 && !reimbursementSummary.getExpenseIds().isEmpty()) {
+                if (reimbursementAmount.compareTo(BigDecimal.ZERO) > 0 && reimbursementSummary != null && !reimbursementSummary.getExpenseIds().isEmpty() && reimbursementPayrollAdapter != null) {
                     reimbursementPayrollAdapter.markReimbursementsProcessed(reimbursementSummary.getExpenseIds(), run.getId());
                 }
 

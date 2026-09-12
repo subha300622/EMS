@@ -38,15 +38,15 @@ public class AttendancePolicyEvaluator {
         ZoneId effectiveZone = (zoneId != null) ? zoneId : ZoneId.systemDefault();
         LocalTime localCheckIn = LocalTime.ofInstant(checkInTime, effectiveZone);
         LocalTime officeStartTime = policy.getOfficeStartTime() != null ? policy.getOfficeStartTime() : LocalTime.of(9, 0);
-        int gracePeriodMinutes = policy.getGracePeriodMinutes() != null ? policy.getGracePeriodMinutes() : 15;
+        int gracePeriodMinutes = policy.getGracePeriodMinutes() != null ? policy.getGracePeriodMinutes() : (policy.getLateGraceMinutes() != null ? policy.getLateGraceMinutes() : 15);
 
-        LocalTime allowedCheckInTime = officeStartTime.plusMinutes(gracePeriodMinutes);
-
-        boolean isLate = localCheckIn.isAfter(allowedCheckInTime);
         int lateByMinutes = 0;
         String lateBy = "00:00";
+        boolean isLate = false;
 
-        if (isLate) {
+        LocalTime graceDeadline = officeStartTime.plusMinutes(gracePeriodMinutes);
+        if (localCheckIn.isAfter(graceDeadline)) {
+            isLate = true;
             Duration lateDur = Duration.between(officeStartTime, localCheckIn);
             lateByMinutes = (int) Math.max(0, lateDur.toMinutes());
             lateBy = String.format("%02d:%02d", lateDur.toHours(), lateDur.toMinutesPart());
@@ -63,7 +63,7 @@ public class AttendancePolicyEvaluator {
         ZoneId effectiveZone = (zoneId != null) ? zoneId : ZoneId.systemDefault();
         LocalTime localCheckOut = LocalTime.ofInstant(checkOutTime, effectiveZone);
         LocalTime officeEndTime = policy.getOfficeEndTime() != null ? policy.getOfficeEndTime() : LocalTime.of(18, 0);
-        int earlyCheckoutThreshold = policy.getEarlyCheckoutThreshold() != null ? policy.getEarlyCheckoutThreshold() : 15;
+        int earlyGrace = policy.getEarlyCheckoutThreshold() != null ? policy.getEarlyCheckoutThreshold() : (policy.getEarlyExitGraceMinutes() != null ? policy.getEarlyExitGraceMinutes() : 15);
         int halfDayThreshold = policy.getHalfDayThreshold() != null ? policy.getHalfDayThreshold() : 240;
 
         int totalWorkingMinutes = 0;
@@ -74,12 +74,13 @@ public class AttendancePolicyEvaluator {
 
         boolean isHalfDay = totalWorkingMinutes < halfDayThreshold;
 
-        LocalTime allowedEarlyCheckoutTime = officeEndTime.minusMinutes(earlyCheckoutThreshold);
-        boolean isEarlyCheckout = localCheckOut.isBefore(allowedEarlyCheckoutTime);
         int earlyByMinutes = 0;
         String earlyBy = "00:00";
+        boolean isEarlyCheckout = false;
 
-        if (isEarlyCheckout) {
+        LocalTime earlyThresholdTime = officeEndTime.minusMinutes(earlyGrace);
+        if (localCheckOut.isBefore(earlyThresholdTime)) {
+            isEarlyCheckout = true;
             Duration earlyDur = Duration.between(localCheckOut, officeEndTime);
             earlyByMinutes = (int) Math.max(0, earlyDur.toMinutes());
             earlyBy = String.format("%02d:%02d", earlyDur.toHours(), earlyDur.toMinutesPart());

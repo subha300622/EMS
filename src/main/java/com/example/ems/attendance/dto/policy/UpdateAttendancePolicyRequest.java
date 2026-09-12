@@ -1,5 +1,7 @@
 package com.example.ems.attendance.dto.policy;
 
+import com.example.ems.attendance.entity.ExceedGraceAction;
+import com.example.ems.attendance.entity.GracePeriodType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Size;
 
@@ -36,6 +38,36 @@ public class UpdateAttendancePolicyRequest {
     @Schema(description = "Maximum allowed break minutes", example = "60")
     private Integer maximumBreakMinutes;
 
+    @Schema(description = "Late grace minutes (automatic tolerance)", example = "10")
+    private Integer lateGraceMinutes;
+
+    @Schema(description = "Early exit grace minutes (automatic tolerance)", example = "10")
+    private Integer earlyExitGraceMinutes;
+
+    @Schema(description = "Number of grace occurrences allowed per period", example = "3")
+    private Integer graceOccurrencesPerPeriod;
+
+    @Schema(description = "Grace period type (DAILY, WEEKLY, MONTHLY, YEARLY)", example = "MONTHLY")
+    private GracePeriodType gracePeriodType;
+
+    @Schema(description = "Allow late grace", example = "true")
+    private Boolean allowLateGrace;
+
+    @Schema(description = "Allow early exit grace", example = "true")
+    private Boolean allowEarlyExitGrace;
+
+    @Schema(description = "Action when grace limit is exceeded (MARK_LATE, MARK_HALF_DAY, MARK_ABSENT, DEDUCT_LEAVE)", example = "MARK_LATE")
+    private ExceedGraceAction exceedGraceAction;
+
+    @Schema(description = "Max allowed permissions per month", example = "4")
+    private Integer maxMonthlyPermissions;
+
+    @Schema(description = "Max permission minutes per day", example = "120")
+    private Integer maxDailyPermissionMinutes;
+
+    @Schema(description = "Max permission minutes per month", example = "480")
+    private Integer maxMonthlyPermissionMinutes;
+
     public UpdateAttendancePolicyRequest() {}
 
     public String getName() { return name; }
@@ -64,4 +96,34 @@ public class UpdateAttendancePolicyRequest {
 
     public Integer getMaximumBreakMinutes() { return maximumBreakMinutes; }
     public void setMaximumBreakMinutes(Integer maximumBreakMinutes) { this.maximumBreakMinutes = maximumBreakMinutes; }
+
+    public Integer getLateGraceMinutes() { return lateGraceMinutes; }
+    public void setLateGraceMinutes(Integer lateGraceMinutes) { this.lateGraceMinutes = lateGraceMinutes; }
+
+    public Integer getEarlyExitGraceMinutes() { return earlyExitGraceMinutes; }
+    public void setEarlyExitGraceMinutes(Integer earlyExitGraceMinutes) { this.earlyExitGraceMinutes = earlyExitGraceMinutes; }
+
+    public Integer getGraceOccurrencesPerPeriod() { return graceOccurrencesPerPeriod; }
+    public void setGraceOccurrencesPerPeriod(Integer graceOccurrencesPerPeriod) { this.graceOccurrencesPerPeriod = graceOccurrencesPerPeriod; }
+
+    public GracePeriodType getGracePeriodType() { return gracePeriodType; }
+    public void setGracePeriodType(GracePeriodType gracePeriodType) { this.gracePeriodType = gracePeriodType; }
+
+    public Boolean getAllowLateGrace() { return allowLateGrace; }
+    public void setAllowLateGrace(Boolean allowLateGrace) { this.allowLateGrace = allowLateGrace; }
+
+    public Boolean getAllowEarlyExitGrace() { return allowEarlyExitGrace; }
+    public void setAllowEarlyExitGrace(Boolean allowEarlyExitGrace) { this.allowEarlyExitGrace = allowEarlyExitGrace; }
+
+    public ExceedGraceAction getExceedGraceAction() { return exceedGraceAction; }
+    public void setExceedGraceAction(ExceedGraceAction exceedGraceAction) { this.exceedGraceAction = exceedGraceAction; }
+
+    public Integer getMaxMonthlyPermissions() { return maxMonthlyPermissions; }
+    public void setMaxMonthlyPermissions(Integer maxMonthlyPermissions) { this.maxMonthlyPermissions = maxMonthlyPermissions; }
+
+    public Integer getMaxDailyPermissionMinutes() { return maxDailyPermissionMinutes; }
+    public void setMaxDailyPermissionMinutes(Integer maxDailyPermissionMinutes) { this.maxDailyPermissionMinutes = maxDailyPermissionMinutes; }
+
+    public Integer getMaxMonthlyPermissionMinutes() { return maxMonthlyPermissionMinutes; }
+    public void setMaxMonthlyPermissionMinutes(Integer maxMonthlyPermissionMinutes) { this.maxMonthlyPermissionMinutes = maxMonthlyPermissionMinutes; }
 }
