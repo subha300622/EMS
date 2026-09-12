@@ -1,6 +1,5 @@
 package com.example.ems.employee.controller;
 
-import java.util.List;
 import java.util.Map;
 
 import com.example.ems.auth.entity.User;
@@ -9,7 +8,6 @@ import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.dto.manager.AnnouncementDto;
-import com.example.ems.common.dto.manager.AnnouncementCommentDto;
 import com.example.ems.common.service.ManagerNotificationService;
 import com.example.ems.employee.entity.Announcement;
 import com.example.ems.employee.repository.AnnouncementRepository;
@@ -18,6 +16,7 @@ import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,6 +25,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.ems.employee.dto.AddCommentRequest;
 
 @RestController
 @RequestMapping("/api/v1/announcements")
@@ -80,14 +80,13 @@ public class AnnouncementController {
     // ── 1. GET ALL ANNOUNCEMENTS (PAGINATED) ──────────────────────────────────
     @Operation(summary = "Get All Announcements", description = "Retrieves a paginated list of announcements depending on roles.")
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Page<AnnouncementDto>>> getAnnouncements(
+public ResponseEntity<?> getAnnouncements(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "10") int size){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -95,7 +94,7 @@ public class AnnouncementController {
         boolean hasRead = roleService.hasPermission(currentUser.getWorkEmail(), "employee.announcement.read");
 
         if (!hasManage && !hasRead) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires announcement read permissions.", "AUTH_002"));
         }
 
@@ -114,13 +113,12 @@ public class AnnouncementController {
     // ── 2. GET ANNOUNCEMENT BY ID ─────────────────────────────────────────────
     @Operation(summary = "Get Announcement Details")
     @GetMapping("/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<AnnouncementDto>> getAnnouncementById(
+public ResponseEntity<?> getAnnouncementById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -128,7 +126,7 @@ public class AnnouncementController {
         boolean hasRead = roleService.hasPermission(currentUser.getWorkEmail(), "employee.announcement.read");
 
         if (!hasManage && !hasRead) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires announcement read permissions.", "AUTH_002"));
         }
 
@@ -136,7 +134,7 @@ public class AnnouncementController {
             return ResponseEntity.ok(ApiResponse.success("Announcement details retrieved successfully",
                     managerNotificationService.getAnnouncementDetails(id)));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "ANC_001"));
         }
     }
@@ -144,17 +142,16 @@ public class AnnouncementController {
     // ── 3. CREATE ANNOUNCEMENT ────────────────────────────────────────────────
     @Operation(summary = "Create Company Announcement")
     @PostMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<AnnouncementDto>> createAnnouncement(
+public ResponseEntity<?> createAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody AnnouncementDto requestDto) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "announcement.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'announcement.manage' permission.", "AUTH_002"));
         }
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -165,25 +162,24 @@ public class AnnouncementController {
     // ── 4. UPDATE ANNOUNCEMENT ────────────────────────────────────────────────
     @Operation(summary = "Update Company Announcement")
     @PutMapping("/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<AnnouncementDto>> updateAnnouncement(
+public ResponseEntity<?> updateAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @RequestBody AnnouncementDto requestDto) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "announcement.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'announcement.manage' permission.", "AUTH_002"));
         }
         try {
             return ResponseEntity.ok(ApiResponse.success("Announcement updated successfully",
                     managerNotificationService.updateAnnouncement(id, requestDto)));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "ANC_001"));
         }
     }
@@ -191,17 +187,16 @@ public class AnnouncementController {
     // ── 5. DELETE ANNOUNCEMENT ────────────────────────────────────────────────
     @Operation(summary = "Delete Company Announcement")
     @DeleteMapping("/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Map<String, String>>> deleteAnnouncement(
+public ResponseEntity<?> deleteAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "announcement.manage")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'announcement.manage' permission.", "AUTH_002"));
         }
         try {
@@ -209,7 +204,7 @@ public class AnnouncementController {
             return ResponseEntity.ok(ApiResponse.success("Announcement deleted successfully",
                     Map.of("message", "Announcement deleted successfully")));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "ANC_001"));
         }
     }
@@ -217,26 +212,25 @@ public class AnnouncementController {
     // ── 6. LIKE ANNOUNCEMENT ──────────────────────────────────────────────────
     @Operation(summary = "Like Company Announcement")
     @PostMapping("/{id}/like")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Map<String, Integer>>> likeAnnouncement(
+public ResponseEntity<?> likeAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         boolean hasManage = roleService.hasPermission(currentUser.getWorkEmail(), "announcement.manage");
         boolean hasRead = roleService.hasPermission(currentUser.getWorkEmail(), "employee.announcement.read");
         if (!hasManage && !hasRead) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires announcement read permissions.", "AUTH_002"));
         }
         try {
             return ResponseEntity.ok(ApiResponse.success("Announcement liked successfully",
                     managerNotificationService.likeAnnouncement(id)));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "ANC_001"));
         }
     }
@@ -244,19 +238,18 @@ public class AnnouncementController {
     // ── 7. GET COMMENTS ───────────────────────────────────────────────────────
     @Operation(summary = "Get Announcement Comments")
     @GetMapping("/{id}/comments")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<AnnouncementCommentDto>>> getComments(
+public ResponseEntity<?> getComments(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         boolean hasManage = roleService.hasPermission(currentUser.getWorkEmail(), "announcement.manage");
         boolean hasRead = roleService.hasPermission(currentUser.getWorkEmail(), "employee.announcement.read");
         if (!hasManage && !hasRead) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires announcement read permissions.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Announcement comments retrieved successfully",
@@ -266,25 +259,24 @@ public class AnnouncementController {
     // ── 8. ADD COMMENT ────────────────────────────────────────────────────────
     @Operation(summary = "Add Comment to Announcement")
     @PostMapping("/{id}/comments")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<AnnouncementCommentDto>> addComment(
+public ResponseEntity<?> addComment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
-            @RequestBody Map<String, String> body) {
+            @RequestBody @Valid AddCommentRequest body) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         boolean hasManage = roleService.hasPermission(currentUser.getWorkEmail(), "announcement.manage");
         boolean hasRead = roleService.hasPermission(currentUser.getWorkEmail(), "employee.announcement.read");
         if (!hasManage && !hasRead) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires announcement read permissions.", "AUTH_002"));
         }
-        String content = body != null ? body.get("content") : null;
+        String content = body != null ? body.content() : null;
         if (content == null || content.trim().isEmpty()) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error("Comment content cannot be empty", "ANC_002"));
         }
         try {
@@ -292,7 +284,7 @@ public class AnnouncementController {
                     .body(ApiResponse.success("Comment added successfully",
                             managerNotificationService.addComment(currentUser, id, content)));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "ANC_001"));
         }
     }

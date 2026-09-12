@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "my_goals")
@@ -53,10 +54,10 @@ public class MyGoal {
     private List<MyGoalMilestone> milestones = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false)
-    private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     @Column(name = "updated_at", nullable = false)
-    private java.time.LocalDateTime updatedAt = java.time.LocalDateTime.now();
+    private LocalDateTime updatedAt = LocalDateTime.now();
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -116,9 +117,9 @@ public class MyGoal {
     public List<MyGoalMilestone> getMilestones() { return milestones; }
     public void setMilestones(List<MyGoalMilestone> milestones) { this.milestones = milestones; }
 
-    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public java.time.LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(java.time.LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

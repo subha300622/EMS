@@ -11,6 +11,9 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import java.util.UUID;
 
 public class RequestCorrelationFilterTest {
 
@@ -24,7 +27,7 @@ public class RequestCorrelationFilterTest {
         
         FilterChain filterChain = new FilterChain() {
             @Override
-            public void doFilter(jakarta.servlet.ServletRequest servletRequest, jakarta.servlet.ServletResponse servletResponse) {
+            public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse) {
                 assertEquals("existing-id-123", MDC.get("correlationId"));
             }
         };
@@ -42,11 +45,11 @@ public class RequestCorrelationFilterTest {
         
         FilterChain filterChain = new FilterChain() {
             @Override
-            public void doFilter(jakarta.servlet.ServletRequest servletRequest, jakarta.servlet.ServletResponse servletResponse) {
+            public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse) {
                 String correlationId = MDC.get("correlationId");
                 assertNotNull(correlationId);
                 assertFalse(correlationId.trim().isEmpty());
-                assertDoesNotThrow(() -> java.util.UUID.fromString(correlationId));
+                assertDoesNotThrow(() -> UUID.fromString(correlationId));
             }
         };
 
@@ -55,6 +58,6 @@ public class RequestCorrelationFilterTest {
         assertNull(MDC.get("correlationId"));
         String responseHeader = response.getHeader("X-Request-ID");
         assertNotNull(responseHeader);
-        assertDoesNotThrow(() -> java.util.UUID.fromString(responseHeader));
+        assertDoesNotThrow(() -> UUID.fromString(responseHeader));
     }
 }

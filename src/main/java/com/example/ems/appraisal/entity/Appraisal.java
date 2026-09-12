@@ -1,9 +1,12 @@
 package com.example.ems.appraisal.entity;
 
 import com.example.ems.employee.entity.Employee;
-
+import com.example.ems.organization.entity.Organization;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "appraisals")
@@ -13,13 +16,28 @@ public class Appraisal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
     @ManyToOne(optional = false)
     @JoinColumn(name = "employee_id", nullable = false)
     private Employee employee;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "cycle_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "cycle_id")
     private AppraisalCycle cycle;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "request_id")
+    private AppraisalRequest request;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AppraisalStatus status = AppraisalStatus.CREATED;
+
+    @Column(name = "current_stage_order")
+    private Integer currentStageOrder = 1;
 
     private Double selfRating;
 
@@ -41,9 +59,14 @@ public class Appraisal {
 
     private Double finalRating;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private AppraisalStatus status = AppraisalStatus.ELIGIBLE;
+    @Column(name = "performance_category", length = 100)
+    private String performanceCategory;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
+    @Column(name = "published_at")
+    private LocalDateTime publishedAt;
 
     private boolean attendanceJustified;
 
@@ -56,17 +79,17 @@ public class Appraisal {
     @ElementCollection
     @CollectionTable(name = "appraisal_achievements", joinColumns = @JoinColumn(name = "appraisal_id"))
     @Column(name = "achievement")
-    private java.util.List<String> achievements = new java.util.ArrayList<>();
+    private List<String> achievements = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "appraisal_strengths", joinColumns = @JoinColumn(name = "appraisal_id"))
     @Column(name = "strength")
-    private java.util.List<String> strengths = new java.util.ArrayList<>();
+    private List<String> strengths = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "appraisal_improvement_areas", joinColumns = @JoinColumn(name = "appraisal_id"))
     @Column(name = "improvement_area")
-    private java.util.List<String> improvementAreas = new java.util.ArrayList<>();
+    private List<String> improvementAreas = new ArrayList<>();
 
     private Double leadershipOwnershipRating;
     private Double technicalExcellenceRating;
@@ -77,7 +100,10 @@ public class Appraisal {
 
     private String myBand = "A+";
 
-    private java.time.LocalDate selfReviewDueDate = java.time.LocalDate.of(2026, 4, 25);
+    private LocalDate selfReviewDueDate = LocalDate.of(2026, 4, 25);
+
+    private boolean financeStageStarted = false;
+    private boolean compensationFrozen = false;
 
     @Column(nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -91,6 +117,14 @@ public class Appraisal {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
 
     public Employee getEmployee() {
@@ -107,6 +141,30 @@ public class Appraisal {
 
     public void setCycle(AppraisalCycle cycle) {
         this.cycle = cycle;
+    }
+
+    public AppraisalRequest getRequest() {
+        return request;
+    }
+
+    public void setRequest(AppraisalRequest request) {
+        this.request = request;
+    }
+
+    public AppraisalStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(AppraisalStatus status) {
+        this.status = status;
+    }
+
+    public Integer getCurrentStageOrder() {
+        return currentStageOrder;
+    }
+
+    public void setCurrentStageOrder(Integer currentStageOrder) {
+        this.currentStageOrder = currentStageOrder;
     }
 
     public Double getSelfRating() {
@@ -173,12 +231,28 @@ public class Appraisal {
         this.finalRating = finalRating;
     }
 
-    public AppraisalStatus getStatus() {
-        return status;
+    public String getPerformanceCategory() {
+        return performanceCategory;
     }
 
-    public void setStatus(AppraisalStatus status) {
-        this.status = status;
+    public void setPerformanceCategory(String performanceCategory) {
+        this.performanceCategory = performanceCategory;
+    }
+
+    public LocalDateTime getCompletedAt() {
+        return completedAt;
+    }
+
+    public void setCompletedAt(LocalDateTime completedAt) {
+        this.completedAt = completedAt;
+    }
+
+    public LocalDateTime getPublishedAt() {
+        return publishedAt;
+    }
+
+    public void setPublishedAt(LocalDateTime publishedAt) {
+        this.publishedAt = publishedAt;
     }
 
     public boolean isAttendanceJustified() {
@@ -213,43 +287,27 @@ public class Appraisal {
         this.attendanceJustifiedBy = attendanceJustifiedBy;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public java.util.List<String> getAchievements() {
+    public List<String> getAchievements() {
         return achievements;
     }
 
-    public void setAchievements(java.util.List<String> achievements) {
+    public void setAchievements(List<String> achievements) {
         this.achievements = achievements;
     }
 
-    public java.util.List<String> getStrengths() {
+    public List<String> getStrengths() {
         return strengths;
     }
 
-    public void setStrengths(java.util.List<String> strengths) {
+    public void setStrengths(List<String> strengths) {
         this.strengths = strengths;
     }
 
-    public java.util.List<String> getImprovementAreas() {
+    public List<String> getImprovementAreas() {
         return improvementAreas;
     }
 
-    public void setImprovementAreas(java.util.List<String> improvementAreas) {
+    public void setImprovementAreas(List<String> improvementAreas) {
         this.improvementAreas = improvementAreas;
     }
 
@@ -274,15 +332,28 @@ public class Appraisal {
     public String getMyBand() { return myBand; }
     public void setMyBand(String myBand) { this.myBand = myBand; }
 
-    public java.time.LocalDate getSelfReviewDueDate() { return selfReviewDueDate; }
-    public void setSelfReviewDueDate(java.time.LocalDate selfReviewDueDate) { this.selfReviewDueDate = selfReviewDueDate; }
-
-    private boolean financeStageStarted = false;
-    private boolean compensationFrozen = false;
+    public LocalDate getSelfReviewDueDate() { return selfReviewDueDate; }
+    public void setSelfReviewDueDate(LocalDate selfReviewDueDate) { this.selfReviewDueDate = selfReviewDueDate; }
 
     public boolean isFinanceStageStarted() { return financeStageStarted; }
     public void setFinanceStageStarted(boolean financeStageStarted) { this.financeStageStarted = financeStageStarted; }
 
     public boolean isCompensationFrozen() { return compensationFrozen; }
     public void setCompensationFrozen(boolean compensationFrozen) { this.compensationFrozen = compensationFrozen; }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

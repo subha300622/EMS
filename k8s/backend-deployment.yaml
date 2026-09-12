@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ems-backend
+  namespace: ems
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ems-backend
+  template:
+    metadata:
+      labels:
+        app: ems-backend
+    spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z ems-postgres 5432; do echo waiting for postgres; sleep 2; done;']
+      containers:
+        - name: ems-backend
+          image: ems-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ems-config
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: ems-config
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ems-config
+                  key: REDIS_URL
+            - name: APP_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: ems-config
+                  key: APP_BASE_URL
+            - name: POST_API_LOG_FILE
+              valueFrom:
+                configMapKeyRef:
+                  name: ems-config
+                  key: POST_API_LOG_FILE
+            - name: RAZORPAY_KEY_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: ems-config
+                  key: RAZORPAY_KEY_ID
+            - name: RAZORPAY_WEBHOOK_SECRET
+              valueFrom:
+                configMapKeyRef:
+                  name: ems-config
+                  key: RAZORPAY_WEBHOOK_SECRET
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: ems-secret
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: RAZORPAY_KEY_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ems-secret
+                  key: RAZORPAY_KEY_SECRET

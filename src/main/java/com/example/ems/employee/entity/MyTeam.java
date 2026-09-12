@@ -2,6 +2,8 @@ package com.example.ems.employee.entity;
 
 import jakarta.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 @Entity
 @Table(name = "my_teams")
 public class MyTeam {
@@ -17,6 +19,7 @@ public class MyTeam {
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "manager_id")
+    @JsonIgnoreProperties({"manager", "team", "hibernateLazyInitializer", "handler"})
     private Employee manager;
 
     public MyTeam() {}

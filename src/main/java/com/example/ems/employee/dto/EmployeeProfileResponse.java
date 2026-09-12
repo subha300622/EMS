@@ -1,4 +1,5 @@
 package com.example.ems.employee.dto;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -18,23 +19,13 @@ public class EmployeeProfileResponse {
     private String department;
     private ManagerProfileDto manager;
     private ContactProfileDto contact;
+    private PersonalInfoDto personalInfo;
     private WorkInformationDto workInformation;
     private List<String> skills;
 
     public EmployeeProfileResponse() {}
 
-    public EmployeeProfileResponse(Long employeeId, String employeeCode, String fullName, String profileImage, String designation, String department, ManagerProfileDto manager, ContactProfileDto contact, WorkInformationDto workInformation, List<String> skills) {
-        this.employeeId = employeeId;
-        this.employeeCode = employeeCode;
-        this.fullName = fullName;
-        this.profileImage = profileImage;
-        this.designation = designation;
-        this.department = department;
-        this.manager = manager;
-        this.contact = contact;
-        this.workInformation = workInformation;
-        this.skills = skills;
-    }
+    // --- Getters and Setters ---
 
     public Long getEmployeeId() { return employeeId; }
     public void setEmployeeId(Long employeeId) { this.employeeId = employeeId; }
@@ -60,16 +51,21 @@ public class EmployeeProfileResponse {
     public ContactProfileDto getContact() { return contact; }
     public void setContact(ContactProfileDto contact) { this.contact = contact; }
 
+    public PersonalInfoDto getPersonalInfo() { return personalInfo; }
+    public void setPersonalInfo(PersonalInfoDto personalInfo) { this.personalInfo = personalInfo; }
+
     public WorkInformationDto getWorkInformation() { return workInformation; }
     public void setWorkInformation(WorkInformationDto workInformation) { this.workInformation = workInformation; }
 
     public List<String> getSkills() { return skills; }
     public void setSkills(List<String> skills) { this.skills = skills; }
 
+    // --- Nested DTOs ---
+
     public static class ManagerProfileDto {
         @Schema(example = "1")
         private Long employeeId;
-        @Schema(example = "string")
+        @Schema(example = "Jane Smith")
         private String name;
 
         public ManagerProfileDto() {}
@@ -87,16 +83,19 @@ public class EmployeeProfileResponse {
     }
 
     public static class ContactProfileDto {
-        @Schema(example = "john.doe@example.com")
+        @Schema(example = "john.doe@company.com")
         private String email;
-        @Schema(example = "+1-555-0199")
+        @Schema(example = "+919876543210")
         private String phone;
+        @Schema(example = "Jane Doe - +919876543211")
+        private String emergencyContact;
 
         public ContactProfileDto() {}
 
-        public ContactProfileDto(String email, String phone) {
+        public ContactProfileDto(String email, String phone, String emergencyContact) {
             this.email = email;
             this.phone = phone;
+            this.emergencyContact = emergencyContact;
         }
 
         public String getEmail() { return email; }
@@ -104,24 +103,56 @@ public class EmployeeProfileResponse {
 
         public String getPhone() { return phone; }
         public void setPhone(String phone) { this.phone = phone; }
+
+        public String getEmergencyContact() { return emergencyContact; }
+        public void setEmergencyContact(String emergencyContact) { this.emergencyContact = emergencyContact; }
+    }
+
+    public static class PersonalInfoDto {
+        @Schema(example = "Male")
+        private String gender;
+        @Schema(example = "1990-05-15")
+        private String dateOfBirth;
+        @Schema(example = "42, MG Road, Bangalore 560001")
+        private String address;
+
+        public PersonalInfoDto() {}
+
+        public PersonalInfoDto(String gender, String dateOfBirth, String address) {
+            this.gender = gender;
+            this.dateOfBirth = dateOfBirth;
+            this.address = address;
+        }
+
+        public String getGender() { return gender; }
+        public void setGender(String gender) { this.gender = gender; }
+
+        public String getDateOfBirth() { return dateOfBirth; }
+        public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+
+        public String getAddress() { return address; }
+        public void setAddress(String address) { this.address = address; }
     }
 
     public static class WorkInformationDto {
         @Schema(example = "Bangalore")
         private String location;
-        @Schema(example = "string")
+        @Schema(example = "HYBRID")
         private String workMode;
-        @Schema(example = "string")
+        @Schema(example = "2023-01-15")
         private String joiningDate;
+        @Schema(example = "FULL_TIME")
+        private String employmentType;
         @Schema(example = "ACTIVE")
         private String status;
 
         public WorkInformationDto() {}
 
-        public WorkInformationDto(String location, String workMode, String joiningDate, String status) {
+        public WorkInformationDto(String location, String workMode, String joiningDate, String employmentType, String status) {
             this.location = location;
             this.workMode = workMode;
             this.joiningDate = joiningDate;
+            this.employmentType = employmentType;
             this.status = status;
         }
 
@@ -133,6 +164,9 @@ public class EmployeeProfileResponse {
 
         public String getJoiningDate() { return joiningDate; }
         public void setJoiningDate(String joiningDate) { this.joiningDate = joiningDate; }
+
+        public String getEmploymentType() { return employmentType; }
+        public void setEmploymentType(String employmentType) { this.employmentType = employmentType; }
 
         public String getStatus() { return status; }
         public void setStatus(String status) { this.status = status; }

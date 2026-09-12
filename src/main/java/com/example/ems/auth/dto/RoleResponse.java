@@ -17,6 +17,8 @@ public class RoleResponse {
     private Integer permissionsCount;
     @Schema(example = "string")
     private String createdAt;
+    private List<PermissionGroupDto> permissionGroups;
+    private List<PermissionResponse> directPermissions;
     private List<PermissionResponse> permissions;
 
     public RoleResponse() {}
@@ -27,6 +29,17 @@ public class RoleResponse {
         this.description = description;
         this.permissionsCount = permissionsCount;
         this.createdAt = createdAt;
+        this.permissions = permissions;
+    }
+
+    public RoleResponse(Long roleId, String name, String description, Integer permissionsCount, String createdAt, List<PermissionGroupDto> permissionGroups, List<PermissionResponse> directPermissions, List<PermissionResponse> permissions) {
+        this.roleId = roleId;
+        this.name = name;
+        this.description = description;
+        this.permissionsCount = permissionsCount;
+        this.createdAt = createdAt;
+        this.permissionGroups = permissionGroups;
+        this.directPermissions = directPermissions;
         this.permissions = permissions;
     }
 
@@ -68,6 +81,22 @@ public class RoleResponse {
 
     public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public List<PermissionGroupDto> getPermissionGroups() {
+        return permissionGroups;
+    }
+
+    public void setPermissionGroups(List<PermissionGroupDto> permissionGroups) {
+        this.permissionGroups = permissionGroups;
+    }
+
+    public List<PermissionResponse> getDirectPermissions() {
+        return directPermissions;
+    }
+
+    public void setDirectPermissions(List<PermissionResponse> directPermissions) {
+        this.directPermissions = directPermissions;
     }
 
     public List<PermissionResponse> getPermissions() {

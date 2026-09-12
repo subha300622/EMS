@@ -1,6 +1,8 @@
 package com.example.ems.employee.entity;
 
 import jakarta.persistence.*;
+import com.example.ems.organization.entity.Organization;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name = "departments")
@@ -10,20 +12,25 @@ public class Department {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String code;
 
     private String description;
 
     private Long parentDepartmentId;
     private Long managerId;
-    private java.math.BigDecimal budget = java.math.BigDecimal.ZERO;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Organization organization;
+
+    private BigDecimal budget = BigDecimal.ZERO;
     private String status = "ACTIVE";
     private String costCenter;
-    private java.math.BigDecimal utilizedBudget = java.math.BigDecimal.ZERO;
+    private BigDecimal utilizedBudget = BigDecimal.ZERO;
 
     public Department() {}
 
@@ -34,14 +41,14 @@ public class Department {
         this.description = description;
     }
 
-    public Department(Long id, String name, String code, String description, Long parentDepartmentId, Long managerId, java.math.BigDecimal budget, String status) {
+    public Department(Long id, String name, String code, String description, Long parentDepartmentId, Long managerId, BigDecimal budget, String status) {
         this.id = id;
         this.name = name;
         this.code = code;
         this.description = description;
         this.parentDepartmentId = parentDepartmentId;
         this.managerId = managerId;
-        this.budget = budget != null ? budget : java.math.BigDecimal.ZERO;
+        this.budget = budget != null ? budget : BigDecimal.ZERO;
         this.status = status != null ? status : "ACTIVE";
     }
 
@@ -93,11 +100,11 @@ public class Department {
         this.managerId = managerId;
     }
 
-    public java.math.BigDecimal getBudget() {
+    public BigDecimal getBudget() {
         return budget;
     }
 
-    public void setBudget(java.math.BigDecimal budget) {
+    public void setBudget(BigDecimal budget) {
         this.budget = budget;
     }
 
@@ -117,11 +124,19 @@ public class Department {
         this.costCenter = costCenter;
     }
 
-    public java.math.BigDecimal getUtilizedBudget() {
+    public BigDecimal getUtilizedBudget() {
         return utilizedBudget;
     }
 
-    public void setUtilizedBudget(java.math.BigDecimal utilizedBudget) {
+    public void setUtilizedBudget(BigDecimal utilizedBudget) {
         this.utilizedBudget = utilizedBudget;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
 }

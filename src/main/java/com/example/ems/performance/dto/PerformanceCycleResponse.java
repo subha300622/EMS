@@ -5,6 +5,7 @@ import com.example.ems.performance.entity.PerformanceCycle;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 public class PerformanceCycleResponse {
     @Schema(example = "1")
@@ -49,7 +50,7 @@ public class PerformanceCycleResponse {
         this.createdAt = cycle.getCreatedAt();
         this.updatedAt = cycle.getUpdatedAt();
         if (cycle.getStartDate() != null && cycle.getEndDate() != null) {
-            this.durationDays = java.time.temporal.ChronoUnit.DAYS.between(cycle.getStartDate(), cycle.getEndDate());
+            this.durationDays = ChronoUnit.DAYS.between(cycle.getStartDate(), cycle.getEndDate());
         }
     }
 

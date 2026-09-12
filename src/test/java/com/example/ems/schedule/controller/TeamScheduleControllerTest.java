@@ -31,6 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.example.ems.schedule.dto.OvertimeSummaryDto;
 
 public class TeamScheduleControllerTest {
 
@@ -81,7 +82,7 @@ public class TeamScheduleControllerTest {
                                 new TeamScheduleOverviewDto(95.0, 1, 0, 10, 90.0, 5.0, 2),
                                 Collections.emptyList(),
                                 Collections.emptyList(),
-                                new com.example.ems.schedule.dto.OvertimeSummaryDto(0.0, Collections.emptyList()));
+                                new OvertimeSummaryDto(0.0, Collections.emptyList()));
 
                 when(teamScheduleService.getTeamSchedule(any(), any(), any(), any(), any(), any(), any()))
                                 .thenReturn(mockResponse);

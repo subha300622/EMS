@@ -1,10 +1,8 @@
 package com.example.ems.common.controller;
-import java.util.List;
-import com.example.ems.common.dto.ApprovalItemDto;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
+
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.service.ApprovalCenterService;
@@ -28,128 +26,109 @@ public class ApprovalCenterController {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private RoleService roleService;
+
 
     @Autowired
     private JwtService jwtService;
 
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<ApprovalItemDto>>> getPendingApprovals(
+public ResponseEntity<?> getPendingApprovals(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         return ResponseEntity.ok(ApiResponse.success("Pending approvals retrieved successfully",
                 approvalCenterService.getPendingApprovals()));
     }
 
     @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<List<ApprovalItemDto>>> getPendingApprovalsAlias(
+    public ResponseEntity<?> getPendingApprovalsAlias(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
         return getPendingApprovals(authHeader);
     }
 
     @GetMapping("/history")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<ApprovalItemDto>>> getApprovalHistory(
+public ResponseEntity<?> getApprovalHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         return ResponseEntity.ok(ApiResponse.success("Approval history retrieved successfully",
                 approvalCenterService.getApprovalHistory()));
     }
 
     @GetMapping("/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<ApprovalItemDto>> getApprovalById(
+public ResponseEntity<?> getApprovalById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
 
-        return approvalCenterService.getApprovalById(id)
-                .map(item -> ResponseEntity.ok(ApiResponse.success("Approval retrieved successfully", item)))
-                .orElseGet(() -> (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ErrorResponse.error("Approval not found with ID: " + id, "APP_003")));
+
+        var approvalOpt = approvalCenterService.getApprovalById(id);
+        if (approvalOpt.isPresent()) {
+            return ResponseEntity.ok(ApiResponse.success("Approval retrieved successfully", approvalOpt.get()));
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.error("Approval not found with ID: " + id, "APP_003"));
     }
 
     @PatchMapping("/{id}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveItem(
+public ResponseEntity<?> approveItem(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         try {
             approvalCenterService.approveItem(id, currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Item approved successfully", null));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to approve item: " + e.getMessage(), "APP_002"));
         }
     }
 
     @PatchMapping("/{id}/reject")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectItem(
+public ResponseEntity<?> rejectItem(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String id){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
-        }
+
 
         try {
             approvalCenterService.rejectItem(id, currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Item rejected successfully", null));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to reject item: " + e.getMessage(), "APP_002"));
         }
     }

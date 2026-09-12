@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ems-config
+  namespace: ems
+data:
+  SPRING_DATASOURCE_URL: "jdbc:postgresql://ems-postgres:5432/employee_db"
+  SPRING_DATASOURCE_USERNAME: "ems_user"
+  REDIS_URL: "redis://ems-redis:6379"
+  APP_BASE_URL: "http://localhost:3000"
+  POST_API_LOG_FILE: "post_api_payloads.log"
+  RAZORPAY_KEY_ID: "rzp_live_StUZupmMw4H4yc"
+  RAZORPAY_WEBHOOK_SECRET: "webhook_secret"

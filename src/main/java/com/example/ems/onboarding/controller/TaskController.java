@@ -1,95 +1,68 @@
 package com.example.ems.onboarding.controller;
 
-import com.example.ems.auth.entity.User;
-import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.onboarding.dto.OnboardingTaskResponse;
-import com.example.ems.onboarding.entity.OnboardingTask;
-import com.example.ems.onboarding.repository.OnboardingTaskRepository;
-import com.example.ems.onboarding.service.OnboardingService;
-import com.example.ems.onboarding.service.TeamOnboardingService;
-import com.example.ems.security.service.JwtService;
+import com.example.ems.onboarding.dto.task.*;
+import com.example.ems.onboarding.service.OnboardingTaskService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-
 @RestController
-@RequestMapping("/api/v1/tasks")
+@RequestMapping("/api/v1/onboarding/{onboardingId}/tasks")
 @CrossOrigin("*")
 @Tag(name = "Canonical Tasks Service")
 public class TaskController {
 
     @Autowired
-    private TeamOnboardingService teamOnboardingService;
+    private OnboardingTaskService taskService;
 
-    @Autowired
-    private OnboardingService onboardingService;
-
-    @Autowired
-    private OnboardingTaskRepository onboardingTaskRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private JwtService jwtService;
-
-    private User resolveUser(String authHeader) {
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            if (jwtService.validateAccessToken(token)) {
-                String email = jwtService.getEmailFromToken(token);
-                return userRepository.findByWorkEmail(email).orElse(null);
-            }
-        }
-        return null;
+    @GetMapping
+    @Operation(summary = "Get Onboarding Tasks List")
+    public ResponseEntity<ApiResponse<OnboardingTaskListResponse>> getTasks(
+            @PathVariable Long onboardingId) {
+        OnboardingTaskListResponse response = taskService.getTasks(onboardingId);
+        return ResponseEntity.ok(ApiResponse.success("Tasks retrieved successfully", response));
     }
 
-    @PutMapping("/{taskId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> updateTask(
-            @RequestHeader(value = "Authorization", required = false) String authHeader,
+    @GetMapping("/{taskId}")
+    @Operation(summary = "Get Onboarding Task Details")
+    public ResponseEntity<ApiResponse<OnboardingTaskListResponse.TaskItem>> getTaskDetails(
+            @PathVariable Long onboardingId,
+            @PathVariable Long taskId) {
+        OnboardingTaskListResponse.TaskItem response = taskService.getTaskDetails(onboardingId, taskId);
+        return ResponseEntity.ok(ApiResponse.success("Task details retrieved successfully", response));
+    }
+
+    @PatchMapping("/{taskId}")
+    @Operation(summary = "Update Onboarding Task")
+    public ResponseEntity<ApiResponse<OnboardingTaskListResponse.TaskItem>> updateTask(
+            @PathVariable Long onboardingId,
             @PathVariable Long taskId,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody TaskUpdateRequest request) {
+        OnboardingTaskListResponse.TaskItem response = taskService.updateTask(onboardingId, taskId, request);
+        return ResponseEntity.ok(ApiResponse.success("Task updated successfully", response));
+    }
 
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
+    @PostMapping("/{taskId}/complete")
+    @Operation(summary = "Complete Onboarding Task")
+    public ResponseEntity<ApiResponse<OnboardingTaskListResponse.TaskItem>> completeTask(
+            @PathVariable Long onboardingId,
+            @PathVariable Long taskId,
+            @RequestBody(required = false) TaskCompleteRequest request) {
+        OnboardingTaskListResponse.TaskItem response = taskService.completeTask(onboardingId, taskId, request);
+        return ResponseEntity.ok(ApiResponse.success("Task completed successfully", response));
+    }
 
-        String status = (String) body.get("status");
-        if (status == null || status.isBlank()) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("status field is required", "VAL_001"));
-        }
-
-        try {
-            if ("COMPLETED".equalsIgnoreCase(status)) {
-                // If completedBy is not provided in body, default to 1L or resolved user's ID
-                Long completedBy = 1L;
-                if (body.containsKey("completedBy")) {
-                    completedBy = ((Number) body.get("completedBy")).longValue();
-                }
-                teamOnboardingService.completeTask(taskId, completedBy);
-            } else {
-                onboardingService.updateTaskStatus(taskId, status);
-            }
-
-            OnboardingTask task = onboardingTaskRepository.findById(taskId).orElse(null);
-            if (task == null) {
-                return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ErrorResponse.error("Task not found with ID: " + taskId, "ONB_004"));
-            }
-            return ResponseEntity.ok(ApiResponse.success("Task status updated successfully", new OnboardingTaskResponse(task)));
-        } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error(e.getMessage(), "ONB_004"));
-        }
+    @PatchMapping("/{taskId}/assign")
+    @Operation(summary = "Assign Onboarding Task")
+    public ResponseEntity<ApiResponse<OnboardingTaskListResponse.TaskItem>> assignTask(
+            @PathVariable Long onboardingId,
+            @PathVariable Long taskId,
+            @Valid @RequestBody TaskAssignRequest request) {
+        OnboardingTaskListResponse.TaskItem response = taskService.assignTask(onboardingId, taskId, request);
+        return ResponseEntity.ok(ApiResponse.success("Task assigned successfully", response));
     }
 }

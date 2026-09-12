@@ -13,4 +13,14 @@
     <Match>
         <Bug pattern="VA_FORMAT_STRING_USES_NEWLINE,DM_DEFAULT_ENCODING,DMI_RANDOM_USED_ONLY_ONCE,BX_UNBOXED_AND_COERCED_FOR_TERNARY_OPERATOR,HRS_REQUEST_PARAMETER_TO_HTTP_HEADER,DMI_HARDCODED_ABSOLUTE_FILENAME,CT_CONSTRUCTOR_THROW" />
     </Match>
+    <!-- Exclude NM_CLASS_NOT_EXCEPTION for domain entity ScheduleException -->
+    <Match>
+        <Class name="com.example.ems.schedule.entity.ScheduleException" />
+        <Bug pattern="NM_CLASS_NOT_EXCEPTION" />
+    </Match>
+    <!-- Exclude UL_UNRELEASED_LOCK for BaseCacheService custom RefCountedLock -->
+    <Match>
+        <Class name="com.example.ems.config.BaseCacheService" />
+        <Bug pattern="UL_UNRELEASED_LOCK" />
+    </Match>
 </FindBugsFilter>

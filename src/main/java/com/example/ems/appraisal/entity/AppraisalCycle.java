@@ -1,5 +1,7 @@
 package com.example.ems.appraisal.entity;
 
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.organization.entity.Organization;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -12,29 +14,53 @@ public class AppraisalCycle {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(length = 50)
+    private String type = "ANNUAL"; // ANNUAL, QUARTERLY, PROBATION, OFF_CYCLE
+
+    @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
-    @Column(nullable = false)
+    @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
     @Column(nullable = false)
-    private String status = "ACTIVE"; // ACTIVE, COMPLETED, CLOSED
+    private String status = "DRAFT"; // DRAFT, OPEN, IN_PROGRESS, REVIEW, COMPLETED, CLOSED, CANCELLED
 
-    @Column(nullable = false)
+    @Column(name = "eligible_criteria_json", columnDefinition = "TEXT")
+    private String eligibleCriteriaJson;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_by")
+    private Employee createdBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "configuration_version_id")
+    private AppraisalConfigurationVersion configurationVersion;
+
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    @Column(nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
+
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
 
     public LocalDate getStartDate() { return startDate; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
@@ -44,6 +70,15 @@ public class AppraisalCycle {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getEligibleCriteriaJson() { return eligibleCriteriaJson; }
+    public void setEligibleCriteriaJson(String eligibleCriteriaJson) { this.eligibleCriteriaJson = eligibleCriteriaJson; }
+
+    public Employee getCreatedBy() { return createdBy; }
+    public void setCreatedBy(Employee createdBy) { this.createdBy = createdBy; }
+
+    public AppraisalConfigurationVersion getConfigurationVersion() { return configurationVersion; }
+    public void setConfigurationVersion(AppraisalConfigurationVersion configurationVersion) { this.configurationVersion = configurationVersion; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

@@ -7,7 +7,6 @@ import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.auth.service.RoleService;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +23,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Propagation;
 
 @Service
 public class MyDocumentService {
@@ -55,16 +55,11 @@ public class MyDocumentService {
                 || roleService.isSuperAdmin(authEmail);
     }
 
-    @PostConstruct
     @Transactional
-    public void init() {
-        if (categoryRepository.count() == 0) {
-            seedData();
+    public void seedCoreCategoriesAndTypes() {
+        if (categoryRepository.count() > 0) {
+            return;
         }
-    }
-
-    @Transactional
-    public void seedData() {
         // Categories
         MyDocumentCategory identity = categoryRepository.save(new MyDocumentCategory("Identity Documents", "IDENTITY"));
         MyDocumentCategory employment = categoryRepository.save(new MyDocumentCategory("Employment Documents", "EMPLOYMENT"));
@@ -105,15 +100,17 @@ public class MyDocumentService {
         typeRepository.save(new MyDocumentType("COMPANY_ID", "ID Card (Digital)", company, true, false, List.of("PDF", "JPG", "PNG"), 10));
         typeRepository.save(new MyDocumentType("ACCESS_BADGE", "Access Badge", company, true, false, List.of("PDF", "JPG", "PNG"), 10));
         typeRepository.save(new MyDocumentType("COMPANY_NDA", "NDA", company, true, false, List.of("PDF"), 15));
+    }
 
-        // Seed mock documents for existing employees
+    @Transactional
+    public void seedMockEmployeeDocuments() {
         List<Employee> employees = employeeRepository.findAll();
         for (Employee emp : employees) {
             seedMockDocumentsForEmployee(emp);
         }
     }
 
-    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void seedMockDocumentsForEmployee(Employee emp) {
         if (employeeDocumentRepository.findByEmployeeId(emp.getId()).size() > 0) {
             return;

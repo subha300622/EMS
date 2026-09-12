@@ -34,10 +34,30 @@ public class OnboardingTask {
     private LocalDate dueDate;
 
     @ManyToOne
+    @JoinColumn(name = "assigned_to_id")
+    private Employee assignedTo;
+
+    private String remarks;
+    private Long phaseId;
+    private Long documentId;
+
+    @ManyToOne
     @JoinColumn(name = "completed_by_id")
     private Employee completedBy;
 
     private LocalDateTime completedAt;
+
+    public Employee getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(Employee assignedTo) { this.assignedTo = assignedTo; }
+
+    public String getRemarks() { return remarks; }
+    public void setRemarks(String remarks) { this.remarks = remarks; }
+
+    public Long getPhaseId() { return phaseId; }
+    public void setPhaseId(Long phaseId) { this.phaseId = phaseId; }
+
+    public Long getDocumentId() { return documentId; }
+    public void setDocumentId(Long documentId) { this.documentId = documentId; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

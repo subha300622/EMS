@@ -3,30 +3,46 @@ package com.example.ems.auth.repository;
 import com.example.ems.auth.entity.User;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.Optional;
+import java.util.List;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     User findByWorkEmailAndPassword(String workEmail, String password);
 
-    java.util.Optional<User> findByUserId(String userId);
+    Optional<User> findByUserId(String userId);
 
     boolean existsByUserId(String userId);
 
     boolean existsByWorkEmail(String workEmail);
 
+    boolean existsByMobileNumber(String mobileNumber);
+
     boolean existsByEmployeeId(String employeeId);
 
     Optional<User> findByWorkEmail(String workEmail);
 
-    @org.springframework.data.jpa.repository.Query("SELECT u FROM User u WHERE " +
+    @Query("SELECT u FROM User u WHERE " +
             "LOWER(u.fullName) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.workEmail) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.department) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.employeeId) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
             "LOWER(u.userId) LIKE LOWER(CONCAT('%', :query, '%'))")
-    java.util.List<User> searchUsers(@org.springframework.data.repository.query.Param("query") String query);
+    List<User> searchUsers(@Param("query") String query);
 
-    java.util.List<User> findByRoleId(Long roleId);
+    List<User> findByRoleId(Long roleId);
+
+    List<User> findByOrganizationId(Long organizationId);
+
+    long countByOrganizationId(Long organizationId);
+
+    Optional<User> findByIdAndOrganizationId(Long id, Long organizationId);
+    Optional<User> findByUserIdAndOrganizationId(String userId, Long organizationId);
+    Optional<User> findByWorkEmailAndOrganizationId(String workEmail, Long organizationId);
+    boolean existsByEmployeeIdAndOrganizationId(String employeeId, Long organizationId);
+    boolean existsByWorkEmailAndOrganizationId(String workEmail, Long organizationId);
 }

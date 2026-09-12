@@ -1,67 +1,107 @@
 package com.example.ems.payroll.service;
 
-import com.example.ems.payroll.entity.Payroll;
-import com.example.ems.payroll.entity.Payslip;
-import com.example.ems.payroll.repository.PayrollRepository;
-import com.example.ems.payroll.repository.PayslipRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.ems.common.exception.ResourceNotFoundException;
+import com.example.ems.payroll.dto.PayrollItemResponse;
+import com.example.ems.payroll.dto.PayslipDetailResponse;
+import com.example.ems.payroll.entity.PayrollEmployee;
+import com.example.ems.payroll.entity.PayrollRun;
+import com.example.ems.payroll.repository.PayrollEmployeeRepository;
+import com.example.ems.payroll.repository.PayrollItemRepository;
+import com.example.ems.payroll.repository.PayrollRunRepository;
+import com.example.ems.security.context.TenantContext;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.List;
 
 @Service
+@Transactional(readOnly = true)
 public class PayslipService {
 
-    @Autowired
-    private PayslipRepository payslipRepository;
+    private final PayrollRunRepository payrollRunRepository;
+    private final PayrollEmployeeRepository payrollEmployeeRepository;
+    private final PayrollItemRepository payrollItemRepository;
 
-    @Autowired
-    private PayrollRepository payrollRepository;
+    public PayslipService(PayrollRunRepository payrollRunRepository,
+                          PayrollEmployeeRepository payrollEmployeeRepository,
+                          PayrollItemRepository payrollItemRepository) {
+        this.payrollRunRepository = payrollRunRepository;
+        this.payrollEmployeeRepository = payrollEmployeeRepository;
+        this.payrollItemRepository = payrollItemRepository;
+    }
 
-    public List<Payslip> generatePayslips(Integer month, Integer year) {
-        List<Payroll> eligiblePayrolls = payrollRepository.findByMonthAndYear(month, year).stream()
-                .filter(p -> "PROCESSED".equalsIgnoreCase(p.getStatus()) || "PAID".equalsIgnoreCase(p.getStatus()))
-                .collect(Collectors.toList());
+    public List<PayslipDetailResponse> getMyPayslips(Long employeeId) {
+        Long organizationId = TenantContext.requireOrganizationId();
 
-        List<Payslip> generated = new ArrayList<>();
+        List<PayrollEmployee> employeeSnapshots = payrollEmployeeRepository
+                .findByEmployeeIdAndOrganizationIdOrderByCalculationDateDesc(employeeId, organizationId);
 
-        for (Payroll payroll : eligiblePayrolls) {
-            Optional<Payslip> existing = payslipRepository.findByPayrollId(payroll.getId());
-            if (existing.isEmpty()) {
-                Payslip ps = new Payslip();
-                ps.setPayroll(payroll);
-                
-                String num = "PS-" + year + "-" + String.format("%02d", month) + "-" + payroll.getEmployee().getId();
-                ps.setPayslipNumber(num);
-                ps.setGeneratedAt(LocalDateTime.now());
-                
-                generated.add(payslipRepository.save(ps));
-            }
+        return employeeSnapshots.stream()
+                .map(pe -> {
+                    PayrollRun run = payrollRunRepository.findByIdAndOrganizationId(pe.getPayrollRunId(), organizationId)
+                            .orElse(null);
+                    List<PayrollItemResponse> items = payrollItemRepository
+                            .findByPayrollEmployeeIdAndOrganizationIdOrderByIdAsc(pe.getId(), organizationId)
+                            .stream()
+                            .map(PayrollItemResponse::fromEntity)
+                            .toList();
+
+                    return new PayslipDetailResponse(
+                            run != null ? run.getId() : pe.getPayrollRunId(),
+                            pe.getId(),
+                            pe.getEmployeeId(),
+                            pe.getEmployeeName(),
+                            pe.getEmployeeCode(),
+                            run != null ? run.getPeriodStart() : null,
+                            run != null ? run.getPeriodEnd() : null,
+                            pe.getCurrency(),
+                            pe.getGrossAmount(),
+                            pe.getBenefitsAmount(),
+                            pe.getDeductionsAmount(),
+                            pe.getNetAmount(),
+                            pe.getStatus().name(),
+                            pe.getCalculationDate(),
+                            items
+                    );
+                })
+                .toList();
+    }
+
+    public PayslipDetailResponse getMyPayslip(Long employeeId, Long payrollEmployeeId) {
+        Long organizationId = TenantContext.requireOrganizationId();
+
+        PayrollEmployee pe = payrollEmployeeRepository.findByIdAndOrganizationId(payrollEmployeeId, organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payslip not found with id: " + payrollEmployeeId));
+
+        if (!pe.getEmployeeId().equals(employeeId)) {
+            throw new ResourceNotFoundException("Payslip not found for current employee.");
         }
-        return generated;
-    }
 
-    public List<Payslip> getPayslipsByEmployeeId(Long employeeId) {
-        return payslipRepository.findByPayrollEmployeeId(employeeId);
-    }
+        PayrollRun run = payrollRunRepository.findByIdAndOrganizationId(pe.getPayrollRunId(), organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Payroll run not found with id: " + pe.getPayrollRunId()));
 
-    public Optional<Payslip> getPayslipById(Long id) {
-        return payslipRepository.findById(id);
-    }
+        List<PayrollItemResponse> items = payrollItemRepository
+                .findByPayrollEmployeeIdAndOrganizationIdOrderByIdAsc(pe.getId(), organizationId)
+                .stream()
+                .map(PayrollItemResponse::fromEntity)
+                .toList();
 
-    @org.springframework.transaction.annotation.Transactional
-    public boolean deletePayslip(Long id) {
-        if (payslipRepository.existsById(id)) {
-            payslipRepository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-
-    public List<Payslip> getAllPayslips() {
-        return payslipRepository.findAll();
+        return new PayslipDetailResponse(
+                run.getId(),
+                pe.getId(),
+                pe.getEmployeeId(),
+                pe.getEmployeeName(),
+                pe.getEmployeeCode(),
+                run.getPeriodStart(),
+                run.getPeriodEnd(),
+                pe.getCurrency(),
+                pe.getGrossAmount(),
+                pe.getBenefitsAmount(),
+                pe.getDeductionsAmount(),
+                pe.getNetAmount(),
+                pe.getStatus().name(),
+                pe.getCalculationDate(),
+                items
+        );
     }
 }

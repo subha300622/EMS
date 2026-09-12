@@ -1,6 +1,7 @@
 package com.example.ems.performance.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "my_goal_milestones")
@@ -21,7 +22,7 @@ public class MyGoalMilestone {
     private String status; // PENDING, COMPLETED
 
     @Column(name = "created_at", nullable = false)
-    private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     // Getters and Setters
     public Long getId() { return id; }
@@ -36,6 +37,6 @@ public class MyGoalMilestone {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public java.time.LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(java.time.LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

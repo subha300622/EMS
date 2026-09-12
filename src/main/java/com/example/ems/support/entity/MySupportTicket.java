@@ -1,6 +1,7 @@
 package com.example.ems.support.entity;
 
 import com.example.ems.employee.entity.Employee;
+import com.example.ems.organization.entity.Organization;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -33,11 +34,13 @@ public class MySupportTicket {
     @Column(nullable = false, length = 1000)
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String priority = "MEDIUM"; // LOW, MEDIUM, HIGH, CRITICAL
+    private SupportTicketPriority priority = SupportTicketPriority.MEDIUM;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String status = "OPEN"; // OPEN, ASSIGNED, IN_PROGRESS, WAITING_FOR_EMPLOYEE, RESOLVED, CLOSED
+    private SupportTicketStatus status = SupportTicketStatus.OPEN;
 
     private String preferredContactMethod = "EMAIL";
 
@@ -58,6 +61,31 @@ public class MySupportTicket {
     private LocalDateTime slaResponseDueAt;
 
     private LocalDateTime slaResolutionDueAt;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @Column(name = "merged_into_ticket_id")
+    private Long mergedIntoTicketId;
+
+    @Column(name = "merged_by")
+    private String mergedBy;
+
+    @Column(name = "merged_at")
+    private LocalDateTime mergedAt;
+
+    @Column(name = "merge_reason", length = 1000)
+    private String mergeReason;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @Column(name = "deleted_by")
+    private String deletedBy;
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -90,11 +118,11 @@ public class MySupportTicket {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public String getPriority() { return priority; }
-    public void setPriority(String priority) { this.priority = priority; }
+    public SupportTicketPriority getPriority() { return priority; }
+    public void setPriority(SupportTicketPriority priority) { this.priority = priority; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public SupportTicketStatus getStatus() { return status; }
+    public void setStatus(SupportTicketStatus status) { this.status = status; }
 
     public String getPreferredContactMethod() { return preferredContactMethod; }
     public void setPreferredContactMethod(String preferredContactMethod) { this.preferredContactMethod = preferredContactMethod; }
@@ -125,6 +153,30 @@ public class MySupportTicket {
 
     public LocalDateTime getSlaResolutionDueAt() { return slaResolutionDueAt; }
     public void setSlaResolutionDueAt(LocalDateTime slaResolutionDueAt) { this.slaResolutionDueAt = slaResolutionDueAt; }
+
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
+
+    public Long getMergedIntoTicketId() { return mergedIntoTicketId; }
+    public void setMergedIntoTicketId(Long mergedIntoTicketId) { this.mergedIntoTicketId = mergedIntoTicketId; }
+
+    public String getMergedBy() { return mergedBy; }
+    public void setMergedBy(String mergedBy) { this.mergedBy = mergedBy; }
+
+    public LocalDateTime getMergedAt() { return mergedAt; }
+    public void setMergedAt(LocalDateTime mergedAt) { this.mergedAt = mergedAt; }
+
+    public String getMergeReason() { return mergeReason; }
+    public void setMergeReason(String mergeReason) { this.mergeReason = mergeReason; }
+
+    public boolean isDeleted() { return isDeleted; }
+    public void setDeleted(boolean deleted) { isDeleted = deleted; }
+
+    public LocalDateTime getDeletedAt() { return deletedAt; }
+    public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    public String getDeletedBy() { return deletedBy; }
+    public void setDeletedBy(String deletedBy) { this.deletedBy = deletedBy; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

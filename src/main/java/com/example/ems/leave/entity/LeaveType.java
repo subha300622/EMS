@@ -1,5 +1,7 @@
 package com.example.ems.leave.entity;
 
+import com.example.ems.organization.entity.Organization;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -10,7 +12,7 @@ public class LeaveType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     private String description;
@@ -19,6 +21,11 @@ public class LeaveType {
     private Integer defaultDays = 0;
 
     private boolean active = true;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    @JsonIgnore
+    private Organization organization;
 
     public LeaveType() {}
 
@@ -30,43 +37,21 @@ public class LeaveType {
         this.active = active;
     }
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public Integer getDefaultDays() { return defaultDays; }
+    public void setDefaultDays(Integer defaultDays) { this.defaultDays = defaultDays; }
 
-    public String getDescription() {
-        return description;
-    }
+    public boolean isActive() { return active; }
+    public void setActive(boolean active) { this.active = active; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Integer getDefaultDays() {
-        return defaultDays;
-    }
-
-    public void setDefaultDays(Integer defaultDays) {
-        this.defaultDays = defaultDays;
-    }
-
-    public boolean isActive() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active = active;
-    }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 }

@@ -50,13 +50,12 @@ public class MyExitController {
     // 2. Submit Resignation Request
     @Operation(summary = "Submit Resignation", description = "Submits a formal resignation request starting the employee offboarding process.")
     @PostMapping("/resignation")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<SubmitResignationResponse> submitResignation(
+public ResponseEntity<?> submitResignation(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody SubmitResignationRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -64,7 +63,7 @@ public class MyExitController {
             SubmitResignationResponse response = myExitService.submitResignation(currentUser.getWorkEmail(), request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "OFB_001"));
         }
     }
@@ -72,12 +71,11 @@ public class MyExitController {
     // 3. Get Exit Checklist
     @Operation(summary = "Get Exit Checklist", description = "Retrieves the clearance checklist tasks assigned to the employee for offboarding.")
     @GetMapping("/checklist")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ExitChecklistResponse> getChecklist(
+public ResponseEntity<?> getChecklist(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -85,7 +83,7 @@ public class MyExitController {
             ExitChecklistResponse response = myExitService.getExitChecklist(currentUser.getWorkEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "OFB_002"));
         }
     }
@@ -93,15 +91,14 @@ public class MyExitController {
     // 4. Upload Exit Documents
     @Operation(summary = "Upload Exit Document", description = "Uploads required offboarding documents such as signed agreements or letters.")
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<UploadDocumentResponse> uploadDocument(
+public ResponseEntity<?> uploadDocument(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam("documentType") String documentType,
             @RequestParam("file") MultipartFile file,
             @RequestParam(value = "comments", required = false) String comments){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -111,7 +108,7 @@ public class MyExitController {
                     currentUser.getWorkEmail(), documentType, fileName, comments);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "OFB_002"));
         }
     }
@@ -119,12 +116,11 @@ public class MyExitController {
     // 5. Get Uploaded Exit Documents
     @Operation(summary = "Get Exit Documents", description = "Retrieves list and status of uploaded exit/offboarding documents.")
     @GetMapping("/documents")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<UploadedDocumentsResponse> getDocuments(
+public ResponseEntity<?> getDocuments(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -132,7 +128,7 @@ public class MyExitController {
             UploadedDocumentsResponse response = myExitService.getUploadedDocuments(currentUser.getWorkEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "OFB_002"));
         }
     }
@@ -140,14 +136,13 @@ public class MyExitController {
     // 6. Confirm Asset Return
     @Operation(summary = "Confirm Asset Return", description = "Acknowledges/confirms physical return of a company asset by the employee.")
     @PostMapping("/assets/{assetId}/return")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<AssetReturnConfirmResponse> confirmAssetReturn(
+public ResponseEntity<?> confirmAssetReturn(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("assetId") Long assetId,
             @Valid @RequestBody AssetReturnConfirmRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -155,7 +150,7 @@ public class MyExitController {
             AssetReturnConfirmResponse response = myExitService.confirmAssetReturn(currentUser.getWorkEmail(), assetId, request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "OFB_006"));
         }
     }
@@ -163,12 +158,11 @@ public class MyExitController {
     // 7. Get Assigned Assets
     @Operation(summary = "Get Offboarding Assets", description = "Retrieves the list of company assets assigned to the employee that must be cleared.")
     @GetMapping("/assets")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<AssignedAssetsResponse> getAssets(
+public ResponseEntity<?> getAssets(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -176,7 +170,7 @@ public class MyExitController {
             AssignedAssetsResponse response = myExitService.getAssignedAssets(currentUser.getWorkEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "OFB_002"));
         }
     }
@@ -184,13 +178,12 @@ public class MyExitController {
     // 8. Schedule Exit Interview
     @Operation(summary = "Schedule Exit Interview", description = "Schedules a convenient time for the exit interview with HR.")
     @PostMapping("/interview")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ExitInterviewScheduleResponse> scheduleInterview(
+public ResponseEntity<?> scheduleInterview(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody ExitInterviewScheduleRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -198,7 +191,7 @@ public class MyExitController {
             ExitInterviewScheduleResponse response = myExitService.scheduleExitInterview(currentUser.getWorkEmail(), request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "OFB_009"));
         }
     }
@@ -206,13 +199,12 @@ public class MyExitController {
     // 9. Sign NDA / Exit Agreement
     @Operation(summary = "Sign Exit Agreement", description = "Digitally signs exit agreements or NDAs required during offboarding.")
     @PostMapping("/agreements/sign")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<SignAgreementResponse> signAgreement(
+public ResponseEntity<?> signAgreement(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody SignAgreementRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -220,7 +212,7 @@ public class MyExitController {
             SignAgreementResponse response = myExitService.signAgreement(currentUser.getWorkEmail(), request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "OFB_002"));
         }
     }
@@ -228,12 +220,11 @@ public class MyExitController {
     // 10. Get F&F Settlement Details
     @Operation(summary = "Get Full & Final Settlement Details", description = "Retrieves full and final (F&F) settlement statements, dues, and status.")
     @GetMapping("/settlement")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<SettlementDetailsResponse> getSettlement(
+public ResponseEntity<?> getSettlement(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -241,7 +232,7 @@ public class MyExitController {
             SettlementDetailsResponse response = myExitService.getSettlementDetails(currentUser.getWorkEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "OFB_007"));
         }
     }
@@ -249,12 +240,11 @@ public class MyExitController {
     // 11. Get Exit Timeline
     @Operation(summary = "Get Exit Timeline", description = "Retrieves timeline of steps, milestones, and updates in the employee exit process.")
     @GetMapping("/timeline")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ExitTimelineResponse> getTimeline(
+public ResponseEntity<?> getTimeline(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -262,7 +252,7 @@ public class MyExitController {
             ExitTimelineResponse response = myExitService.getExitTimeline(currentUser.getWorkEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "OFB_002"));
         }
     }
@@ -270,12 +260,11 @@ public class MyExitController {
     // 12. Download Experience Letter
     @Operation(summary = "Download Experience Letter", description = "Downloads the generated experience/relieving letter in PDF format once offboarding is complete.")
     @GetMapping(value = "/experience-letter", produces = MediaType.APPLICATION_PDF_VALUE)
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<Object> downloadExperienceLetter(
+public ResponseEntity<?> downloadExperienceLetter(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -297,13 +286,12 @@ public class MyExitController {
     // 13. Cancel Exit Request
     @Operation(summary = "Cancel Exit Request", description = "Cancels a submitted resignation request, if allowed within the notice period window.")
     @PutMapping("/resignation/cancel")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<CancelExitResponse> cancelExit(
+public ResponseEntity<?> cancelExit(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody CancelExitRequest request){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
@@ -311,10 +299,10 @@ public class MyExitController {
             CancelExitResponse response = myExitService.cancelExitRequest(currentUser.getWorkEmail(), request);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "OFB_002"));
         } catch (IllegalStateException e) {
-            return (ResponseEntity) ResponseEntity.badRequest()
+            return ResponseEntity.badRequest()
                     .body(ErrorResponse.error(e.getMessage(), "OFB_001"));
         }
     }

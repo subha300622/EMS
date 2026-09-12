@@ -1,0 +1,19 @@
+package com.example.ems.expense.dto;
+
+public class ExpenseRejectRequest {
+    private String reason;
+
+    public ExpenseRejectRequest() {}
+
+    public ExpenseRejectRequest(String reason) {
+        this.reason = reason;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
+    }
+}

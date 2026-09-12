@@ -17,7 +17,6 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.employee.dto.TeamMemberListItemDto;
 import com.example.ems.employee.dto.TeamSummaryDto;
-import com.example.ems.employee.dto.EmployeeSearchResponse;
 import com.example.ems.employee.dto.OrgChartNodeDto;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
@@ -54,6 +53,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestHeader;
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/v1/directory")
@@ -106,8 +106,7 @@ public class EmployeeDirectoryController {
     // ── 1. GET MY TEAM DIRECTORY ─────────────────────────────────────────────
     @Operation(summary = "Get My Team Directory", description = "Retrieves direct reports and team mates of the logged-in employee.")
     @GetMapping("/my-team")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Page<TeamMemberListItemDto>>> getMyTeam(
+public ResponseEntity<?> getMyTeam(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -115,11 +114,11 @@ public class EmployeeDirectoryController {
             @RequestParam(required = false) String status) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "employee.team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.team.read' permission.", "AUTH_002"));
         }
 
@@ -192,7 +191,7 @@ public class EmployeeDirectoryController {
                             .orElse(4.5);
                 }
 
-                java.math.BigDecimal ctc = e.getAnnualSalary() != null ? e.getAnnualSalary() : java.math.BigDecimal.valueOf(1800000);
+                BigDecimal ctc = e.getAnnualSalary() != null ? e.getAnnualSalary() : BigDecimal.valueOf(1800000);
 
                 content.add(new TeamMemberListItemDto(
                         e.getId(),
@@ -216,18 +215,17 @@ public class EmployeeDirectoryController {
     // ── 2. QUICK SEARCH EMPLOYEES ────────────────────────────────────────────
     @Operation(summary = "Quick Search Employees", description = "Provides autocomplete or keyword search for employees by name/email.")
     @GetMapping("/search")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<EmployeeSearchResponse>> searchEmployees(
+public ResponseEntity<?> searchEmployees(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer limit) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "employee.directory.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.directory.read' permission.", "AUTH_002"));
         }
         return ResponseEntity.ok(ApiResponse.success("Search results retrieved", directoryService.searchEmployees(keyword, limit)));
@@ -236,18 +234,17 @@ public class EmployeeDirectoryController {
     // ── 3. GET ORGANIZATION CHART ────────────────────────────────────────────
     @Operation(summary = "Get Organization Chart", description = "Generates the complete hierarchal structure of the organization.")
     @GetMapping("/organization-chart")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getOrganizationChart(
+    public ResponseEntity<?> getOrganizationChart(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.directory.read' permission.",
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'employee.directory.read' permission.",
                             "AUTH_002"));
         }
 
@@ -266,26 +263,25 @@ public class EmployeeDirectoryController {
     // ── 4. GET ORGANIZATION CHART FOR EMPLOYEE ───────────────────────────────
     @Operation(summary = "Get Organization Chart for Employee", description = "Generates reporting structure starting from a specific employee.")
     @GetMapping("/organization-chart/{employeeId}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> getOrganizationChartForEmployee(
+    public ResponseEntity<?> getOrganizationChartForEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long employeeId){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.directory.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.directory.read' permission.",
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires 'employee.directory.read' permission.",
                             "AUTH_002"));
         }
 
         Employee rootEmployee = employeeRepository.findById(employeeId).orElse(null);
         if (rootEmployee == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(ErrorResponse.error("Employee not found with ID: " + employeeId, "EMP_002"));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Employee not found with ID: " + employeeId, "EMP_002"));
         }
 
         List<Employee> allEmployees = employeeRepository.findAll();
@@ -320,16 +316,15 @@ public class EmployeeDirectoryController {
 
     @Operation(summary = "Get My Team Summary Widget", description = "Retrieves high level counts of team size, active, wfh, and on leave members.")
     @GetMapping("/my-team/summary")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<TeamSummaryDto>> getMyTeamSummary(
+public ResponseEntity<?> getMyTeamSummary(
             @RequestHeader("Authorization") String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkPermission(user, "employee.team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'employee.team.read' permission.", "AUTH_002"));
         }
 
@@ -384,7 +379,7 @@ public class EmployeeDirectoryController {
 
     @Operation(summary = "Export My Team to Excel", description = "Generates and downloads an Excel spreadsheet of team members.")
     @GetMapping("/my-team/export")
-    public ResponseEntity<byte[]> exportMyTeam(
+    public ResponseEntity<?> exportMyTeam(
             @RequestHeader("Authorization") String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
