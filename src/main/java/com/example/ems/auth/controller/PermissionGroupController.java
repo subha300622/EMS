@@ -1,36 +1,40 @@
 package com.example.ems.auth.controller;
 
+import com.example.ems.auth.dto.AddPermissionsToGroupRequest;
+import com.example.ems.auth.dto.CreatePermissionGroupRequest;
+import com.example.ems.auth.dto.UpdatePermissionGroupRequest;
 import com.example.ems.auth.entity.Permission;
 import com.example.ems.auth.entity.PermissionGroup;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.PermissionGroupRepository;
 import com.example.ems.auth.repository.PermissionRepository;
 import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
-
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-import com.example.ems.auth.dto.AddPermissionsToGroupRequest;
-import com.example.ems.auth.dto.CreatePermissionGroupRequest;
-import com.example.ems.auth.dto.UpdatePermissionGroupRequest;
-import com.example.ems.auth.service.RoleService;
-import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/api/v1/permission-groups")
+@RequestMapping(value = "/api/v1/permission-groups", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin("*")
-@Tag(name = "Permission Group APIs")
+@Tag(name = "Permission Group APIs", description = "Platform and Tenant Permission Group Management APIs")
 public class PermissionGroupController {
 
     @Autowired
@@ -66,6 +70,10 @@ public class PermissionGroupController {
 
     @GetMapping
     @Operation(summary = "List permission groups")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission groups retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = PermissionGroup.class))))
+    })
     public ResponseEntity<?> getAllPermissionGroups() {
         List<PermissionGroup> groups = permissionGroupRepository.findAll();
         return ResponseEntity.ok(ApiResponse.success("Permission groups retrieved successfully", groups));
@@ -73,6 +81,12 @@ public class PermissionGroupController {
 
     @GetMapping("/{groupId}")
     @Operation(summary = "Get permission group by ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission group retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PermissionGroup.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Permission group not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> getPermissionGroupById(@PathVariable Long groupId) {
         PermissionGroup group = permissionGroupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("Permission group not found with ID: " + groupId));
@@ -81,7 +95,17 @@ public class PermissionGroupController {
 
     @PostMapping
     @Operation(summary = "Create permission group", description = "Restricted to PLATFORM_ADMIN.")
-public ResponseEntity<?> createPermissionGroup(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Permission group created successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PermissionGroup.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request or duplicate code",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Restricted to PLATFORM_ADMIN",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> createPermissionGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestBody @Valid CreatePermissionGroupRequest request) {
 
@@ -129,7 +153,17 @@ public ResponseEntity<?> createPermissionGroup(
 
     @PutMapping("/{groupId}")
     @Operation(summary = "Update permission group", description = "Restricted to PLATFORM_ADMIN.")
-public ResponseEntity<?> updatePermissionGroup(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission group updated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PermissionGroup.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Restricted to PLATFORM_ADMIN",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Permission group not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> updatePermissionGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long groupId,
             @RequestBody @Valid UpdatePermissionGroupRequest request) {
@@ -160,7 +194,17 @@ public ResponseEntity<?> updatePermissionGroup(
 
     @DeleteMapping("/{groupId}")
     @Operation(summary = "Delete permission group", description = "Restricted to PLATFORM_ADMIN.")
-public ResponseEntity<?> deletePermissionGroup(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission group deleted successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Restricted to PLATFORM_ADMIN",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Permission group not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> deletePermissionGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long groupId) {
 
@@ -184,6 +228,12 @@ public ResponseEntity<?> deletePermissionGroup(
 
     @GetMapping("/{groupId}/permissions")
     @Operation(summary = "List group's permissions")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Group permissions retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = Permission.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Permission group not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> getGroupPermissions(@PathVariable Long groupId) {
         PermissionGroup group = permissionGroupRepository.findById(groupId)
                 .orElseThrow(() -> new IllegalArgumentException("Permission group not found with ID: " + groupId));
@@ -192,7 +242,17 @@ public ResponseEntity<?> deletePermissionGroup(
 
     @PostMapping("/{groupId}/permissions")
     @Operation(summary = "Add permissions to group", description = "Restricted to PLATFORM_ADMIN.")
-public ResponseEntity<?> addPermissionsToGroup(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permissions added to group successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = Permission.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Restricted to PLATFORM_ADMIN",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Permission group or permission not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> addPermissionsToGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long groupId,
             @RequestBody @Valid AddPermissionsToGroupRequest request) {
@@ -227,7 +287,17 @@ public ResponseEntity<?> addPermissionsToGroup(
 
     @DeleteMapping("/{groupId}/permissions/{permissionId}")
     @Operation(summary = "Remove permission from group", description = "Restricted to PLATFORM_ADMIN.")
-public ResponseEntity<?> removePermissionFromGroup(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission removed from group successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Restricted to PLATFORM_ADMIN",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Permission group or permission not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> removePermissionFromGroup(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long groupId,
             @PathVariable Long permissionId) {
@@ -254,3 +324,4 @@ public ResponseEntity<?> removePermissionFromGroup(
         return ResponseEntity.ok(ApiResponse.success("Permission removed from group successfully", null));
     }
 }
+

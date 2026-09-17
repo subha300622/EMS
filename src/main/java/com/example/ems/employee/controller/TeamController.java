@@ -11,6 +11,10 @@ import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -47,6 +51,12 @@ public class TeamController {
 
     // 1. Create Team
     @Operation(summary = "Create Team", description = "Creates a new team within the user's organization with optional department association and optional team lead.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Team created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.TeamResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping("/teams")
 public ResponseEntity<?> createTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -70,6 +80,11 @@ public ResponseEntity<?> createTeam(
 
     // 2. List Teams
     @Operation(summary = "List Teams", description = "Retrieves teams belonging to the user's organization with search, status, department filtering, and pagination.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Teams retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TeamDtos.TeamResponseDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping("/teams")
 public ResponseEntity<?> listTeams(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -91,6 +106,12 @@ public ResponseEntity<?> listTeams(
 
     // 3. Get Team Details
     @Operation(summary = "Get Team Details", description = "Retrieves details of a specific team by ID.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.TeamResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/teams/{teamId}")
 public ResponseEntity<?> getTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -113,6 +134,12 @@ public ResponseEntity<?> getTeam(
 
     // 4. Update Team
     @Operation(summary = "Update Team", description = "Updates team details, department association (or null), and team lead.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.TeamResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PutMapping("/teams/{teamId}")
 public ResponseEntity<?> updateTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -142,6 +169,12 @@ public ResponseEntity<?> updateTeam(
 
     // 5. Delete Team
     @Operation(summary = "Delete Team", description = "Soft deletes a team if no active members exist. Fails with TEAM_HAS_ACTIVE_MEMBERS if active members remain.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team deleted successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @DeleteMapping("/teams/{teamId}")
     public ResponseEntity<?> deleteTeam(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -172,6 +205,12 @@ public ResponseEntity<?> updateTeam(
 
     // 6. Change Team Status
     @Operation(summary = "Change Team Status", description = "Updates team status to ACTIVE or INACTIVE.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team status updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.TeamResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PatchMapping("/teams/{teamId}/status")
 public ResponseEntity<?> changeTeamStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -195,6 +234,12 @@ public ResponseEntity<?> changeTeamStatus(
 
     // 7. Assign Department to Team
     @Operation(summary = "Assign/Remove Department to/from Team", description = "Assigns a department (or null) to a team after checking member compatibility.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department assigned to team successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.TeamResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PatchMapping("/teams/{teamId}/department")
 public ResponseEntity<?> assignDepartment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -224,6 +269,12 @@ public ResponseEntity<?> assignDepartment(
 
     // 8. Change Team Lead
     @Operation(summary = "Change Team Lead", description = "Promotes an existing active team member to Team Lead (or null to remove lead).")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team lead updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.TeamResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PatchMapping("/teams/{teamId}/team-lead")
 public ResponseEntity<?> changeTeamLead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -247,6 +298,12 @@ public ResponseEntity<?> changeTeamLead(
 
     // 9. Get Team Members
     @Operation(summary = "Get Team Members", description = "Retrieves active members of a specific team.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team members retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.TeamMemberListResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/teams/{teamId}/members")
 public ResponseEntity<?> getTeamMembers(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -269,6 +326,12 @@ public ResponseEntity<?> getTeamMembers(
 
     // 10. Add Single Employee to Team
     @Operation(summary = "Add Employee to Team", description = "Adds an active employee to an active team.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Employee added to team successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.MemberDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping("/teams/{teamId}/members")
 public ResponseEntity<?> addMember(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -293,6 +356,12 @@ public ResponseEntity<?> addMember(
 
     // 11. Bulk Add Employees to Team
     @Operation(summary = "Bulk Add Employees to Team", description = "Adds multiple employees to a team with partial success status reporting.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bulk member addition processed",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamDtos.TeamMemberBulkAddResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping("/teams/{teamId}/members/bulk")
 public ResponseEntity<?> bulkAddMembers(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -316,6 +385,11 @@ public ResponseEntity<?> bulkAddMembers(
 
     // 12. Remove Employee from Team
     @Operation(summary = "Remove Employee from Team", description = "Removes an employee from a team (unless employee is current Team Lead).")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee removed from team successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @DeleteMapping("/teams/{teamId}/members/{employeeId}")
     public ResponseEntity<?> removeMember(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -343,6 +417,12 @@ public ResponseEntity<?> bulkAddMembers(
 
     // 13. Get Teams by Department
     @Operation(summary = "Get Teams by Department", description = "Retrieves teams belonging to a specific department.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department teams retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TeamDtos.TeamResponseDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/departments/{departmentId}/teams")
 public ResponseEntity<?> getTeamsByDepartment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -365,6 +445,12 @@ public ResponseEntity<?> getTeamsByDepartment(
 
     // 14. Get Team Audit Logs
     @Operation(summary = "Get Team Audit Logs", description = "Retrieves audit history log of changes for a specific team.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team audit logs retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TeamAuditLog.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/teams/{teamId}/audit-logs")
 public ResponseEntity<?> getAuditLogs(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

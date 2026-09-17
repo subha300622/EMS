@@ -77,6 +77,15 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Get paginated organization list report")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization list loaded successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OrganizationReportListItem.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/list")
     public ResponseEntity<?> getList(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -99,6 +108,15 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Get top organizations list")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Top organizations loaded successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OrganizationReportListItem.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/top")
     public ResponseEntity<?> getTop(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -113,6 +131,15 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Get inactive organizations list")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Inactive organizations loaded successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OrganizationReportListItem.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/inactive")
     public ResponseEntity<?> getInactive(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -126,6 +153,15 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Get recently registered organizations list")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Recently registered organizations loaded successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OrganizationReportListItem.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/recent")
     public ResponseEntity<?> getRecent(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -139,6 +175,15 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Get expiring organizations list")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Expiring organizations loaded successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OrganizationReportListItem.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/expiring")
     public ResponseEntity<?> getExpiring(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -152,6 +197,14 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Get detailed report for single organization")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization details loaded successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = OrganizationReportDetail.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{organizationId}")
     public ResponseEntity<?> getDetails(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -165,6 +218,16 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Trigger async export of organization report")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Report export started successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ReportExportInitiatedResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid export format",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/export")
     public ResponseEntity<?> export(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -203,6 +266,15 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Get history of report exports")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Export history loaded successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ExportHistoryResponse.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/exports")
     public ResponseEntity<?> getExports(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -225,6 +297,22 @@ public class PlatformOrganizationReportController {
     }
 
     @Operation(summary = "Download exported report file")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "File downloaded successfully",
+            content = {
+                @io.swagger.v3.oas.annotations.media.Content(mediaType = "text/csv", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")),
+                @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/pdf", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary")),
+                @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/octet-stream", schema = @io.swagger.v3.oas.annotations.media.Schema(type = "string", format = "binary"))
+            }),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "202", description = "Export generation pending",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "File not found",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/export/download/{exportId}")
     public ResponseEntity<?> download(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

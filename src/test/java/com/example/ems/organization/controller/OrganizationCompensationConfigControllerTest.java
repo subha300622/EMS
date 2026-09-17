@@ -18,7 +18,6 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -53,7 +52,7 @@ class OrganizationCompensationConfigControllerTest {
     @DisplayName("GET /api/v1/organizations/compensation-config returns 200 with config")
     void testGetConfig() throws Exception {
         CompensationConfigResponse response = new CompensationConfigResponse(10L, true, false, true, null);
-        when(configService.getConfig(10L)).thenReturn(response);
+        when(configService.getCurrentConfig()).thenReturn(response);
 
         mockMvc.perform(get("/api/v1/organizations/compensation-config"))
                 .andExpect(status().isOk())
@@ -69,7 +68,7 @@ class OrganizationCompensationConfigControllerTest {
         CompensationConfigRequest request = new CompensationConfigRequest(false, true, true);
         CompensationConfigResponse response = new CompensationConfigResponse(10L, false, true, true, null);
 
-        when(configService.updateConfig(eq(10L), any(CompensationConfigRequest.class))).thenReturn(response);
+        when(configService.updateCurrentConfig(any(CompensationConfigRequest.class))).thenReturn(response);
 
         mockMvc.perform(put("/api/v1/organizations/compensation-config")
                         .contentType(MediaType.APPLICATION_JSON)

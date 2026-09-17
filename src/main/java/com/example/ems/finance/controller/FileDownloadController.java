@@ -1,5 +1,9 @@
 package com.example.ems.finance.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.example.ems.finance.service.FinanceAssetCostReportService;
 import com.example.ems.finance.service.FinanceSettlementService;
@@ -41,6 +45,15 @@ public class FileDownloadController {
     private ExpenseRepository expenseRepository;
 
     // ── Receipt folders download subpath ──────────────────────────────────────
+    @Operation(summary = "Download Receipt File", description = "Downloads binary receipt files (PDF/images) associated with expense claims.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Receipt file stream",
+                    content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Receipt file not found")
+    })
     @GetMapping("/receipts/{fileName:.+}")
     public ResponseEntity<?> downloadReceiptFolderFile(@PathVariable("fileName") String fileName) {
         return serveReceiptFile(fileName);
@@ -77,6 +90,18 @@ public class FileDownloadController {
     }
 
     // ── F&F Statements and general files download path ────────────────────────
+    @Operation(summary = "Download General File or Report", description = "Downloads reports, CSV exports, or FNF settlement PDF documents.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Report or document file stream",
+                    content = {
+                            @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary")),
+                            @Content(mediaType = "text/csv", schema = @Schema(type = "string", format = "binary"))
+                    }
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "File not found")
+    })
     @GetMapping("/{fileName:.+}")
     public ResponseEntity<?> downloadGeneralFile(@PathVariable("fileName") String fileName) {
         // Receipt download direct fallback

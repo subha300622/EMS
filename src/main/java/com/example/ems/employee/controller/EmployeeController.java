@@ -19,6 +19,10 @@ import java.util.ArrayList;
 import java.util.stream.Collectors;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -62,6 +66,13 @@ public class EmployeeController {
     private DepartmentRepository departmentRepository;
 
     @Operation(summary = "Create Employee Record", description = "Creates a new employee profile in the system with contact details, department, role, and salary parameters.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Employee created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeCreatedResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping("/employees")
     public ResponseEntity<?> createEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -106,6 +117,12 @@ public class EmployeeController {
     }
 
     @Operation(summary = "Get All Employees", description = "Retrieves a paginated, searchable, and filterable list of all employees in the system.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employees list retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = EmployeeListItemDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/employees")
     @Transactional(readOnly = true)
 public ResponseEntity<?> getAllEmployees(
@@ -204,6 +221,13 @@ public ResponseEntity<?> getAllEmployees(
     }
 
     @Operation(summary = "Get Employee Master Profile", description = "Retrieves full master profile of an employee by employeeId.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeProfileResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/employees/{employeeId}")
     public ResponseEntity<?> getEmployeeMasterProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -230,6 +254,13 @@ public ResponseEntity<?> getAllEmployees(
     }
 
     @Operation(summary = "Update Employee Master Profile", description = "Updates attributes of an existing employee master profile.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeUpdateResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PutMapping("/employees/{employeeId}")
     public ResponseEntity<?> updateEmployeeMasterProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -263,6 +294,13 @@ public ResponseEntity<?> getAllEmployees(
     }
 
     @Operation(summary = "Get Employee Status", description = "Retrieves current employment and account status for an employee.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee status retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeStatusResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/employees/{employeeId}/status")
     public ResponseEntity<?> getEmployeeStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -295,6 +333,13 @@ public ResponseEntity<?> getAllEmployees(
     }
 
     @Operation(summary = "Update Employee Status", description = "Updates status indicators for an employee.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee status updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeStatusResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PatchMapping("/employees/{employeeId}/status")
     public ResponseEntity<?> updateEmployeeStatusPatch(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -335,6 +380,13 @@ public ResponseEntity<?> getAllEmployees(
     }
 
     @Operation(summary = "Soft Delete Employee", description = "Soft deactivates an employee record and revokes user sessions.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee deleted successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeStatusResponseDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @DeleteMapping("/employees/{employeeId}")
     public ResponseEntity<?> deleteEmployeeMaster(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -385,6 +437,13 @@ public ResponseEntity<?> getAllEmployees(
     // ── Employee Role Management Endpoints ─────────────────────────────────────
 
     @Operation(summary = "Get Employee Roles", description = "Retrieves active organization role assignments for an employee.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee roles retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeRolesResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/employees/{employeeId}/roles")
 public ResponseEntity<?> getEmployeeRoles(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -411,6 +470,13 @@ public ResponseEntity<?> getEmployeeRoles(
     }
 
     @Operation(summary = "Assign Single Role", description = "Assigns an organization role to an employee.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Role assigned successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeRolesResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping("/employees/{employeeId}/roles")
 public ResponseEntity<?> assignRoleToEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -451,6 +517,13 @@ public ResponseEntity<?> assignRoleToEmployee(
     }
 
     @Operation(summary = "Assign Multiple Roles", description = "Assigns multiple organization roles to an employee transactionally.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bulk roles assigned successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeRolesResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping("/employees/{employeeId}/roles/bulk")
 public ResponseEntity<?> assignBulkRolesToEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -490,6 +563,13 @@ public ResponseEntity<?> assignBulkRolesToEmployee(
     }
 
     @Operation(summary = "Change Employee Roles", description = "Replaces/updates employee role assignments with effective date and reason.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee roles changed successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeRolesResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PutMapping("/employees/{employeeId}/roles")
 public ResponseEntity<?> changeEmployeeRoles(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -528,6 +608,13 @@ public ResponseEntity<?> changeEmployeeRoles(
     }
 
     @Operation(summary = "Remove Employee Role", description = "Removes an assigned role from an employee.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role removed successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeRolesResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @DeleteMapping("/employees/{employeeId}/roles/{roleId}")
 public ResponseEntity<?> removeEmployeeRole(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -561,6 +648,11 @@ public ResponseEntity<?> removeEmployeeRole(
     }
 
     @Operation(summary = "Get Assignable Roles", description = "Retrieves available organization roles for employee management screens.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Assignable roles retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AssignableRoleDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping("/roles/assignable")
 public ResponseEntity<?> getAssignableRoles(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {

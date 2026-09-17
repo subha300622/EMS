@@ -1,5 +1,7 @@
 package com.example.ems.audit.controller;
 
+import com.example.ems.audit.dto.AuditDashboardStatsDto;
+import com.example.ems.audit.dto.ReviewAuditLogRequest;
 import com.example.ems.audit.entity.AuditLog;
 import com.example.ems.audit.entity.Severity;
 import com.example.ems.audit.service.AuditLogService;
@@ -9,9 +11,19 @@ import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -21,18 +33,11 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
-import com.example.ems.audit.dto.ReviewAuditLogRequest;
-import jakarta.validation.Valid;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.format.annotation.DateTimeFormat;
 
 @RestController
 @RequestMapping("/api/v1/audit-logs")
 @CrossOrigin("*")
-@Tag(name = "Audit & Compliance")
+@Tag(name = "Audit & Compliance", description = "Audit Log Management and Compliance Monitoring APIs")
 public class AuditLogController {
 
     @Autowired
@@ -82,8 +87,17 @@ public class AuditLogController {
         return List.of();
     }
 
-    @GetMapping
-public ResponseEntity<?> getAllLogs(
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get Paginated and Filtered Audit Logs")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AuditLog.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getAllLogs(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) String module,
@@ -129,8 +143,19 @@ public ResponseEntity<?> getAllLogs(
         return ResponseEntity.ok(ApiResponse.success("Audit logs retrieved successfully", pageResult));
     }
 
-    @GetMapping("/{id}")
-public ResponseEntity<?> getLogById(
+    @GetMapping(value = "/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get Audit Log Details By ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Audit log details retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuditLog.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Audit log not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getLogById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id){
         User currentUser = resolveUser(authHeader);
@@ -148,8 +173,17 @@ public ResponseEntity<?> getLogById(
                         .body(ErrorResponse.error("Audit log not found with ID: " + id, "AUD_001")));
     }
 
-    @GetMapping("/export")
-public ResponseEntity<?> exportLogs(@RequestHeader(value = "Authorization", required = false) String authHeader){
+    @GetMapping(value = "/export", produces = { "text/csv", MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    @Operation(summary = "Export Audit Logs as CSV")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CSV export stream",
+                    content = @Content(mediaType = "text/csv", schema = @Schema(type = "string", format = "binary"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.export permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> exportLogs(@RequestHeader(value = "Authorization", required = false) String authHeader){
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
@@ -167,8 +201,17 @@ public ResponseEntity<?> exportLogs(@RequestHeader(value = "Authorization", requ
         return new ResponseEntity<>(data, headers, HttpStatus.OK);
     }
 
-    @GetMapping("/dashboard")
-public ResponseEntity<?> getDashboardStats(
+    @GetMapping(value = "/dashboard", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get Audit Log Dashboard Summary Statistics")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dashboard stats retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuditDashboardStatsDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getDashboardStats(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -183,14 +226,34 @@ public ResponseEntity<?> getDashboardStats(
                 auditLogService.getDashboardStats(allowedModules)));
     }
 
-    @GetMapping("/summary")
+    @GetMapping(value = "/summary", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get Audit Log Dashboard Summary (alias)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dashboard stats retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuditDashboardStatsDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> getSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         return getDashboardStats(authHeader);
     }
 
-    @PostMapping("/{id}/review")
-public ResponseEntity<?> reviewLog(
+    @PostMapping(value = "/{id}/review", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Review Flagged Audit Log and Clear Flag")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Audit log reviewed and flag cleared",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AuditLog.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Audit log not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> reviewLog(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id,
             @RequestBody(required = false) @Valid ReviewAuditLogRequest body) {
@@ -212,8 +275,17 @@ public ResponseEntity<?> reviewLog(
         }
     }
 
-    @PostMapping("/dismiss-all")
-public ResponseEntity<?> dismissAllFlags(
+    @PostMapping(value = "/dismiss-all", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Dismiss All Flagged Audit Logs")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "All flags dismissed successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> dismissAllFlags(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -227,8 +299,17 @@ public ResponseEntity<?> dismissAllFlags(
         return ResponseEntity.ok(ApiResponse.success("All flags dismissed successfully", null));
     }
 
-    @GetMapping("/user/{userId}")
-public ResponseEntity<?> getLogsByUser(
+    @GetMapping(value = "/user/{userId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get Audit Logs By User ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully for user",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AuditLog.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getLogsByUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String userId){
         User currentUser = resolveUser(authHeader);
@@ -243,8 +324,17 @@ public ResponseEntity<?> getLogsByUser(
         return ResponseEntity.ok(ApiResponse.success("Audit logs retrieved successfully for user: " + userId, logs));
     }
 
-    @GetMapping("/entity/{entityType}/{entityId}")
-public ResponseEntity<?> getLogsByEntity(
+    @GetMapping(value = "/entity/{entityType}/{entityId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get Audit Logs By Entity Type and ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Audit logs retrieved successfully for entity",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AuditLog.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getLogsByEntity(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String entityType,
             @PathVariable String entityId){
@@ -260,3 +350,4 @@ public ResponseEntity<?> getLogsByEntity(
         return ResponseEntity.ok(ApiResponse.success("Audit logs retrieved successfully for entity: " + entityType + " (" + entityId + ")", logs));
     }
 }
+

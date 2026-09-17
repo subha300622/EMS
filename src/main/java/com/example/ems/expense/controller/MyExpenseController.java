@@ -13,6 +13,9 @@ import com.example.ems.expense.repository.MyExpenseReceiptRepository;
 import com.example.ems.expense.service.MyExpenseService;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -367,6 +370,16 @@ public class MyExpenseController {
 
     // 8. Download Receipt
     @Operation(summary = "Download Receipt", description = "Downloads the file data of an uploaded expense receipt.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Receipt file stream",
+                    content = @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Receipt not found")
+    })
     @GetMapping("/receipts/{receiptId}/download")
     public ResponseEntity<?> downloadReceipt(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,

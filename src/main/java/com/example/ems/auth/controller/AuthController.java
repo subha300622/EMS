@@ -4,19 +4,33 @@ import java.util.List;
 import java.util.Map;
 
 import com.example.ems.auth.dto.AcceptInvitationRequest;
+import com.example.ems.auth.dto.AccountActivationResponse;
 import com.example.ems.auth.dto.ActivateAccountRequest;
 import com.example.ems.auth.dto.ActivateEmailRequest;
+import com.example.ems.auth.dto.ActiveSessionDto;
+import com.example.ems.auth.dto.AvailabilityCheckResponse;
 import com.example.ems.auth.dto.ChangePasswordRequest;
+import com.example.ems.auth.dto.CheckEmailRequest;
+import com.example.ems.auth.dto.CheckOrganizationRequest;
+import com.example.ems.auth.dto.CheckPhoneRequest;
+import com.example.ems.auth.dto.EmailAvailabilityResponse;
 import com.example.ems.auth.dto.ForgotPasswordRequest;
 import com.example.ems.auth.dto.LoginRequest;
 import com.example.ems.auth.dto.LoginResponse;
 import com.example.ems.auth.dto.LogoutRequest;
+import com.example.ems.auth.dto.PhoneAvailabilityResponse;
 import com.example.ems.auth.dto.RefreshTokenRequest;
+import com.example.ems.auth.dto.ResendOtpResponse;
 import com.example.ems.auth.dto.ResetPasswordRequest;
+import com.example.ems.auth.dto.SignupApiResponse;
 import com.example.ems.auth.dto.SignupRequest;
 import com.example.ems.auth.dto.SignupResponse;
-import com.example.ems.auth.dto.SignupApiResponse;
+import com.example.ems.auth.dto.TokenRefreshResponse;
+import com.example.ems.auth.dto.UserMeProfileDto;
+import com.example.ems.auth.dto.VerifyEmailRequest;
 import com.example.ems.auth.dto.VerifyOtpRequest;
+import com.example.ems.auth.dto.VerifyOtpResponse;
+import com.example.ems.auth.dto.VerifyTokenResponse;
 import com.example.ems.auth.entity.Invitation;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
@@ -26,58 +40,45 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.OtpService;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.auth.service.SessionService;
+import com.example.ems.auth.service.SignupService;
+import com.example.ems.auth.service.SignupValidationService;
+import com.example.ems.auth.service.VerificationService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-import com.example.ems.mail.service.EmailService;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
-import com.example.ems.security.service.JwtService;
-import com.example.ems.auth.service.SignupService;
-import com.example.ems.auth.service.VerificationService;
-import com.example.ems.auth.service.SignupValidationService;
+import com.example.ems.mail.service.EmailService;
 import com.example.ems.organization.repository.OrganizationRepository;
-
-import io.swagger.v3.oas.annotations.tags.Tag;
+import com.example.ems.security.context.SecurityContextFacade;
+import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.example.ems.auth.dto.AccountActivationResponse;
-import com.example.ems.auth.dto.ActiveSessionDto;
-import com.example.ems.auth.dto.AvailabilityCheckResponse;
-import com.example.ems.auth.dto.CheckEmailRequest;
-import com.example.ems.auth.dto.CheckOrganizationRequest;
-import com.example.ems.auth.dto.CheckPhoneRequest;
-import com.example.ems.auth.dto.EmailAvailabilityResponse;
-import com.example.ems.auth.dto.PhoneAvailabilityResponse;
-import com.example.ems.auth.dto.ResendOtpResponse;
-import com.example.ems.auth.dto.TokenRefreshResponse;
-import com.example.ems.auth.dto.UserMeProfileDto;
-import com.example.ems.auth.dto.VerifyEmailRequest;
-import com.example.ems.auth.dto.VerifyOtpResponse;
-import com.example.ems.auth.dto.VerifyTokenResponse;
-import com.example.ems.security.context.SecurityContextFacade;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import org.springframework.transaction.annotation.Transactional;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping(value = "/api/v1/auth", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin("*")
-@Tag(name = "Authentication & Security")
+@Tag(name = "Authentication & Security", description = "Authentication, Session Management, and Security APIs")
 public class AuthController {
 
     @Autowired
@@ -148,6 +149,14 @@ public class AuthController {
 
     // ── 1. LOGIN ─────────────────────────────────────────────────────────────
     @Operation(summary = "User Login", description = "Authenticates a user, starts a session in Redis, and returns JWT tokens and user metadata.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Login successful",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = LoginResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid credentials",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Account suspended / inactive",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/login")
     @Transactional
     public ResponseEntity<?> login(@RequestBody @Valid LoginRequest request,
@@ -220,6 +229,12 @@ public class AuthController {
     }
 
     @Operation(summary = "Get Current User Permissions", description = "Retrieves the list of effective permissions for the logged-in user.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permissions retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(type = "string", example = "employee.read")))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/permissions")
     public ResponseEntity<?> getMyPermissions(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -237,6 +252,10 @@ public class AuthController {
 
     // ── 2. LOGOUT ────────────────────────────────────────────────────────────
     @Operation(summary = "User Logout", description = "Revokes the active refresh token and terminates the user session.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Logged out successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
+    })
     @PostMapping("/logout")
     public ResponseEntity<?> logout(@RequestBody @Valid LogoutRequest request) {
         sessionService.revokeSession(request.getRefreshToken());
@@ -245,6 +264,12 @@ public class AuthController {
 
     // ── 3. REFRESH TOKEN ─────────────────────────────────────────────────────
     @Operation(summary = "Refresh Access Token", description = "Rotates the refresh token and issues a new access token for active sessions.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Token refreshed successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = TokenRefreshResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Invalid or expired refresh token",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/refresh")
     public ResponseEntity<?> refresh(@RequestBody @Valid RefreshTokenRequest request) {
         SessionService.SessionMetadata session = sessionService.rotateRefreshToken(request.getRefreshToken());
@@ -276,6 +301,10 @@ public class AuthController {
 
     // ── 4. FORGOT PASSWORD ───────────────────────────────────────────────────
     @Operation(summary = "Forgot Password", description = "Initiates password reset process and dispatches OTP code to the work email.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OTP sent notification",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
+    })
     @PostMapping("/forgot-password")
     public ResponseEntity<?> forgotPassword(
             @RequestBody @Valid ForgotPasswordRequest request) {
@@ -289,6 +318,12 @@ public class AuthController {
 
     // ── 5. VERIFY OTP ────────────────────────────────────────────────────────
     @Operation(summary = "Verify OTP", description = "Validates the emailed OTP code and returns a password reset token.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OTP verified successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = VerifyOtpResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid or expired OTP",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(
             @RequestBody @Valid VerifyOtpRequest request) {
@@ -305,6 +340,12 @@ public class AuthController {
 
     // ── 6. RESET PASSWORD ───────────────────────────────────────────
     @Operation(summary = "Reset Password", description = "Resets the account password using a valid reset token generated by OTP verification.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Password mismatch or invalid token",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody @Valid ResetPasswordRequest request) {
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
@@ -321,6 +362,14 @@ public class AuthController {
 
     // ── 7. CHANGE PASSWORD ───────────────────────────────────────────────────
     @Operation(summary = "Change Password", description = "Updates the authenticated user's account password.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password changed successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Password mismatch or validation error",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -352,6 +401,12 @@ public class AuthController {
 
     // ── 8. GET CURRENT USER ──────────────────────────────────────────────────
     @Operation(summary = "Get Current User Profile", description = "Retrieves active profile, roles, and permissions of the logged-in user.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User profile retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserMeProfileDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/me")
     public ResponseEntity<?> getMe(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -387,6 +442,12 @@ public class AuthController {
 
     // ── 8b. VERIFY TOKEN ─────────────────────────────────────────────────────
     @Operation(summary = "Verify Token", description = "Performs validity checks on the user access token.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Token is valid",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = VerifyTokenResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/verify")
     public ResponseEntity<?> verifyToken(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -405,6 +466,10 @@ public class AuthController {
 
     // ── 9. RESEND OTP ───────────────────────────────────────────────────────
     @Operation(summary = "Resend OTP", description = "Generates and sends a new OTP for the password reset sequence.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OTP resent successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ResendOtpResponse.class)))
+    })
     @PostMapping("/resend-otp")
     public ResponseEntity<?> resendOtp(
             @RequestBody @Valid ForgotPasswordRequest request) {
@@ -414,6 +479,12 @@ public class AuthController {
 
     // ── 10. ACTIVE SESSIONS ──────────────────────────────────────────────────
     @Operation(summary = "Get Active Sessions", description = "Retrieves list of active device/browser login sessions for security audit.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Active sessions retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ActiveSessionDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/sessions")
     public ResponseEntity<?> getSessions(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -443,6 +514,12 @@ public class AuthController {
 
     // ── 11. REVOKE SESSION ───────────────────────────────────────────────────
     @Operation(summary = "Revoke Session", description = "Revokes a specific active session by ID.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Session revoked successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @DeleteMapping("/sessions/{sessionId}")
     public ResponseEntity<?> revokeSession(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -460,6 +537,12 @@ public class AuthController {
 
     // ── 12. LOGOUT FROM ALL DEVICES ──────────────────────────────────────────
     @Operation(summary = "Logout from All Devices", description = "Terminates all active login sessions and tokens for the user.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Logged out from all devices successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/logout-all")
     public ResponseEntity<?> logoutAll(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -476,6 +559,14 @@ public class AuthController {
 
     // ── 14. ACCEPT INVITATION ────────────────────────────────────────────────
     @Operation(summary = "Accept Invitation", description = "Accepts the activation link token, sets the password, and creates the user account.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Account activated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountActivationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid token or password mismatch",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Invitation not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/accept-invitation")
     public ResponseEntity<?> acceptInvitation(@RequestBody @Valid AcceptInvitationRequest request) {
         Optional<Invitation> optInvitation = invitationRepository.findByInvitationToken(request.getInvitationToken());
@@ -565,6 +656,14 @@ public class AuthController {
     }
 
     @Operation(summary = "Activate Account", description = "Validates the emailed activation/invite token, sets the password, and activates the user account.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Account activated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AccountActivationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid token or password mismatch",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Invitation not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/activate")
     public ResponseEntity<?> activateAccount(@RequestBody @Valid ActivateAccountRequest request) {
         AcceptInvitationRequest acceptRequest = new AcceptInvitationRequest();
@@ -575,6 +674,14 @@ public class AuthController {
     }
 
     @Operation(summary = "Send Account Activation Email", description = "Generates an activation token and sends the activation email via Gmail SMTP.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Activation email sent successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User or Employee not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/activate-request")
     public ResponseEntity<?> sendActivationEmail(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -664,6 +771,12 @@ public class AuthController {
     }
 
     @Operation(summary = "Verify Email Token", description = "Verifies email registration token to activate admin account and organization.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Email verified successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid or expired token",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/email/verify")
     public ResponseEntity<?> verifyEmail(@RequestParam(required = false) String token,
             @RequestBody(required = false) @Valid VerifyEmailRequest body) {
@@ -691,6 +804,12 @@ public class AuthController {
     }
 
     @Operation(summary = "Check Organization Name Availability", description = "Checks if an organization name is unique after normalising it.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization name check completed",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = AvailabilityCheckResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Missing or invalid organization name",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/check-organization")
     public ResponseEntity<?> checkOrganization(@RequestBody @Valid CheckOrganizationRequest body) {
         String orgName = body != null ? body.orgName() : null;
@@ -709,6 +828,12 @@ public class AuthController {
     }
 
     @Operation(summary = "Check email availability with normalization", description = "Checks if an email is already registered after normalising it.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Email availability check completed",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmailAvailabilityResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Missing or invalid email",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/check-email")
     public ResponseEntity<?> checkEmail(@RequestBody @Valid CheckEmailRequest body) {
         String email = body != null ? body.email() : null;
@@ -727,6 +852,12 @@ public class AuthController {
     }
 
     @Operation(summary = "Check mobile number availability with normalization", description = "Checks if a phone number is already registered after normalising it.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Phone availability check completed",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PhoneAvailabilityResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Missing or invalid mobile number",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/check-phone")
     public ResponseEntity<?> checkPhone(@RequestBody @Valid CheckPhoneRequest body) {
         String mobileNumber = body != null ? body.mobileNumber() : null;
@@ -744,3 +875,4 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(code, message, data));
     }
 }
+

@@ -26,6 +26,17 @@ import com.example.ems.offboarding.repository.OffboardingRepository;
 import com.example.ems.offboarding.repository.OffboardingSettlementRepository;
 import com.example.ems.offboarding.repository.OffboardingTaskRepository;
 
+import com.example.ems.common.exception.ResourceNotFoundException;
+import com.example.ems.offboarding.dto.AssignTemplateToRequestDto;
+import com.example.ems.offboarding.dto.InitiateExitRequest;
+import com.example.ems.offboarding.dto.InitiateExitResponse;
+import com.example.ems.offboarding.entity.OffboardingClearanceTaskTemplate;
+import com.example.ems.offboarding.entity.OffboardingTemplate;
+import com.example.ems.offboarding.enums.OffboardingTemplateStatus;
+import com.example.ems.offboarding.repository.OffboardingClearanceTaskTemplateRepository;
+import com.example.ems.offboarding.repository.OffboardingTemplateRepository;
+import com.example.ems.security.context.TenantContext;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -64,6 +75,15 @@ public class OffboardingService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired(required = false)
+    private OffboardingTemplateAssignmentService templateAssignmentService;
+
+    @Autowired(required = false)
+    private OffboardingTemplateRepository templateRepository;
+
+    @Autowired(required = false)
+    private OffboardingClearanceTaskTemplateRepository clearanceTaskRepository;
 
     private OffboardingResponse buildResponse(Offboarding offboarding) {
         List<OffboardingTask> tasks = offboardingTaskRepository.findByOffboardingId(offboarding.getId());
@@ -109,6 +129,171 @@ public class OffboardingService {
     }
 
     // ── 2. CREATE OFFBOARDING ────────────────────────────────────────────────
+    @Transactional
+    @CacheEvict(value = "offboardingDashboard", allEntries = true)
+    public InitiateExitResponse initiateExit(InitiateExitRequest request) {
+        Long orgId = TenantContext.requireOrganizationId();
+
+        Employee employee = employeeRepository.findById(request.getEmployeeId())
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + request.getEmployeeId()));
+
+        if (employee.getOrganization() == null || !orgId.equals(employee.getOrganization().getId())) {
+            throw new ResourceNotFoundException("Employee not found in organization ID: " + orgId);
+        }
+
+        Optional<Offboarding> existing = offboardingRepository.findByEmployeeId(request.getEmployeeId());
+        if (existing.isPresent()) {
+            String existingStatus = existing.get().getStatus();
+            if (!"REJECTED".equalsIgnoreCase(existingStatus) && !"COMPLETED".equalsIgnoreCase(existingStatus)) {
+                throw new IllegalStateException("An exit process is already active for employee: " + employee.getFullName());
+            }
+        }
+
+        String exitType = (request.getExitType() != null && !request.getExitType().trim().isEmpty())
+                ? request.getExitType().trim().toUpperCase()
+                : "RESIGNATION";
+
+        LocalDate lastWorkingDate = request.getLastWorkingDate();
+        if (lastWorkingDate == null) {
+            lastWorkingDate = LocalDate.now().plusDays(request.getNoticePeriodDays() != null ? request.getNoticePeriodDays() : 30);
+        }
+
+        LocalDate resignationDate = request.getResignationDate();
+        if ("RESIGNATION".equalsIgnoreCase(exitType) && resignationDate == null) {
+            resignationDate = LocalDate.now();
+        }
+
+        // Resolve template via multi-tier decision engine
+        OffboardingTemplate template = null;
+        if (templateAssignmentService != null) {
+            try {
+                template = templateAssignmentService.resolveTemplateForEmployee(employee, exitType);
+            } catch (Exception ignored) {
+            }
+        }
+
+        Offboarding offboarding = new Offboarding();
+        offboarding.setEmployee(employee);
+        offboarding.setStatus("PENDING");
+        offboarding.setCurrentStage("MANAGER_APPROVAL");
+        offboarding.setReason(request.getReasonDetails() != null ? request.getReasonDetails() : request.getReasonCategory());
+        offboarding.setReasonCategory(request.getReasonCategory());
+        offboarding.setResignationDate(resignationDate);
+        offboarding.setRequestedLastWorkingDay(lastWorkingDate);
+        offboarding.setExitDate(lastWorkingDate);
+        offboarding.setComments(request.getReasonDetails());
+        offboarding.setTemplateId(template != null ? template.getId() : null);
+        offboarding.setCreatedAt(LocalDateTime.now());
+        offboarding.setUpdatedAt(LocalDateTime.now());
+
+        Offboarding saved = offboardingRepository.save(offboarding);
+
+        // Instantiate tasks based on resolved template clearance tasks or default
+        if (template != null && clearanceTaskRepository != null) {
+            List<OffboardingClearanceTaskTemplate> clearanceTasks = clearanceTaskRepository
+                    .findByTemplateIdAndOrganizationIdAndActiveTrueOrderBySequenceAsc(template.getId(), orgId);
+            if (clearanceTasks != null && !clearanceTasks.isEmpty()) {
+                for (OffboardingClearanceTaskTemplate ct : clearanceTasks) {
+                    OffboardingTask task = new OffboardingTask();
+                    task.setOffboarding(saved);
+                    task.setTitle(ct.getTaskName());
+                    task.setDescription(ct.getDescription());
+                    task.setStatus("PENDING");
+                    task.setAssignedTo(ct.getAssignToType() != null ? ct.getAssignToType().name() : "EMPLOYEE");
+                    task.setActionRequired(ct.getMandatory() != null ? ct.getMandatory() : false);
+                    task.setDueDate(saved.getExitDate());
+                    offboardingTaskRepository.save(task);
+                }
+            } else {
+                createDefaultTasks(saved);
+            }
+        } else {
+            createDefaultTasks(saved);
+        }
+
+        return new InitiateExitResponse(
+                saved.getId(),
+                employee.getId(),
+                employee.getFullName(),
+                employee.getEmployeeId(),
+                exitType,
+                saved.getStatus(),
+                saved.getCurrentStage(),
+                template != null ? template.getId() : null,
+                template != null ? template.getName() : null,
+                saved.getExitDate(),
+                saved.getResignationDate(),
+                saved.getReasonCategory(),
+                request.getAssignedHrOwnerId(),
+                saved.getCreatedAt()
+        );
+    }
+
+    @Transactional
+    @CacheEvict(value = "offboardingDashboard", allEntries = true)
+    public InitiateExitResponse assignTemplateToRequest(Long requestId, AssignTemplateToRequestDto dto) {
+        Long orgId = TenantContext.requireOrganizationId();
+
+        Offboarding offboarding = offboardingRepository.findById(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Offboarding request not found with ID: " + requestId));
+
+        if (offboarding.getEmployee() == null || offboarding.getEmployee().getOrganization() == null
+                || !orgId.equals(offboarding.getEmployee().getOrganization().getId())) {
+            throw new ResourceNotFoundException("Offboarding request not found in organization ID: " + orgId);
+        }
+
+        OffboardingTemplate template = templateRepository.findByIdAndOrganizationId(dto.getTemplateId(), orgId)
+                .orElseThrow(() -> new ResourceNotFoundException("Template not found with ID: " + dto.getTemplateId()));
+
+        if (template.getStatus() != OffboardingTemplateStatus.ACTIVE) {
+            throw new IllegalStateException("Cannot assign an INACTIVE template (Template ID: " + template.getId() + ")");
+        }
+
+        offboarding.setTemplateId(template.getId());
+        offboarding.setUpdatedAt(LocalDateTime.now());
+        Offboarding saved = offboardingRepository.save(offboarding);
+
+        // Regenerate checklist tasks from assigned template
+        if (clearanceTaskRepository != null) {
+            offboardingTaskRepository.deleteByOffboardingId(saved.getId());
+            List<OffboardingClearanceTaskTemplate> clearanceTasks = clearanceTaskRepository
+                    .findByTemplateIdAndOrganizationIdAndActiveTrueOrderBySequenceAsc(template.getId(), orgId);
+            if (clearanceTasks != null && !clearanceTasks.isEmpty()) {
+                for (OffboardingClearanceTaskTemplate ct : clearanceTasks) {
+                    OffboardingTask task = new OffboardingTask();
+                    task.setOffboarding(saved);
+                    task.setTitle(ct.getTaskName());
+                    task.setDescription(ct.getDescription());
+                    task.setStatus("PENDING");
+                    task.setAssignedTo(ct.getAssignToType() != null ? ct.getAssignToType().name() : "EMPLOYEE");
+                    task.setActionRequired(ct.getMandatory() != null ? ct.getMandatory() : false);
+                    task.setDueDate(saved.getExitDate());
+                    offboardingTaskRepository.save(task);
+                }
+            } else {
+                createDefaultTasks(saved);
+            }
+        }
+
+        Employee employee = saved.getEmployee();
+        return new InitiateExitResponse(
+                saved.getId(),
+                employee.getId(),
+                employee.getFullName(),
+                employee.getEmployeeId(),
+                "RESIGNATION",
+                saved.getStatus(),
+                saved.getCurrentStage(),
+                template.getId(),
+                template.getName(),
+                saved.getExitDate(),
+                saved.getResignationDate(),
+                saved.getReasonCategory(),
+                null,
+                saved.getCreatedAt()
+        );
+    }
+
     @Transactional
     @CacheEvict(value = "offboardingDashboard", allEntries = true)
     public OffboardingResponse createOffboarding(OffboardingRequest request) {

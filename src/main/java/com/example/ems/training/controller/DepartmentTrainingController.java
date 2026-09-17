@@ -8,21 +8,28 @@ import com.example.ems.employee.repository.DepartmentRepository;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.training.dto.DepartmentProgressResponse;
+import com.example.ems.training.dto.TrainingAssignmentOptionsRequest;
+import com.example.ems.training.dto.TrainingEmployeeSummaryResponse;
 import com.example.ems.training.dto.TrainingUnifiedAssignmentRequest;
 import com.example.ems.training.entity.AssignmentTargetType;
 import com.example.ems.training.entity.TrainingParticipant;
 import com.example.ems.training.service.TrainingManagementService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.*;
-import com.example.ems.training.dto.TrainingAssignmentOptionsRequest;
-import com.example.ems.training.dto.TrainingEmployeeSummaryResponse;
-import jakarta.validation.Valid;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/training/departments")
@@ -62,8 +69,15 @@ public class DepartmentTrainingController {
         return null;
     }
 
+    @Operation(summary = "Get all departments with training summary")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Department summaries retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = DepartmentProgressResponse.class)))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
-public ResponseEntity<?> getDepartmentsWithSummary(
+    public ResponseEntity<?> getDepartmentsWithSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null)
@@ -81,8 +95,17 @@ public ResponseEntity<?> getDepartmentsWithSummary(
         return ResponseEntity.ok(summaries);
     }
 
+    @Operation(summary = "Get department training details")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Department details retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepartmentProgressResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{departmentId}")
-public ResponseEntity<?> getDepartmentDetails(
+    public ResponseEntity<?> getDepartmentDetails(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId) {
         User user = resolveUser(authHeader);
@@ -97,8 +120,17 @@ public ResponseEntity<?> getDepartmentDetails(
         }
     }
 
+    @Operation(summary = "Get department trainings")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Department trainings retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepartmentProgressResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{departmentId}/trainings")
-public ResponseEntity<?> getDepartmentTrainings(
+    public ResponseEntity<?> getDepartmentTrainings(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId) {
         User user = resolveUser(authHeader);
@@ -113,8 +145,17 @@ public ResponseEntity<?> getDepartmentTrainings(
         }
     }
 
+    @Operation(summary = "Assign training to department")
+    @ApiResponses({
+        @ApiResponse(responseCode = "201", description = "Training assigned successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TrainingParticipant.class)))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{departmentId}/trainings/{trainingId}")
-public ResponseEntity<?> assignTrainingToDepartment(
+    public ResponseEntity<?> assignTrainingToDepartment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId,
             @PathVariable Long trainingId,
@@ -136,8 +177,16 @@ public ResponseEntity<?> assignTrainingToDepartment(
         }
     }
 
+    @Operation(summary = "Remove department training assignment")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Training assignment removed successfully"),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @DeleteMapping("/{departmentId}/trainings/{trainingId}")
-public ResponseEntity<?> removeDepartmentTrainingAssignment(
+    public ResponseEntity<?> removeDepartmentTrainingAssignment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId,
             @PathVariable Long trainingId) {
@@ -155,8 +204,15 @@ public ResponseEntity<?> removeDepartmentTrainingAssignment(
         }
     }
 
+    @Operation(summary = "Get employees in department for training")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Department employees retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TrainingEmployeeSummaryResponse.class)))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{departmentId}/employees")
-public ResponseEntity<?> getDepartmentEmployees(
+    public ResponseEntity<?> getDepartmentEmployees(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId) {
         User user = resolveUser(authHeader);
@@ -179,8 +235,17 @@ public ResponseEntity<?> getDepartmentEmployees(
         return ResponseEntity.ok(employees);
     }
 
+    @Operation(summary = "Get department training progress")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Department progress retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepartmentProgressResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{departmentId}/progress")
-public ResponseEntity<?> getDepartmentProgress(
+    public ResponseEntity<?> getDepartmentProgress(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId) {
         User user = resolveUser(authHeader);

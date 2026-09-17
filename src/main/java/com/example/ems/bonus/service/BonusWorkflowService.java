@@ -34,19 +34,28 @@ public class BonusWorkflowService {
     private final BonusRecordRepository recordRepository;
     private final ApprovalFacade approvalFacade;
     private final com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService;
+    private final com.example.ems.employee.repository.EmployeeRepository employeeRepository;
 
     @Autowired
     public BonusWorkflowService(BonusRecordRepository recordRepository,
                                 @Autowired(required = false) ApprovalFacade approvalFacade,
-                                @Autowired(required = false) com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService) {
+                                @Autowired(required = false) com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService,
+                                @Autowired(required = false) com.example.ems.employee.repository.EmployeeRepository employeeRepository) {
         this.recordRepository = recordRepository;
         this.approvalFacade = approvalFacade;
         this.compensationConfigService = compensationConfigService;
+        this.employeeRepository = employeeRepository;
     }
 
     public BonusWorkflowService(BonusRecordRepository recordRepository,
-                                @Autowired(required = false) ApprovalFacade approvalFacade) {
-        this(recordRepository, approvalFacade, null);
+                                ApprovalFacade approvalFacade,
+                                com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService) {
+        this(recordRepository, approvalFacade, compensationConfigService, null);
+    }
+
+    public BonusWorkflowService(BonusRecordRepository recordRepository,
+                                ApprovalFacade approvalFacade) {
+        this(recordRepository, approvalFacade, null, null);
     }
 
     public BonusRecordResponse submitForApproval(Long id) {
@@ -158,5 +167,18 @@ public class BonusWorkflowService {
         Page<BonusRecord> page = recordRepository.findFiltered(
                 orgId, employeeId, policyId, bonusType, status, payrollStatus, periodStart, periodEnd, pageable);
         return page.map(BonusRecordResponse::fromEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<BonusRecordResponse> getMyRecords(Pageable pageable) {
+        Long orgId = TenantContext.requireOrganizationId();
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && employeeRepository != null) {
+            com.example.ems.employee.entity.Employee employee = employeeRepository.findByEmailAndOrganizationId(auth.getName().trim().toLowerCase(), orgId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee profile not found for authenticated user."));
+            Page<BonusRecord> records = recordRepository.findByOrganizationIdAndEmployeeId(orgId, employee.getId(), pageable);
+            return records.map(BonusRecordResponse::fromEntity);
+        }
+        throw new SecurityException("No authenticated security context found.");
     }
 }

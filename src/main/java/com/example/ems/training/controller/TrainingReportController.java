@@ -5,9 +5,18 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.training.dto.AttendanceReportResponse;
+import com.example.ems.training.dto.DepartmentProgressResponse;
+import com.example.ems.training.dto.EmployeeReportResponse;
 import com.example.ems.training.dto.ParticipationReportResponse;
+import com.example.ems.training.dto.TeamProgressResponse;
 import com.example.ems.training.dto.TrainingReportSummaryResponse;
 import com.example.ems.training.service.TrainingManagementService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -52,32 +61,60 @@ public class TrainingReportController {
         return null;
     }
 
+    @Operation(summary = "Get high-level training analytics summary")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Training summary report retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingReportSummaryResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/summary")
-public ResponseEntity<?> getSummaryReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> getSummaryReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         TrainingReportSummaryResponse summary = trainingService.getReportSummary(user);
         return ResponseEntity.ok(summary);
     }
 
+    @Operation(summary = "Get training participation analytics breakdown")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Participation report retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = ParticipationReportResponse.class)))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/participation")
-public ResponseEntity<?> getParticipationReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> getParticipationReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         List<ParticipationReportResponse> report = trainingService.getParticipationReport(user);
         return ResponseEntity.ok(report);
     }
 
+    @Operation(summary = "Get training attendance analytics report")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Attendance report retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AttendanceReportResponse.class)))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/attendance")
-public ResponseEntity<?> getAttendanceReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> getAttendanceReport(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         List<AttendanceReportResponse> report = trainingService.getAttendanceReport(user);
         return ResponseEntity.ok(report);
     }
 
+    @Operation(summary = "Export training attendance report as CSV")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "CSV export generated successfully",
+            content = @Content(mediaType = "text/csv", schema = @Schema(type = "string", format = "binary"))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/export")
-public ResponseEntity<?> exportReport(
+    public ResponseEntity<?> exportReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "csv") String format) {
         User user = resolveUser(authHeader);
@@ -99,8 +136,17 @@ public ResponseEntity<?> exportReport(
     }
 
     // ── Department, Team & Employee Reports ─────────────────────────────────
+    @Operation(summary = "Get department training report")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Department report retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepartmentProgressResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/department/{departmentId}")
-public ResponseEntity<?> getDepartmentReport(
+    public ResponseEntity<?> getDepartmentReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId) {
         User user = resolveUser(authHeader);
@@ -112,8 +158,17 @@ public ResponseEntity<?> getDepartmentReport(
         }
     }
 
+    @Operation(summary = "Get department completion report")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Department completion report retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepartmentProgressResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/department/{departmentId}/completion")
-public ResponseEntity<?> getDepartmentCompletionReport(
+    public ResponseEntity<?> getDepartmentCompletionReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long departmentId) {
         User user = resolveUser(authHeader);
@@ -125,8 +180,17 @@ public ResponseEntity<?> getDepartmentCompletionReport(
         }
     }
 
+    @Operation(summary = "Get team training report")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Team report retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamProgressResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/team/{teamId}")
-public ResponseEntity<?> getTeamReport(
+    public ResponseEntity<?> getTeamReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId) {
         User user = resolveUser(authHeader);
@@ -138,8 +202,17 @@ public ResponseEntity<?> getTeamReport(
         }
     }
 
+    @Operation(summary = "Get team completion report")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Team completion report retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamProgressResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/team/{teamId}/completion")
-public ResponseEntity<?> getTeamCompletionReport(
+    public ResponseEntity<?> getTeamCompletionReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long teamId) {
         User user = resolveUser(authHeader);
@@ -151,8 +224,17 @@ public ResponseEntity<?> getTeamCompletionReport(
         }
     }
 
+    @Operation(summary = "Get employee training report")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Employee report retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeReportResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/employee/{employeeId}")
-public ResponseEntity<?> getEmployeeReport(
+    public ResponseEntity<?> getEmployeeReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long employeeId) {
         User user = resolveUser(authHeader);

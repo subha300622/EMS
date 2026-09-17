@@ -443,7 +443,7 @@ public class MasterCompensationPayrollIntegrationTest {
         incReq.setFixedAmount(BigDecimal.valueOf(5000.00));
         incReq.setApprovalRequired(false);
         var incPol = incentivePolicyService.createPolicy(incReq);
-        var activeIncPol = incentivePolicyService.activatePolicy(incPol.getId());
+        incentivePolicyService.activatePolicy(incPol.getId());
 
         // 3. Bonus Policy
         BonusPolicyRequest bonusReq = new BonusPolicyRequest();
@@ -454,7 +454,7 @@ public class MasterCompensationPayrollIntegrationTest {
         bonusReq.setFixedAmount(BigDecimal.valueOf(10000.00));
         bonusReq.setApprovalRequired(false);
         var bonusPol = bonusPolicyService.createPolicy(bonusReq);
-        var activeBonusPol = bonusPolicyService.activatePolicy(bonusPol.getId());
+        bonusPolicyService.activatePolicy(bonusPol.getId());
 
         // Register approved test records for period
         OvertimeRecord ot = new OvertimeRecord();

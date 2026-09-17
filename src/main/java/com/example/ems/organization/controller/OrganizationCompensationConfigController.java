@@ -4,7 +4,6 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.organization.dto.CompensationConfigRequest;
 import com.example.ems.organization.dto.CompensationConfigResponse;
 import com.example.ems.organization.service.OrganizationCompensationConfigService;
-import com.example.ems.security.context.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +26,7 @@ public class OrganizationCompensationConfigController {
     @GetMapping
     @PreAuthorize("hasAuthority('COMPENSATION_CONFIG_VIEW') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('HR') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<CompensationConfigResponse>> getCompensationConfig() {
-        Long orgId = TenantContext.requireOrganizationId();
-        CompensationConfigResponse response = configService.getConfig(orgId);
+        CompensationConfigResponse response = configService.getCurrentConfig();
         return ResponseEntity.ok(ApiResponse.success("Compensation configuration retrieved successfully", response));
     }
 
@@ -37,8 +35,7 @@ public class OrganizationCompensationConfigController {
     @PreAuthorize("hasAuthority('COMPENSATION_CONFIG_MANAGE') or hasRole('HR') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<CompensationConfigResponse>> updateCompensationConfig(
             @RequestBody CompensationConfigRequest request) {
-        Long orgId = TenantContext.requireOrganizationId();
-        CompensationConfigResponse response = configService.updateConfig(orgId, request);
+        CompensationConfigResponse response = configService.updateCurrentConfig(request);
         return ResponseEntity.ok(ApiResponse.success("Compensation configuration updated successfully", response));
     }
 }

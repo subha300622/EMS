@@ -4,24 +4,30 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
+import com.example.ems.finance.entity.FinanceOnboardingHistory;
+import com.example.ems.finance.service.EmployeeFinanceOnboardingService;
+import com.example.ems.onboarding.dto.ApprovalActionRequest;
+import com.example.ems.onboarding.dto.OnboardingResponse;
+import com.example.ems.onboarding.dto.OnboardingTimelineEventDto;
 import com.example.ems.onboarding.dto.approval.OnboardingApprovalActionRequest;
 import com.example.ems.onboarding.dto.approval.OnboardingApprovalListResponse;
 import com.example.ems.onboarding.service.OnboardingApprovalService;
 import com.example.ems.onboarding.service.OnboardingService;
-import com.example.ems.finance.service.EmployeeFinanceOnboardingService;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import com.example.ems.finance.entity.FinanceOnboardingHistory;
-import com.example.ems.onboarding.dto.ApprovalActionRequest;
-import com.example.ems.onboarding.dto.OnboardingTimelineEventDto;
 
 @RestController
 @CrossOrigin("*")
@@ -54,16 +60,34 @@ public class ApprovalController {
         return null;
     }
 
-    @GetMapping("/api/v1/onboarding/{onboardingId}/approvals")
+    @GetMapping(value = "/api/v1/onboarding/{onboardingId}/approvals", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get Onboarding Approvals History & Current Status")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Approvals history retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = OnboardingApprovalListResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Onboarding not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> getOnboardingApprovals(
             @PathVariable Long onboardingId) {
         OnboardingApprovalListResponse response = onboardingApprovalService.getApprovals(onboardingId);
         return ResponseEntity.ok(ApiResponse.success("Approvals history retrieved successfully", response));
     }
 
-    @PostMapping("/api/v1/onboarding/{onboardingId}/approvals")
+    @PostMapping(value = "/api/v1/onboarding/{onboardingId}/approvals", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Process Onboarding Approval Action (Approve / Reject)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Approval action processed successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = OnboardingApprovalListResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid approval action request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Onboarding not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> processApproval(
             @PathVariable Long onboardingId,
             @Valid @RequestBody OnboardingApprovalActionRequest request) {
@@ -71,8 +95,19 @@ public class ApprovalController {
         return ResponseEntity.ok(ApiResponse.success("Approval action processed successfully", response));
     }
 
-    @PostMapping("/api/v1/approvals")
-public ResponseEntity<?> handleApproval(
+    @PostMapping(value = "/api/v1/approvals", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Centralized approval action handler for onboarding or finance")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Approval action processed successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = OnboardingResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid action or parameters",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Target entity not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> handleApproval(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody @Valid ApprovalActionRequest body) {
 
@@ -136,7 +171,14 @@ public ResponseEntity<?> handleApproval(
         }
     }
 
-    @GetMapping("/api/v1/approvals/onboarding/{id}")
+    @GetMapping(value = "/api/v1/approvals/onboarding/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get structured onboarding approval timeline history")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Onboarding approvals history timeline retrieved",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = OnboardingTimelineEventDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
+    })
     public ResponseEntity<?> getOnboardingHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
@@ -149,7 +191,14 @@ public ResponseEntity<?> handleApproval(
         return ResponseEntity.ok(ApiResponse.success("Onboarding approvals history timeline retrieved", timeline));
     }
 
-    @GetMapping("/api/v1/approvals/finance/{id}")
+    @GetMapping(value = "/api/v1/approvals/finance/{id}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get finance approvals history logs")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Finance approvals history logs retrieved",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = FinanceOnboardingHistory.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class)))
+    })
     public ResponseEntity<?> getFinanceHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
@@ -162,3 +211,4 @@ public ResponseEntity<?> handleApproval(
         return ResponseEntity.ok(ApiResponse.success("Finance approvals history logs retrieved", history));
     }
 }
+

@@ -2,19 +2,13 @@ package com.example.ems.bonus.controller;
 
 import com.example.ems.bonus.dto.*;
 import com.example.ems.bonus.entity.BonusPayrollStatus;
-import com.example.ems.bonus.entity.BonusRecord;
 import com.example.ems.bonus.entity.BonusStatus;
 import com.example.ems.bonus.entity.BonusType;
-import com.example.ems.bonus.repository.BonusRecordRepository;
 import com.example.ems.bonus.service.BonusAdjustmentService;
 import com.example.ems.bonus.service.BonusCalculationService;
 import com.example.ems.bonus.service.BonusPayrollIntegrationService;
 import com.example.ems.bonus.service.BonusWorkflowService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.exception.ResourceNotFoundException;
-import com.example.ems.employee.entity.Employee;
-import com.example.ems.employee.repository.EmployeeRepository;
-import com.example.ems.security.context.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,8 +20,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -43,21 +35,15 @@ public class BonusRecordController {
     private final BonusAdjustmentService adjustmentService;
     private final BonusWorkflowService workflowService;
     private final BonusPayrollIntegrationService payrollIntegrationService;
-    private final BonusRecordRepository recordRepository;
-    private final EmployeeRepository employeeRepository;
 
     public BonusRecordController(BonusCalculationService calculationService,
                                  BonusAdjustmentService adjustmentService,
                                  BonusWorkflowService workflowService,
-                                 BonusPayrollIntegrationService payrollIntegrationService,
-                                 BonusRecordRepository recordRepository,
-                                 EmployeeRepository employeeRepository) {
+                                 BonusPayrollIntegrationService payrollIntegrationService) {
         this.calculationService = calculationService;
         this.adjustmentService = adjustmentService;
         this.workflowService = workflowService;
         this.payrollIntegrationService = payrollIntegrationService;
-        this.recordRepository = recordRepository;
-        this.employeeRepository = employeeRepository;
     }
 
     @Operation(summary = "Preview Bonus Calculation", description = "Stateless preview calculation of bonus amounts and eligibility without persisting.")
@@ -111,10 +97,8 @@ public class BonusRecordController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('BONUS_VIEW') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('HR') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<BonusRecordResponse>> getBonusById(@PathVariable("id") Long id) {
-        Long orgId = TenantContext.requireOrganizationId();
-        BonusRecord record = recordRepository.findByIdAndOrganizationId(id, orgId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bonus record not found with ID: " + id));
-        return ResponseEntity.ok(ApiResponse.success("Bonus record retrieved successfully", BonusRecordResponse.fromEntity(record)));
+        BonusRecordResponse response = workflowService.getRecordById(id);
+        return ResponseEntity.ok(ApiResponse.success("Bonus record retrieved successfully", response));
     }
 
     @Operation(summary = "Get Eligible Records for Payroll", description = "Returns approved bonus records eligible for a payroll period with optional payroll status filter (defaults to PENDING).")
@@ -144,11 +128,10 @@ public class BonusRecordController {
             @RequestParam(value = "periodEnd", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate periodEnd,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Long orgId = TenantContext.requireOrganizationId();
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(100, Math.max(1, size)), Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<BonusRecord> records = recordRepository.findFiltered(
-                orgId, employeeId, policyId, bonusType, status, payrollStatus, periodStart, periodEnd, pageable);
-        return ResponseEntity.ok(ApiResponse.success("Bonus records retrieved successfully", records.map(BonusRecordResponse::fromEntity)));
+        Page<BonusRecordResponse> records = workflowService.searchRecords(
+                employeeId, policyId, bonusType, status, payrollStatus, periodStart, periodEnd, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Bonus records retrieved successfully", records));
     }
 
     @Operation(summary = "Get My Bonus Records", description = "Retrieves paginated bonus records for the currently authenticated employee.")
@@ -157,19 +140,8 @@ public class BonusRecordController {
     public ResponseEntity<ApiResponse<Page<BonusRecordResponse>>> getMyBonusRecords(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Long orgId = TenantContext.requireOrganizationId();
-        Employee employee = resolveCurrentEmployee(orgId);
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(100, Math.max(1, size)), Sort.by(Sort.Direction.DESC, "createdAt"));
-        Page<BonusRecord> records = recordRepository.findByOrganizationIdAndEmployeeId(orgId, employee.getId(), pageable);
-        return ResponseEntity.ok(ApiResponse.success("My bonus records retrieved successfully", records.map(BonusRecordResponse::fromEntity)));
-    }
-
-    private Employee resolveCurrentEmployee(Long orgId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null) {
-            return employeeRepository.findByEmailAndOrganizationId(auth.getName().trim().toLowerCase(), orgId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Employee profile not found for authenticated user."));
-        }
-        throw new SecurityException("No authenticated security context found.");
+        Page<BonusRecordResponse> records = workflowService.getMyRecords(pageable);
+        return ResponseEntity.ok(ApiResponse.success("My bonus records retrieved successfully", records));
     }
 }

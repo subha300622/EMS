@@ -7,6 +7,9 @@ import com.example.ems.offboarding.dto.*;
 import com.example.ems.offboarding.service.MyExitService;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,9 +23,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.nio.charset.StandardCharsets;
 
 @RestController
-@RequestMapping("/api/v1/my-exit")
+@RequestMapping(value = "/api/v1/my-exit", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin("*")
-@Tag(name = "Employee Self Service - Exit Management")
+@Tag(name = "Employee Self Service - Exit Management", description = "Self-Service resignation submissions, exit checklist, asset returns, document uploads, and clearance tracking.")
 public class MyExitController {
 
     @Autowired
@@ -45,14 +48,17 @@ public class MyExitController {
         return null;
     }
 
-
-
     // 2. Submit Resignation Request
     @Operation(summary = "Submit Resignation", description = "Submits a formal resignation request starting the employee offboarding process.")
-    @PostMapping("/resignation")
-public ResponseEntity<?> submitResignation(
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Resignation submitted successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = SubmitResignationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request or active exit already in progress", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping(value = "/resignation", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> submitResignation(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody SubmitResignationRequest request){
+            @Valid @RequestBody SubmitResignationRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -70,9 +76,14 @@ public ResponseEntity<?> submitResignation(
 
     // 3. Get Exit Checklist
     @Operation(summary = "Get Exit Checklist", description = "Retrieves the clearance checklist tasks assigned to the employee for offboarding.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Exit checklist retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ExitChecklistResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Exit process not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/checklist")
-public ResponseEntity<?> getChecklist(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+    public ResponseEntity<?> getChecklist(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -90,12 +101,17 @@ public ResponseEntity<?> getChecklist(
 
     // 4. Upload Exit Documents
     @Operation(summary = "Upload Exit Document", description = "Uploads required offboarding documents such as signed agreements or letters.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document uploaded successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UploadDocumentResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Exit process not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<?> uploadDocument(
+    public ResponseEntity<?> uploadDocument(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam("documentType") String documentType,
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "comments", required = false) String comments){
+            @RequestParam(value = "comments", required = false) String comments) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -115,9 +131,14 @@ public ResponseEntity<?> uploadDocument(
 
     // 5. Get Uploaded Exit Documents
     @Operation(summary = "Get Exit Documents", description = "Retrieves list and status of uploaded exit/offboarding documents.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Documents retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = UploadedDocumentsResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Exit process not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/documents")
-public ResponseEntity<?> getDocuments(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+    public ResponseEntity<?> getDocuments(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -135,11 +156,16 @@ public ResponseEntity<?> getDocuments(
 
     // 6. Confirm Asset Return
     @Operation(summary = "Confirm Asset Return", description = "Acknowledges/confirms physical return of a company asset by the employee.")
-    @PostMapping("/assets/{assetId}/return")
-public ResponseEntity<?> confirmAssetReturn(
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Asset return confirmed successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = AssetReturnConfirmResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping(value = "/assets/{assetId}/return", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> confirmAssetReturn(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable("assetId") Long assetId,
-            @Valid @RequestBody AssetReturnConfirmRequest request){
+            @Valid @RequestBody AssetReturnConfirmRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -157,9 +183,14 @@ public ResponseEntity<?> confirmAssetReturn(
 
     // 7. Get Assigned Assets
     @Operation(summary = "Get Offboarding Assets", description = "Retrieves the list of company assets assigned to the employee that must be cleared.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Assigned assets retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = AssignedAssetsResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Exit process not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/assets")
-public ResponseEntity<?> getAssets(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+    public ResponseEntity<?> getAssets(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -177,10 +208,15 @@ public ResponseEntity<?> getAssets(
 
     // 8. Schedule Exit Interview
     @Operation(summary = "Schedule Exit Interview", description = "Schedules a convenient time for the exit interview with HR.")
-    @PostMapping("/interview")
-public ResponseEntity<?> scheduleInterview(
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Exit interview scheduled successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ExitInterviewScheduleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping(value = "/interview", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> scheduleInterview(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody ExitInterviewScheduleRequest request){
+            @Valid @RequestBody ExitInterviewScheduleRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -198,10 +234,15 @@ public ResponseEntity<?> scheduleInterview(
 
     // 9. Sign NDA / Exit Agreement
     @Operation(summary = "Sign Exit Agreement", description = "Digitally signs exit agreements or NDAs required during offboarding.")
-    @PostMapping("/agreements/sign")
-public ResponseEntity<?> signAgreement(
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Exit agreement signed successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = SignAgreementResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping(value = "/agreements/sign", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> signAgreement(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody SignAgreementRequest request){
+            @Valid @RequestBody SignAgreementRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -219,9 +260,14 @@ public ResponseEntity<?> signAgreement(
 
     // 10. Get F&F Settlement Details
     @Operation(summary = "Get Full & Final Settlement Details", description = "Retrieves full and final (F&F) settlement statements, dues, and status.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Settlement details retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = SettlementDetailsResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Settlement not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/settlement")
-public ResponseEntity<?> getSettlement(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+    public ResponseEntity<?> getSettlement(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -239,9 +285,14 @@ public ResponseEntity<?> getSettlement(
 
     // 11. Get Exit Timeline
     @Operation(summary = "Get Exit Timeline", description = "Retrieves timeline of steps, milestones, and updates in the employee exit process.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Exit timeline retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ExitTimelineResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Exit process not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/timeline")
-public ResponseEntity<?> getTimeline(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+    public ResponseEntity<?> getTimeline(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -259,9 +310,13 @@ public ResponseEntity<?> getTimeline(
 
     // 12. Download Experience Letter
     @Operation(summary = "Download Experience Letter", description = "Downloads the generated experience/relieving letter in PDF format once offboarding is complete.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Experience letter PDF stream", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE, schema = @Schema(type = "string", format = "binary"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping(value = "/experience-letter", produces = MediaType.APPLICATION_PDF_VALUE)
-public ResponseEntity<?> downloadExperienceLetter(
-            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader){
+    public ResponseEntity<?> downloadExperienceLetter(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -285,10 +340,16 @@ public ResponseEntity<?> downloadExperienceLetter(
 
     // 13. Cancel Exit Request
     @Operation(summary = "Cancel Exit Request", description = "Cancels a submitted resignation request, if allowed within the notice period window.")
-    @PutMapping("/resignation/cancel")
-public ResponseEntity<?> cancelExit(
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Exit request cancelled successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = CancelExitResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Cancellation not permitted", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Exit process not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PutMapping(value = "/resignation/cancel", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> cancelExit(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @Valid @RequestBody CancelExitRequest request){
+            @Valid @RequestBody CancelExitRequest request) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

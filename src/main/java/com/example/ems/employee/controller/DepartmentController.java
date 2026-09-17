@@ -18,6 +18,10 @@ import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -58,6 +62,13 @@ public class DepartmentController {
         }
 
         @Operation(summary = "Create Department", description = "Creates a new department within the authenticated user's organization.")
+        @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Department created successfully",
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = Department.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+        })
         @PostMapping("/departments")
 public ResponseEntity<?> createDepartment(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -85,6 +96,11 @@ public ResponseEntity<?> createDepartment(
         }
 
         @Operation(summary = "Get All Departments", description = "Retrieves a detailed list of departments belonging to the authenticated organization context.")
+        @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Departments list retrieved successfully",
+                content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = DepartmentResponseDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+        })
         @GetMapping("/departments")
 public ResponseEntity<?> getDepartments(
                         @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -100,6 +116,12 @@ public ResponseEntity<?> getDepartments(
         }
 
         @Operation(summary = "Get Department Details", description = "Retrieves detailed department profile for the authenticated organization.")
+        @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department details retrieved successfully",
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepartmentResponseDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+        })
         @GetMapping("/departments/{id}")
 public ResponseEntity<?> getDepartmentById(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -120,6 +142,13 @@ public ResponseEntity<?> getDepartmentById(
         }
 
         @Operation(summary = "Update Department", description = "Updates a department within the user's organization and records audit history.")
+        @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department updated successfully",
+                content = @Content(mediaType = "application/json", schema = @Schema(implementation = DepartmentResponseDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+        })
         @PutMapping("/departments/{id}")
 public ResponseEntity<?> updateDepartment(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -147,6 +176,11 @@ public ResponseEntity<?> updateDepartment(
         }
 
         @Operation(summary = "Get Department Change History", description = "Retrieves the audit log history of changes for a department.")
+        @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department change history retrieved successfully",
+                content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = DepartmentAuditLog.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
+        })
         @GetMapping("/departments/{id}/history")
 public ResponseEntity<?> getHistory(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -164,6 +198,12 @@ public ResponseEntity<?> getHistory(
         }
 
         @Operation(summary = "Delete Department", description = "Deletes a department belonging to the authenticated organization.")
+        @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+        })
         @DeleteMapping("/departments/{id}")
 public ResponseEntity<?> deleteDepartment(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -192,6 +232,13 @@ public ResponseEntity<?> deleteDepartment(
         }
 
         @Operation(summary = "Toggle Department Status", description = "Deactivates or activates a department status in the authenticated organization.")
+        @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department status updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+        })
         @PatchMapping("/departments/{id}")
 public ResponseEntity<?> toggleStatus(
                         @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -221,7 +268,7 @@ public ResponseEntity<?> toggleStatus(
                         response.put("id", String.valueOf(updated.getId()));
                         response.put("status", status.equalsIgnoreCase("Active") ? "Active" : "Inactive");
                         return ResponseEntity
-                                        .ok(ApiResponse.success("Department status updated successfully", response));
+                                         .ok(ApiResponse.success("Department status updated successfully", response));
                 } catch (IllegalArgumentException e) {
                         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                                         .body(ErrorResponse.error(e.getMessage(), "DEP_404"));

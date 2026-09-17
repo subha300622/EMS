@@ -1,36 +1,40 @@
 package com.example.ems.auth.controller;
 
+import com.example.ems.auth.dto.AssignPermissionGroupsRequest;
+import com.example.ems.auth.dto.AssignPermissionsRequest;
+import com.example.ems.auth.dto.AssignRoleToUserRequest;
 import com.example.ems.auth.dto.RoleRequest;
 import com.example.ems.auth.dto.RoleResponse;
-
+import com.example.ems.auth.entity.Permission;
+import com.example.ems.auth.entity.PermissionGroup;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
-
 import com.example.ems.security.service.JwtService;
-
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.stream.Collectors;
-import com.example.ems.auth.dto.AssignPermissionGroupsRequest;
-import com.example.ems.auth.dto.AssignPermissionsRequest;
-import com.example.ems.auth.dto.AssignRoleToUserRequest;
 
 @RestController
-@RequestMapping("/api/v1/roles")
+@RequestMapping(value = "/api/v1/roles", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin("*")
-@Tag(name = "Custom Role APIs")
+@Tag(name = "Custom Role APIs", description = "Tenant Custom Role and Permission Management APIs")
 public class CustomRoleController {
 
     @Autowired
@@ -61,7 +65,13 @@ public class CustomRoleController {
 
     @GetMapping
     @Operation(summary = "List organization custom roles", description = "Lists custom roles for the caller's organization context.")
-public ResponseEntity<?> getOrganizationRoles(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization custom roles retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = RoleResponse.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getOrganizationRoles(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -79,7 +89,15 @@ public ResponseEntity<?> getOrganizationRoles(
 
     @GetMapping("/{roleId}")
     @Operation(summary = "Get custom role by ID")
-public ResponseEntity<?> getRoleById(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getRoleById(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId) {
 
@@ -95,7 +113,17 @@ public ResponseEntity<?> getRoleById(
 
     @PostMapping
     @Operation(summary = "Create custom role", description = "Creates a new custom role scoped to caller's organization.")
-public ResponseEntity<?> createCustomRole(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Custom role created successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> createCustomRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @Valid @RequestBody RoleRequest request) {
 
@@ -115,7 +143,19 @@ public ResponseEntity<?> createCustomRole(
 
     @PutMapping("/{roleId}")
     @Operation(summary = "Update custom role")
-public ResponseEntity<?> updateCustomRole(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Custom role updated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> updateCustomRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @Valid @RequestBody RoleRequest request) {
@@ -135,7 +175,17 @@ public ResponseEntity<?> updateCustomRole(
 
     @DeleteMapping("/{roleId}")
     @Operation(summary = "Delete custom role")
-public ResponseEntity<?> deleteCustomRole(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Custom role deleted successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> deleteCustomRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId) {
 
@@ -156,7 +206,15 @@ public ResponseEntity<?> deleteCustomRole(
 
     @GetMapping("/{roleId}/permissions")
     @Operation(summary = "Get role permissions")
-public ResponseEntity<?> getRolePermissions(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role permissions retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = Permission.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getRolePermissions(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId) {
 
@@ -172,7 +230,17 @@ public ResponseEntity<?> getRolePermissions(
 
     @PostMapping("/{roleId}/permissions")
     @Operation(summary = "Assign permissions to role")
-public ResponseEntity<?> assignPermissionsToRole(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permissions assigned to role successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> assignPermissionsToRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @RequestBody @Valid AssignPermissionsRequest request) {
@@ -202,7 +270,17 @@ public ResponseEntity<?> assignPermissionsToRole(
 
     @DeleteMapping("/{roleId}/permissions/{permissionId}")
     @Operation(summary = "Remove permission from role")
-public ResponseEntity<?> removePermissionFromRole(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission removed from role successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role or permission not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> removePermissionFromRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @PathVariable Long permissionId) {
@@ -224,7 +302,15 @@ public ResponseEntity<?> removePermissionFromRole(
 
     @GetMapping("/{roleId}/permission-groups")
     @Operation(summary = "Get role permission groups")
-public ResponseEntity<?> getRolePermissionGroups(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role permission groups retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = PermissionGroup.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getRolePermissionGroups(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId) {
 
@@ -240,7 +326,17 @@ public ResponseEntity<?> getRolePermissionGroups(
 
     @PostMapping("/{roleId}/permission-groups")
     @Operation(summary = "Assign permission groups to role")
-public ResponseEntity<?> assignPermissionGroupsToRole(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission groups assigned to role successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> assignPermissionGroupsToRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @RequestBody @Valid AssignPermissionGroupsRequest request) {
@@ -271,7 +367,17 @@ public ResponseEntity<?> assignPermissionGroupsToRole(
 
     @DeleteMapping("/{roleId}/permission-groups/{groupId}")
     @Operation(summary = "Remove permission group from role")
-public ResponseEntity<?> removePermissionGroupFromRole(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission group removed from role successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role or permission group not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> removePermissionGroupFromRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @PathVariable Long groupId) {
@@ -295,7 +401,19 @@ public ResponseEntity<?> removePermissionGroupFromRole(
 
     @PostMapping("/{roleId}/users")
     @Operation(summary = "Assign role to employee/user", description = "Assigns the specified role to an employee within caller's organization.")
-public ResponseEntity<?> assignRoleToUser(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role assigned to user successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid user ID or assignment failed",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role or user not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> assignRoleToUser(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long roleId,
             @RequestBody @Valid AssignRoleToUserRequest request) {
@@ -335,3 +453,4 @@ public ResponseEntity<?> assignRoleToUser(
         return ResponseEntity.ok(ApiResponse.success("Role assigned to user successfully", null));
     }
 }
+

@@ -1,18 +1,12 @@
 package com.example.ems.overtime.controller;
 
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.exception.ResourceNotFoundException;
-import com.example.ems.employee.entity.Employee;
-import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.overtime.dto.*;
 import com.example.ems.overtime.entity.OvertimePayrollStatus;
-import com.example.ems.overtime.entity.OvertimeRecord;
 import com.example.ems.overtime.entity.OvertimeStatus;
-import com.example.ems.overtime.repository.OvertimeRecordRepository;
 import com.example.ems.overtime.service.OvertimeAdjustmentService;
 import com.example.ems.overtime.service.OvertimeCalculationService;
 import com.example.ems.overtime.service.OvertimeWorkflowService;
-import com.example.ems.security.context.TenantContext;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -24,8 +18,6 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -39,19 +31,13 @@ public class OvertimeRecordController {
     private final OvertimeCalculationService calculationService;
     private final OvertimeAdjustmentService adjustmentService;
     private final OvertimeWorkflowService workflowService;
-    private final OvertimeRecordRepository recordRepository;
-    private final EmployeeRepository employeeRepository;
 
     public OvertimeRecordController(OvertimeCalculationService calculationService,
                                     OvertimeAdjustmentService adjustmentService,
-                                    OvertimeWorkflowService workflowService,
-                                    OvertimeRecordRepository recordRepository,
-                                    EmployeeRepository employeeRepository) {
+                                    OvertimeWorkflowService workflowService) {
         this.calculationService = calculationService;
         this.adjustmentService = adjustmentService;
         this.workflowService = workflowService;
-        this.recordRepository = recordRepository;
-        this.employeeRepository = employeeRepository;
     }
 
     @Operation(summary = "Preview Overtime Calculation", description = "Stateless preview calculation of overtime hours, hourly rate, multipliers, and calculated amounts without persisting.")
@@ -95,10 +81,8 @@ public class OvertimeRecordController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('OVERTIME_VIEW') or hasRole('EMPLOYEE') or hasRole('MANAGER') or hasRole('HR') or hasRole('SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<OvertimeRecordResponse>> getOvertimeById(@PathVariable("id") Long id) {
-        Long orgId = TenantContext.requireOrganizationId();
-        OvertimeRecord record = recordRepository.findByIdAndOrganizationId(id, orgId)
-                .orElseThrow(() -> new ResourceNotFoundException("Overtime record not found with ID: " + id));
-        return ResponseEntity.ok(ApiResponse.success("Overtime record retrieved successfully", OvertimeRecordResponse.fromEntity(record)));
+        OvertimeRecordResponse response = workflowService.getRecordById(id);
+        return ResponseEntity.ok(ApiResponse.success("Overtime record retrieved successfully", response));
     }
 
     @Operation(summary = "Get Filtered Overtime Records", description = "Queries overtime records with multi-criteria filtering for reporting and administration.")
@@ -112,10 +96,9 @@ public class OvertimeRecordController {
             @RequestParam(value = "toDate", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate toDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Long orgId = TenantContext.requireOrganizationId();
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(100, Math.max(1, size)), Sort.by(Sort.Direction.DESC, "workDate"));
-        Page<OvertimeRecord> records = recordRepository.findFiltered(orgId, employeeId, status, payrollStatus, fromDate, toDate, pageable);
-        return ResponseEntity.ok(ApiResponse.success("Overtime records retrieved successfully", records.map(OvertimeRecordResponse::fromEntity)));
+        Page<OvertimeRecordResponse> records = workflowService.searchRecords(employeeId, status, payrollStatus, fromDate, toDate, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Overtime records retrieved successfully", records));
     }
 
     @Operation(summary = "Get My Overtime Records", description = "Retrieves paginated overtime records for the currently authenticated employee.")
@@ -124,19 +107,8 @@ public class OvertimeRecordController {
     public ResponseEntity<ApiResponse<Page<OvertimeRecordResponse>>> getMyOvertimeRecords(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        Long orgId = TenantContext.requireOrganizationId();
-        Employee employee = resolveCurrentEmployee(orgId);
         Pageable pageable = PageRequest.of(Math.max(0, page), Math.min(100, Math.max(1, size)), Sort.by(Sort.Direction.DESC, "workDate"));
-        Page<OvertimeRecord> records = recordRepository.findByOrganizationIdAndEmployeeId(orgId, employee.getId(), pageable);
-        return ResponseEntity.ok(ApiResponse.success("My overtime records retrieved successfully", records.map(OvertimeRecordResponse::fromEntity)));
-    }
-
-    private Employee resolveCurrentEmployee(Long orgId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getName() != null) {
-            return employeeRepository.findByEmailAndOrganizationId(auth.getName().trim().toLowerCase(), orgId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Employee profile not found for authenticated user."));
-        }
-        throw new SecurityException("No authenticated security context found.");
+        Page<OvertimeRecordResponse> records = workflowService.getMyRecords(pageable);
+        return ResponseEntity.ok(ApiResponse.success("My overtime records retrieved successfully", records));
     }
 }

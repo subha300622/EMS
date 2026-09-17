@@ -25,7 +25,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -166,12 +165,12 @@ public class BonusRecordControllerTest {
 
     @Test
     void testGetBonusById() throws Exception {
-        BonusRecord rec = new BonusRecord();
-        rec.setId(501L);
-        rec.setCalculatedAmount(BigDecimal.valueOf(15000.00));
-        rec.setStatus(BonusStatus.APPROVED);
+        BonusRecordResponse resp = new BonusRecordResponse();
+        resp.setId(501L);
+        resp.setApprovedAmount(BigDecimal.valueOf(15000.00));
+        resp.setStatus(BonusStatus.APPROVED);
 
-        when(recordRepository.findByIdAndOrganizationId(501L, orgId)).thenReturn(Optional.of(rec));
+        when(workflowService.getRecordById(501L)).thenReturn(resp);
 
         mockMvc.perform(get("/api/v1/bonuses/501"))
                 .andExpect(status().isOk())

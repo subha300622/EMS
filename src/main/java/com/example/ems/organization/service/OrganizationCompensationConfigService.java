@@ -82,6 +82,17 @@ public class OrganizationCompensationConfigService {
     }
 
     @Transactional(readOnly = true)
+    public CompensationConfigResponse getCurrentConfig() {
+        Long organizationId = com.example.ems.security.context.TenantContext.requireOrganizationId();
+        return getConfig(organizationId);
+    }
+
+    public CompensationConfigResponse updateCurrentConfig(CompensationConfigRequest request) {
+        Long organizationId = com.example.ems.security.context.TenantContext.requireOrganizationId();
+        return updateConfig(organizationId, request);
+    }
+
+    @Transactional(readOnly = true)
     public CompensationConfigResponse getConfig(Long organizationId) {
         return configRepository.findByOrganizationId(organizationId)
                 .map(CompensationConfigResponse::fromEntity)

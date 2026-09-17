@@ -8,6 +8,7 @@ import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.dto.manager.AnnouncementDto;
+import com.example.ems.common.dto.manager.AnnouncementCommentDto;
 import com.example.ems.common.service.ManagerNotificationService;
 import com.example.ems.employee.entity.Announcement;
 import com.example.ems.employee.repository.AnnouncementRepository;
@@ -16,6 +17,10 @@ import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -79,6 +84,12 @@ public class AnnouncementController {
 
     // ── 1. GET ALL ANNOUNCEMENTS (PAGINATED) ──────────────────────────────────
     @Operation(summary = "Get All Announcements", description = "Retrieves a paginated list of announcements depending on roles.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcements list retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AnnouncementDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping
 public ResponseEntity<?> getAnnouncements(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -112,6 +123,13 @@ public ResponseEntity<?> getAnnouncements(
 
     // ── 2. GET ANNOUNCEMENT BY ID ─────────────────────────────────────────────
     @Operation(summary = "Get Announcement Details")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement details retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AnnouncementDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/{id}")
 public ResponseEntity<?> getAnnouncementById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -141,6 +159,12 @@ public ResponseEntity<?> getAnnouncementById(
 
     // ── 3. CREATE ANNOUNCEMENT ────────────────────────────────────────────────
     @Operation(summary = "Create Company Announcement")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Announcement created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AnnouncementDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping
 public ResponseEntity<?> createAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -161,6 +185,13 @@ public ResponseEntity<?> createAnnouncement(
 
     // ── 4. UPDATE ANNOUNCEMENT ────────────────────────────────────────────────
     @Operation(summary = "Update Company Announcement")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AnnouncementDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @PutMapping("/{id}")
 public ResponseEntity<?> updateAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -186,6 +217,12 @@ public ResponseEntity<?> updateAnnouncement(
 
     // ── 5. DELETE ANNOUNCEMENT ────────────────────────────────────────────────
     @Operation(summary = "Delete Company Announcement")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement deleted successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @DeleteMapping("/{id}")
 public ResponseEntity<?> deleteAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -211,6 +248,12 @@ public ResponseEntity<?> deleteAnnouncement(
 
     // ── 6. LIKE ANNOUNCEMENT ──────────────────────────────────────────────────
     @Operation(summary = "Like Company Announcement")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement liked successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @PostMapping("/{id}/like")
 public ResponseEntity<?> likeAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -237,6 +280,12 @@ public ResponseEntity<?> likeAnnouncement(
 
     // ── 7. GET COMMENTS ───────────────────────────────────────────────────────
     @Operation(summary = "Get Announcement Comments")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement comments retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AnnouncementCommentDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/{id}/comments")
 public ResponseEntity<?> getComments(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -258,6 +307,14 @@ public ResponseEntity<?> getComments(
 
     // ── 8. ADD COMMENT ────────────────────────────────────────────────────────
     @Operation(summary = "Add Comment to Announcement")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Comment added successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = AnnouncementCommentDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @PostMapping("/{id}/comments")
 public ResponseEntity<?> addComment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

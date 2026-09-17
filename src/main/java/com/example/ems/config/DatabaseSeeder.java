@@ -325,6 +325,10 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "employee.onboarding.update",
                 "employee.onboarding.document.upload", "employee.onboarding.document.read",
                 "employee.onboarding.submit"));
+        groupDefinitions.put("OFFBOARDING", Arrays.asList(
+                "offboarding.request.read", "offboarding.analytics.read", "offboarding.template.read",
+                "offboarding.template.manage", "offboarding.request.create", "offboarding.request.approve",
+                "offboarding.request.reject"));
         groupDefinitions.put("SUPPORT", Arrays.asList(
                 "support.self.create", "support.self.read", "support.self.comment.create", "support.self.close",
                 "support.view", "support.reply", "support.manage", "employee.support-ticket.create",

@@ -15,7 +15,13 @@ import com.example.ems.training.dto.TrainingCatalogRequest;
 import com.example.ems.training.dto.TrainingProgressUpdateRequest;
 import com.example.ems.training.entity.TrainingCourse;
 import com.example.ems.training.service.TrainingAssignmentService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -78,6 +84,12 @@ public class TrainingAssignmentController {
     }
 
     // ── A. Catalog APIs (HR) ─────────────────────────────────────────────────
+    @Operation(summary = "Create Course")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Training course created successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping("/catalog")
 public ResponseEntity<?> createCourse(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -100,12 +112,23 @@ public ResponseEntity<?> createCourse(
         return ResponseEntity.status(HttpStatus.CREATED).body(resp);
     }
 
+    @Operation(summary = "Get Catalog")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Courses retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TrainingCourse.class))))
+    })
     @GetMapping("/catalog")
     public ResponseEntity<?> getCatalog() {
         List<TrainingCourse> courses = assignmentService.getCourses();
         return ResponseEntity.ok(courses);
     }
 
+    @Operation(summary = "Get Course by ID")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Course retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingCourse.class))),
+        @ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/catalog/{id}")
 public ResponseEntity<?> getCourseById(@PathVariable Long id) {
         Optional<TrainingCourse> course = assignmentService.getCourseById(id);
@@ -117,6 +140,13 @@ public ResponseEntity<?> getCourseById(@PathVariable Long id) {
     }
 
     // ── B. Assignment APIs (Manager/HR) ──────────────────────────────────────
+    @Operation(summary = "Assign Training")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Training assigned successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping("/assign")
 public ResponseEntity<?> assignTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -143,6 +173,11 @@ public ResponseEntity<?> assignTraining(
         }
     }
 
+    @Operation(summary = "Get Assignments")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Assignments retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TrainingAssignmentItemResponse.class))))
+    })
     @GetMapping("/assignments")
     public ResponseEntity<?> getAssignments() {
         List<TrainingAssignmentItemResponse> list = assignmentService.getAssignments().stream().map(a ->
@@ -157,6 +192,11 @@ public ResponseEntity<?> assignTraining(
         return ResponseEntity.ok(list);
     }
 
+    @Operation(summary = "Get Assignment Details")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Assignment details retrieved successfully"),
+        @ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/assignments/{id}")
 public ResponseEntity<?> getAssignmentDetails(@PathVariable Long id) {
         Optional<Map<String, Object>> details = assignmentService.getAssignmentDetails(id);
@@ -167,6 +207,14 @@ public ResponseEntity<?> getAssignmentDetails(@PathVariable Long id) {
         return ResponseEntity.ok(details.get());
     }
 
+    @Operation(summary = "Get Employee Training Details")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Employee detail retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = EmployeeTrainingDetailResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden"),
+        @ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/employee/{id}")
 public ResponseEntity<?> getEmployeeDetail(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -195,6 +243,11 @@ public ResponseEntity<?> getEmployeeDetail(
     }
 
     // ── C. Employee Training APIs ────────────────────────────────────────────
+    @Operation(summary = "Get My Trainings")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "My trainings retrieved successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping("/my")
 public ResponseEntity<?> getMyTrainings(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -208,6 +261,13 @@ public ResponseEntity<?> getMyTrainings(
         return ResponseEntity.ok(list);
     }
 
+    @Operation(summary = "Update Training Progress")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Progress updated successfully"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden"),
+        @ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @PutMapping("/{assignmentId}/progress")
 public ResponseEntity<?> updateProgress(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -235,6 +295,14 @@ public ResponseEntity<?> updateProgress(
         }
     }
 
+    @Operation(summary = "Complete Training")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Training completed successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden"),
+        @ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @PutMapping("/{assignmentId}/complete")
 public ResponseEntity<?> completeTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -268,6 +336,14 @@ public ResponseEntity<?> completeTraining(
     }
 
     // ── D. Team Dashboard APIs (Manager UI) ──────────────────────────────────
+    @Operation(summary = "Get Team Summary")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Team summary retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamSummaryResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/team/summary")
 public ResponseEntity<?> getTeamSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -295,6 +371,13 @@ public ResponseEntity<?> getTeamSummary(
         return ResponseEntity.ok(summary);
     }
 
+    @Operation(summary = "Get Team Progress")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Team progress retrieved successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/team")
 public ResponseEntity<?> getTeamProgress(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -322,6 +405,14 @@ public ResponseEntity<?> getTeamProgress(
         return ResponseEntity.ok(progress);
     }
 
+    @Operation(summary = "Get Team Risk")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Team risk retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TeamRiskResponse.class)))),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/team/risk")
 public ResponseEntity<?> getTeamRisk(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

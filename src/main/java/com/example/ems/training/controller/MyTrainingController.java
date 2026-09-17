@@ -10,6 +10,11 @@ import com.example.ems.training.entity.ParticipationStatus;
 import com.example.ems.training.entity.Training;
 import com.example.ems.training.entity.TrainingParticipant;
 import com.example.ems.training.service.TrainingManagementService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -49,16 +54,32 @@ public class MyTrainingController {
         return null;
     }
 
+    @Operation(summary = "Get my assigned trainings")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Trainings retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = MyTrainingsResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
-public ResponseEntity<?> getMyTrainings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
+    public ResponseEntity<?> getMyTrainings(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         MyTrainingsResponse response = trainingService.getMyTrainings(user);
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Get my training details")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Training details retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Training.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "404", description = "Training not found",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{trainingId}")
-public ResponseEntity<?> getMyTrainingDetail(
+    public ResponseEntity<?> getMyTrainingDetail(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);
@@ -71,8 +92,17 @@ public ResponseEntity<?> getMyTrainingDetail(
         }
     }
 
+    @Operation(summary = "Accept training invitation")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Training accepted successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingParticipant.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{trainingId}/accept")
-public ResponseEntity<?> acceptTraining(
+    public ResponseEntity<?> acceptTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @RequestBody(required = false) ParticipantResponseRequest request) {
@@ -87,8 +117,17 @@ public ResponseEntity<?> acceptTraining(
         }
     }
 
+    @Operation(summary = "Decline training invitation")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Training declined successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingParticipant.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{trainingId}/decline")
-public ResponseEntity<?> declineTraining(
+    public ResponseEntity<?> declineTraining(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @RequestBody(required = false) ParticipantResponseRequest request) {

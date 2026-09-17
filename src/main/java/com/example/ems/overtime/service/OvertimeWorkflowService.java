@@ -30,19 +30,28 @@ public class OvertimeWorkflowService {
     private final OvertimeRecordRepository recordRepository;
     private final ApprovalFacade approvalFacade;
     private final com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService;
+    private final com.example.ems.employee.repository.EmployeeRepository employeeRepository;
 
     @Autowired
     public OvertimeWorkflowService(OvertimeRecordRepository recordRepository,
                                    @Autowired(required = false) ApprovalFacade approvalFacade,
-                                   @Autowired(required = false) com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService) {
+                                   @Autowired(required = false) com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService,
+                                   @Autowired(required = false) com.example.ems.employee.repository.EmployeeRepository employeeRepository) {
         this.recordRepository = recordRepository;
         this.approvalFacade = approvalFacade;
         this.compensationConfigService = compensationConfigService;
+        this.employeeRepository = employeeRepository;
     }
 
     public OvertimeWorkflowService(OvertimeRecordRepository recordRepository,
-                                   @Autowired(required = false) ApprovalFacade approvalFacade) {
-        this(recordRepository, approvalFacade, null);
+                                   ApprovalFacade approvalFacade,
+                                   com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService) {
+        this(recordRepository, approvalFacade, compensationConfigService, null);
+    }
+
+    public OvertimeWorkflowService(OvertimeRecordRepository recordRepository,
+                                   ApprovalFacade approvalFacade) {
+        this(recordRepository, approvalFacade, null, null);
     }
 
     /**
@@ -112,5 +121,37 @@ public class OvertimeWorkflowService {
                 record.getId(), record.getWorkflowInstanceId());
 
         return OvertimeRecordResponse.fromEntity(record);
+    }
+
+    @Transactional(readOnly = true)
+    public OvertimeRecordResponse getRecordById(Long id) {
+        Long orgId = TenantContext.requireOrganizationId();
+        OvertimeRecord record = recordRepository.findByIdAndOrganizationId(id, orgId)
+                .orElseThrow(() -> new ResourceNotFoundException("Overtime record not found with ID: " + id));
+        return OvertimeRecordResponse.fromEntity(record);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<OvertimeRecordResponse> searchRecords(
+            Long employeeId, OvertimeStatus status, OvertimePayrollStatus payrollStatus,
+            java.time.LocalDate fromDate, java.time.LocalDate toDate,
+            org.springframework.data.domain.Pageable pageable) {
+        Long orgId = TenantContext.requireOrganizationId();
+        org.springframework.data.domain.Page<OvertimeRecord> page = recordRepository.findFiltered(
+                orgId, employeeId, status, payrollStatus, fromDate, toDate, pageable);
+        return page.map(OvertimeRecordResponse::fromEntity);
+    }
+
+    @Transactional(readOnly = true)
+    public org.springframework.data.domain.Page<OvertimeRecordResponse> getMyRecords(org.springframework.data.domain.Pageable pageable) {
+        Long orgId = TenantContext.requireOrganizationId();
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && employeeRepository != null) {
+            com.example.ems.employee.entity.Employee employee = employeeRepository.findByEmailAndOrganizationId(auth.getName().trim().toLowerCase(), orgId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee profile not found for authenticated user."));
+            org.springframework.data.domain.Page<OvertimeRecord> records = recordRepository.findByOrganizationIdAndEmployeeId(orgId, employee.getId(), pageable);
+            return records.map(OvertimeRecordResponse::fromEntity);
+        }
+        throw new SecurityException("No authenticated security context found.");
     }
 }

@@ -25,7 +25,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -182,17 +181,17 @@ public class OvertimeRecordControllerTest {
 
     @Test
     void testGetRecordById() throws Exception {
-        OvertimeRecord entity = new OvertimeRecord();
-        entity.setId(50L);
-        entity.setWorkDate(LocalDate.of(2026, 9, 1));
-        entity.setScheduledMinutes(480);
-        entity.setWorkedMinutes(600);
-        entity.setCalculatedOtMinutes(120);
-        entity.setCalculatedAmount(BigDecimal.valueOf(300.00));
-        entity.setStatus(OvertimeStatus.APPROVED);
-        entity.setPayrollStatus(OvertimePayrollStatus.PENDING);
+        OvertimeRecordResponse resp = new OvertimeRecordResponse();
+        resp.setId(50L);
+        resp.setWorkDate(LocalDate.of(2026, 9, 1));
+        resp.setScheduledMinutes(480);
+        resp.setWorkedMinutes(600);
+        resp.setCalculatedOtMinutes(120);
+        resp.setCalculatedAmount(BigDecimal.valueOf(300.00));
+        resp.setStatus(OvertimeStatus.APPROVED);
+        resp.setPayrollStatus(OvertimePayrollStatus.PENDING);
 
-        when(recordRepository.findByIdAndOrganizationId(50L, 1L)).thenReturn(Optional.of(entity));
+        when(workflowService.getRecordById(50L)).thenReturn(resp);
 
         mockMvc.perform(get("/api/v1/overtime/50"))
                 .andExpect(status().isOk())
@@ -202,18 +201,18 @@ public class OvertimeRecordControllerTest {
 
     @Test
     void testGetRecords() throws Exception {
-        OvertimeRecord entity = new OvertimeRecord();
-        entity.setId(50L);
-        entity.setWorkDate(LocalDate.of(2026, 9, 1));
-        entity.setScheduledMinutes(480);
-        entity.setWorkedMinutes(600);
-        entity.setCalculatedOtMinutes(120);
-        entity.setCalculatedAmount(BigDecimal.valueOf(300.00));
-        entity.setStatus(OvertimeStatus.APPROVED);
-        entity.setPayrollStatus(OvertimePayrollStatus.PENDING);
+        OvertimeRecordResponse resp = new OvertimeRecordResponse();
+        resp.setId(50L);
+        resp.setWorkDate(LocalDate.of(2026, 9, 1));
+        resp.setScheduledMinutes(480);
+        resp.setWorkedMinutes(600);
+        resp.setCalculatedOtMinutes(120);
+        resp.setCalculatedAmount(BigDecimal.valueOf(300.00));
+        resp.setStatus(OvertimeStatus.APPROVED);
+        resp.setPayrollStatus(OvertimePayrollStatus.PENDING);
 
-        when(recordRepository.findFiltered(any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(new PageImpl<>(List.of(entity), PageRequest.of(0, 10), 1));
+        when(workflowService.searchRecords(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(resp), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/api/v1/overtime?page=0&size=10"))
                 .andExpect(status().isOk())

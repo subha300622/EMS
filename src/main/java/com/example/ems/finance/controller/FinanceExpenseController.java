@@ -11,6 +11,10 @@ import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -78,6 +82,15 @@ public class FinanceExpenseController {
 
     // ── 1. GET DASHBOARD ──────────────────────────────────────────────────────
     @Operation(summary = "Get Expense Dashboard Stats", description = "Retrieves high-level counts of pending, approved, and reimbursed expense claims.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Expense dashboard retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExpenseDashboardResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @Deprecated
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard(
@@ -92,6 +105,15 @@ public class FinanceExpenseController {
 
     // ── 2. GET EXPENSE CLAIMS (LIST) ──────────────────────────────────────────
     @Operation(summary = "Get Expense Claims List", description = "Retrieves a paginated and filtered list of all employee expense claims.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Expense claims list retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FinanceExpenseListResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @Deprecated
     @GetMapping
     public ResponseEntity<?> getExpenses(
@@ -116,6 +138,16 @@ public class FinanceExpenseController {
 
     // ── 3. GET EXPENSE DETAILS ───────────────────────────────────────────────
     @Operation(summary = "Get Expense Claim Details", description = "Retrieves full information for a specific expense claim by ID, including audit logs.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Expense claim details retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FinanceExpenseDetailsResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense claim not found")
+    })
     @Deprecated
     @GetMapping("/{expenseId}")
     public ResponseEntity<?> getExpenseDetails(
@@ -136,6 +168,16 @@ public class FinanceExpenseController {
 
     // ── 4. VIEW RECEIPT METADATA ─────────────────────────────────────────────
     @Operation(summary = "Get Expense Claim Receipt Metadata", description = "Retrieves attachment and file metadata for the receipt of the specified expense claim.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Receipt metadata retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FinanceExpenseReceiptResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Receipt metadata not found")
+    })
     @Deprecated
     @GetMapping("/{expenseId}/receipt")
     public ResponseEntity<?> getReceiptMetadata(
@@ -156,6 +198,17 @@ public class FinanceExpenseController {
 
     // ── 5. APPROVE CLAIM ─────────────────────────────────────────────────────
     @Operation(summary = "Approve Expense Claim", description = "Approves a pending expense claim.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Expense approved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExpenseWorkflowResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request state"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense claim not found")
+    })
     @Deprecated
     @PatchMapping("/{expenseId}/approve")
     public ResponseEntity<?> approveExpense(
@@ -181,6 +234,17 @@ public class FinanceExpenseController {
 
     // ── 6. REJECT CLAIM ──────────────────────────────────────────────────────
     @Operation(summary = "Reject Expense Claim", description = "Rejects a pending expense claim.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Expense rejected successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExpenseWorkflowResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request state"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense claim not found")
+    })
     @Deprecated
     @PatchMapping("/{expenseId}/reject")
     public ResponseEntity<?> rejectExpense(
@@ -206,6 +270,17 @@ public class FinanceExpenseController {
 
     // ── 7. SEND BACK FOR CORRECTION ──────────────────────────────────────────
     @Operation(summary = "Return Expense Claim for Correction", description = "Returns an expense claim back to the employee requesting clarification or missing receipts.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Expense returned for correction",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExpenseWorkflowResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request state"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense claim not found")
+    })
     @Deprecated
     @PatchMapping("/{expenseId}/send-back")
     public ResponseEntity<?> sendBackExpense(
@@ -231,6 +306,17 @@ public class FinanceExpenseController {
 
     // ── 8. REIMBURSE CLAIM ───────────────────────────────────────────────────
     @Operation(summary = "Reimburse Expense Claim", description = "Reimburses an approved expense claim, logging the payment mode and transaction ID.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Expense reimbursed successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ReimburseExpenseResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid payment data or state"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense claim not found")
+    })
     @Deprecated
     @PatchMapping("/{expenseId}/reimburse")
     public ResponseEntity<?> reimburseExpense(
@@ -260,6 +346,17 @@ public class FinanceExpenseController {
 
     // ── 9. BULK APPROVE ──────────────────────────────────────────────────────
     @Operation(summary = "Bulk Approve Expense Claims", description = "Approves multiple pending expense claims in a single request.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Selected expenses approved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request or expense IDs"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense not found")
+    })
     @Deprecated
     @PatchMapping("/bulk-approve")
     public ResponseEntity<?> bulkApprove(
@@ -288,6 +385,17 @@ public class FinanceExpenseController {
 
     // ── 10. BULK REJECT ──────────────────────────────────────────────────────
     @Operation(summary = "Bulk Reject Expense Claims", description = "Rejects multiple pending expense claims in a single request.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Selected expenses rejected successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request or expense IDs"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense not found")
+    })
     @Deprecated
     @PatchMapping("/bulk-reject")
     public ResponseEntity<?> bulkReject(
@@ -316,6 +424,16 @@ public class FinanceExpenseController {
 
     // ── 11. TIMELINE APIs ────────────────────────────────────────────────────
     @Operation(summary = "Get Expense Claim Timeline", description = "Retrieves chronological audit trail logs showing transitions on the specified expense claim.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Timeline events retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = FinanceExpenseTimelineItem.class)))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense claim not found")
+    })
     @Deprecated
     @GetMapping("/{expenseId}/timeline")
     public ResponseEntity<?> getTimeline(
@@ -336,6 +454,15 @@ public class FinanceExpenseController {
 
     // ── 12. REPORTS API (SUMMARY) ────────────────────────────────────────────
     @Operation(summary = "Get Expense Reports Summary", description = "Retrieves consolidated financial stats on expense reports grouped by category and department.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Expense reports summary retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ExpenseReportsSummaryResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @Deprecated
     @GetMapping("/reports/summary")
     public ResponseEntity<?> getReportsSummary(
@@ -350,6 +477,15 @@ public class FinanceExpenseController {
 
     // ── 13. EXPORT APIs (CSV / PDF / XLSX) ────────────────────────────────────
     @Operation(summary = "Export Expenses to CSV", description = "Generates and downloads a CSV spreadsheet report of expense claims.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "CSV file stream",
+                    content = @Content(mediaType = "text/csv", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @Deprecated
     @GetMapping("/export/csv")
     public ResponseEntity<?> exportCsv(
@@ -371,6 +507,15 @@ public class FinanceExpenseController {
     }
 
     @Operation(summary = "Export Expenses to XLSX", description = "Generates and downloads an Excel spreadsheet report of expense claims.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "XLSX file stream",
+                    content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @Deprecated
     @GetMapping("/export/xlsx")
     public ResponseEntity<?> exportXlsx(
@@ -392,6 +537,15 @@ public class FinanceExpenseController {
     }
 
     @Operation(summary = "Export Expenses to PDF", description = "Generates and downloads a printable PDF report of expense claims.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "PDF document stream",
+                    content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @Deprecated
     @GetMapping("/export/pdf")
     public ResponseEntity<?> exportPdf(
@@ -413,5 +567,6 @@ public class FinanceExpenseController {
     }
 
     // Helper workflow response DTO
-    private record ExpenseWorkflowResponse(String message, String status) {}
+    @Deprecated
+    public static record ExpenseWorkflowResponse(String message, String status) {}
 }

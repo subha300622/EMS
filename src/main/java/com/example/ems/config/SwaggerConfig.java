@@ -102,7 +102,11 @@ public class SwaggerConfig {
                                                 new Tag().name("Employee Self Service - Exit Management")
                                                                 .description("Self-Service resignation submissions, final clearance tracking."),
                                                 new Tag().name("Employee Self Service - Assets").description(
-                                                                "Self-Service assigned assets listing, damage reports, return requests.")));
+                                                                "Self-Service assigned assets listing, damage reports, return requests."),
+                                                new Tag().name("Offboarding Template Management").description(
+                                                                "Endpoints for configuring organization Offboarding Templates, clearance checklists, asset return policies, document handover requirements, knowledge transfer, and exit interviews."),
+                                                new Tag().name("Exit Requests").description(
+                                                                "Offboarding Exit Request Approval APIs.")));
         }
 
         private OpenApiCustomizer filterByTagsCustomizer(Set<String> allowedTags, List<String> excludes,
@@ -321,7 +325,9 @@ public class SwaggerConfig {
                                                 "Asset Management",
                                                 "Document Management",
                                                 "Training Management",
-                                                "Notification Management"), null, false))
+                                                "Notification Management",
+                                                "Offboarding Template Management",
+                                                "Exit Requests"), null, false))
                                 .build();
         }
 

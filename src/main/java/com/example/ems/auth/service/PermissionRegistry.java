@@ -66,7 +66,20 @@ public final class PermissionRegistry {
         public static final String TRAINING_LIBRARY_MANAGE = "training.library.manage";
         public static final String TRAINING_REPORTS_VIEW = "training.reports.view";
 
+        // Offboarding Management
+        public static final String OFFBOARDING_REQUEST_READ = "offboarding.request.read";
+        public static final String OFFBOARDING_ANALYTICS_READ = "offboarding.analytics.read";
+        public static final String OFFBOARDING_TEMPLATE_READ = "offboarding.template.read";
+        public static final String OFFBOARDING_TEMPLATE_MANAGE = "offboarding.template.manage";
+        public static final String OFFBOARDING_REQUEST_CREATE = "offboarding.request.create";
+        public static final String OFFBOARDING_REQUEST_APPROVE = "offboarding.request.approve";
+        public static final String OFFBOARDING_REQUEST_REJECT = "offboarding.request.reject";
+
         public static final List<String> ALL_PERMISSIONS = List.of(
+                        // Offboarding Management
+                        "offboarding.request.read", "offboarding.analytics.read", "offboarding.template.read",
+                        "offboarding.template.manage", "offboarding.request.create", "offboarding.request.approve",
+                        "offboarding.request.reject",
                         // Training Management
                         "training.create", "training.read", "training.update", "training.delete", "training.approve",
                         "training.publish", "training.assign", "training.attendance.manage", "training.library.manage",

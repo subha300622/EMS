@@ -11,6 +11,10 @@ import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.util.OrganizationIdResolver;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +30,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping(value = "/api/v1/users", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin("*")
 @Tag(name = "User Management", description = "System user accounts, lifecycle administration, user search.")
 public class UserController {
@@ -169,8 +173,18 @@ public class UserController {
     // 1. GET /api/v1/users/{userId} - Get User by ID
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get User by ID", description = "Retrieves user details under the tenant organization without permissions field.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserDetailResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{userId}")
-public ResponseEntity<?> getUserById(
+    public ResponseEntity<?> getUserById(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -214,8 +228,20 @@ public ResponseEntity<?> getUserById(
     // 2. PUT /api/v1/users/{userId} - Update User
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update User Details", description = "Updates profile fields: fullName, email, mobile. Disallows status, roles, password, and IDs.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User updated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UpdatedUserDataResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.update permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{userId}")
-public ResponseEntity<?> updateUser(
+    public ResponseEntity<?> updateUser(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @Valid @RequestBody UpdateUserRequest request) {
@@ -264,8 +290,18 @@ public ResponseEntity<?> updateUser(
     // 3. DELETE /api/v1/users/{userId} - Delete User (Soft Delete / Deactivation)
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Delete User", description = "Soft deletes / deactivates a user account.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User deleted successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.delete permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @DeleteMapping("/{userId}")
-public ResponseEntity<?> deleteUser(
+    public ResponseEntity<?> deleteUser(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -297,8 +333,18 @@ public ResponseEntity<?> deleteUser(
     // 4. PUT /api/v1/users/{userId}/password/reset - Reset User Password
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Reset User Password", description = "Admin-initiated password reset generating a temporary password.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password reset successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.update permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{userId}/password/reset")
-public ResponseEntity<?> resetPassword(
+    public ResponseEntity<?> resetPassword(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @RequestBody(required = false) ResetPasswordAdminRequest request) {
@@ -340,8 +386,18 @@ public ResponseEntity<?> resetPassword(
     // 5. PUT /api/v1/users/{userId}/role - Update User Role
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update User Role", description = "Updates a user's single primary role.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User role updated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserRoleUpdatedDataResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.role.assign permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User or role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{userId}/role")
-public ResponseEntity<?> updateUserRole(
+    public ResponseEntity<?> updateUserRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @Valid @RequestBody UpdateRoleRequest request) {
@@ -384,8 +440,18 @@ public ResponseEntity<?> updateUserRole(
     // 6. DELETE /api/v1/users/{userId}/role - Remove User Role
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Remove User Role", description = "Removes any assigned role from the user.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role removed successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.role.assign permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @DeleteMapping("/{userId}/role")
-public ResponseEntity<?> removeUserRole(
+    public ResponseEntity<?> removeUserRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -418,8 +484,18 @@ public ResponseEntity<?> removeUserRole(
     // 7. GET /api/v1/users/{userId}/roles - Get User Roles
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get User Roles", description = "Retrieves user roles array without permissions.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User roles retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserRolesResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{userId}/roles")
-public ResponseEntity<?> getUserRoles(
+    public ResponseEntity<?> getUserRoles(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId) {
 
@@ -449,8 +525,18 @@ public ResponseEntity<?> getUserRoles(
     // 8. PUT /api/v1/users/{userId}/roles - Assign Multiple Roles
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Assign Multiple Roles", description = "Assigns multiple roles to a user.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Roles assigned successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserRolesResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.role.assign permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{userId}/roles")
-public ResponseEntity<?> assignMultipleRoles(
+    public ResponseEntity<?> assignMultipleRoles(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @Valid @RequestBody AssignMultipleRolesRequest request) {
@@ -497,8 +583,20 @@ public ResponseEntity<?> assignMultipleRoles(
     // 9. PUT /api/v1/users/{userId}/status - Update User Status
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update User Status", description = "Updates user status: ACTIVE, INACTIVE, SUSPENDED, LOCKED, PENDING.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User status updated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserStatusUpdatedDataResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid status",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.update permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{userId}/status")
-public ResponseEntity<?> updateUserStatus(
+    public ResponseEntity<?> updateUserStatus(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable String userId,
             @Valid @RequestBody UpdateStatusRequest request) {
@@ -532,8 +630,16 @@ public ResponseEntity<?> updateUserStatus(
     // 10. GET /api/v1/users/export - Export Users to CSV
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Export Users to CSV", description = "Exports filtered user list as CSV.")
-    @GetMapping("/export")
-public ResponseEntity<?> exportUsers(
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CSV export stream",
+                    content = @Content(mediaType = "text/csv", schema = @Schema(type = "string", format = "binary"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping(value = "/export", produces = { "text/csv", MediaType.APPLICATION_OCTET_STREAM_VALUE })
+    public ResponseEntity<?> exportUsers(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String roleId,
@@ -581,8 +687,14 @@ public ResponseEntity<?> exportUsers(
     // 11. GET /api/v1/users/me/bootstrap - Current User Bootstrap
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Current User Bootstrap Data", description = "Retrieves user summary, organization details, and roles for initial application bootstrap.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bootstrap data retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = BootstrapDataResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/me/bootstrap")
-public ResponseEntity<?> getMyBootstrap(
+    public ResponseEntity<?> getMyBootstrap(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -612,8 +724,14 @@ public ResponseEntity<?> getMyBootstrap(
     // 12. GET /api/v1/users/me/context - Current User Organization Context
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Current User Org Context", description = "Retrieves user organization context.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User organization context retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ContextDataResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/me/context")
-public ResponseEntity<?> getMyContext(
+    public ResponseEntity<?> getMyContext(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -639,8 +757,14 @@ public ResponseEntity<?> getMyContext(
     // 13. GET /api/v1/users/me/profile - Current User Profile
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Current User Profile", description = "Retrieves current authenticated user profile.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User profile retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserProfileResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/me/profile")
-public ResponseEntity<?> getMyProfile(
+    public ResponseEntity<?> getMyProfile(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -669,8 +793,16 @@ public ResponseEntity<?> getMyProfile(
     // 14. GET /api/v1/users/pending - Get Pending Users
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Pending Users", description = "Retrieves registration requests pending approval scoped to current tenant.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending users retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = PendingUserDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/pending")
-public ResponseEntity<?> getPendingUsers(
+    public ResponseEntity<?> getPendingUsers(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
 
         User currentUser = resolveUser(authHeader);
@@ -703,8 +835,16 @@ public ResponseEntity<?> getPendingUsers(
     // 15. GET /api/v1/users/search - Search Users
     // ─────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Search Users", description = "Paginated search across users with query, status, and roleId filters.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Users retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = PaginatedSearchResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/search")
-public ResponseEntity<?> searchUsers(
+    public ResponseEntity<?> searchUsers(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @RequestParam(required = false) String query,
             @RequestParam(required = false) String status,
@@ -758,3 +898,4 @@ public ResponseEntity<?> searchUsers(
         return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", data));
     }
 }
+

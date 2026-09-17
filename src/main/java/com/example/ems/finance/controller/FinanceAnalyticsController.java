@@ -8,6 +8,10 @@ import com.example.ems.finance.dto.*;
 import com.example.ems.finance.entity.EmployeeFinanceOnboarding;
 import com.example.ems.finance.service.EmployeeFinanceOnboardingService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -64,6 +68,12 @@ public class FinanceAnalyticsController {
                 || roleService.hasPermission(user.getWorkEmail(), "expense.manage");
     }
 
+    @Operation(summary = "Get Finance Onboarding Reports", description = "Retrieves structured finance onboarding reports across all employees.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Finance onboarding report compiled"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/reports")
     public ResponseEntity<ApiResponse<List<FinanceOnboardingReportItem>>> getReports(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -80,6 +90,16 @@ public class FinanceAnalyticsController {
         return ResponseEntity.ok(ApiResponse.success("Finance onboarding report compiled", items));
     }
 
+    @Operation(summary = "Export Finance Onboarding Report", description = "Exports finance onboarding records as a CSV document.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "CSV file stream",
+                    content = @Content(mediaType = "text/csv", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/reports/export")
     public ResponseEntity<String> exportReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -98,6 +118,12 @@ public class FinanceAnalyticsController {
                 .body(csv);
     }
 
+    @Operation(summary = "Get Pending Finance Reviews", description = "Retrieves pending employee finance onboarding reviews filtered by department or status.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending finance onboarding reviews retrieved"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/pending-reviews")
     public ResponseEntity<ApiResponse<List<EmployeeFinanceOnboarding>>> getPendingReviews(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -116,6 +142,13 @@ public class FinanceAnalyticsController {
         return ResponseEntity.ok(ApiResponse.success("Pending finance onboarding reviews retrieved", list));
     }
 
+    @Operation(summary = "Calculate Structured CTC Breakup", description = "Calculates monthly and annual salary breakup (Basic, HRA, Allowances, PF) given annual or monthly CTC.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CTC breakup calculated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid CTC input"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping("/calculate-ctc")
     public ResponseEntity<ApiResponse<CtcBreakupResponse>> calculateCtc(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

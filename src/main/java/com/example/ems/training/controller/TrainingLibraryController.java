@@ -7,7 +7,13 @@ import com.example.ems.security.service.JwtService;
 import com.example.ems.training.dto.LibraryResourceCreateRequest;
 import com.example.ems.training.entity.TrainingLibraryResource;
 import com.example.ems.training.service.TrainingManagementService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -50,6 +56,13 @@ public class TrainingLibraryController {
         return null;
     }
 
+    @Operation(summary = "Create Library Resource")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "201", description = "Library resource created successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingLibraryResource.class))),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PostMapping
 public ResponseEntity<?> createResource(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -64,6 +77,12 @@ public ResponseEntity<?> createResource(
         }
     }
 
+    @Operation(summary = "Get Library Resources")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Library resources retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TrainingLibraryResource.class)))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping
 public ResponseEntity<?> getResources(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -76,6 +95,13 @@ public ResponseEntity<?> getResources(
         return ResponseEntity.ok(resources);
     }
 
+    @Operation(summary = "Update Library Resource")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Library resource updated successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingLibraryResource.class))),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @PutMapping("/{resourceId}")
 public ResponseEntity<?> updateResource(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -91,6 +117,12 @@ public ResponseEntity<?> updateResource(
         }
     }
 
+    @Operation(summary = "Delete Library Resource")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Library resource deleted successfully"),
+        @ApiResponse(responseCode = "400", description = "Bad Request"),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @DeleteMapping("/{resourceId}")
 public ResponseEntity<?> deleteResource(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

@@ -3,7 +3,6 @@ package com.example.ems.incentive.controller;
 import com.example.ems.incentive.dto.*;
 import com.example.ems.incentive.entity.IncentiveCalculationMethod;
 import com.example.ems.incentive.entity.IncentivePayrollStatus;
-import com.example.ems.incentive.entity.IncentiveRecord;
 import com.example.ems.incentive.entity.IncentiveStatus;
 import com.example.ems.incentive.repository.IncentiveRecordRepository;
 import com.example.ems.incentive.service.IncentiveAdjustmentService;
@@ -29,7 +28,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -187,13 +185,13 @@ public class IncentiveRecordControllerTest {
 
     @Test
     void testGetRecordById() throws Exception {
-        IncentiveRecord record = IncentiveRecord.builder()
+        IncentiveRecordResponse res = IncentiveRecordResponse.builder()
                 .id(200L)
                 .calculatedAmount(new BigDecimal("5000.00"))
                 .status(IncentiveStatus.CALCULATED)
                 .build();
 
-        when(recordRepository.findByIdAndOrganizationId(200L, 1L)).thenReturn(Optional.of(record));
+        when(workflowService.getRecordById(200L)).thenReturn(res);
 
         mockMvc.perform(get("/api/v1/incentives/200"))
                 .andExpect(status().isOk())
@@ -203,13 +201,13 @@ public class IncentiveRecordControllerTest {
 
     @Test
     void testSearchRecords() throws Exception {
-        IncentiveRecord record = IncentiveRecord.builder()
+        IncentiveRecordResponse res = IncentiveRecordResponse.builder()
                 .id(200L)
                 .calculatedAmount(new BigDecimal("5000.00"))
                 .build();
 
-        when(recordRepository.findFiltered(any(), any(), any(), any(), any(), any(), any()))
-                .thenReturn(new PageImpl<>(List.of(record), PageRequest.of(0, 10), 1));
+        when(workflowService.searchRecords(any(), any(), any(), any(), any(), any()))
+                .thenReturn(new PageImpl<>(List.of(res), PageRequest.of(0, 10), 1));
 
         mockMvc.perform(get("/api/v1/incentives?page=0&size=10"))
                 .andExpect(status().isOk())

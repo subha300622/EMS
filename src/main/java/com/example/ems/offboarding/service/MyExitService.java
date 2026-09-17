@@ -49,6 +49,12 @@ public class MyExitService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired(required = false)
+    private OffboardingTemplateAssignmentService templateAssignmentService;
+
+    @Autowired(required = false)
+    private OffboardingClearanceTaskTemplateRepository clearanceTaskRepository;
+
     @Transactional(readOnly = true)
     public MyExitDashboardResponse getMyExitDashboard(String email) {
         Employee emp = employeeRepository.findByEmail(email)
@@ -137,61 +143,91 @@ public class MyExitService {
         asset2.setReturnStatus("PENDING");
         asset2 = offboardingAssetReturnRepository.save(asset2);
 
-        // 2. Initialize checklist tasks
-        OffboardingTask task1 = new OffboardingTask();
-        task1.setOffboarding(offboarding);
-        task1.setTitle("Submit Resignation Letter");
-        task1.setDescription("Employee initiates exit process by submitting a formal resignation.");
-        task1.setStatus("COMPLETED");
-        task1.setCompletedAt(LocalDateTime.now());
-        task1.setAssignedTo("EMPLOYEE");
-        task1.setActionRequired(false);
-        task1.setDueDate(offboarding.getExitDate());
-        offboardingTaskRepository.save(task1);
+        // 2. Resolve template & initialize checklist tasks
+        OffboardingTemplate template = null;
+        if (templateAssignmentService != null) {
+            try {
+                template = templateAssignmentService.resolveTemplateForEmployee(emp, "RESIGNATION");
+            } catch (Exception ignored) {
+            }
+        }
 
-        OffboardingTask task2 = new OffboardingTask();
-        task2.setOffboarding(offboarding);
-        task2.setTitle("Upload Clearance Documents");
-        task2.setDescription("Upload NOC, ID cards, access card handover proof, etc.");
-        task2.setStatus("IN_PROGRESS");
-        task2.setAssignedTo("EMPLOYEE");
-        task2.setActionRequired(true);
-        task2.setAllowedActions("UPLOAD_DOCUMENT");
-        task2.setDueDate(offboarding.getExitDate());
-        offboardingTaskRepository.save(task2);
+        boolean createdFromTemplate = false;
+        if (template != null && clearanceTaskRepository != null && emp.getOrganization() != null) {
+            List<OffboardingClearanceTaskTemplate> clearanceTasks = clearanceTaskRepository
+                    .findByTemplateIdAndOrganizationIdAndActiveTrueOrderBySequenceAsc(template.getId(), emp.getOrganization().getId());
+            if (clearanceTasks != null && !clearanceTasks.isEmpty()) {
+                for (OffboardingClearanceTaskTemplate ct : clearanceTasks) {
+                    OffboardingTask task = new OffboardingTask();
+                    task.setOffboarding(offboarding);
+                    task.setTitle(ct.getTaskName());
+                    task.setDescription(ct.getDescription());
+                    task.setStatus("PENDING");
+                    task.setAssignedTo(ct.getAssignToType() != null ? ct.getAssignToType().name() : "EMPLOYEE");
+                    task.setActionRequired(ct.getMandatory() != null ? ct.getMandatory() : false);
+                    task.setDueDate(offboarding.getExitDate());
+                    offboardingTaskRepository.save(task);
+                }
+                createdFromTemplate = true;
+            }
+        }
 
-        OffboardingTask task3 = new OffboardingTask();
-        task3.setOffboarding(offboarding);
-        task3.setTitle("Return Company Laptop");
-        task3.setDescription("Laptop return verification by IT.");
-        task3.setStatus("PENDING");
-        task3.setAssignedTo("IT");
-        task3.setActionRequired(false);
-        task3.setAssetId(asset1.getId());
-        task3.setDueDate(offboarding.getExitDate());
-        offboardingTaskRepository.save(task3);
+        if (!createdFromTemplate) {
+            OffboardingTask task1 = new OffboardingTask();
+            task1.setOffboarding(offboarding);
+            task1.setTitle("Submit Resignation Letter");
+            task1.setDescription("Employee initiates exit process by submitting a formal resignation.");
+            task1.setStatus("COMPLETED");
+            task1.setCompletedAt(LocalDateTime.now());
+            task1.setAssignedTo("EMPLOYEE");
+            task1.setActionRequired(false);
+            task1.setDueDate(offboarding.getExitDate());
+            offboardingTaskRepository.save(task1);
 
-        OffboardingTask task4 = new OffboardingTask();
-        task4.setOffboarding(offboarding);
-        task4.setTitle("Return Mobile Phone");
-        task4.setDescription("Mobile phone return verification by IT.");
-        task4.setStatus("PENDING");
-        task4.setAssignedTo("IT");
-        task4.setActionRequired(false);
-        task4.setAssetId(asset2.getId());
-        task4.setDueDate(offboarding.getExitDate());
-        offboardingTaskRepository.save(task4);
+            OffboardingTask task2 = new OffboardingTask();
+            task2.setOffboarding(offboarding);
+            task2.setTitle("Upload Clearance Documents");
+            task2.setDescription("Upload NOC, ID cards, access card handover proof, etc.");
+            task2.setStatus("IN_PROGRESS");
+            task2.setAssignedTo("EMPLOYEE");
+            task2.setActionRequired(true);
+            task2.setAllowedActions("UPLOAD_DOCUMENT");
+            task2.setDueDate(offboarding.getExitDate());
+            offboardingTaskRepository.save(task2);
 
-        OffboardingTask task5 = new OffboardingTask();
-        task5.setOffboarding(offboarding);
-        task5.setTitle("Sign NDA / Exit Agreement");
-        task5.setDescription("Employee signs the exit non-disclosure agreement.");
-        task5.setStatus("PENDING");
-        task5.setAssignedTo("EMPLOYEE");
-        task5.setActionRequired(true);
-        task5.setAllowedActions("SIGN_AGREEMENT");
-        task5.setDueDate(offboarding.getExitDate());
-        offboardingTaskRepository.save(task5);
+            OffboardingTask task3 = new OffboardingTask();
+            task3.setOffboarding(offboarding);
+            task3.setTitle("Return Company Laptop");
+            task3.setDescription("Laptop return verification by IT.");
+            task3.setStatus("PENDING");
+            task3.setAssignedTo("IT");
+            task3.setActionRequired(false);
+            task3.setAssetId(asset1.getId());
+            task3.setDueDate(offboarding.getExitDate());
+            offboardingTaskRepository.save(task3);
+
+            OffboardingTask task4 = new OffboardingTask();
+            task4.setOffboarding(offboarding);
+            task4.setTitle("Return Mobile Phone");
+            task4.setDescription("Mobile phone return verification by IT.");
+            task4.setStatus("PENDING");
+            task4.setAssignedTo("IT");
+            task4.setActionRequired(false);
+            task4.setAssetId(asset2.getId());
+            task4.setDueDate(offboarding.getExitDate());
+            offboardingTaskRepository.save(task4);
+
+            OffboardingTask task5 = new OffboardingTask();
+            task5.setOffboarding(offboarding);
+            task5.setTitle("Sign NDA / Exit Agreement");
+            task5.setDescription("Employee signs the exit non-disclosure agreement.");
+            task5.setStatus("PENDING");
+            task5.setAssignedTo("EMPLOYEE");
+            task5.setActionRequired(true);
+            task5.setAllowedActions("SIGN_AGREEMENT");
+            task5.setDueDate(offboarding.getExitDate());
+            offboardingTaskRepository.save(task5);
+        }
 
         // 3. Initialize F&F Settlement
         OffboardingSettlement settlement = new OffboardingSettlement();

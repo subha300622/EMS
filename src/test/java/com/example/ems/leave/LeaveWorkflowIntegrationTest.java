@@ -286,18 +286,18 @@ public class LeaveWorkflowIntegrationTest {
     public void testLeaveCalendarRetrieval() {
         LeaveRequest request = new LeaveRequest();
         request.setLeaveTypeId(casualLeaveType.getId());
-        request.setStartDate(LocalDate.of(2026, 9, 15));
-        request.setEndDate(LocalDate.of(2026, 9, 17));
+        request.setStartDate(LocalDate.of(2026, 11, 20));
+        request.setEndDate(LocalDate.of(2026, 11, 22));
         request.setReason("Conference");
         leaveService.applyLeave(employee, request);
 
         List<Leave> calendar = leaveService.getEmployeeCalendar(
                 employee.getId(),
-                LocalDate.of(2026, 9, 1),
-                LocalDate.of(2026, 9, 30)
+                LocalDate.of(2026, 11, 1),
+                LocalDate.of(2026, 11, 30)
         );
         assertNotNull(calendar);
         assertFalse(calendar.isEmpty());
-        assertEquals(LocalDate.of(2026, 9, 15), calendar.get(0).getStartDate());
+        assertEquals(LocalDate.of(2026, 11, 20), calendar.get(0).getStartDate());
     }
 }

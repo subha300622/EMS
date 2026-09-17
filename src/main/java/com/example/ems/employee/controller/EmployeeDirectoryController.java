@@ -43,6 +43,10 @@ import org.springframework.http.MediaType;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -105,6 +109,12 @@ public class EmployeeDirectoryController {
 
     // ── 1. GET MY TEAM DIRECTORY ─────────────────────────────────────────────
     @Operation(summary = "Get My Team Directory", description = "Retrieves direct reports and team mates of the logged-in employee.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "My Team retrieved",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = TeamMemberListItemDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/my-team")
 public ResponseEntity<?> getMyTeam(
             @RequestHeader("Authorization") String authHeader,
@@ -214,6 +224,12 @@ public ResponseEntity<?> getMyTeam(
 
     // ── 2. QUICK SEARCH EMPLOYEES ────────────────────────────────────────────
     @Operation(summary = "Quick Search Employees", description = "Provides autocomplete or keyword search for employees by name/email.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Search results retrieved",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = com.example.ems.employee.dto.EmployeeSearchResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/search")
 public ResponseEntity<?> searchEmployees(
             @RequestHeader("Authorization") String authHeader,
@@ -233,6 +249,12 @@ public ResponseEntity<?> searchEmployees(
 
     // ── 3. GET ORGANIZATION CHART ────────────────────────────────────────────
     @Operation(summary = "Get Organization Chart", description = "Generates the complete hierarchal structure of the organization.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization chart retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = OrgChartNodeDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/organization-chart")
     public ResponseEntity<?> getOrganizationChart(
             @RequestHeader(value = "Authorization", required = false) String authHeader){
@@ -262,6 +284,13 @@ public ResponseEntity<?> searchEmployees(
 
     // ── 4. GET ORGANIZATION CHART FOR EMPLOYEE ───────────────────────────────
     @Operation(summary = "Get Organization Chart for Employee", description = "Generates reporting structure starting from a specific employee.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization chart for employee retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = OrgChartNodeDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
+    })
     @GetMapping("/organization-chart/{employeeId}")
     public ResponseEntity<?> getOrganizationChartForEmployee(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -315,6 +344,12 @@ public ResponseEntity<?> searchEmployees(
     }
 
     @Operation(summary = "Get My Team Summary Widget", description = "Retrieves high level counts of team size, active, wfh, and on leave members.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team summary retrieved",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamSummaryDto.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/my-team/summary")
 public ResponseEntity<?> getMyTeamSummary(
             @RequestHeader("Authorization") String authHeader) {
@@ -378,6 +413,12 @@ public ResponseEntity<?> getMyTeamSummary(
     }
 
     @Operation(summary = "Export My Team to Excel", description = "Generates and downloads an Excel spreadsheet of team members.")
+    @ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Excel report generated successfully",
+            content = @Content(mediaType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", schema = @Schema(type = "string", format = "binary"))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/my-team/export")
     public ResponseEntity<?> exportMyTeam(
             @RequestHeader("Authorization") String authHeader) {

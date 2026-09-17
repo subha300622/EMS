@@ -33,19 +33,28 @@ public class IncentiveWorkflowService {
     private final IncentiveRecordRepository recordRepository;
     private final ApprovalFacade approvalFacade;
     private final com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService;
+    private final com.example.ems.employee.repository.EmployeeRepository employeeRepository;
 
     @Autowired
     public IncentiveWorkflowService(IncentiveRecordRepository recordRepository,
                                     @Autowired(required = false) ApprovalFacade approvalFacade,
-                                    @Autowired(required = false) com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService) {
+                                    @Autowired(required = false) com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService,
+                                    @Autowired(required = false) com.example.ems.employee.repository.EmployeeRepository employeeRepository) {
         this.recordRepository = recordRepository;
         this.approvalFacade = approvalFacade;
         this.compensationConfigService = compensationConfigService;
+        this.employeeRepository = employeeRepository;
     }
 
     public IncentiveWorkflowService(IncentiveRecordRepository recordRepository,
-                                    @Autowired(required = false) ApprovalFacade approvalFacade) {
-        this(recordRepository, approvalFacade, null);
+                                    ApprovalFacade approvalFacade,
+                                    com.example.ems.organization.service.OrganizationCompensationConfigService compensationConfigService) {
+        this(recordRepository, approvalFacade, compensationConfigService, null);
+    }
+
+    public IncentiveWorkflowService(IncentiveRecordRepository recordRepository,
+                                    ApprovalFacade approvalFacade) {
+        this(recordRepository, approvalFacade, null, null);
     }
 
     public IncentiveRecordResponse submitForApproval(Long id) {
@@ -163,5 +172,18 @@ public class IncentiveWorkflowService {
                                                       LocalDate periodStart, LocalDate periodEnd,
                                                       Pageable pageable) {
         return searchRecords(employeeId, status, null, periodStart, periodEnd, pageable);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<IncentiveRecordResponse> getMyRecords(Pageable pageable) {
+        Long orgId = TenantContext.requireOrganizationId();
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && employeeRepository != null) {
+            com.example.ems.employee.entity.Employee employee = employeeRepository.findByEmailAndOrganizationId(auth.getName().trim().toLowerCase(), orgId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Employee profile not found for authenticated user."));
+            Page<IncentiveRecord> records = recordRepository.findByOrganizationIdAndEmployeeId(orgId, employee.getId(), pageable);
+            return records.map(IncentiveRecordResponse::fromEntity);
+        }
+        throw new SecurityException("No authenticated security context found.");
     }
 }

@@ -7,9 +7,13 @@ import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.employee.dto.DocumentApprovalResponse;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +42,12 @@ public class DocumentApprovalController {
     }
 
     @Operation(summary = "Approve Document Verification", description = "Approves a submitted employee document")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document approved successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = DocumentApprovalResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiResponse.class)))
+    })
     @PostMapping("/{documentId}/approve")
     @PreAuthorize("hasAuthority('DOCUMENT_APPROVE')")
     public ResponseEntity<ApiResponse<DocumentApprovalResponse>> approveDocument(
@@ -54,6 +64,12 @@ public class DocumentApprovalController {
     }
 
     @Operation(summary = "Reject Document Verification", description = "Rejects a submitted employee document")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document rejected successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = DocumentApprovalResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiResponse.class)))
+    })
     @PostMapping("/{documentId}/reject")
     @PreAuthorize("hasAuthority('DOCUMENT_REJECT')")
     public ResponseEntity<ApiResponse<DocumentApprovalResponse>> rejectDocument(
@@ -70,6 +86,12 @@ public class DocumentApprovalController {
     }
 
     @Operation(summary = "Send Back Document Verification", description = "Requests re-upload or revision of a document")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document sent back for revision successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = DocumentApprovalResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiResponse.class)))
+    })
     @PostMapping("/{documentId}/send-back")
     @PreAuthorize("hasAuthority('DOCUMENT_APPROVE')")
     public ResponseEntity<ApiResponse<DocumentApprovalResponse>> sendBackDocument(

@@ -13,6 +13,9 @@ import com.example.ems.storage.service.FileAccessControlService;
 import com.example.ems.storage.service.FileService;
 import com.example.ems.storage.service.FirebaseStorageService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.InputStreamResource;
@@ -80,6 +83,16 @@ public class FileController {
     }
 
     @Operation(summary = "Upload Profile Image", description = "Uploads a profile image for the authenticated user and replaces any previous profile picture.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Profile image uploaded successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileMetadataResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid file payload"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Storage failure")
+    })
     @PostMapping(value = "/profile-image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadProfileImage(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -101,6 +114,16 @@ public class FileController {
     }
 
     @Operation(summary = "Upload Document", description = "Uploads an HR document or attendance proof for the authenticated user.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Document uploaded successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = FileMetadataResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid file payload"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Storage failure")
+    })
     @PostMapping(value = "/upload-document", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadDocument(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -123,6 +146,17 @@ public class FileController {
     }
 
     @Operation(summary = "Download File (Private Streaming)", description = "Performs RBAC access check on the requested file and streams the private byte content directly to the requester.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "File stream",
+                    content = @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "File metadata not found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "Download failure")
+    })
     @GetMapping("/{fileId}/download")
     public ResponseEntity<?> downloadFile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,

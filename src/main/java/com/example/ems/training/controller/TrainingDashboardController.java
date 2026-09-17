@@ -6,7 +6,12 @@ import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.JwtService;
 import com.example.ems.training.dto.TrainingDashboardMetricsResponse;
 import com.example.ems.training.service.TrainingManagementService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -45,6 +50,12 @@ public class TrainingDashboardController {
         return null;
     }
 
+    @Operation(summary = "Get Training Dashboard")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Dashboard metrics retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingDashboardMetricsResponse.class))),
+        @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
     @GetMapping
 public ResponseEntity<?> getDashboard(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
