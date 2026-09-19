@@ -53,6 +53,9 @@ public class FnfSettlementWorkflowTest {
     private EmployeeRepository employeeRepository;
 
     @Mock
+    private com.example.ems.employee.service.EmployeeService employeeService;
+
+    @Mock
     private ApprovalWorkflowEngineService approvalWorkflowEngineService;
 
     @Mock
@@ -270,12 +273,8 @@ public class FnfSettlementWorkflowTest {
         // Verify Exit transitions to SETTLEMENT_COMPLETED
         verify(exitRepository, times(1)).save(argThat(e -> "SETTLEMENT_COMPLETED".equals(e.getStatus())));
 
-        // Verify Employee profile transitions to EXITED
-        verify(employeeRepository, times(1)).save(argThat(emp ->
-                "EXITED".equals(emp.getStatus()) &&
-                "EXITED".equals(emp.getCurrentStatus()) &&
-                "UNAVAILABLE".equals(emp.getAvailability())
-        ));
+        // Verify Employee lifecycle termination boundary invoked
+        verify(employeeService, times(1)).terminateEmployee(eq(101L), eq("Full and final settlement payment disbursed"));
     }
 
     @Test

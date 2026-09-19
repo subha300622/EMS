@@ -123,13 +123,14 @@ public class ExitConcurrencyAndRlsIntegrationTest {
                 e.setEmail("emp.a@orga.com");
                 e.setEmployeeId("EMPA-01");
                 e.setDepartment("Finance");
-                e.setStatus("ACTIVE");
-                e.setCurrentStatus("ACTIVE");
-                e.setAvailability("AVAILABLE");
                 e.setAnnualSalary(BigDecimal.valueOf(1200000.00));
                 e.setOrganization(orgA);
                 return employeeRepository.save(e);
             });
+            empA.setStatus("ACTIVE");
+            empA.setCurrentStatus("ACTIVE");
+            empA.setAvailability("AVAILABLE");
+            empA = employeeRepository.save(empA);
 
             empB = employeeRepository.findByEmail("emp.b@orgb.com").orElseGet(() -> {
                 Employee e = new Employee();
@@ -137,13 +138,14 @@ public class ExitConcurrencyAndRlsIntegrationTest {
                 e.setEmail("emp.b@orgb.com");
                 e.setEmployeeId("EMPB-01");
                 e.setDepartment("Finance");
-                e.setStatus("ACTIVE");
-                e.setCurrentStatus("ACTIVE");
-                e.setAvailability("AVAILABLE");
                 e.setAnnualSalary(BigDecimal.valueOf(1200000.00));
                 e.setOrganization(orgB);
                 return employeeRepository.save(e);
             });
+            empB.setStatus("ACTIVE");
+            empB.setCurrentStatus("ACTIVE");
+            empB.setAvailability("AVAILABLE");
+            empB = employeeRepository.save(empB);
 
             exitA = new EmployeeExit();
             exitA.setOrganization(orgA);
@@ -300,7 +302,9 @@ public class ExitConcurrencyAndRlsIntegrationTest {
             assertEquals("SETTLEMENT_COMPLETED", finalExit.getStatus());
 
             Employee finalEmp = employeeRepository.findById(empA.getId()).orElseThrow();
-            assertEquals("EXITED", finalEmp.getStatus());
+            assertEquals("TERMINATED", finalEmp.getStatus());
+            assertEquals("EXITED", finalEmp.getCurrentStatus());
+            assertEquals("UNAVAILABLE", finalEmp.getAvailability());
             return null;
         });
     }

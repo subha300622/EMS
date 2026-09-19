@@ -11,6 +11,7 @@ import com.example.ems.common.exception.ConflictException;
 import com.example.ems.common.exception.ResourceNotFoundException;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.employee.service.EmployeeService;
 import com.example.ems.offboarding.dto.*;
 import com.example.ems.offboarding.entity.EmployeeExit;
 import com.example.ems.offboarding.entity.ExitFnfAudit;
@@ -50,6 +51,9 @@ public class FnfSettlementService {
 
     @Autowired
     private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private EmployeeService employeeService;
 
     @Autowired
     private ExitFnfAuditRepository auditRepository;
@@ -735,12 +739,12 @@ public class FnfSettlementService {
         exit.setUpdatedAt(LocalDateTime.now());
         exitRepository.save(exit);
 
-        // Multi-Entity Transition: Employee -> EXITED
+        // Multi-Entity Transition: Employee Lifecycle Termination Boundary
         Employee employee = exit.getEmployee();
-        employee.setStatus("EXITED");
-        employee.setCurrentStatus("EXITED");
-        employee.setAvailability("UNAVAILABLE");
-        employeeRepository.save(employee);
+        employeeService.terminateEmployee(
+                employee.getId(),
+                "Full and final settlement payment disbursed"
+        );
 
         recordAuditSnapshot(saved, "PAYMENT", currentUser, settlement.getNetSettlement(), request.getAmount(),
                 "Payment disbursed via " + request.getPaymentMethod() + " with ref: " + request.getTransactionReference());

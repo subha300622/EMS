@@ -10,6 +10,7 @@ import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.employee.service.EmployeeService;
 import com.example.ems.offboarding.dto.*;
 import com.example.ems.offboarding.entity.EmployeeExit;
 import com.example.ems.offboarding.entity.ExitClearance;
@@ -58,6 +59,9 @@ public class FnfAdversarialSecurityTest {
 
     @Mock
     private EmployeeRepository employeeRepository;
+
+    @Mock
+    private EmployeeService employeeService;
 
     @Mock
     private ExitFnfAuditRepository auditRepository;
@@ -393,9 +397,8 @@ public class FnfAdversarialSecurityTest {
         when(employeeRepository.findByEmail("fiona.fin@acme.com")).thenReturn(Optional.of(financeOfficer));
         when(fnfRepository.saveAndFlush(any())).thenAnswer(i -> i.getArgument(0));
 
-        // Downstream failure simulation: Employee repository fails to persist EXITED
-        // status
-        when(employeeRepository.save(any(Employee.class)))
+        // Downstream failure simulation: EmployeeService fails to terminate employee
+        when(employeeService.terminateEmployee(anyLong(), anyString()))
                 .thenThrow(new RuntimeException("Database error updating employee status"));
 
         FnfPaymentRequest req = new FnfPaymentRequest();

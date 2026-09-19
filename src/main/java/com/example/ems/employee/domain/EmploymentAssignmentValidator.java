@@ -8,9 +8,112 @@ import com.example.ems.employee.entity.JobLevel;
 import com.example.ems.employee.entity.EmploymentType;
 import com.example.ems.auth.entity.User;
 import com.example.ems.common.exception.BadRequestException;
+import com.example.ems.employee.entity.Employee;
+import com.example.ems.employee.repository.EmployeeRepository;
+import org.springframework.stereotype.Component;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+@Component
 public class EmploymentAssignmentValidator {
+
+    public void validateEmployeeAssignments(Employee employee, Department department, Employee reportingManager, EmployeeRepository employeeRepository) {
+        if (employee == null) {
+            throw new BadRequestException("Employee is required");
+        }
+        Organization organization = employee.getOrganization();
+        if (organization == null) {
+            throw new BadRequestException("Organization is required for active employee");
+        }
+        if (organization.getStatus() != null && !"ACTIVE".equalsIgnoreCase(organization.getStatus().name())) {
+            throw new BadRequestException("Organization is not active");
+        }
+
+        if (department != null) {
+            if (!"ACTIVE".equalsIgnoreCase(department.getStatus())) {
+                throw new BadRequestException("Department is not active");
+            }
+            if (department.getOrganization() == null || !department.getOrganization().getId().equals(organization.getId())) {
+                throw new BadRequestException("Department does not belong to the employee's organization");
+            }
+        }
+
+        if (reportingManager != null) {
+            validateManager(employee, reportingManager, employeeRepository);
+        }
+    }
+
+    public void validateManagerChange(Employee employee, Employee newManager, EmployeeRepository employeeRepository) {
+        if (employee == null) {
+            throw new BadRequestException("Employee is required");
+        }
+        if (newManager == null) {
+            throw new BadRequestException("New reporting manager is required");
+        }
+        validateManager(employee, newManager, employeeRepository);
+    }
+
+    public void validateDepartmentTransfer(Employee employee, Department fromDept, Department toDept) {
+        if (employee == null) {
+            throw new BadRequestException("Employee is required");
+        }
+        if (toDept == null) {
+            throw new BadRequestException("Destination department is required");
+        }
+        Organization org = employee.getOrganization();
+        if (org == null) {
+            throw new BadRequestException("Employee does not belong to an organization");
+        }
+        if (toDept.getOrganization() == null || !toDept.getOrganization().getId().equals(org.getId())) {
+            throw new BadRequestException("Destination department does not belong to the employee's organization");
+        }
+        if (!"ACTIVE".equalsIgnoreCase(toDept.getStatus())) {
+            throw new BadRequestException("Destination department is not active");
+        }
+        if (fromDept != null) {
+            if (fromDept.getOrganization() == null || !fromDept.getOrganization().getId().equals(org.getId())) {
+                throw new BadRequestException("Source department does not belong to the employee's organization");
+            }
+        }
+    }
+
+    private void validateManager(Employee employee, Employee manager, EmployeeRepository employeeRepository) {
+        Organization organization = employee.getOrganization();
+        if (organization == null) {
+            throw new BadRequestException("Employee does not belong to an organization");
+        }
+        if (employee.getId() != null && employee.getId().equals(manager.getId())) {
+            throw new BadRequestException("Employee cannot report to themselves");
+        }
+        if (!"ACTIVE".equalsIgnoreCase(manager.getStatus())) {
+            throw new BadRequestException("Reporting Manager is not active");
+        }
+        if (manager.getOrganization() == null || !manager.getOrganization().getId().equals(organization.getId())) {
+            throw new BadRequestException("Reporting Manager does not belong to the same organization");
+        }
+
+        // Circular reporting chain detection
+        if (employee.getId() != null) {
+            Set<Long> visited = new HashSet<>();
+            visited.add(employee.getId());
+
+            Employee current = manager;
+            while (current != null) {
+                if (visited.contains(current.getId())) {
+                    throw new BadRequestException("Circular reporting chain detected");
+                }
+                visited.add(current.getId());
+                if (current.getManager() != null) {
+                    current = current.getManager();
+                } else if (employeeRepository != null && current.getId() != null) {
+                    current = employeeRepository.findById(current.getId()).map(Employee::getManager).orElse(null);
+                } else {
+                    break;
+                }
+            }
+        }
+    }
 
     public void validate(
             Organization organization,

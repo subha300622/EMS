@@ -52,6 +52,19 @@ import java.util.stream.Collectors;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import com.example.ems.employee.entity.EmployeeStatus;
+import com.example.ems.employee.domain.EmployeeStatusTransitionValidator;
+import com.example.ems.employee.domain.EmploymentAssignmentValidator;
+import com.example.ems.employee.event.EmployeeJoinedEvent;
+import com.example.ems.employee.event.EmployeeActivatedEvent;
+import com.example.ems.employee.event.EmployeeSuspendedEvent;
+import com.example.ems.employee.event.EmployeeTransferredEvent;
+import com.example.ems.employee.event.EmployeeManagerChangedEvent;
+import com.example.ems.employee.event.EmployeeTerminatedEvent;
+import com.example.ems.common.exception.BadRequestException;
+import java.time.LocalDate;
+import java.time.Instant;
+
 @Service
 public class EmployeeService {
 
@@ -105,6 +118,12 @@ public class EmployeeService {
     @Autowired
     private SecurityContextFacade securityContextFacade;
 
+    @Autowired
+    private EmployeeStatusTransitionValidator transitionValidator;
+
+    @Autowired
+    private EmploymentAssignmentValidator assignmentValidator;
+
     // ── Centralized Security & Tenant Context Helpers ─────────────────────────
 
     public User getAuthenticatedUser() {
@@ -153,10 +172,14 @@ public class EmployeeService {
     }
 
     public Optional<Employee> findEmployeeByTenant(String identifier) {
+        return findEmployeeByTenant(identifier, null);
+    }
+
+    public Optional<Employee> findEmployeeByTenant(String identifier, User currentUserOverride) {
         if (identifier == null || identifier.isBlank()) {
             return Optional.empty();
         }
-        User currentUser = getAuthenticatedUser();
+        User currentUser = currentUserOverride != null ? currentUserOverride : getAuthenticatedUser();
         boolean platAdmin = isPlatformAdmin(currentUser);
 
         if (platAdmin) {
@@ -634,18 +657,282 @@ public class EmployeeService {
     }
 
     @Transactional
-    public Optional<Employee> updateEmployeeStatus(Long id, String status) {
-        User currentUser = getAuthenticatedUser();
-        Optional<Employee> opt = isPlatformAdmin(currentUser)
-                ? employeeRepository.findById(id)
-                : employeeRepository.findByIdAndOrganizationId(id, getAuthenticatedOrganization(currentUser).getId());
+    public Employee updateEmployeeStatus(Long employeeId, EmployeeStatus targetStatus, String reason) {
+        if (employeeId == null) {
+            throw new IllegalArgumentException("Employee ID cannot be null");
+        }
+        if (targetStatus == null) {
+            throw new IllegalArgumentException("Target status cannot be null");
+        }
 
-        return opt.map(employee -> {
-            employee.setStatus(status);
-            Employee saved = employeeRepository.save(employee);
-            eventPublisher.publishEvent(new EmployeeUpdatedEvent(this, saved));
-            return saved;
-        });
+        // 1. Load employee within tenant
+        Employee employee = findEmployeeByTenant(String.valueOf(employeeId))
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+
+        // 2. Reject direct termination via generic status update to protect offboarding workflow
+        if (targetStatus == EmployeeStatus.TERMINATED) {
+            throw new IllegalStateException("Direct termination via status update is not allowed; use terminateEmployee() or offboarding exit workflow");
+        }
+
+        // 3. Resolve currentStatus & validate transition
+        EmployeeStatus currentStatus = EmployeeStatus.fromString(employee.getStatus());
+        transitionValidator.validateTransition(currentStatus, targetStatus);
+
+        // 4. Update status & save
+        employee.setStatus(targetStatus.name());
+        Employee saved = employeeRepository.save(employee);
+
+        Long orgId = saved.getOrganization() != null ? saved.getOrganization().getId() : null;
+        Instant now = Instant.now();
+
+        // 5. Publish appropriate lifecycle event
+        if (currentStatus == EmployeeStatus.ONBOARDING && targetStatus == EmployeeStatus.PROBATION) {
+            eventPublisher.publishEvent(new EmployeeJoinedEvent(saved.getId(), orgId, now));
+        } else if (targetStatus == EmployeeStatus.ACTIVE) {
+            eventPublisher.publishEvent(new EmployeeActivatedEvent(saved.getId(), orgId, now));
+        } else if (targetStatus == EmployeeStatus.SUSPENDED) {
+            eventPublisher.publishEvent(new EmployeeSuspendedEvent(saved.getId(), orgId, reason != null ? reason : "Employee suspended", now));
+        }
+
+        eventPublisher.publishEvent(new EmployeeUpdatedEvent(this, saved));
+
+        return saved;
+    }
+
+    @Transactional
+    public Optional<Employee> updateEmployeeStatus(Long id, String status) {
+        if (status == null || status.isBlank()) {
+            throw new IllegalArgumentException("Status cannot be null or blank");
+        }
+        EmployeeStatus targetStatus = EmployeeStatus.fromString(status);
+        Employee updated = updateEmployeeStatus(id, targetStatus, "Status updated");
+        return Optional.of(updated);
+    }
+
+    @Transactional
+    public Employee activateEmployee(Long employeeId) {
+        if (employeeId == null) {
+            throw new IllegalArgumentException("Employee ID cannot be null");
+        }
+
+        Employee employee = findEmployeeByTenant(String.valueOf(employeeId))
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+
+        EmployeeStatus currentStatus = EmployeeStatus.fromString(employee.getStatus());
+        transitionValidator.validateTransition(currentStatus, EmployeeStatus.ACTIVE);
+
+        Department dept = null;
+        if (employee.getDepartment() != null && !employee.getDepartment().isBlank() && employee.getOrganization() != null) {
+            dept = departmentRepository.findByNameIgnoreCaseAndOrganizationId(employee.getDepartment(), employee.getOrganization().getId())
+                    .orElse(null);
+        }
+        assignmentValidator.validateEmployeeAssignments(employee, dept, employee.getManager(), employeeRepository);
+
+        employee.setStatus(EmployeeStatus.ACTIVE.name());
+        Employee saved = employeeRepository.save(employee);
+
+        Long orgId = saved.getOrganization() != null ? saved.getOrganization().getId() : null;
+        eventPublisher.publishEvent(new EmployeeActivatedEvent(saved.getId(), orgId, Instant.now()));
+        eventPublisher.publishEvent(new EmployeeUpdatedEvent(this, saved));
+
+        return saved;
+    }
+
+    @Transactional
+    public EmployeeTerminatedEvent terminateEmployee(Long employeeId, String reason) {
+        if (employeeId == null) {
+            throw new IllegalArgumentException("Employee ID cannot be null");
+        }
+
+        Employee employee = findEmployeeByTenant(String.valueOf(employeeId))
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Employee not found with ID: " + employeeId));
+
+        EmployeeStatus currentStatus =
+                EmployeeStatus.fromString(employee.getStatus());
+
+        if (currentStatus == EmployeeStatus.TERMINATED) {
+            throw new IllegalStateException("Employee is already terminated");
+        }
+
+        transitionValidator.validateTransition(
+                currentStatus,
+                EmployeeStatus.TERMINATED
+        );
+
+        employee.setStatus(EmployeeStatus.TERMINATED.name());
+        employee.setCurrentStatus("EXITED");
+        employee.setAvailability("UNAVAILABLE");
+
+        employeeRepository.save(employee);
+
+        EmployeeTerminatedEvent event = new EmployeeTerminatedEvent(
+                employee.getId(),
+                employee.getOrganization().getId(),
+                reason,
+                Instant.now()
+        );
+
+        eventPublisher.publishEvent(event);
+
+        return event;
+    }
+
+    @Transactional
+    public DepartmentTransfer transferEmployee(
+            Long employeeId,
+            Long fromDeptId,
+            Long toDeptId,
+            LocalDate effectiveDate,
+            String remarks) {
+
+        if (employeeId == null) {
+            throw new BadRequestException("Employee ID is required");
+        }
+
+        if (toDeptId == null) {
+            throw new BadRequestException("Destination department ID is required");
+        }
+
+        if (fromDeptId != null && fromDeptId.equals(toDeptId)) {
+            throw new BadRequestException(
+                    "Source and destination departments must be different");
+        }
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() ->
+                        new BadRequestException(
+                                "Employee not found with ID: " + employeeId));
+
+        if (employee.getOrganization() == null
+                || employee.getOrganization().getId() == null) {
+            throw new BadRequestException(
+                    "Employee does not belong to an organization");
+        }
+
+        Department toDept = departmentRepository.findById(toDeptId)
+                .orElseThrow(() ->
+                        new BadRequestException(
+                                "Destination department not found with ID: " + toDeptId));
+
+        Department fromDept = null;
+
+        if (fromDeptId != null) {
+            fromDept = departmentRepository.findById(fromDeptId)
+                    .orElseThrow(() ->
+                            new BadRequestException(
+                                    "Source department not found with ID: " + fromDeptId));
+        }
+
+        if (fromDept != null
+                && fromDept.getName() != null
+                && employee.getDepartment() != null
+                && !fromDept.getName().equalsIgnoreCase(employee.getDepartment())) {
+            throw new BadRequestException(
+                    "Source department does not match employee's current department");
+        }
+
+        if (toDept.getName() != null
+                && toDept.getName().equalsIgnoreCase(employee.getDepartment())) {
+            throw new BadRequestException(
+                    "Employee is already assigned to the destination department");
+        }
+
+        assignmentValidator.validateDepartmentTransfer(
+                employee,
+                fromDept,
+                toDept
+        );
+
+        DepartmentTransfer transfer = new DepartmentTransfer(
+                employee.getId(),
+                fromDept != null ? fromDept.getId() : null,
+                toDept.getId(),
+                effectiveDate != null ? effectiveDate : LocalDate.now(),
+                remarks
+        );
+
+        employee.setDepartment(toDept.getName());
+        employeeRepository.save(employee);
+
+        transfer = departmentTransferRepository.save(transfer);
+
+        eventPublisher.publishEvent(
+                new EmployeeTransferredEvent(
+                        employee.getId(),
+                        employee.getOrganization().getId(),
+                        fromDept != null ? fromDept.getId() : null,
+                        toDept.getId(),
+                        Instant.now()
+                )
+        );
+
+        return transfer;
+    }
+
+    @Transactional
+    public EmployeeManagerChangedEvent changeManager(
+            Long employeeId,
+            Long newManagerId) {
+
+        if (employeeId == null) {
+            throw new BadRequestException("Employee ID is required");
+        }
+
+        if (newManagerId == null) {
+            throw new BadRequestException("New reporting manager ID is required");
+        }
+
+        Employee employee = employeeRepository.findById(employeeId)
+                .orElseThrow(() ->
+                        new BadRequestException(
+                                "Employee not found with ID: " + employeeId));
+
+        if (employee.getOrganization() == null
+                || employee.getOrganization().getId() == null) {
+            throw new BadRequestException(
+                    "Employee does not belong to an organization");
+        }
+
+        Employee newManager = employeeRepository.findById(newManagerId)
+                .orElseThrow(() ->
+                        new BadRequestException(
+                                "Reporting manager not found with ID: " + newManagerId));
+
+        // Reuse the existing tenant, ACTIVE, self-manager,
+        // and circular hierarchy validation.
+        assignmentValidator.validateManagerChange(
+                employee,
+                newManager,
+                employeeRepository
+        );
+
+        Long oldManagerId = employee.getManager() != null
+                ? employee.getManager().getId()
+                : null;
+
+        // No-op protection.
+        if (oldManagerId != null && oldManagerId.equals(newManager.getId())) {
+            throw new BadRequestException(
+                    "Employee already reports to this manager");
+        }
+
+        employee.setManager(newManager);
+        employeeRepository.save(employee);
+
+        EmployeeManagerChangedEvent event =
+                new EmployeeManagerChangedEvent(
+                        employee.getId(),
+                        employee.getOrganization().getId(),
+                        oldManagerId,
+                        newManager.getId(),
+                        Instant.now()
+                );
+
+        eventPublisher.publishEvent(event);
+
+        return event;
     }
 
     public List<Map<String, Object>> getEmployeeTimeline(Long employeeId) {
@@ -1213,11 +1500,18 @@ public class EmployeeService {
 
     @Transactional
     public Map<String, Object> updateEmployeeStatusPatch(String identifier, String newStatus, String reason, User currentUserOverride) {
-        Employee emp = findEmployeeByTenant(identifier)
+        if (identifier == null || identifier.isBlank()) {
+            throw new IllegalArgumentException("Employee ID is required");
+        }
+        if (newStatus == null || newStatus.isBlank()) {
+            throw new IllegalArgumentException("Status is required");
+        }
+
+        Employee emp = findEmployeeByTenant(identifier, currentUserOverride)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + identifier));
 
-        emp.setStatus(newStatus);
-        Employee saved = employeeRepository.save(emp);
+        EmployeeStatus targetStatus = EmployeeStatus.fromString(newStatus);
+        Employee saved = updateEmployeeStatus(emp.getId(), targetStatus, reason);
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("employeeId", saved.getEmployeeId() != null ? saved.getEmployeeId() : "EMP" + saved.getId());

@@ -374,7 +374,7 @@ public ResponseEntity<?> getAllEmployees(
                     null
             );
             return ResponseEntity.ok(ApiResponse.success("Employee status updated successfully", res));
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage(), "EMP_003"));
         }
     }
