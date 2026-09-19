@@ -5,7 +5,6 @@ import com.example.ems.auth.entity.PermissionGroup;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.PermissionGroupRepository;
-import com.example.ems.auth.repository.PermissionRepository;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.config.DatabaseSeeder;
@@ -14,7 +13,6 @@ import com.example.ems.organization.repository.OrganizationRepository;
 import com.example.ems.security.context.TenantContext;
 import com.example.ems.security.dto.AuthAuthenticationToken;
 import com.example.ems.security.dto.AuthPrincipal;
-import com.example.ems.security.provider.SessionAuthenticationProvider;
 import com.example.ems.security.service.PermissionCheckService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,9 +43,6 @@ public class PermissionEnforcementIntegrationTest {
     private PermissionCheckService permissionCheckService;
 
     @Autowired
-    private SessionAuthenticationProvider sessionAuthenticationProvider;
-
-    @Autowired
     private RoleRepository roleRepository;
 
     @Autowired
@@ -58,9 +53,6 @@ public class PermissionEnforcementIntegrationTest {
 
     @Autowired
     private PermissionGroupRepository permissionGroupRepository;
-
-    @Autowired
-    private PermissionRepository permissionRepository;
 
     @Autowired
     private DatabaseSeeder databaseSeeder;

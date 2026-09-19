@@ -16,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class LeaveBalanceService {
@@ -31,6 +32,32 @@ public class LeaveBalanceService {
 
     @Autowired
     private LeaveTypeRepository leaveTypeRepository;
+
+    @Transactional
+    public LeaveBalance getOrCreateBalanceWithLock(Employee employee, LeaveType leaveType, Integer year) {
+        Optional<LeaveBalance> opt = leaveBalanceRepository.findByEmployeeIdAndLeaveTypeIdAndYearWithLock(
+                employee.getId(), leaveType.getId(), year);
+        if (opt.isPresent()) {
+            return opt.get();
+        }
+        // If not found, ensure it is created (or handle unique constraint race gracefully)
+        try {
+            LeaveBalance b = new LeaveBalance();
+            b.setEmployee(employee);
+            b.setLeaveType(leaveType);
+            b.setOrganization(employee.getOrganization());
+            b.setYear(year);
+            b.setTotalEntitlement(leaveType.getDefaultDays() != null ? leaveType.getDefaultDays().doubleValue() : 0.0);
+            b.setUsedBalance(0.0);
+            b.setPendingBalance(0.0);
+            leaveBalanceRepository.saveAndFlush(b);
+        } catch (Exception ignored) {
+            // Already created by a concurrent transaction
+        }
+        return leaveBalanceRepository.findByEmployeeIdAndLeaveTypeIdAndYearWithLock(
+                employee.getId(), leaveType.getId(), year)
+                .orElseGet(() -> getOrCreateBalance(employee, leaveType, year));
+    }
 
     public LeaveBalance getOrCreateBalance(Employee employee, LeaveType leaveType, Integer year) {
         return leaveBalanceRepository.findByEmployeeIdAndLeaveTypeIdAndYear(employee.getId(), leaveType.getId(), year)
@@ -49,39 +76,62 @@ public class LeaveBalanceService {
 
     @Transactional
     public LeaveBalance saveBalance(LeaveBalance balance) {
+        balance.validateInvariants();
         balance.setUpdatedAt(LocalDateTime.now());
         return leaveBalanceRepository.save(balance);
     }
 
     @Transactional
     public void reserveBalance(Employee employee, LeaveType leaveType, Integer year, Double days) {
-        LeaveBalance balance = getOrCreateBalance(employee, leaveType, year);
+        if (days == null || days <= 0) {
+            return;
+        }
+        LeaveBalance balance = getOrCreateBalanceWithLock(employee, leaveType, year);
+        double available = balance.getAvailableBalance();
+        if (available < days - 1e-6) {
+            throw new IllegalArgumentException(String.format(
+                    "Insufficient leave balance. Available: %.1f days, Requested: %.1f days",
+                    available, days));
+        }
         balance.setPendingBalance(balance.getPendingBalance() + days);
+        balance.validateInvariants();
         balance.setUpdatedAt(LocalDateTime.now());
         leaveBalanceRepository.save(balance);
     }
 
     @Transactional
     public void commitBalance(Employee employee, LeaveType leaveType, Integer year, Double days) {
-        LeaveBalance balance = getOrCreateBalance(employee, leaveType, year);
+        if (days == null || days <= 0) {
+            return;
+        }
+        LeaveBalance balance = getOrCreateBalanceWithLock(employee, leaveType, year);
         balance.setPendingBalance(Math.max(0.0, balance.getPendingBalance() - days));
         balance.setUsedBalance(balance.getUsedBalance() + days);
+        balance.validateInvariants();
         balance.setUpdatedAt(LocalDateTime.now());
         leaveBalanceRepository.save(balance);
     }
 
     @Transactional
     public void releasePendingBalance(Employee employee, LeaveType leaveType, Integer year, Double days) {
-        LeaveBalance balance = getOrCreateBalance(employee, leaveType, year);
+        if (days == null || days <= 0) {
+            return;
+        }
+        LeaveBalance balance = getOrCreateBalanceWithLock(employee, leaveType, year);
         balance.setPendingBalance(Math.max(0.0, balance.getPendingBalance() - days));
+        balance.validateInvariants();
         balance.setUpdatedAt(LocalDateTime.now());
         leaveBalanceRepository.save(balance);
     }
 
     @Transactional
     public void refundApprovedBalance(Employee employee, LeaveType leaveType, Integer year, Double days) {
-        LeaveBalance balance = getOrCreateBalance(employee, leaveType, year);
+        if (days == null || days <= 0) {
+            return;
+        }
+        LeaveBalance balance = getOrCreateBalanceWithLock(employee, leaveType, year);
         balance.setUsedBalance(Math.max(0.0, balance.getUsedBalance() - days));
+        balance.validateInvariants();
         balance.setUpdatedAt(LocalDateTime.now());
         leaveBalanceRepository.save(balance);
     }

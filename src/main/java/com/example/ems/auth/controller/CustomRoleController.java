@@ -287,7 +287,6 @@ public class CustomRoleController {
                     .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
         }
 
-        Role role = roleService.requireTenantMutableRole(roleId);
 
         List<Long> permissionIds = request.getPermissionIds();
         if (permissionIds != null && !permissionIds.isEmpty()) {

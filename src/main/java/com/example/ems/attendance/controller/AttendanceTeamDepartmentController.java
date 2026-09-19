@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -30,6 +31,7 @@ public class AttendanceTeamDepartmentController {
     // ── Team Attendance Endpoints ───────────────────────────────────────────
 
     @Operation(summary = "Get Team Daily Attendance", description = "Returns team daily attendance rollup (total employees, present, absent, on leave, late) and member breakdown for a specific date.")
+    @PreAuthorize("hasAuthority('attendance.team.read') or hasAuthority('attendance.manage') or hasAuthority('attendance.admin')")
     @GetMapping("/teams/{teamId}")
     public ResponseEntity<ApiResponse<TeamDailyAttendanceResponse>> getTeamDailyAttendance(
             @PathVariable("teamId") Long teamId,
@@ -41,6 +43,7 @@ public class AttendanceTeamDepartmentController {
     }
 
     @Operation(summary = "Get Team Attendance History", description = "Returns paginated attendance history for all active members of a team with optional date range and status filters.")
+    @PreAuthorize("hasAuthority('attendance.team.read') or hasAuthority('attendance.manage') or hasAuthority('attendance.admin')")
     @GetMapping("/teams/{teamId}/history")
     public ResponseEntity<ApiResponse<Page<TeamDepartmentAttendanceHistoryItemDto>>> getTeamAttendanceHistory(
             @PathVariable("teamId") Long teamId,
@@ -53,6 +56,7 @@ public class AttendanceTeamDepartmentController {
     // ── Department Attendance Endpoints ─────────────────────────────────────
 
     @Operation(summary = "Get Department Daily Attendance", description = "Returns department daily attendance rollup, team-wise distribution, and employee attendance details for a specific date.")
+    @PreAuthorize("hasAuthority('attendance.team.read') or hasAuthority('attendance.manage') or hasAuthority('attendance.admin')")
     @GetMapping("/departments/{departmentId}")
     public ResponseEntity<ApiResponse<DepartmentDailyAttendanceResponse>> getDepartmentDailyAttendance(
             @PathVariable("departmentId") Long departmentId,
@@ -64,6 +68,7 @@ public class AttendanceTeamDepartmentController {
     }
 
     @Operation(summary = "Get Department Attendance History", description = "Returns paginated attendance history for all employees in a department with optional date range and status filters.")
+    @PreAuthorize("hasAuthority('attendance.team.read') or hasAuthority('attendance.manage') or hasAuthority('attendance.admin')")
     @GetMapping("/departments/{departmentId}/history")
     public ResponseEntity<ApiResponse<Page<TeamDepartmentAttendanceHistoryItemDto>>> getDepartmentAttendanceHistory(
             @PathVariable("departmentId") Long departmentId,

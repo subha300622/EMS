@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -24,6 +25,7 @@ public class AttendanceCoreController {
     private AttendanceService attendanceService;
 
     @Operation(summary = "Employee Check-In", description = "Records daily check-in for the authenticated employee in the active tenant organization. Transitions state from NOT_CHECKED_IN to WORKING.")
+    @PreAuthorize("hasAuthority('attendance.self.checkin')")
     @PostMapping("/check-in")
     public ResponseEntity<ApiResponse<AttendanceCoreResponse>> checkIn() {
         AttendanceCoreResponse response = attendanceService.checkInCore();
@@ -32,6 +34,7 @@ public class AttendanceCoreController {
     }
 
     @Operation(summary = "Start Break", description = "Starts an attendance break for the authenticated employee. State transitions from WORKING to ON_BREAK.")
+    @PreAuthorize("hasAuthority('attendance.self.checkin')")
     @PostMapping("/break/start")
     public ResponseEntity<ApiResponse<AttendanceCoreResponse>> startBreak() {
         AttendanceCoreResponse response = attendanceService.startBreakCore();
@@ -39,6 +42,7 @@ public class AttendanceCoreController {
     }
 
     @Operation(summary = "End Break", description = "Ends the active attendance break and calculates break duration. State transitions from ON_BREAK back to WORKING.")
+    @PreAuthorize("hasAuthority('attendance.self.checkin')")
     @PostMapping("/break/end")
     public ResponseEntity<ApiResponse<AttendanceCoreResponse>> endBreak() {
         AttendanceCoreResponse response = attendanceService.endBreakCore();
@@ -46,6 +50,7 @@ public class AttendanceCoreController {
     }
 
     @Operation(summary = "Employee Check-Out", description = "Completes daily attendance, calculates total break time, total attendance time, and net working duration. Transitions state to COMPLETED.")
+    @PreAuthorize("hasAuthority('attendance.self.checkout')")
     @PostMapping("/check-out")
     public ResponseEntity<ApiResponse<AttendanceCoreResponse>> checkOut() {
         AttendanceCoreResponse response = attendanceService.checkOutCore();
@@ -53,6 +58,7 @@ public class AttendanceCoreController {
     }
 
     @Operation(summary = "Get Today's Attendance", description = "Retrieves today's attendance status and break intervals for the authenticated employee. Returns NOT_CHECKED_IN if no punch exists.")
+    @PreAuthorize("hasAuthority('attendance.self.read')")
     @GetMapping("/today")
     public ResponseEntity<ApiResponse<AttendanceCoreResponse>> getTodayAttendance() {
         AttendanceCoreResponse response = attendanceService.getTodayAttendanceCore();
@@ -60,6 +66,7 @@ public class AttendanceCoreController {
     }
 
     @Operation(summary = "Get Attendance Day Summary", description = "Retrieves complete daily attendance calculation breakdown (audit timestamps, grace, permission, payable minutes, and overtime) for an employee on a given date.")
+    @PreAuthorize("hasAuthority('attendance.self.read') or hasAuthority('attendance.team.read') or hasAuthority('attendance.admin')")
     @GetMapping("/summary")
     public ResponseEntity<ApiResponse<AttendanceDaySummaryDto>> getAttendanceDaySummary(
             @RequestParam(value = "employeeId", required = false) Long employeeId,
@@ -70,6 +77,7 @@ public class AttendanceCoreController {
     }
 
     @Operation(summary = "Get Attendance By ID", description = "Retrieves an attendance record by ID, scoped to both current organization and authenticated employee.")
+    @PreAuthorize("hasAuthority('attendance.self.read') or hasAuthority('attendance.team.read') or hasAuthority('attendance.admin')")
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<AttendanceCoreResponse>> getAttendanceById(@PathVariable("id") Long id) {
         AttendanceCoreResponse response = attendanceService.getAttendanceByIdCore(id);
@@ -77,6 +85,7 @@ public class AttendanceCoreController {
     }
 
     @Operation(summary = "Get Attendance History", description = "Retrieves paginated attendance history for the authenticated employee with optional date range and status filters.")
+    @PreAuthorize("hasAuthority('attendance.self.read')")
     @GetMapping("/history")
     public ResponseEntity<ApiResponse<org.springframework.data.domain.Page<com.example.ems.attendance.dto.AttendanceHistoryItemDto>>> getAttendanceHistory(
             @ModelAttribute com.example.ems.attendance.dto.AttendanceHistoryQuery query) {

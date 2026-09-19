@@ -9,6 +9,8 @@ import com.example.ems.leave.entity.*;
 import com.example.ems.leave.repository.*;
 import com.example.ems.leave.event.LeaveApprovedEvent;
 import com.example.ems.leave.event.LeaveCancelledEvent;
+import com.example.ems.leave.event.LeaveRejectedEvent;
+import com.example.ems.leave.event.LeaveRequestedEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -376,6 +378,18 @@ public class LeaveService {
                 savedLeave, "APPLIED", employee, null, "PENDING", "Leave request submitted"
         ));
 
+        // Publish Domain Event
+        String empCode = employee != null ? (employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getId().toString()) : "UNKNOWN";
+        eventPublisher.publishEvent(new LeaveRequestedEvent(
+                savedLeave.getId(),
+                empCode,
+                orgId,
+                savedLeave.getStartDate(),
+                savedLeave.getEndDate(),
+                savedLeave.getDurationDays(),
+                leaveType.getName()
+        ));
+
         return savedLeave;
     }
 
@@ -459,6 +473,10 @@ public class LeaveService {
         }
 
         String oldStatus = leave.getStatus();
+        if (!"PENDING".equalsIgnoreCase(oldStatus) && !"APPROVED".equalsIgnoreCase(oldStatus)) {
+            throw new IllegalStateException("Only PENDING or APPROVED leave requests can be cancelled. Current status: " + oldStatus);
+        }
+
         int year = leave.getStartDate().getYear();
         double paidDays = leave.getPaidDays() != null ? leave.getPaidDays() : leave.getDurationDays();
 
@@ -480,10 +498,10 @@ public class LeaveService {
                 saved, "CANCELLED", actor, oldStatus, "CANCELLED", "Leave request cancelled"
         ));
 
-        if ("APPROVED".equalsIgnoreCase(oldStatus)) {
-            String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
-            eventPublisher.publishEvent(new LeaveCancelledEvent(saved.getId(), empCode, saved.getStartDate(), saved.getEndDate()));
-        }
+        String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
+        Long cancelOrgId = saved.getOrganization() != null ? saved.getOrganization().getId() : (actor != null && actor.getOrganization() != null ? actor.getOrganization().getId() : null);
+        String actorCode = actor != null ? (actor.getEmployeeId() != null ? actor.getEmployeeId() : actor.getId().toString()) : "SYSTEM";
+        eventPublisher.publishEvent(new LeaveCancelledEvent(saved.getId(), empCode, cancelOrgId, actorCode, saved.getStartDate(), saved.getEndDate()));
 
         return saved;
     }
@@ -643,6 +661,10 @@ public class LeaveService {
 
         int year = leave.getStartDate().getYear();
         String oldStatus = leave.getStatus();
+        if (!"PENDING".equalsIgnoreCase(oldStatus)) {
+            throw new IllegalStateException("Only PENDING leave requests can be approved. Current status: " + oldStatus);
+        }
+
         leave.setStatus("APPROVED");
         leave.setApprovedBy(approver);
         leave.setApprovedAt(LocalDateTime.now());
@@ -660,7 +682,9 @@ public class LeaveService {
 
         String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
         String leaveTypeName = saved.getLeaveType() != null ? saved.getLeaveType().getName() : "LEAVE";
-        eventPublisher.publishEvent(new LeaveApprovedEvent(saved.getId(), empCode, saved.getStartDate(), saved.getEndDate(), leaveTypeName));
+        Long approverOrgId = saved.getOrganization() != null ? saved.getOrganization().getId() : (approver != null && approver.getOrganization() != null ? approver.getOrganization().getId() : null);
+        String approverCode = approver != null ? (approver.getEmployeeId() != null ? approver.getEmployeeId() : approver.getId().toString()) : "SYSTEM";
+        eventPublisher.publishEvent(new LeaveApprovedEvent(saved.getId(), empCode, approverOrgId, approverCode, saved.getStartDate(), saved.getEndDate(), leaveTypeName));
 
         return saved;
     }
@@ -678,11 +702,15 @@ public class LeaveService {
 
         int year = leave.getStartDate().getYear();
         String oldStatus = leave.getStatus();
+        if (!"PENDING".equalsIgnoreCase(oldStatus)) {
+            throw new IllegalStateException("Only PENDING leave requests can be rejected. Current status: " + oldStatus);
+        }
+
         leave.setStatus("REJECTED");
         leave.setApprovedBy(approver);
         leave.setRejectedAt(LocalDateTime.now());
         leave.setUpdatedAt(LocalDateTime.now());
-        leaveRepository.save(leave);
+        Leave saved = leaveRepository.save(leave);
 
         double paidDays = leave.getPaidDays() != null ? leave.getPaidDays() : leave.getDurationDays();
         if (paidDays > 0) {
@@ -692,6 +720,12 @@ public class LeaveService {
         historyRepository.save(new LeaveRequestHistory(
                 leave, "REJECTED", approver, oldStatus, "REJECTED", "Rejected directly"
         ));
+
+        String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
+        Long rejectOrgId = saved.getOrganization() != null ? saved.getOrganization().getId() : (approver != null && approver.getOrganization() != null ? approver.getOrganization().getId() : null);
+        String approverCode = approver != null ? (approver.getEmployeeId() != null ? approver.getEmployeeId() : approver.getId().toString()) : "SYSTEM";
+        eventPublisher.publishEvent(new LeaveRejectedEvent(saved.getId(), empCode, rejectOrgId, approverCode, "Rejected directly"));
+
         return leave;
     }
 

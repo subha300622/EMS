@@ -49,7 +49,22 @@ public class LeaveBalance {
     public LeaveBalance() {}
 
     public Double getAvailableBalance() {
-        return totalEntitlement - usedBalance - pendingBalance;
+        double total = totalEntitlement != null ? totalEntitlement : 0.0;
+        double used = usedBalance != null ? usedBalance : 0.0;
+        double pending = pendingBalance != null ? pendingBalance : 0.0;
+        return total - used - pending;
+    }
+
+    public void validateInvariants() {
+        if (usedBalance == null || usedBalance < 0) {
+            throw new IllegalStateException("Invariant violated: usedBalance cannot be negative (" + usedBalance + ")");
+        }
+        if (pendingBalance == null || pendingBalance < 0) {
+            throw new IllegalStateException("Invariant violated: pendingBalance cannot be negative (" + pendingBalance + ")");
+        }
+        if (getAvailableBalance() < -1e-6) {
+            throw new IllegalStateException("Invariant violated: availableBalance cannot be negative (" + getAvailableBalance() + ")");
+        }
     }
 
     public Long getId() { return id; }

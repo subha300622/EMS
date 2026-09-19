@@ -8,7 +8,9 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.leave.dto.*;
 import com.example.ems.leave.entity.*;
 import com.example.ems.leave.service.*;
+import com.example.ems.security.dto.AuthPrincipal;
 import com.example.ems.security.service.JwtService;
+import com.example.ems.security.service.PermissionCheckService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,6 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -49,7 +54,21 @@ public class LeaveController {
     @Autowired
     private JwtService jwtService;
 
+    @Autowired
+    private PermissionCheckService permissionCheckService;
+
     private User resolveUser(String authHeader) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof AuthPrincipal principal) {
+            if (principal.getWorkEmail() != null) {
+                User u = userRepository.findByWorkEmail(principal.getWorkEmail()).orElse(null);
+                if (u != null) return u;
+            }
+            if (principal.getUserId() != null) {
+                User u = userRepository.findById(principal.getUserId()).orElse(null);
+                if (u != null) return u;
+            }
+        }
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if ("dev-token".equalsIgnoreCase(token)) {
@@ -63,7 +82,7 @@ public class LeaveController {
         if (authHeader != null && authHeader.contains("dev-token")) {
             return userRepository.findAll().stream().findFirst().orElse(null);
         }
-        return userRepository.findAll().stream().findFirst().orElse(null);
+        return null;
     }
 
     private Employee resolveEmployee(User user) {
@@ -83,6 +102,7 @@ public class LeaveController {
     // == 1. LEAVE TYPES (/types) ===============================================
 
     @Operation(summary = "Create Leave Type")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PostMapping("/types")
     public ResponseEntity<ApiResponse<LeaveType>> createLeaveType(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -96,6 +116,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "List Leave Types")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/types")
     public ResponseEntity<ApiResponse<List<LeaveType>>> getLeaveTypes(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -107,6 +128,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Get Leave Type Details")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/types/{leaveTypeId}")
     public ResponseEntity<ApiResponse<LeaveType>> getLeaveType(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -119,6 +141,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Update Leave Type")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PutMapping("/types/{leaveTypeId}")
     public ResponseEntity<ApiResponse<LeaveType>> updateLeaveType(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -132,6 +155,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Update Leave Type Status")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PatchMapping("/types/{leaveTypeId}/status")
     public ResponseEntity<ApiResponse<LeaveType>> updateLeaveTypeStatus(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -147,6 +171,7 @@ public class LeaveController {
     // == 2. LEAVE POLICIES (/policies) =========================================
 
     @Operation(summary = "Create Policy")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PostMapping("/policies")
     public ResponseEntity<ApiResponse<LeavePolicy>> createPolicy(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -160,6 +185,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "List Policies")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/policies")
     public ResponseEntity<ApiResponse<List<LeavePolicy>>> getPolicies(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -171,6 +197,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Get Policy Details")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/policies/{policyId}")
     public ResponseEntity<ApiResponse<LeavePolicy>> getPolicy(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -183,6 +210,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Update Policy")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PutMapping("/policies/{policyId}")
     public ResponseEntity<ApiResponse<LeavePolicy>> updatePolicy(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -196,6 +224,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Get Policy Rules")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @GetMapping("/policies/{policyId}/rules")
     public ResponseEntity<ApiResponse<List<LeaveRule>>> getPolicyRules(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -211,6 +240,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Create Policy Rule")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PostMapping("/policies/{policyId}/rules")
     public ResponseEntity<ApiResponse<LeaveRule>> createPolicyRule(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -225,6 +255,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Get Policy Accrual Rules")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @GetMapping("/policies/{policyId}/accrual-rules")
     public ResponseEntity<ApiResponse<List<LeaveAccrualRule>>> getPolicyAccrualRules(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -240,6 +271,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Create Policy Accrual Rule")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PostMapping("/policies/{policyId}/accrual-rules")
     public ResponseEntity<ApiResponse<LeaveAccrualRule>> createPolicyAccrualRule(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -254,6 +286,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Assign Policy to Employees")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PostMapping("/policies/{policyId}/assign")
     public ResponseEntity<ApiResponse<LeavePolicy>> assignPolicy(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -270,6 +303,7 @@ public class LeaveController {
     // == 3. LEAVE REQUESTS (/requests) =========================================
 
     @Operation(summary = "Apply Leave")
+    @PreAuthorize("hasAuthority('leave.self.create')")
     @PostMapping("/requests")
     public ResponseEntity<ApiResponse<Leave>> applyLeave(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -289,6 +323,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "List Leave Requests (With Filters & mine=true support)")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/requests")
     public ResponseEntity<ApiResponse<List<Leave>>> getLeaveRequests(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -313,6 +348,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Get Leave Request Details")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/requests/{leaveRequestId}")
     public ResponseEntity<ApiResponse<Leave>> getLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -326,6 +362,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Edit Leave Request")
+    @PreAuthorize("hasAuthority('leave.self.create') or hasAuthority('leave.manage')")
     @PutMapping("/requests/{leaveRequestId}")
     public ResponseEntity<ApiResponse<Leave>> updateLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -340,6 +377,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Approve Leave Request")
+    @PreAuthorize("hasAuthority('leave.approve')")
     @PostMapping("/requests/{leaveRequestId}/approve")
     public ResponseEntity<ApiResponse<ManagerApprovalActionResponseDto>> approveLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -359,6 +397,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Reject Leave Request")
+    @PreAuthorize("hasAuthority('leave.reject')")
     @PostMapping("/requests/{leaveRequestId}/reject")
     public ResponseEntity<ApiResponse<ManagerApprovalActionResponseDto>> rejectLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -378,6 +417,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Send Back Leave Request")
+    @PreAuthorize("hasAuthority('leave.approve') or hasAuthority('leave.reject')")
     @PostMapping("/requests/{leaveRequestId}/send-back")
     public ResponseEntity<ApiResponse<ManagerApprovalActionResponseDto>> sendBackLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -397,6 +437,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Cancel Leave Request")
+    @PreAuthorize("hasAuthority('leave.self.cancel') or hasAuthority('leave.manage') or hasAuthority('leave.admin')")
     @PostMapping("/requests/{leaveRequestId}/cancel")
     public ResponseEntity<ApiResponse<Leave>> cancelLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -414,6 +455,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Leave Request Audit History")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/requests/{leaveRequestId}/history")
     public ResponseEntity<ApiResponse<List<LeaveRequestHistory>>> getLeaveRequestHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -428,6 +470,7 @@ public class LeaveController {
     // == 4. LEAVE BALANCES (/balances) =========================================
 
     @Operation(summary = "My Leave Balance")
+    @PreAuthorize("hasAuthority('leave.self.read')")
     @GetMapping("/balances/me")
     public ResponseEntity<ApiResponse<List<LeaveBalance>>> getMyBalances(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -442,6 +485,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Employee Leave Balance")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/balances/{employeeId}")
     public ResponseEntity<ApiResponse<List<LeaveBalance>>> getEmployeeBalances(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -454,6 +498,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Adjust Balance")
+    @PreAuthorize("hasAuthority('leave.admin') or hasAuthority('leave.manage')")
     @PostMapping("/balances/{employeeId}/adjust")
     public ResponseEntity<ApiResponse<LeaveBalanceAdjustment>> adjustBalance(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -471,6 +516,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "List Balance Adjustment History")
+    @PreAuthorize("hasAuthority('leave.admin') or hasAuthority('leave.manage')")
     @GetMapping("/balance-adjustments")
     public ResponseEntity<ApiResponse<List<LeaveBalanceAdjustment>>> getAdjustments(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -484,6 +530,7 @@ public class LeaveController {
     // == 5. CALENDAR, TEAM, DEPARTMENT & DASHBOARD ============================
 
     @Operation(summary = "Unified Leave Calendar (With Filters)")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/calendar")
     public ResponseEntity<ApiResponse<List<LeaveCalendarEventDto>>> getCalendar(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -504,6 +551,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Employee Leave Calendar")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/calendar/employee/{employeeId}")
     public ResponseEntity<ApiResponse<List<LeaveCalendarEventDto>>> getEmployeeCalendar(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -521,6 +569,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Team Leave Calendar")
+    @PreAuthorize("hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/calendar/team/{teamId}")
     public ResponseEntity<ApiResponse<List<LeaveCalendarEventDto>>> getTeamCalendar(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -538,6 +587,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Department Leave Calendar")
+    @PreAuthorize("hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/calendar/department/{department}")
     public ResponseEntity<ApiResponse<List<LeaveCalendarEventDto>>> getDepartmentCalendar(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -555,6 +605,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Team Leave View")
+    @PreAuthorize("hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/team")
     public ResponseEntity<ApiResponse<List<Leave>>> getTeamLeaveView(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -572,6 +623,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Department Leave View")
+    @PreAuthorize("hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/department")
     public ResponseEntity<ApiResponse<List<Leave>>> getDepartmentLeaveView(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -590,6 +642,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Unified Leave Dashboard")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.team.read') or hasAuthority('leave.admin')")
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<LeaveDashboardMetricsDto>> getLeaveDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -603,6 +656,7 @@ public class LeaveController {
     // == 6. ACCRUALS & ENCASHMENTS =============================================
 
     @Operation(summary = "Accrual History")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @GetMapping("/accruals")
     public ResponseEntity<ApiResponse<List<LeaveAccrualTransaction>>> getAccrualHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -614,6 +668,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Run Accrual Operation")
+    @PreAuthorize("hasAuthority('leave.admin')")
     @PostMapping("/accruals/run")
     public ResponseEntity<ApiResponse<List<LeaveAccrualTransaction>>> runAccrual(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -625,6 +680,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "List Encashments")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.admin')")
     @GetMapping("/encashments")
     public ResponseEntity<ApiResponse<List<LeaveEncashment>>> getEncashments(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -636,6 +692,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Request Encashment")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.admin')")
     @PostMapping("/encashments")
     public ResponseEntity<ApiResponse<LeaveEncashment>> requestEncashment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -649,6 +706,7 @@ public class LeaveController {
     }
 
     @Operation(summary = "Get Encashment Details")
+    @PreAuthorize("hasAuthority('leave.self.read') or hasAuthority('leave.admin')")
     @GetMapping("/encashments/{encashmentId}")
     public ResponseEntity<ApiResponse<LeaveEncashment>> getEncashment(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
