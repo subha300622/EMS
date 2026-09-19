@@ -27,9 +27,11 @@ import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.security.service.JwtService;
 import java.util.ArrayList;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
 
     private final ObjectMapper objectMapper = new ObjectMapper();

@@ -276,8 +276,78 @@ public class DatabaseSeeder implements ApplicationRunner {
             permissionMap.put(permName, permission);
         }
 
-        // 2. Seed System Master Permission Groups
+        // 2. Seed System Master Permission Groups (Tiered: Self-Service, Manager, Admin)
         Map<String, List<String>> groupDefinitions = new LinkedHashMap<>();
+
+        // Tiered Leave Management
+        groupDefinitions.put("LEAVE_SELF_SERVICE", Arrays.asList(
+                "leave.self.read", "employee.leave.create", "employee.leave.read", "employee.leave.cancel"));
+        groupDefinitions.put("LEAVE_MANAGER", Arrays.asList(
+                "leave.team.read", "leave.team.approve", "leave.approve", "leave.reject"));
+        groupDefinitions.put("LEAVE_ADMIN", Arrays.asList(
+                "leave.manage", "leave.create", "leave.read", "leave.approve", "leave.reject",
+                "leave.team.read", "leave.team.approve"));
+
+        // Tiered Attendance Management
+        groupDefinitions.put("ATTENDANCE_SELF_SERVICE", Arrays.asList(
+                "attendance.self.read", "employee.attendance.read", "employee.attendance.create",
+                "attendance.permission.create", "attendance.permission.read"));
+        groupDefinitions.put("ATTENDANCE_MANAGER", Arrays.asList(
+                "attendance.team.read", "attendance.permission.approve", "attendance.permission.reject"));
+        groupDefinitions.put("ATTENDANCE_ADMIN", Arrays.asList(
+                "attendance.read", "attendance.manage", "attendance.grace.manage", "attendance.adjust",
+                "attendance.policy.read", "attendance.policy.create", "attendance.policy.update", "attendance.policy.approve"));
+
+        // Tiered Performance & Goals
+        groupDefinitions.put("PERFORMANCE_SELF_SERVICE", Arrays.asList(
+                "performance.self.read", "performance.self.goal.update", "performance.self.assessment.submit",
+                "performance.self.feedback.read", "performance.self.history.read", "employee.performance.read",
+                "employee.performance.self-review.submit", "goal.self.read", "goal.self.update",
+                "employee.goal.read", "employee.goal.update"));
+        groupDefinitions.put("PERFORMANCE_MANAGER", Arrays.asList(
+                "performance.review", "performance.read", "goal.read", "goal.approve", "goal.reject"));
+        groupDefinitions.put("PERFORMANCE_ADMIN", Arrays.asList(
+                "performance.manage", "performance.finalize", "performance.read", "performance.review",
+                "goal.create", "goal.read", "goal.update", "goal.delete", "goal.analytics.read"));
+
+        // Tiered Payroll & Compensation
+        groupDefinitions.put("PAYROLL_SELF_SERVICE", Arrays.asList(
+                "payslip.self.read", "employee.payslip.read", "employee.payslip.download"));
+        groupDefinitions.put("PAYROLL_OPERATOR", Arrays.asList(
+                "payroll.read", "payroll.manage", "salary.manage", "payroll-settings.manage"));
+        groupDefinitions.put("PAYROLL_ADMIN", Arrays.asList(
+                "payroll.read", "payroll.manage", "salary.manage", "payroll.approve", "payroll.disburse",
+                "payroll-settings.manage", "fnf.manage"));
+
+        // General Employee Self Service
+        groupDefinitions.put("EMPLOYEE_SELF_SERVICE", Arrays.asList(
+                "employee.dashboard.read", "employee.profile.read", "employee.profile.update",
+                "employee.directory.read", "employee.team.hierarchy.read", "document.self.read",
+                "employee.document.read", "employee.document.upload", "employee.asset.read", "employee.asset.request",
+                "employee.notification.read", "employee.notification.update", "employee.announcement.read",
+                "settings.self.read", "schedule.self.read", "schedule.self.change.create",
+                "schedule.self.availability.update", "schedule.self.notification.read", "schedule.self.timeline.read"));
+
+        // HR & People Administration
+        groupDefinitions.put("HR_ADMIN", Arrays.asList(
+                "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
+                "employee.directory.manage", "employee.report.read",
+                "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload",
+                "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
+                "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload",
+                "employee.onboarding.document.read", "employee.onboarding.submit",
+                "offboarding.request.read", "offboarding.analytics.read", "offboarding.template.read",
+                "offboarding.template.manage", "offboarding.request.create", "offboarding.request.approve",
+                "offboarding.request.reject",
+                "training.create", "training.read", "training.update", "training.delete", "training.approve",
+                "training.publish", "training.assign", "training.attendance.manage", "training.library.manage",
+                "training.reports.view", "recruitment.manage", "reports.hr"));
+
+        // Finance & Expense Administration
+        groupDefinitions.put("FINANCE_ADMIN", Arrays.asList(
+                "payroll.read", "payroll.manage", "fnf.manage", "expense.manage", "reports.finance", "audit.read"));
+
+        // General Functional Area Groups (Maintained for backward compatibility and composition)
         groupDefinitions.put("EMPLOYEE_MANAGEMENT", Arrays.asList(
                 "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
                 "employee.directory.read", "employee.directory.manage", "employee.report.read", "employee.profile.read",
@@ -289,11 +359,11 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "attendance.policy.read", "attendance.policy.create", "attendance.policy.update", "attendance.policy.approve",
                 "employee.attendance.read", "employee.attendance.create"));
         groupDefinitions.put("LEAVE_MANAGEMENT", Arrays.asList(
-                "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve", "leave.self.read",
-                "employee.leave.create", "employee.leave.read", "employee.leave.cancel"));
+                "leave.create", "leave.read", "leave.approve", "leave.reject", "leave.manage", "leave.team.read",
+                "leave.team.approve", "leave.self.read", "employee.leave.create", "employee.leave.read", "employee.leave.cancel"));
         groupDefinitions.put("PAYROLL", Arrays.asList(
-                "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
-                "employee.payslip.read", "employee.payslip.download", "payroll-settings.manage", "fnf.manage"));
+                "payroll.read", "payroll.manage", "payroll.approve", "payroll.disburse", "salary.manage", "payslip.read",
+                "payslip.self.read", "employee.payslip.read", "employee.payslip.download", "payroll-settings.manage", "fnf.manage"));
         groupDefinitions.put("RECRUITMENT", Arrays.asList(
                 "RECRUITMENT_JOB_VIEW", "RECRUITMENT_JOB_CREATE", "RECRUITMENT_JOB_UPDATE", "RECRUITMENT_JOB_PUBLISH",
                 "RECRUITMENT_APPLICATION_VIEW", "RECRUITMENT_APPLICATION_SHORTLIST", "RECRUITMENT_APPLICATION_REJECT", "RECRUITMENT_APPLICATION_SELECT",
@@ -302,14 +372,13 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "RECRUITMENT_TALENT_POOL_VIEW", "RECRUITMENT_TALENT_POOL_INVITE", "RECRUITMENT_DASHBOARD_VIEW",
                 "recruitment.manage", "employee.training.read", "employee.training.complete"));
         groupDefinitions.put("PERFORMANCE", Arrays.asList(
-                "performance.review", "performance.self.read", "performance.self.goal.update",
-                "performance.self.assessment.submit",
+                "performance.review", "performance.read", "performance.manage", "performance.finalize",
+                "performance.self.read", "performance.self.goal.update", "performance.self.assessment.submit",
                 "performance.self.feedback.read", "performance.self.history.read", "employee.performance.read",
                 "employee.performance.self-review.submit"));
         groupDefinitions.put("GOALS", Arrays.asList(
                 "goal.create", "goal.read", "goal.update", "goal.delete", "goal.self.read", "goal.self.update",
-                "goal.submit",
-                "goal.approve", "goal.reject", "goal.analytics.read", "employee.goal.read", "employee.goal.update"));
+                "goal.submit", "goal.approve", "goal.reject", "goal.analytics.read", "employee.goal.read", "employee.goal.update"));
         groupDefinitions.put("ASSETS", Arrays.asList(
                 "asset.manage", "asset.self.read", "employee.asset.read", "employee.asset.request"));
         groupDefinitions.put("EXPENSES", Arrays.asList(
@@ -320,9 +389,8 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "employee.document.delete"));
         groupDefinitions.put("ONBOARDING", Arrays.asList(
                 "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload",
-                "onboarding.document.read.self",
-                "onboarding.self.submit", "employee.onboarding.read.self", "employee.onboarding.read",
-                "employee.onboarding.update",
+                "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",
+                "employee.onboarding.read", "employee.onboarding.update",
                 "employee.onboarding.document.upload", "employee.onboarding.document.read",
                 "employee.onboarding.submit"));
         groupDefinitions.put("OFFBOARDING", Arrays.asList(
@@ -337,16 +405,13 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "reports.view", "reports.hr", "reports.finance", "reports.manager"));
         groupDefinitions.put("TEAM", Arrays.asList(
                 "team.read", "task.assign", "employee.team.hierarchy.read", "employee.schedule.read",
-                "schedule.self.read",
-                "schedule.self.change.create", "schedule.self.availability.update", "schedule.self.notification.read",
-                "schedule.self.timeline.read"));
+                "schedule.self.read", "schedule.self.change.create", "schedule.self.availability.update",
+                "schedule.self.notification.read", "schedule.self.timeline.read"));
         groupDefinitions.put("SETTINGS", Arrays.asList(
                 "settings.manage", "settings.self.read", "settings.security.read", "settings.security.update",
-                "settings.privacy.read",
-                "settings.privacy.update", "settings.notifications.read", "settings.notifications.update",
-                "settings.appearance.read",
-                "settings.appearance.update", "settings.language.read", "settings.language.update",
-                "settings.devices.read",
+                "settings.privacy.read", "settings.privacy.update", "settings.notifications.read",
+                "settings.notifications.update", "settings.appearance.read", "settings.appearance.update",
+                "settings.language.read", "settings.language.update", "settings.devices.read",
                 "settings.devices.remove", "settings.data.export", "settings.support.create", "settings.support.read",
                 "announcement.manage", "employee.announcement.read", "employee.notification.read",
                 "employee.notification.update"));
@@ -357,16 +422,14 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "organization.subscription", "organization.audit.read", "organization.export"));
         groupDefinitions.put("PLATFORM", Arrays.asList(
                 "platform.organization.view", "platform.organization.edit", "platform.role.view",
-                "platform.role.override",
-                "platform.permission.override", "platform.dashboard.view", "platform.audit.view",
-                "platform.reports.view",
-                "platform.dashboard.subscription.view", "platform.reports.subscription.view",
-                "platform.reports.subscription.export",
-                "platform.revenue.dashboard.view", "platform.revenue.payments.view", "platform.revenue.invoices.view",
-                "platform.revenue.refunds.view", "platform.revenue.plans.view", "platform.revenue.forecast.view",
-                "platform.revenue.export",
-                "system.manage", "role.manage", "permission.manage", "user.manage", "user.create", "user.read",
-                "user.update", "user.delete", "user.role.assign"));
+                "platform.role.override", "platform.permission.override", "platform.dashboard.view",
+                "platform.audit.view", "platform.reports.view", "platform.dashboard.subscription.view",
+                "platform.reports.subscription.view", "platform.reports.subscription.export",
+                "platform.revenue.dashboard.view", "platform.revenue.payments.view",
+                "platform.revenue.invoices.view", "platform.revenue.refunds.view",
+                "platform.revenue.plans.view", "platform.revenue.forecast.view", "platform.revenue.export",
+                "system.manage", "role.manage", "role.view", "permission.manage", "user.manage", "user.create",
+                "user.read", "user.update", "user.delete", "user.role.assign"));
 
         Map<String, PermissionGroup> groupMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : groupDefinitions.entrySet()) {
@@ -394,25 +457,39 @@ public class DatabaseSeeder implements ApplicationRunner {
 
         // 3. Seed Platform Template Roles and map Permission Groups
         Map<String, List<String>> roleGroupsMap = new HashMap<>();
-        roleGroupsMap.put("PLATFORM_ADMIN",
-                Arrays.asList("PLATFORM", "ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS", "EMPLOYEE_MANAGEMENT",
-                        "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS",
-                        "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
-        roleGroupsMap.put("SUPER_ADMIN",
-                Arrays.asList("ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS", "EMPLOYEE_MANAGEMENT", "ATTENDANCE",
-                        "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT", "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES",
-                        "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
-        roleGroupsMap.put("ADMIN",
-                Arrays.asList("EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "PAYROLL", "RECRUITMENT",
-                        "PERFORMANCE", "GOALS", "ASSETS", "EXPENSES", "DOCUMENTS", "ONBOARDING", "SUPPORT", "REPORTS",
-                        "TEAM", "SETTINGS", "AUDIT"));
-        roleGroupsMap.put("HR", Arrays.asList("EMPLOYEE_MANAGEMENT", "ATTENDANCE", "LEAVE_MANAGEMENT", "RECRUITMENT",
-                "PERFORMANCE", "GOALS", "DOCUMENTS", "ONBOARDING", "SUPPORT", "REPORTS", "TEAM"));
-        roleGroupsMap.put("MANAGER",
-                Arrays.asList("ATTENDANCE", "LEAVE_MANAGEMENT", "PERFORMANCE", "GOALS", "SUPPORT", "REPORTS", "TEAM"));
-        roleGroupsMap.put("FINANCE", Arrays.asList("PAYROLL", "EXPENSES", "REPORTS", "AUDIT"));
-        roleGroupsMap.put("EMPLOYEE",
-                Arrays.asList("ATTENDANCE", "LEAVE_MANAGEMENT", "DOCUMENTS", "ONBOARDING", "SUPPORT", "TEAM"));
+
+        roleGroupsMap.put("EMPLOYEE", Arrays.asList(
+                "LEAVE_SELF_SERVICE", "ATTENDANCE_SELF_SERVICE", "PERFORMANCE_SELF_SERVICE",
+                "PAYROLL_SELF_SERVICE", "EMPLOYEE_SELF_SERVICE", "SUPPORT", "DOCUMENTS"));
+
+        roleGroupsMap.put("MANAGER", Arrays.asList(
+                "LEAVE_SELF_SERVICE", "ATTENDANCE_SELF_SERVICE", "PERFORMANCE_SELF_SERVICE",
+                "PAYROLL_SELF_SERVICE", "EMPLOYEE_SELF_SERVICE", "SUPPORT", "DOCUMENTS",
+                "LEAVE_MANAGER", "ATTENDANCE_MANAGER", "PERFORMANCE_MANAGER", "REPORTS", "TEAM"));
+
+        roleGroupsMap.put("HR", Arrays.asList(
+                "LEAVE_SELF_SERVICE", "ATTENDANCE_SELF_SERVICE", "PERFORMANCE_SELF_SERVICE",
+                "PAYROLL_SELF_SERVICE", "EMPLOYEE_SELF_SERVICE", "SUPPORT", "DOCUMENTS",
+                "LEAVE_ADMIN", "ATTENDANCE_ADMIN", "PERFORMANCE_ADMIN", "HR_ADMIN", "REPORTS", "TEAM", "RECRUITMENT"));
+
+        roleGroupsMap.put("FINANCE", Arrays.asList(
+                "LEAVE_SELF_SERVICE", "ATTENDANCE_SELF_SERVICE", "PERFORMANCE_SELF_SERVICE",
+                "PAYROLL_SELF_SERVICE", "EMPLOYEE_SELF_SERVICE", "SUPPORT", "DOCUMENTS",
+                "PAYROLL_ADMIN", "FINANCE_ADMIN", "EXPENSES", "REPORTS", "AUDIT"));
+
+        roleGroupsMap.put("ADMIN", Arrays.asList(
+                "LEAVE_ADMIN", "ATTENDANCE_ADMIN", "PERFORMANCE_ADMIN", "HR_ADMIN", "PAYROLL_ADMIN",
+                "FINANCE_ADMIN", "EMPLOYEE_SELF_SERVICE", "EXPENSES", "DOCUMENTS", "SUPPORT",
+                "REPORTS", "TEAM", "SETTINGS", "AUDIT", "RECRUITMENT"));
+
+        roleGroupsMap.put("SUPER_ADMIN", Arrays.asList(
+                "LEAVE_ADMIN", "ATTENDANCE_ADMIN", "PERFORMANCE_ADMIN", "HR_ADMIN", "PAYROLL_ADMIN",
+                "FINANCE_ADMIN", "EMPLOYEE_SELF_SERVICE", "EXPENSES", "DOCUMENTS", "SUPPORT",
+                "REPORTS", "TEAM", "SETTINGS", "AUDIT", "ORGANIZATION", "RECRUITMENT"));
+
+        roleGroupsMap.put("PLATFORM_ADMIN", Arrays.asList(
+                "PLATFORM", "ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS",
+                "LEAVE_ADMIN", "ATTENDANCE_ADMIN", "PAYROLL_ADMIN", "HR_ADMIN", "FINANCE_ADMIN"));
 
         Map<String, Role> roleMap = new HashMap<>();
         for (Map.Entry<String, List<String>> entry : roleGroupsMap.entrySet()) {

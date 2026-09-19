@@ -18,6 +18,9 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.ems.common.exception.ConflictException;
+import com.example.ems.common.exception.ResourceNotFoundException;
+import org.springframework.security.access.AccessDeniedException;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -328,10 +331,10 @@ public class RoleService {
     @Transactional
     public Role createTenantRole(Long organizationId, RoleRequest request) {
         Organization organization = organizationRepository.findById(organizationId)
-                .orElseThrow(() -> new IllegalArgumentException("Organization not found with ID: " + organizationId));
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found with ID: " + organizationId));
 
         if (roleRepository.existsByOrganizationIdAndName(organizationId, request.getName())) {
-            throw new IllegalArgumentException("Role with name '" + request.getName() + "' already exists in organization");
+            throw new ConflictException("ROLE_NAME_ALREADY_EXISTS: Role with name '" + request.getName() + "' already exists in organization", "ROLE_NAME_ALREADY_EXISTS");
         }
 
         Role role = new Role();
@@ -348,16 +351,23 @@ public class RoleService {
     @Transactional
     public Role updateTenantRole(Long id, Long organizationId, RoleRequest request) {
         Role role = roleRepository.findById(id)
-                .filter(r -> organizationId.equals(r.getOrganization() != null ? r.getOrganization().getId() : null))
-                .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + id + " for organization ID: " + organizationId));
+                .orElseThrow(() -> new ResourceNotFoundException("ROLE_NOT_FOUND: Role not found with ID: " + id));
+
+        if (role.isPlatformTemplate()) {
+            throw new ConflictException("ROLE_SYSTEM_PROTECTED: Platform template roles cannot be modified by tenants", "ROLE_SYSTEM_PROTECTED");
+        }
+
+        if (role.getOrganization() == null || !organizationId.equals(role.getOrganization().getId())) {
+            throw new AccessDeniedException("ROLE_TENANT_ACCESS_DENIED: Role belongs to another organization");
+        }
 
         if (role.isSystemRole() && !role.getName().equalsIgnoreCase(request.getName())) {
-            throw new IllegalArgumentException("Cannot rename system roles");
+            throw new ConflictException("ROLE_SYSTEM_PROTECTED: Cannot rename system roles", "ROLE_SYSTEM_PROTECTED");
         }
 
         if (!role.getName().equalsIgnoreCase(request.getName()) &&
                 roleRepository.existsByOrganizationIdAndName(organizationId, request.getName())) {
-            throw new IllegalArgumentException("Role with name '" + request.getName() + "' already exists in organization");
+            throw new ConflictException("ROLE_NAME_ALREADY_EXISTS: Role with name '" + request.getName() + "' already exists in organization", "ROLE_NAME_ALREADY_EXISTS");
         }
 
         role.setName(request.getName().trim());
@@ -371,17 +381,20 @@ public class RoleService {
     @Transactional
     public void deleteTenantRole(Long id, Long organizationId) {
         Role role = roleRepository.findById(id)
-                .filter(r -> organizationId.equals(r.getOrganization() != null ? r.getOrganization().getId() : null))
-                .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + id + " for organization ID: " + organizationId));
+                .orElseThrow(() -> new ResourceNotFoundException("ROLE_NOT_FOUND: Role not found with ID: " + id));
 
-        if (role.isSystemRole()) {
-            throw new IllegalArgumentException("Cannot delete core system roles");
+        if (role.isPlatformTemplate() || role.isSystemRole()) {
+            throw new ConflictException("ROLE_SYSTEM_PROTECTED: Core system roles and platform templates cannot be deleted", "ROLE_SYSTEM_PROTECTED");
+        }
+
+        if (role.getOrganization() == null || !organizationId.equals(role.getOrganization().getId())) {
+            throw new AccessDeniedException("ROLE_TENANT_ACCESS_DENIED: Role belongs to another organization");
         }
 
         // Check if users are assigned to this role
         List<User> assignedUsers = userRepository.findByRoleId(id);
         if (!assignedUsers.isEmpty()) {
-            throw new IllegalArgumentException("Cannot delete role because it is currently assigned to " + assignedUsers.size() + " user(s).");
+            throw new ConflictException("ROLE_ASSIGNED_TO_ACTIVE_USERS: Cannot delete role because it is currently assigned to " + assignedUsers.size() + " user(s).", "ROLE_ASSIGNED_TO_ACTIVE_USERS");
         }
 
         evictRolePermissionsCache(id);
@@ -427,9 +440,76 @@ public class RoleService {
      */
     public Role requireRoleOwnedByCurrentTenant(Long roleId) {
         Long orgId = currentOrganizationId();
-        return getRoleById(roleId)
-                .filter(r -> r.isPlatformTemplate() || (r.getOrganization() != null && orgId.equals(r.getOrganization().getId())))
-                .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
+        Role role = getRoleById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("ROLE_NOT_FOUND: Role not found with ID: " + roleId));
+
+        if (role.isPlatformTemplate()) {
+            return role;
+        }
+
+        if (role.getOrganization() == null || !orgId.equals(role.getOrganization().getId())) {
+            throw new AccessDeniedException("ROLE_TENANT_ACCESS_DENIED: Role belongs to another organization");
+        }
+
+        return role;
+    }
+
+    /**
+     * Verifies that the role exists, belongs to the current tenant, and is not a platform template or protected system role.
+     */
+    public Role requireTenantMutableRole(Long roleId) {
+        Long orgId = currentOrganizationId();
+        Role role = getRoleById(roleId)
+                .orElseThrow(() -> new ResourceNotFoundException("ROLE_NOT_FOUND: Role not found with ID: " + roleId));
+
+        if (role.isPlatformTemplate()) {
+            throw new ConflictException("ROLE_SYSTEM_PROTECTED: Platform template roles cannot be modified by tenants", "ROLE_SYSTEM_PROTECTED");
+        }
+
+        if (role.getOrganization() == null || !orgId.equals(role.getOrganization().getId())) {
+            throw new AccessDeniedException("ROLE_TENANT_ACCESS_DENIED: Role belongs to another organization");
+        }
+
+        return role;
+    }
+
+    /**
+     * Clones a platform template into a new tenant-scoped custom role.
+     */
+    @Transactional
+    public Role cloneFromTemplate(Long templateId, String newName, String newDescription) {
+        Long orgId = currentOrganizationId();
+        Organization organization = organizationRepository.findById(orgId)
+                .orElseThrow(() -> new ResourceNotFoundException("Organization not found with ID: " + orgId));
+
+        Role template = roleRepository.findById(templateId)
+                .filter(Role::isPlatformTemplate)
+                .orElseThrow(() -> new ResourceNotFoundException("ROLE_NOT_FOUND: Platform template role not found with ID: " + templateId));
+
+        String targetName = (newName != null && !newName.isBlank()) ? newName.trim() : template.getName() + "_CUSTOM";
+        if (roleRepository.existsByOrganizationIdAndName(orgId, targetName)) {
+            throw new ConflictException("ROLE_NAME_ALREADY_EXISTS: Role with name '" + targetName + "' already exists in organization", "ROLE_NAME_ALREADY_EXISTS");
+        }
+
+        Role newRole = new Role();
+        newRole.setName(targetName);
+        newRole.setDescription(newDescription != null && !newDescription.isBlank() ? newDescription : template.getDescription());
+        newRole.setOrganization(organization);
+        newRole.setPlatformTemplate(false);
+        newRole.setSystemRole(false);
+        newRole.setVersion(1);
+
+        if (template.getPermissionGroups() != null) {
+            newRole.setPermissionGroups(new HashSet<>(template.getPermissionGroups()));
+        }
+        if (template.getDirectPermissions() != null) {
+            newRole.setDirectPermissions(new HashSet<>(template.getDirectPermissions()));
+        }
+        if (template.getPermissions() != null) {
+            newRole.setPermissions(new HashSet<>(template.getPermissions()));
+        }
+
+        return roleRepository.save(newRole);
     }
 
     // ── Legacy Compatibility / Shared Mappings CRUD ─────────────────────────────

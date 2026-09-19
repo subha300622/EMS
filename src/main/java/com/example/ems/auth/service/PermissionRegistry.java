@@ -54,6 +54,36 @@ public final class PermissionRegistry {
         public static final String ORGANIZATION_AUDIT_READ = "organization.audit.read";
         public static final String ORGANIZATION_EXPORT = "organization.export";
 
+        // Leave Management
+        public static final String LEAVE_CREATE = "leave.create";
+        public static final String LEAVE_READ = "leave.read";
+        public static final String LEAVE_APPROVE = "leave.approve";
+        public static final String LEAVE_REJECT = "leave.reject";
+        public static final String LEAVE_MANAGE = "leave.manage";
+        public static final String LEAVE_TEAM_READ = "leave.team.read";
+        public static final String LEAVE_TEAM_APPROVE = "leave.team.approve";
+        public static final String LEAVE_SELF_READ = "leave.self.read";
+        public static final String EMPLOYEE_LEAVE_CREATE = "employee.leave.create";
+        public static final String EMPLOYEE_LEAVE_READ = "employee.leave.read";
+        public static final String EMPLOYEE_LEAVE_CANCEL = "employee.leave.cancel";
+
+        // Performance Management
+        public static final String PERFORMANCE_READ = "performance.read";
+        public static final String PERFORMANCE_REVIEW = "performance.review";
+        public static final String PERFORMANCE_MANAGE = "performance.manage";
+        public static final String PERFORMANCE_FINALIZE = "performance.finalize";
+        public static final String PERFORMANCE_SELF_READ = "performance.self.read";
+        public static final String PERFORMANCE_SELF_ASSESSMENT_SUBMIT = "performance.self.assessment.submit";
+
+        // Payroll Management
+        public static final String PAYROLL_READ = "payroll.read";
+        public static final String PAYROLL_MANAGE = "payroll.manage";
+        public static final String PAYROLL_APPROVE = "payroll.approve";
+        public static final String PAYROLL_DISBURSE = "payroll.disburse";
+        public static final String SALARY_MANAGE = "salary.manage";
+        public static final String PAYSLIP_READ = "payslip.read";
+        public static final String PAYSLIP_SELF_READ = "payslip.self.read";
+
         // Training Management
         public static final String TRAINING_CREATE = "training.create";
         public static final String TRAINING_READ = "training.read";
@@ -85,7 +115,7 @@ public final class PermissionRegistry {
                         "training.publish", "training.assign", "training.attendance.manage", "training.library.manage",
                         "training.reports.view",
                         // User Management
-                        "user.create", "user.read", "user.update", "user.delete", "user.manage",
+                        "user.create", "user.read", "user.update", "user.delete", "user.manage", "user.role.assign",
                         // Employee Management
                         "employee.create", "employee.read", "employee.update", "employee.delete", "employee.team.read",
                         // Attendance
@@ -94,16 +124,16 @@ public final class PermissionRegistry {
                         "attendance.permission.reject", "attendance.grace.manage", "attendance.adjust",
                         "attendance.policy.read", "attendance.policy.create", "attendance.policy.update", "attendance.policy.approve",
                         // Leave Management
-                        "leave.create", "leave.read", "leave.approve", "leave.manage", "leave.team.approve",
-                        "leave.self.read",
+                        "leave.create", "leave.read", "leave.approve", "leave.reject", "leave.manage", "leave.team.read",
+                        "leave.team.approve", "leave.self.read",
                         // Payroll
-                        "payroll.read", "payroll.manage", "salary.manage", "payslip.read", "payslip.self.read",
+                        "payroll.read", "payroll.manage", "payroll.approve", "payroll.disburse", "salary.manage", "payslip.read", "payslip.self.read",
                         // Reports
                         "reports.view", "reports.hr", "reports.finance", "reports.manager",
                         // System
-                        "system.manage", "role.manage", "permission.manage",
+                        "system.manage", "role.manage", "role.view", "permission.manage",
                         // Additional
-                        "recruitment.manage", "task.assign", "performance.review", "expense.manage",
+                        "recruitment.manage", "task.assign", "performance.review", "performance.read", "performance.manage", "performance.finalize", "expense.manage",
                         // Onboarding Self-Service
                         "onboarding.self.read", "onboarding.self.update", "onboarding.document.upload",
                         "onboarding.document.read.self", "onboarding.self.submit", "employee.onboarding.read.self",

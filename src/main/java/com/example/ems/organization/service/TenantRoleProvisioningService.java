@@ -56,7 +56,13 @@ public class TenantRoleProvisioningService {
             tenantRole.setSystemRole(template.isSystemRole());
             tenantRole.setVersion(template.getVersion());
 
-            // Duplicate permission links
+            // Duplicate permission groups and links
+            if (template.getPermissionGroups() != null) {
+                tenantRole.setPermissionGroups(new HashSet<>(template.getPermissionGroups()));
+            }
+            if (template.getDirectPermissions() != null) {
+                tenantRole.setDirectPermissions(new HashSet<>(template.getDirectPermissions()));
+            }
             Set<Permission> copiedPermissions = new HashSet<>(template.getPermissions());
             tenantRole.setPermissions(copiedPermissions);
 

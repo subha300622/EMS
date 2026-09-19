@@ -87,6 +87,39 @@ public class CustomRoleController {
         return ResponseEntity.ok(ApiResponse.success("Organization custom roles retrieved successfully", responseList));
     }
 
+    @GetMapping("/templates")
+    @Operation(summary = "List platform role templates", description = "Lists available system role templates that can be viewed or cloned.")
+    public ResponseEntity<?> getPlatformTemplates() {
+        List<Role> templates = roleService.getPlatformTemplates();
+        List<RoleResponse> responseList = templates.stream()
+                .map(roleService::mapRoleToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("Platform role templates retrieved successfully", responseList));
+    }
+
+    @PostMapping("/clone/{templateId}")
+    @Operation(summary = "Clone platform role template into tenant custom role")
+    public ResponseEntity<?> cloneFromTemplate(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long templateId,
+            @RequestBody(required = false) RoleRequest request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        String name = request != null ? request.getName() : null;
+        String desc = request != null ? request.getDescription() : null;
+        Role cloned = roleService.cloneFromTemplate(templateId, name, desc);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Role cloned successfully", roleService.mapRoleToResponse(cloned)));
+    }
+
     @GetMapping("/{roleId}")
     @Operation(summary = "Get custom role by ID")
     @ApiResponses(value = {
@@ -254,6 +287,8 @@ public class CustomRoleController {
                     .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
         }
 
+        Role role = roleService.requireTenantMutableRole(roleId);
+
         List<Long> permissionIds = request.getPermissionIds();
         if (permissionIds != null && !permissionIds.isEmpty()) {
             roleService.assignPermissionIdsToRole(roleId, permissionIds);
@@ -294,6 +329,7 @@ public class CustomRoleController {
                     .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
         }
 
+        roleService.requireTenantMutableRole(roleId);
         roleService.revokePermissionFromRole(roleId, permissionId);
         return ResponseEntity.ok(ApiResponse.success("Permission removed from role successfully", null));
     }
@@ -350,7 +386,7 @@ public class CustomRoleController {
                     .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
         }
 
-        Role role = roleService.requireRoleOwnedByCurrentTenant(roleId);
+        Role role = roleService.requireTenantMutableRole(roleId);
 
         List<Long> groupIds = request.permissionGroupIds();
         if (groupIds != null) {
@@ -391,7 +427,7 @@ public class CustomRoleController {
                     .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
         }
 
-        Role role = roleService.requireRoleOwnedByCurrentTenant(roleId);
+        Role role = roleService.requireTenantMutableRole(roleId);
 
         roleService.removePermissionGroupFromRole(role.getId(), groupId);
         return ResponseEntity.ok(ApiResponse.success("Permission group removed from role successfully", null));
