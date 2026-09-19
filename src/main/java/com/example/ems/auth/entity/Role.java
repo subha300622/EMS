@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashSet;
 import java.util.Set;
+import com.example.ems.organization.entity.Organization;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 @Entity
 @Table(name = "roles")
@@ -14,22 +17,68 @@ public class Role {
     @JsonProperty("roleId")
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String name;
 
     private String description;
 
     @Column(name = "created_at", updatable = false)
-    private java.time.Instant createdAt;
+    private Instant createdAt;
+
+    @Column(name = "updated_at")
+    private Instant updatedAt;
+
+    @Column(name = "status", nullable = false)
+    private String status = "ACTIVE";
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
+
+    @Column(name = "is_platform_template", nullable = false)
+    private boolean isPlatformTemplate = false;
+
+    @Column(name = "version", nullable = false)
+    private int version = 1;
+
+    @Column(name = "system_role", nullable = false)
+    private boolean systemRole = false;
 
     @PrePersist
     public void prePersist() {
         if (this.createdAt == null) {
-            this.createdAt = java.time.Instant.now().truncatedTo(java.time.temporal.ChronoUnit.SECONDS);
+            this.createdAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+        }
+        if (this.updatedAt == null) {
+            this.updatedAt = this.createdAt;
+        }
+        if (this.status == null || this.status.isBlank()) {
+            this.status = "ACTIVE";
         }
     }
 
-    @ManyToMany(fetch = FetchType.LAZY)
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedAt = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+    }
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "role_permission_groups",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "group_id")
+    )
+    private Set<PermissionGroup> permissionGroups = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "role_direct_permissions",
+        joinColumns = @JoinColumn(name = "role_id"),
+        inverseJoinColumns = @JoinColumn(name = "permission_id")
+    )
+    private Set<Permission> directPermissions = new HashSet<>();
+
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "role_permissions",
         joinColumns = @JoinColumn(name = "role_id"),
@@ -70,12 +119,60 @@ public class Role {
         this.description = description;
     }
 
-    public java.time.Instant getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(java.time.Instant createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
+    }
+
+    public boolean isPlatformTemplate() {
+        return isPlatformTemplate;
+    }
+
+    public void setPlatformTemplate(boolean platformTemplate) {
+        isPlatformTemplate = platformTemplate;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
+
+    public boolean isSystemRole() {
+        return systemRole;
+    }
+
+    public void setSystemRole(boolean systemRole) {
+        this.systemRole = systemRole;
+    }
+
+    public Set<PermissionGroup> getPermissionGroups() {
+        return permissionGroups;
+    }
+
+    public void setPermissionGroups(Set<PermissionGroup> permissionGroups) {
+        this.permissionGroups = permissionGroups;
+    }
+
+    public Set<Permission> getDirectPermissions() {
+        return directPermissions;
+    }
+
+    public void setDirectPermissions(Set<Permission> directPermissions) {
+        this.directPermissions = directPermissions;
     }
 
     public Set<Permission> getPermissions() {
@@ -84,5 +181,21 @@ public class Role {
 
     public void setPermissions(Set<Permission> permissions) {
         this.permissions = permissions;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

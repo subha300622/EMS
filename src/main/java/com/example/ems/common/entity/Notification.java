@@ -4,6 +4,7 @@ import com.example.ems.auth.entity.User;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "notifications")
@@ -24,16 +25,19 @@ public class Notification {
     private String message;
 
     @Column(nullable = false, length = 50)
-    @org.hibernate.annotations.ColumnDefault("'SYSTEM'")
+    @ColumnDefault("'SYSTEM'")
     private String type = "SYSTEM";
 
     @Column(nullable = false, length = 50)
-    @org.hibernate.annotations.ColumnDefault("'MEDIUM'")
+    @ColumnDefault("'MEDIUM'")
     private String priority = "MEDIUM";
 
     private boolean isRead = false;
 
     private LocalDateTime createdAt = LocalDateTime.now();
+
+    @Column(name = "idempotency_key", length = 150)
+    private String idempotencyKey;
 
     public Notification() {}
 
@@ -110,5 +114,13 @@ public class Notification {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 }

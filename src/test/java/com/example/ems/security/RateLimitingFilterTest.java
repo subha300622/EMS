@@ -1,5 +1,6 @@
 package com.example.ems.security;
 
+import com.example.ems.auth.service.SafeRedisService;
 import com.example.ems.security.service.JwtService;
 import jakarta.servlet.ServletException;
 
@@ -8,8 +9,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockFilterChain;
@@ -23,10 +22,7 @@ import static org.mockito.Mockito.*;
 public class RateLimitingFilterTest {
 
     @Mock
-    private StringRedisTemplate redisTemplate;
-
-    @Mock
-    private ValueOperations<String, String> valueOperations;
+    private SafeRedisService safeRedisService;
 
     @Mock
     private JwtService jwtService;
@@ -37,7 +33,6 @@ public class RateLimitingFilterTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
     }
 
     @Test
@@ -47,7 +42,7 @@ public class RateLimitingFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = mock(MockFilterChain.class);
 
-        when(valueOperations.increment("rate:limit:192.168.1.1")).thenReturn(50L);
+        when(safeRedisService.increment("rate:limit:192.168.1.1")).thenReturn(50L);
 
         rateLimitingFilter.doFilter(request, response, filterChain);
 
@@ -62,11 +57,11 @@ public class RateLimitingFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = mock(MockFilterChain.class);
 
-        when(valueOperations.increment("rate:limit:192.168.1.1")).thenReturn(1L);
+        when(safeRedisService.increment("rate:limit:192.168.1.1")).thenReturn(1L);
 
         rateLimitingFilter.doFilter(request, response, filterChain);
 
-        verify(redisTemplate).expire(eq("rate:limit:192.168.1.1"), any(Duration.class));
+        verify(safeRedisService).expire(eq("rate:limit:192.168.1.1"), any(Duration.class));
         verify(filterChain).doFilter(request, response);
     }
 
@@ -77,7 +72,7 @@ public class RateLimitingFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = mock(MockFilterChain.class);
 
-        when(valueOperations.increment("rate:limit:192.168.1.1")).thenReturn(101L);
+        when(safeRedisService.increment("rate:limit:192.168.1.1")).thenReturn(101L);
 
         rateLimitingFilter.doFilter(request, response, filterChain);
 
@@ -96,12 +91,12 @@ public class RateLimitingFilterTest {
 
         when(jwtService.validateAccessToken("mock-token")).thenReturn(true);
         when(jwtService.getEmailFromToken("mock-token")).thenReturn("user@company.com");
-        when(valueOperations.increment("rate:limit:user@company.com")).thenReturn(5L);
+        when(safeRedisService.increment("rate:limit:user@company.com")).thenReturn(5L);
 
         rateLimitingFilter.doFilter(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(valueOperations).increment("rate:limit:user@company.com");
+        verify(safeRedisService).increment("rate:limit:user@company.com");
     }
 
     @Test
@@ -111,12 +106,12 @@ public class RateLimitingFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = mock(MockFilterChain.class);
 
-        when(valueOperations.increment("rate:limit:203.0.113.195")).thenReturn(5L);
+        when(safeRedisService.increment("rate:limit:203.0.113.195")).thenReturn(5L);
 
         rateLimitingFilter.doFilter(request, response, filterChain);
 
         verify(filterChain).doFilter(request, response);
-        verify(valueOperations).increment("rate:limit:203.0.113.195");
+        verify(safeRedisService).increment("rate:limit:203.0.113.195");
     }
 
     @Test
@@ -126,7 +121,7 @@ public class RateLimitingFilterTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
         MockFilterChain filterChain = mock(MockFilterChain.class);
 
-        when(valueOperations.increment(anyString())).thenThrow(new RuntimeException("Redis is down"));
+        when(safeRedisService.increment(anyString())).thenReturn(null);
 
         rateLimitingFilter.doFilter(request, response, filterChain);
 

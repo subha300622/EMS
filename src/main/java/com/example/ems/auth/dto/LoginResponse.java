@@ -1,8 +1,6 @@
 package com.example.ems.auth.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.util.List;
-
 public class LoginResponse {
     @Schema(example = "true")
     private boolean success;
@@ -144,6 +142,24 @@ public class LoginResponse {
         }
     }
 
+    public static class BranchContext {
+        private Long id;
+        private boolean enabled;
+
+        public BranchContext() {}
+
+        public BranchContext(Long id, boolean enabled) {
+            this.id = id;
+            this.enabled = enabled;
+        }
+
+        public Long getId() { return id; }
+        public void setId(Long id) { this.id = id; }
+
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    }
+
     public static class UserData {
         @Schema(example = "1")
         private Long id;
@@ -155,23 +171,31 @@ public class LoginResponse {
         private String email;
         @Schema(example = "Software Engineer")
         private String role;
-        private List<String> permissions;
         @Schema(example = "ACTIVE")
         private String status;
         @Schema(example = "string")
         private String lastLogin;
+        @Schema(example = "1")
+        private Long organizationId;
+        @Schema(example = "Acme Corp")
+        private String organizationName;
 
         public UserData() {}
 
-        public UserData(Long id, String employeeId, String name, String email, String role, List<String> permissions, String status, String lastLogin) {
+        public UserData(Long id, String employeeId, String name, String email, String role, String status, String lastLogin) {
+            this(id, employeeId, name, email, role, status, lastLogin, null, null);
+        }
+
+        public UserData(Long id, String employeeId, String name, String email, String role, String status, String lastLogin, Long organizationId, String organizationName) {
             this.id = id;
             this.employeeId = employeeId;
             this.name = name;
             this.email = email;
             this.role = role;
-            this.permissions = permissions;
             this.status = status;
             this.lastLogin = lastLogin;
+            this.organizationId = organizationId;
+            this.organizationName = organizationName;
         }
 
         public Long getId() {
@@ -214,14 +238,6 @@ public class LoginResponse {
             this.role = role;
         }
 
-        public List<String> getPermissions() {
-            return permissions;
-        }
-
-        public void setPermissions(List<String> permissions) {
-            this.permissions = permissions;
-        }
-
         public String getStatus() {
             return status;
         }
@@ -236,6 +252,22 @@ public class LoginResponse {
 
         public void setLastLogin(String lastLogin) {
             this.lastLogin = lastLogin;
+        }
+
+        public Long getOrganizationId() {
+            return organizationId;
+        }
+
+        public void setOrganizationId(Long organizationId) {
+            this.organizationId = organizationId;
+        }
+
+        public String getOrganizationName() {
+            return organizationName;
+        }
+
+        public void setOrganizationName(String organizationName) {
+            this.organizationName = organizationName;
         }
     }
 }

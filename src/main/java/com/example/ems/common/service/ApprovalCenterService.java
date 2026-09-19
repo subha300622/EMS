@@ -34,6 +34,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class ApprovalCenterService {
@@ -136,17 +138,17 @@ public class ApprovalCenterService {
         return items;
     }
 
-    public java.util.Optional<ApprovalItemDto> getApprovalById(String compoundId) {
+    public Optional<ApprovalItemDto> getApprovalById(String compoundId) {
         String[] parts = compoundId.split("-", 2);
         if (parts.length < 2) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
         String type = parts[0].toUpperCase();
         Long id;
         try {
             id = Long.parseLong(parts[1]);
         } catch (NumberFormatException e) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
@@ -198,7 +200,7 @@ public class ApprovalCenterService {
                     return new ApprovalItemDto("EXP-" + exp.getId(), "EXP", requester, details, dateStr, exp.getStatus());
                 });
             default:
-                return java.util.Optional.empty();
+                return Optional.empty();
         }
     }
 
@@ -209,7 +211,7 @@ public class ApprovalCenterService {
         // 1. Leaves (non-PENDING)
         List<Leave> leaves = leaveRepository.findAll().stream()
                 .filter(l -> !"PENDING".equalsIgnoreCase(l.getStatus()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         for (Leave leave : leaves) {
             String requester = leave.getEmployee() != null ? leave.getEmployee().getFullName() : "Unknown";
             String details = String.format("%s Leave: %s to %s. Reason: %s",
@@ -222,7 +224,7 @@ public class ApprovalCenterService {
         // 2. Goals (non-SUBMITTED)
         List<Goal> goals = goalRepository.findAll().stream()
                 .filter(g -> !"SUBMITTED".equalsIgnoreCase(g.getStatus()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         for (Goal goal : goals) {
             String requester = goal.getEmployee() != null ? goal.getEmployee().getFullName() : "Unknown";
             String details = String.format("Goal: %s. Description: %s", goal.getTitle(), goal.getDescription());
@@ -233,7 +235,7 @@ public class ApprovalCenterService {
         // 3. Onboarding (non-UNDER_REVIEW)
         List<Onboarding> onboardings = onboardingRepository.findAll().stream()
                 .filter(o -> !"UNDER_REVIEW".equalsIgnoreCase(o.getStatus()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         for (Onboarding onboarding : onboardings) {
             String requester = onboarding.getEmployee() != null ? onboarding.getEmployee().getFullName() : "Unknown";
             String details = String.format("Onboarding profile for employee %s (Start Date: %s)", requester, onboarding.getStartDate());
@@ -244,7 +246,7 @@ public class ApprovalCenterService {
         // 4. Offboarding (non-PENDING)
         List<Offboarding> offboardings = offboardingRepository.findAll().stream()
                 .filter(o -> !"PENDING".equalsIgnoreCase(o.getStatus()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         for (Offboarding offboarding : offboardings) {
             String requester = offboarding.getEmployee() != null ? offboarding.getEmployee().getFullName() : "Unknown";
             String details = String.format("Exit Offboarding: Last Working Day %s. Reason: %s",
@@ -256,7 +258,7 @@ public class ApprovalCenterService {
         // 5. Salary Revision (non-PENDING)
         List<Increment> increments = incrementRepository.findAll().stream()
                 .filter(i -> !"PENDING".equalsIgnoreCase(i.getStatus()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         for (Increment inc : increments) {
             String requester = inc.getEmployee() != null ? inc.getEmployee().getFullName() : "Unknown";
             String details = String.format("Salary Revision: Current %s -> New %s (Effective: %s). Reason: %s",
@@ -268,7 +270,7 @@ public class ApprovalCenterService {
         // 6. Expenses (non-PENDING / non-SUBMITTED)
         List<Expense> expenses = expenseRepository.findAll().stream()
                 .filter(e -> !"PENDING".equalsIgnoreCase(e.getStatus()) && !"SUBMITTED".equalsIgnoreCase(e.getStatus()))
-                .collect(java.util.stream.Collectors.toList());
+                .collect(Collectors.toList());
         for (Expense exp : expenses) {
             String requester = exp.getEmployee() != null ? exp.getEmployee().getFullName() : "Unknown";
             String details = String.format("Expense Claim: Amount %s. Purpose: %s", exp.getAmount(), exp.getBusinessPurpose());

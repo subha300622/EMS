@@ -12,7 +12,12 @@ import com.example.ems.common.dto.DmsDocumentVersionResponse;
 import com.example.ems.common.dto.DmsSignatureCompleteRequest;
 import com.example.ems.common.dto.DmsSignatureRequest;
 import com.example.ems.common.dto.DmsSignatureResponse;
+import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.auth.service.RoleService;
+import com.example.ems.common.service.DmsService;
+import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.employee.entity.Employee;
+import com.example.ems.security.service.JwtService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,22 +46,22 @@ public class DmsControllerTest {
     private ObjectMapper objectMapper = new ObjectMapper();
 
     @Mock
-    private com.example.ems.common.service.DmsService dmsService;
+    private DmsService dmsService;
     @Mock
-    private com.example.ems.auth.repository.UserRepository userRepository;
+    private UserRepository userRepository;
     @Mock
-    private com.example.ems.employee.repository.EmployeeRepository employeeRepository;
+    private EmployeeRepository employeeRepository;
     @Mock
-    private com.example.ems.security.service.JwtService jwtService;
+    private JwtService jwtService;
     @Mock
-    private com.example.ems.auth.service.RoleService roleService;
+    private RoleService roleService;
 
     @InjectMocks
-    private com.example.ems.common.controller.DmsController dmsController;
+    private DmsController dmsController;
 
-    private com.example.ems.auth.entity.User hrUser;
-    private com.example.ems.auth.entity.User empUser;
-    private com.example.ems.employee.entity.Employee empRecord;
+    private User hrUser;
+    private User empUser;
+    private Employee empRecord;
     private final String hrEmail = "hr@example.com";
     private final String empEmail = "emp@example.com";
     private final String token = "mock-token";

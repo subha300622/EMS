@@ -38,6 +38,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.data.domain.PageRequest;
 
 public class AnnouncementControllerTest {
 
@@ -98,7 +99,7 @@ public class AnnouncementControllerTest {
         announcement.setLikes(0);
         announcement.setViews(0);
 
-        Page<Announcement> page = new PageImpl<>(List.of(announcement), org.springframework.data.domain.PageRequest.of(0, 10), 1);
+        Page<Announcement> page = new PageImpl<>(List.of(announcement), PageRequest.of(0, 10), 1);
         when(announcementRepository.findAll(any(Pageable.class))).thenReturn(page);
         when(announcementCommentRepository.countByAnnouncementId(1L)).thenReturn(2);
 

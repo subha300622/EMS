@@ -1,0 +1,14 @@
+package com.example.ems.payroll.validation;
+
+public enum SalaryValidationErrorType {
+    STRUCTURE_NOT_FOUND,
+    STRUCTURE_EMPTY,
+    STRUCTURE_INACTIVE,
+    COMPONENT_INACTIVE,
+    COMPONENT_NOT_FOUND,
+    DEPENDENCY_NOT_FOUND,
+    CIRCULAR_DEPENDENCY,
+    SELF_DEPENDENCY,
+    INVALID_RULE,
+    INVALID_DATES
+}

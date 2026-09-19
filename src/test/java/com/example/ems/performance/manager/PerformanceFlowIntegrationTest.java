@@ -54,6 +54,11 @@ public class PerformanceFlowIntegrationTest {
 
                 String cycle = "FY2024-25";
 
+                // Clear any existing reviews and goals for this employee in this cycle to ensure a clean test state
+                reviewRepository.findByEmployeeIdAndReviewCycle(employeeEmp.getId(), cycle)
+                                .ifPresent(r -> reviewRepository.delete(r));
+                myGoalRepository.deleteAll(myGoalRepository.findByEmployeeId(employeeEmp.getId()));
+
                 // Fetch or create an AppraisalCycle for the database constraint
                 AppraisalCycle appraisalCycle = appraisalCycleRepository.findByName("Annual Appraisal 2026")
                                 .orElseGet(() -> {

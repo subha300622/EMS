@@ -1,11 +1,48 @@
-target/
-*.class
-*.jar
-
-*.war
-.git/
+```dockerignore
+# Git
+.git
 .gitignore
+
+# IDE
+.idea/
+.vscode/
 .settings/
 .project
 .classpath
+*.iml
+
+# Build output
+target/
+*.class
+*.jar
+*.war
+
+# Maven Wrapper Logs
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env
+.env.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker Compose
+docker-compose.yml
+
+# Redis dump
 *.rdb
+
+# Test reports
+surefire-reports/
+failsafe-reports/
+
+# Temporary files
+tmp/
+temp/
+```

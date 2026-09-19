@@ -23,6 +23,8 @@ import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.expense.entity.ExpenseStatus;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class FinanceService {
@@ -245,11 +247,11 @@ public class FinanceService {
         List<Map<String, Object>> pending = new ArrayList<>();
 
         // Pending Expenses
-        List<com.example.ems.expense.entity.ExpenseStatus> pendingExpenseStatuses = Arrays.asList(
-                com.example.ems.expense.entity.ExpenseStatus.PENDING,
-                com.example.ems.expense.entity.ExpenseStatus.SUBMITTED,
-                com.example.ems.expense.entity.ExpenseStatus.PENDING_MANAGER_APPROVAL,
-                com.example.ems.expense.entity.ExpenseStatus.PENDING_FINANCE_APPROVAL
+        List<ExpenseStatus> pendingExpenseStatuses = Arrays.asList(
+                ExpenseStatus.PENDING,
+                ExpenseStatus.SUBMITTED,
+                ExpenseStatus.PENDING_MANAGER_APPROVAL,
+                ExpenseStatus.PENDING_FINANCE_APPROVAL
         );
         List<Expense> expenses = expenseRepository.findByStatusIn(pendingExpenseStatuses);
         for (Expense e : expenses) {
@@ -406,14 +408,14 @@ public class FinanceService {
         return budgetRepository.findAll();
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Budget createBudget(Budget budget) {
         budget.setCreatedAt(LocalDateTime.now());
         budget.setUpdatedAt(LocalDateTime.now());
         return budgetRepository.save(budget);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Optional<Budget> updateBudget(Long id, Budget budgetDetails) {
         return budgetRepository.findById(id).map(budget -> {
             budget.setDepartment(budgetDetails.getDepartment());
@@ -433,14 +435,14 @@ public class FinanceService {
         return vendorRepository.findAll();
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Vendor createVendor(Vendor vendor) {
         vendor.setCreatedAt(LocalDateTime.now());
         vendor.setUpdatedAt(LocalDateTime.now());
         return vendorRepository.save(vendor);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Optional<Vendor> updateVendor(Long id, Vendor vendorDetails) {
         return vendorRepository.findById(id).map(vendor -> {
             vendor.setCompanyName(vendorDetails.getCompanyName());
@@ -462,7 +464,7 @@ public class FinanceService {
         return invoiceRepository.findAll();
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Invoice createInvoice(Invoice invoice) {
         if (invoice.getVendor() != null && invoice.getVendor().getId() != null) {
             Vendor vendor = vendorRepository.findById(invoice.getVendor().getId())
@@ -475,7 +477,7 @@ public class FinanceService {
         return invoiceRepository.save(invoice);
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Optional<Invoice> approveInvoice(Long id) {
         return invoiceRepository.findById(id).map(invoice -> {
             invoice.setStatus("APPROVED");
@@ -484,7 +486,7 @@ public class FinanceService {
         });
     }
 
-    @org.springframework.transaction.annotation.Transactional
+    @Transactional
     public Optional<Invoice> payInvoice(Long id) {
         return invoiceRepository.findById(id).map(invoice -> {
             invoice.setStatus("PAID");

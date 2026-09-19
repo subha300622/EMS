@@ -57,12 +57,12 @@ public class ManagerNotificationService {
             isReadVal = true;
         }
 
-        boolean filterByType = type != null && !"ALL".equalsIgnoreCase(type);
+        String normalizedType = (type != null && !"ALL".equalsIgnoreCase(type)) ? type.toUpperCase() : null;
 
-        if (filterByType && filterByRead) {
-            notificationPage = notificationRepository.findByUserIdAndTypeAndIsRead(user.getId(), type.toUpperCase(), isReadVal, pageable);
-        } else if (filterByType) {
-            notificationPage = notificationRepository.findByUserIdAndType(user.getId(), type.toUpperCase(), pageable);
+        if (normalizedType != null && filterByRead) {
+            notificationPage = notificationRepository.findByUserIdAndTypeAndIsRead(user.getId(), normalizedType, isReadVal, pageable);
+        } else if (normalizedType != null) {
+            notificationPage = notificationRepository.findByUserIdAndType(user.getId(), normalizedType, pageable);
         } else if (filterByRead) {
             notificationPage = notificationRepository.findByUserIdAndIsRead(user.getId(), isReadVal, pageable);
         } else {

@@ -11,7 +11,6 @@ import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -45,8 +44,7 @@ public class NotificationController {
     // ── 1. GET PAGINATED NOTIFICATION FEED ────────────────────────────────────
     @Operation(summary = "Get Notification Feed")
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Page<NotificationDto>>> getNotificationFeed(
+public ResponseEntity<?> getNotificationFeed(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
@@ -54,7 +52,7 @@ public class NotificationController {
             @RequestParam(name = "status", defaultValue = "ALL") String status) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         return ResponseEntity.ok(ApiResponse.success("Notification feed retrieved successfully",
@@ -65,12 +63,11 @@ public class NotificationController {
     // ── 3. GET UNREAD NOTIFICATIONS COUNT ─────────────────────────────────────
     @Operation(summary = "Get Unread Notifications Count")
     @GetMapping("/unread-count")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<UnreadCountDto>> getUnreadCount(
+public ResponseEntity<?> getUnreadCount(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         return ResponseEntity.ok(ApiResponse.success("Unread count retrieved successfully",
@@ -80,20 +77,19 @@ public class NotificationController {
     // ── 4. MARK SPECIFIC NOTIFICATION AS READ ─────────────────────────────────
     @Operation(summary = "Mark Specific Notification as Read")
     @PutMapping("/{id}/read")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> markAsRead(
+public ResponseEntity<?> markAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("id") Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         try {
             managerNotificationService.markAsRead(currentUser, id);
-            return ResponseEntity.ok(ApiResponse.success("Notification marked as read"));
+            return ResponseEntity.ok(ApiResponse.success("Notification marked as read", null));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error(e.getMessage(), "NOTIF_001"));
         }
     }
@@ -101,35 +97,33 @@ public class NotificationController {
     // ── 5. MARK ALL NOTIFICATIONS AS READ ─────────────────────────────────────
     @Operation(summary = "Mark All Notifications as Read")
     @PutMapping("/read-all")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> markAllAsRead(
+public ResponseEntity<?> markAllAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         managerNotificationService.markAllAsRead(currentUser);
-        return ResponseEntity.ok(ApiResponse.success("All notifications marked as read"));
+        return ResponseEntity.ok(ApiResponse.success("All notifications marked as read", null));
     }
 
     // ── 6. DELETE SPECIFIC NOTIFICATION ──────────────────────────────────────
     @Operation(summary = "Delete Specific Notification")
     @DeleteMapping("/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> deleteNotification(
+public ResponseEntity<?> deleteNotification(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("id") Long id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         try {
             managerNotificationService.deleteNotification(currentUser, id);
-            return ResponseEntity.ok(ApiResponse.success("Notification deleted successfully"));
+            return ResponseEntity.ok(ApiResponse.success("Notification deleted successfully", null));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(ErrorResponse.error(e.getMessage(), "NOTIF_002"));
         }
     }
@@ -137,12 +131,11 @@ public class NotificationController {
     // ── 7. GET NOTIFICATION PREFERENCES ───────────────────────────────────────
     @Operation(summary = "Get Notification Preferences")
     @GetMapping("/preferences")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<NotificationPreferenceDto>> getPreferences(
+public ResponseEntity<?> getPreferences(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         return ResponseEntity.ok(ApiResponse.success("Notification preferences retrieved successfully",
@@ -152,13 +145,12 @@ public class NotificationController {
     // ── 8. UPDATE NOTIFICATION PREFERENCES ───────────────────────────────────────
     @Operation(summary = "Update Notification Preferences")
     @PutMapping("/preferences")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<NotificationPreferenceDto>> updatePreferences(
+public ResponseEntity<?> updatePreferences(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody NotificationPreferenceDto requestDto) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         return ResponseEntity.ok(ApiResponse.success("Notification preferences updated successfully",
@@ -168,12 +160,11 @@ public class NotificationController {
     // ── 9. GET NOTIFICATION STATS ─────────────────────────────────────────────
     @Operation(summary = "Get Notification Stats")
     @GetMapping("/stats")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<NotificationStatsDto>> getStats(
+public ResponseEntity<?> getStats(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         return ResponseEntity.ok(ApiResponse.success("Notification stats retrieved successfully",
@@ -183,12 +174,11 @@ public class NotificationController {
     // ── 10. GET CONSOLIDATED PAGE LOAD DATA ───────────────────────────────────
     @Operation(summary = "Get Consolidated Page Load Data")
     @GetMapping("/page-data")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<NotificationPageResponse>> getPageData(
+public ResponseEntity<?> getPageData(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
         return ResponseEntity.ok(ApiResponse.success("Page-load data retrieved successfully",

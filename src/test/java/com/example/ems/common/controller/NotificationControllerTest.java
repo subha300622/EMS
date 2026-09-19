@@ -29,6 +29,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.data.domain.PageRequest;
 
 public class NotificationControllerTest {
 
@@ -69,7 +70,7 @@ public class NotificationControllerTest {
     @Test
     public void testGetNotificationFeedSuccess() throws Exception {
         NotificationDto dto = new NotificationDto(1L, "Title", "Msg", "APPROVAL", "HIGH", false, "2026-06-22T09:30:00Z");
-        Page<NotificationDto> page = new PageImpl<>(List.of(dto), org.springframework.data.domain.PageRequest.of(0, 20), 1);
+        Page<NotificationDto> page = new PageImpl<>(List.of(dto), PageRequest.of(0, 20), 1);
 
         when(managerNotificationService.getNotificationFeed(eq(currentUser), eq(0), eq(20), eq("ALL"), eq("UNREAD")))
                 .thenReturn(page);

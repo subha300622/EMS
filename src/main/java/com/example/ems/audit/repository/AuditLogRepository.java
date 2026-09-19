@@ -24,4 +24,6 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long>, JpaSp
     long countByEntityTypeInAndCreatedAtAfter(Collection<String> entityTypes, LocalDateTime datetime);
 
     long countByCreatedAtAfter(LocalDateTime datetime);
+
+    long countByUserEmailInAndCreatedAtAfter(Collection<String> userEmails, LocalDateTime datetime);
 }
