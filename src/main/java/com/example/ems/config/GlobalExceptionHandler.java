@@ -135,8 +135,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<ErrorResponse> handleConflictException(
             ConflictException ex) {
+        String code = ex.getErrorCode();
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ErrorResponse.error(ex.getMessage(), "CON_409"));
+                .body(ErrorResponse.error(ex.getMessage(), code != null && !"CONFLICT".equals(code) ? code : "CON_409"));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

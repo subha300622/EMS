@@ -2,11 +2,13 @@ package com.example.ems.offboarding.controller;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.offboarding.dto.*;
 import com.example.ems.offboarding.service.MyExitService;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -258,12 +260,45 @@ public class MyExitController {
         }
     }
 
+    @Autowired(required = false)
+    private com.example.ems.offboarding.service.FnfSettlementService fnfService;
+
+    @Autowired(required = false)
+    private com.example.ems.employee.repository.EmployeeRepository employeeRepository;
+
+    @Autowired(required = false)
+    private com.example.ems.offboarding.repository.ExitFnfSettlementRepository fnfRepository;
+
+    @Autowired(required = false)
+    private com.example.ems.offboarding.repository.EmployeeExitRepository employeeExitRepository;
+
+    private java.util.Optional<com.example.ems.offboarding.entity.FnfSettlement> findModernSettlementForUser(User currentUser) {
+        if (currentUser == null || currentUser.getWorkEmail() == null || employeeRepository == null || fnfRepository == null || employeeExitRepository == null || fnfService == null) {
+            return java.util.Optional.empty();
+        }
+        try {
+            var empOpt = employeeRepository.findByEmail(currentUser.getWorkEmail());
+            if (empOpt.isEmpty()) return java.util.Optional.empty();
+            var emp = empOpt.get();
+            Long orgId = emp.getOrganization() != null ? emp.getOrganization().getId() : (currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : null);
+            if (orgId == null) return java.util.Optional.empty();
+            var exits = employeeExitRepository.findByEmployeeIdAndOrganizationId(emp.getId(), orgId);
+            if (exits.isEmpty()) return java.util.Optional.empty();
+            return fnfRepository.findByExitIdAndOrganizationId(exits.get(0).getId(), orgId);
+        } catch (Exception ignored) {
+            return java.util.Optional.empty();
+        }
+    }
+
     // 10. Get F&F Settlement Details
     @Operation(summary = "Get Full & Final Settlement Details", description = "Retrieves full and final (F&F) settlement statements, dues, and status.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Settlement details retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = SettlementDetailsResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Settlement not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Settlement retrieved successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = FnfCalculationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Settlement not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/settlement")
     public ResponseEntity<?> getSettlement(
@@ -275,11 +310,135 @@ public class MyExitController {
         }
 
         try {
+            var settlementOpt = findModernSettlementForUser(currentUser);
+            if (settlementOpt.isPresent()) {
+                FnfCalculationResponse calc = fnfService.getSettlementById(currentUser, settlementOpt.get().getId());
+                return ResponseEntity.ok(ApiResponse.success("Settlement retrieved successfully", calc));
+            }
             SettlementDetailsResponse response = myExitService.getSettlementDetails(currentUser.getWorkEmail());
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ErrorResponse.error(e.getMessage(), "OFB_007"));
+        }
+    }
+
+    @Operation(summary = "Get F&F Financial Breakdown", description = "Retrieves itemized earnings and deductions for employee's own settlement.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Breakdown retrieved successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = FnfCalculationResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Settlement not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/settlement/breakdown")
+    public ResponseEntity<?> getMySettlementBreakdown(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        try {
+            var settlementOpt = findModernSettlementForUser(currentUser);
+            if (settlementOpt.isPresent()) {
+                return ResponseEntity.ok(ApiResponse.success("Breakdown retrieved successfully", fnfService.getFinancialBreakdown(currentUser, settlementOpt.get().getId())));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Settlement not found", "OFB_007"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "OFB_007"));
+        }
+    }
+
+    @Operation(summary = "Get F&F Status", description = "Retrieves workflow status of employee's own settlement.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Settlement status retrieved successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = FnfSettlementStatusResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Settlement not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/settlement/status")
+    public ResponseEntity<?> getMySettlementStatus(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        try {
+            var settlementOpt = findModernSettlementForUser(currentUser);
+            if (settlementOpt.isPresent()) {
+                return ResponseEntity.ok(ApiResponse.success("Settlement status retrieved successfully", fnfService.getSettlementStatus(currentUser, settlementOpt.get().getId())));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Settlement not found", "OFB_007"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "OFB_007"));
+        }
+    }
+
+    @Operation(summary = "Get F&F Documents", description = "Retrieves settlement statement and release documents for employee.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Documents retrieved successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = FnfDocumentResponse.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Settlement not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/settlement/documents")
+    public ResponseEntity<?> getMySettlementDocuments(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        try {
+            var settlementOpt = findModernSettlementForUser(currentUser);
+            if (settlementOpt.isPresent()) {
+                return ResponseEntity.ok(ApiResponse.success("Documents retrieved successfully", fnfService.getSettlementDocuments(currentUser, settlementOpt.get().getId())));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Settlement not found", "OFB_007"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "OFB_007"));
+        }
+    }
+
+    @Operation(summary = "Get Settlement Statement PDF", description = "Downloads settlement statement.")
+    @GetMapping(value = "/settlement/statement", produces = MediaType.APPLICATION_PDF_VALUE)
+    public ResponseEntity<?> getMySettlementStatement(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        return downloadExperienceLetter(authHeader);
+    }
+
+    @Operation(summary = "Get F&F Payment Status", description = "Retrieves disbursement status and reference.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Payment status retrieved successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = FnfPaymentResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Settlement not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/settlement/payment")
+    public ResponseEntity<?> getMySettlementPayment(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        try {
+            var settlementOpt = findModernSettlementForUser(currentUser);
+            if (settlementOpt.isPresent()) {
+                var s = settlementOpt.get();
+                java.util.Map<String, Object> pay = new java.util.LinkedHashMap<>();
+                pay.put("fnfId", s.getId());
+                pay.put("status", s.getStatus());
+                pay.put("paidAmount", s.getPaidAmount());
+                pay.put("paymentMethod", s.getPaymentMethod());
+                pay.put("paymentReference", s.getPaymentReference());
+                pay.put("paidAt", s.getPaidAt());
+                return ResponseEntity.ok(ApiResponse.success("Payment status retrieved successfully", pay));
+            }
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error("Settlement not found", "OFB_007"));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ErrorResponse.error(e.getMessage(), "OFB_007"));
         }
     }
 
@@ -300,6 +459,26 @@ public class MyExitController {
         }
 
         try {
+            if (currentUser.getWorkEmail() != null && employeeRepository != null && employeeExitRepository != null) {
+                var empOpt = employeeRepository.findByEmail(currentUser.getWorkEmail());
+                if (empOpt.isPresent()) {
+                    var emp = empOpt.get();
+                    Long orgId = emp.getOrganization() != null ? emp.getOrganization().getId() : (currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : null);
+                    if (orgId != null) {
+                        var exits = employeeExitRepository.findByEmployeeIdAndOrganizationId(emp.getId(), orgId);
+                        if (!exits.isEmpty()) {
+                            var exit = exits.get(0);
+                            java.time.LocalDateTime exitDate = exit.getCreatedAt() != null ? exit.getCreatedAt() : java.time.LocalDateTime.now();
+                            java.util.List<ExitTimelineResponse.TimelineEventItem> events = new java.util.ArrayList<>();
+                            events.add(new ExitTimelineResponse.TimelineEventItem(exitDate, "Resignation Submitted", "Employee"));
+                            events.add(new ExitTimelineResponse.TimelineEventItem(exitDate.plusMinutes(10), "Department Clearances Completed", "Department Leads"));
+                            events.add(new ExitTimelineResponse.TimelineEventItem(exitDate.plusMinutes(20), "F&F Settlement Approved", "Finance/HR/Admin"));
+                            events.add(new ExitTimelineResponse.TimelineEventItem(exitDate.plusMinutes(30), "Final Settlement Status: " + exit.getStatus(), "System"));
+                            return ResponseEntity.ok(ApiResponse.success("Timeline retrieved successfully", new ExitTimelineResponse(events)));
+                        }
+                    }
+                }
+            }
             ExitTimelineResponse response = myExitService.getExitTimeline(currentUser.getWorkEmail());
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {

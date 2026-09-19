@@ -18,6 +18,16 @@ import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.example.ems.attendance.entity.AttendancePolicy;
+import com.example.ems.attendance.entity.AttendancePolicyStatus;
+import com.example.ems.attendance.entity.GracePeriodType;
+import com.example.ems.attendance.entity.ExceedGraceAction;
+import com.example.ems.attendance.repository.AttendanceGraceUsageRepository;
+import com.example.ems.attendance.repository.AttendancePolicyRepository;
+import com.example.ems.organization.entity.Organization;
+import com.example.ems.organization.repository.OrganizationRepository;
+import java.time.LocalTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.example.ems.attendance.repository.AttendanceLogRepository;
 
@@ -36,13 +46,57 @@ public class AttendanceConcurrencyTest {
     @Autowired
     private AttendanceLogRepository attendanceLogRepository;
 
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+    @Autowired
+    private AttendancePolicyRepository attendancePolicyRepository;
+
+    @Autowired
+    private AttendanceGraceUsageRepository attendanceGraceUsageRepository;
+
     private Employee employee;
 
     @BeforeEach
     public void setUp() {
+        Organization org = organizationRepository.findAll().stream().findFirst().orElseGet(() -> {
+            Organization o = new Organization();
+            o.setName("Attendance Test Org");
+            o.setOrganizationCode("ATT-TEST-ORG");
+            return organizationRepository.save(o);
+        });
+
+        List<AttendancePolicy> existingPolicies = attendancePolicyRepository.findActivePoliciesForOrganization(org.getId());
+        if (existingPolicies.isEmpty()) {
+            AttendancePolicy policy = new AttendancePolicy();
+            policy.setName("Test Attendance Policy");
+            policy.setOrganization(org);
+            policy.setOfficeStartTime(LocalTime.of(9, 0));
+            policy.setOfficeEndTime(LocalTime.of(18, 0));
+            policy.setGracePeriodMinutes(15);
+            policy.setMinimumWorkingMinutes(480);
+            policy.setHalfDayThreshold(240);
+            policy.setLateThreshold(15);
+            policy.setEarlyCheckoutThreshold(15);
+            policy.setMaximumBreakMinutes(60);
+            policy.setLateGraceMinutes(10);
+            policy.setEarlyExitGraceMinutes(10);
+            policy.setGraceOccurrencesPerPeriod(3);
+            policy.setGracePeriodType(GracePeriodType.MONTHLY);
+            policy.setAllowLateGrace(true);
+            policy.setAllowEarlyExitGrace(true);
+            policy.setExceedGraceAction(ExceedGraceAction.MARK_LATE);
+            policy.setMaxMonthlyPermissions(4);
+            policy.setMaxDailyPermissionMinutes(120);
+            policy.setMaxMonthlyPermissionMinutes(480);
+            policy.setStatus(AttendancePolicyStatus.ACTIVE);
+            attendancePolicyRepository.save(policy);
+        }
+
         // Create a unique employee for this test to avoid conflicting with seeded data
         String uniqueId = UUID.randomUUID().toString().substring(0, 8);
         employee = new Employee();
+        employee.setOrganization(org);
         employee.setFullName("Concurrency Test Employee");
         employee.setEmail("concurrency." + uniqueId + "@company.com");
         employee.setEmployeeId("EMP-CONC-" + uniqueId);
@@ -65,6 +119,7 @@ public class AttendanceConcurrencyTest {
     @AfterEach
     public void tearDown() {
         if (employee != null && employee.getId() != null) {
+            attendanceGraceUsageRepository.deleteAll(attendanceGraceUsageRepository.findByEmployeeId(employee.getId()));
             attendanceRepository.deleteAll(attendanceRepository.findByEmployeeId(employee.getId()));
             attendanceLogRepository.deleteAll(attendanceLogRepository.findByEmployeeId(employee.getId()));
             employeeRepository.delete(employee);
@@ -127,6 +182,7 @@ public class AttendanceConcurrencyTest {
         for (Future<String> future : futures) {
             results.add(future.get());
         }
+        System.out.println("ATTENDANCE CONCURRENCY RESULTS: " + results);
 
         // Verify thread results
         assertEquals(1, successCounter.get(), "Exactly one check-in must succeed");

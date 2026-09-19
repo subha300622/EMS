@@ -21,6 +21,27 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.example.ems.appraisal.dto.AppraisalCurrentStageResponseDto;
+import com.example.ems.appraisal.dto.EmployeePerformanceSummaryDto;
+import com.example.ems.attendance.entity.Attendance;
+import com.example.ems.attendance.entity.AttendanceStatus;
+import com.example.ems.attendance.repository.AttendanceRepository;
+import com.example.ems.common.exception.ResourceNotFoundException;
+import com.example.ems.employee.repository.EmployeeRepository;
+import com.example.ems.goal.domain.Goal;
+import com.example.ems.goal.repository.GoalRepository;
+import com.example.ems.leave.entity.Leave;
+import com.example.ems.leave.repository.LeaveRepository;
+import com.example.ems.performance.entity.PerformanceReviewRecord;
+import com.example.ems.performance.repository.PerformanceReviewRecordRepository;
+import org.springframework.beans.factory.annotation.Qualifier;
+
+import com.example.ems.security.rls.PostgresRlsSessionBinder;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.Comparator;
 
 @Service
 public class AppraisalEvaluationService {
@@ -42,6 +63,33 @@ public class AppraisalEvaluationService {
 
     @Autowired
     private RoleService roleService;
+
+    @Autowired
+    private EmployeeRepository employeeRepository;
+
+    @Autowired
+    private AttendanceRepository attendanceRepository;
+
+    @Autowired
+    private LeaveRepository leaveRepository;
+
+    @Autowired
+    @Qualifier("enterpriseGoalRepository")
+    private GoalRepository goalRepository;
+
+    @Autowired
+    private PerformanceReviewRecordRepository performanceReviewRecordRepository;
+
+    @Autowired(required = false)
+    private PostgresRlsSessionBinder rlsSessionBinder;
+
+    private void bindRlsIfAvailable() {
+        if (rlsSessionBinder != null) {
+            try {
+                rlsSessionBinder.bindCurrentTenant();
+            } catch (Exception ignored) {}
+        }
+    }
 
     @Transactional
     public SelfAssessmentDto saveSelfAssessment(Long appraisalId, SelfAssessmentDto dto, Employee employee) {
@@ -507,6 +555,255 @@ public class AppraisalEvaluationService {
         dto.setComments(r.getComments());
         dto.setRecommendation(r.getRecommendation());
         dto.setSubmittedAt(r.getSubmittedAt());
+        return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public EmployeePerformanceSummaryDto getEmployeePerformanceSummary(Long employeeId) {
+        Long organizationId = TenantContext.requireOrganizationId();
+        bindRlsIfAvailable();
+        Employee employee = employeeRepository.findByIdAndOrganizationId(employeeId, organizationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with ID: " + employeeId));
+
+        List<Appraisal> appraisals = appraisalRepository.findByOrganizationIdAndEmployeeId(organizationId, employeeId);
+
+        // 1. Previous Appraisals: terminal statuses only (COMPLETED, PUBLISHED, CLOSED)
+        List<EmployeePerformanceSummaryDto.PreviousAppraisalDto> previousAppraisals = appraisals.stream()
+                .filter(a -> a.getStatus() == AppraisalStatus.COMPLETED ||
+                             a.getStatus() == AppraisalStatus.PUBLISHED ||
+                             a.getStatus() == AppraisalStatus.CLOSED)
+                .sorted((a1, a2) -> {
+                    LocalDateTime t1 = a1.getCompletedAt() != null ? a1.getCompletedAt() : a1.getPublishedAt();
+                    LocalDateTime t2 = a2.getCompletedAt() != null ? a2.getCompletedAt() : a2.getPublishedAt();
+                    if (t1 != null && t2 != null) {
+                        return t2.compareTo(t1);
+                    }
+                    return a2.getId().compareTo(a1.getId());
+                })
+                .map(a -> {
+                    String cycleName = a.getCycle() != null ? a.getCycle().getName() : "Appraisal #" + a.getId();
+                    Integer cycleYear = null;
+                    if (a.getCycle() != null && a.getCycle().getStartDate() != null) {
+                        cycleYear = a.getCycle().getStartDate().getYear();
+                    } else if (a.getCompletedAt() != null) {
+                        cycleYear = a.getCompletedAt().getYear();
+                    }
+                    String ratingCategory = a.getPerformanceCategory() != null ? a.getPerformanceCategory()
+                            : (a.getFinalRating() != null ? determineCategory(a.getFinalRating()) : null);
+                    LocalDateTime completedTime = a.getCompletedAt() != null ? a.getCompletedAt() : a.getPublishedAt();
+                    return new EmployeePerformanceSummaryDto.PreviousAppraisalDto(
+                            a.getId(),
+                            cycleName,
+                            cycleYear,
+                            a.getFinalRating(),
+                            5.0,
+                            "5_POINT",
+                            ratingCategory,
+                            completedTime
+                    );
+                })
+                .collect(Collectors.toList());
+
+        // 1b. Support for new Enterprise Performance review records (0-100 scale)
+        List<PerformanceReviewRecord> perfRecords = performanceReviewRecordRepository.findByOrganizationIdAndEmployeeId(organizationId, employeeId);
+        List<EmployeePerformanceSummaryDto.PreviousAppraisalDto> enterprisePrevAppraisals = perfRecords.stream()
+                .filter(r -> "PUBLISHED".equalsIgnoreCase(r.getStatus()) ||
+                             "LOCKED".equalsIgnoreCase(r.getStatus()) ||
+                             "COMPLETED".equalsIgnoreCase(r.getStatus()))
+                .map(r -> {
+                    String cycleName = r.getCycle() != null ? r.getCycle().getName() : "Performance Review #" + r.getId();
+                    Integer cycleYear = null;
+                    if (r.getCycle() != null && r.getCycle().getStartDate() != null) {
+                        cycleYear = r.getCycle().getStartDate().getYear();
+                    } else if (r.getApprovedAt() != null) {
+                        cycleYear = r.getApprovedAt().getYear();
+                    }
+                    Double finalScore = r.getFinalScore() != null ? r.getFinalScore().doubleValue()
+                            : (r.getCalculatedScore() != null ? r.getCalculatedScore().doubleValue() : null);
+                    String ratingBand = r.getRatingBand() != null ? r.getRatingBand() : "NOT_RATED";
+                    LocalDateTime completedTime = r.getApprovedAt() != null ? r.getApprovedAt() : r.getSubmittedAt();
+                    return new EmployeePerformanceSummaryDto.PreviousAppraisalDto(
+                            r.getId(),
+                            cycleName,
+                            cycleYear,
+                            finalScore,
+                            100.0,
+                            "100_POINT",
+                            ratingBand,
+                            completedTime
+                    );
+                })
+                .collect(Collectors.toList());
+
+        previousAppraisals.addAll(enterprisePrevAppraisals);
+        previousAppraisals.sort((p1, p2) -> {
+            if (p1.getCompletedAt() != null && p2.getCompletedAt() != null) {
+                return p2.getCompletedAt().compareTo(p1.getCompletedAt());
+            }
+            return p2.getAppraisalId().compareTo(p1.getAppraisalId());
+        });
+
+        // 2. Current Review Context
+        Appraisal currentAppraisal = appraisals.stream()
+                .filter(a -> a.getStatus() != AppraisalStatus.COMPLETED &&
+                             a.getStatus() != AppraisalStatus.PUBLISHED &&
+                             a.getStatus() != AppraisalStatus.CLOSED &&
+                             a.getStatus() != AppraisalStatus.CANCELLED)
+                .max(Comparator.comparing(Appraisal::getId))
+                .orElse(null);
+
+        Optional<PerformanceReviewRecord> activePerfRecord = perfRecords.stream()
+                .filter(r -> !"PUBLISHED".equalsIgnoreCase(r.getStatus()) &&
+                             !"LOCKED".equalsIgnoreCase(r.getStatus()) &&
+                             !"COMPLETED".equalsIgnoreCase(r.getStatus()) &&
+                             !"CANCELLED".equalsIgnoreCase(r.getStatus()))
+                .max(Comparator.comparing(PerformanceReviewRecord::getId));
+
+        EmployeePerformanceSummaryDto.ReviewContextDto reviewContext = new EmployeePerformanceSummaryDto.ReviewContextDto();
+        reviewContext.setPreviousReviewAvailable(!previousAppraisals.isEmpty());
+        if (currentAppraisal != null) {
+            reviewContext.setCurrentReviewId(currentAppraisal.getId());
+            reviewContext.setCurrentCycleName(currentAppraisal.getCycle() != null ? currentAppraisal.getCycle().getName() : null);
+            reviewContext.setCurrentStageOrder(currentAppraisal.getCurrentStageOrder() != null ? currentAppraisal.getCurrentStageOrder() : 1);
+            reviewContext.setAppraisalStatus(currentAppraisal.getStatus() != null ? currentAppraisal.getStatus().name() : null);
+        } else if (activePerfRecord.isPresent()) {
+            PerformanceReviewRecord r = activePerfRecord.get();
+            reviewContext.setCurrentReviewId(r.getId());
+            reviewContext.setCurrentCycleName(r.getCycle() != null ? r.getCycle().getName() : null);
+            reviewContext.setCurrentStageOrder(1);
+            reviewContext.setAppraisalStatus(r.getStatus());
+        }
+
+        // 3. Period Start & Period End
+        LocalDate periodStart = null;
+        LocalDate periodEnd = null;
+        if (currentAppraisal != null && currentAppraisal.getCycle() != null) {
+            periodStart = currentAppraisal.getCycle().getStartDate();
+            periodEnd = currentAppraisal.getCycle().getEndDate();
+        } else if (activePerfRecord.isPresent() && activePerfRecord.get().getCycle() != null) {
+            periodStart = activePerfRecord.get().getCycle().getStartDate();
+            periodEnd = activePerfRecord.get().getCycle().getEndDate();
+        }
+        if (periodStart == null) {
+            periodStart = LocalDate.now().withDayOfYear(1);
+        }
+        if (periodEnd == null || periodEnd.isAfter(LocalDate.now())) {
+            periodEnd = LocalDate.now();
+        }
+        if (periodEnd.isBefore(periodStart)) {
+            periodEnd = periodStart;
+        }
+
+        // 4. Attendance Metrics
+        List<Attendance> attendances = attendanceRepository.findByEmployeeIdAndDateBetweenAndOrganizationId(employeeId, periodStart, periodEnd, organizationId);
+        int calculatedWorkingDays = 0;
+        LocalDate cur = periodStart;
+        while (!cur.isAfter(periodEnd)) {
+            DayOfWeek dow = cur.getDayOfWeek();
+            if (dow != DayOfWeek.SATURDAY && dow != DayOfWeek.SUNDAY) {
+                calculatedWorkingDays++;
+            }
+            cur = cur.plusDays(1);
+        }
+        int workingDays = Math.max(1, calculatedWorkingDays);
+
+        double presentCount = 0.0;
+        for (Attendance att : attendances) {
+            AttendanceStatus aStatus = att.getAttendanceStatus();
+            if (aStatus == AttendanceStatus.PRESENT ||
+                aStatus == AttendanceStatus.LATE ||
+                aStatus == AttendanceStatus.WORKING ||
+                aStatus == AttendanceStatus.COMPLETED) {
+                presentCount += 1.0;
+            } else if (aStatus == AttendanceStatus.HALF_DAY) {
+                presentCount += 0.5;
+            }
+        }
+        int presentDays = (int) Math.round(presentCount);
+        if (presentDays > workingDays) {
+            workingDays = presentDays;
+        }
+        Double attendancePercentage = workingDays > 0
+                ? BigDecimal.valueOf((presentCount / workingDays) * 100.0).setScale(2, RoundingMode.HALF_UP).doubleValue()
+                : 0.0;
+
+        // 5. Approved Leaves
+        List<Leave> leaves = leaveRepository.findByEmployeeIdAndStatus(employeeId, "APPROVED");
+        double totalLeaveDays = 0.0;
+        for (Leave l : leaves) {
+            if (l.getOrganization() != null && !organizationId.equals(l.getOrganization().getId())) {
+                continue;
+            }
+            if (l.getStartDate() != null && l.getEndDate() != null) {
+                if (!l.getStartDate().isAfter(periodEnd) && !l.getEndDate().isBefore(periodStart)) {
+                    LocalDate clampedStart = l.getStartDate().isBefore(periodStart) ? periodStart : l.getStartDate();
+                    LocalDate clampedEnd = l.getEndDate().isAfter(periodEnd) ? periodEnd : l.getEndDate();
+                    long totalSpan = java.time.temporal.ChronoUnit.DAYS.between(l.getStartDate(), l.getEndDate()) + 1;
+                    long clampedSpan = java.time.temporal.ChronoUnit.DAYS.between(clampedStart, clampedEnd) + 1;
+                    double leaveDuration = l.getDurationDays() != null ? l.getDurationDays() : (double) totalSpan;
+                    double proportionalDays = totalSpan > 0 ? (clampedSpan * leaveDuration) / totalSpan : leaveDuration;
+                    totalLeaveDays += proportionalDays;
+                }
+            }
+        }
+        int leaveDays = (int) Math.round(totalLeaveDays);
+
+        // 6. Goals Projection
+        List<Goal> goals = goalRepository.findByOrganizationIdAndOwnerIdAndIsDeletedFalse(organizationId, employeeId);
+        int totalGoals = goals.size();
+        int completedGoals = 0;
+        for (Goal g : goals) {
+            if ("COMPLETED".equalsIgnoreCase(g.getStatus()) || (g.getProgress() != null && g.getProgress() >= 100)) {
+                completedGoals++;
+            }
+        }
+        Double goalCompletionPercentage = totalGoals > 0
+                ? BigDecimal.valueOf(((double) completedGoals / totalGoals) * 100.0).setScale(2, RoundingMode.HALF_UP).doubleValue()
+                : 0.0;
+
+        // 7. KPI Achievement Percentage
+        Double kpiAchievementPercentage = null;
+        if (currentAppraisal != null && currentAppraisal.getCycle() != null) {
+            Optional<PerformanceReviewRecord> reviewRecordOpt = performanceReviewRecordRepository
+                    .findByOrganizationIdAndCycleIdAndEmployeeId(organizationId, currentAppraisal.getCycle().getId(), employeeId);
+            if (reviewRecordOpt.isPresent()) {
+                PerformanceReviewRecord rec = reviewRecordOpt.get();
+                if (rec.getCalculatedAt() != null && rec.getKpiWeightedScore() != null) {
+                    kpiAchievementPercentage = rec.getKpiWeightedScore().setScale(2, RoundingMode.HALF_UP).doubleValue();
+                }
+            }
+        }
+        if (kpiAchievementPercentage == null && activePerfRecord.isPresent()) {
+            PerformanceReviewRecord rec = activePerfRecord.get();
+            if (rec.getCalculatedAt() != null && rec.getKpiWeightedScore() != null) {
+                kpiAchievementPercentage = rec.getKpiWeightedScore().setScale(2, RoundingMode.HALF_UP).doubleValue();
+            }
+        }
+
+        // 8. Assemble Full Summary
+        EmployeePerformanceSummaryDto dto = new EmployeePerformanceSummaryDto();
+        dto.setEmployeeId(employee.getId());
+        dto.setEmployeeName(employee.getFullName());
+        dto.setEmployeeCode(employee.getEmployeeId());
+        dto.setDepartment(employee.getDepartment());
+        dto.setDesignation(employee.getDesignation());
+        dto.setPreviousAppraisals(previousAppraisals);
+
+        EmployeePerformanceSummaryDto.CurrentPeriodPerformanceDto currentPeriod = new EmployeePerformanceSummaryDto.CurrentPeriodPerformanceDto();
+        currentPeriod.setPeriodStart(periodStart);
+        currentPeriod.setPeriodEnd(periodEnd);
+        currentPeriod.setAttendancePercentage(attendancePercentage);
+        currentPeriod.setWorkingDays(workingDays);
+        currentPeriod.setPresentDays(presentDays);
+        currentPeriod.setLeaveDays(leaveDays);
+        currentPeriod.setTotalGoals(totalGoals);
+        currentPeriod.setCompletedGoals(completedGoals);
+        currentPeriod.setGoalCompletionPercentage(goalCompletionPercentage);
+        currentPeriod.setKpiAchievementPercentage(kpiAchievementPercentage);
+        dto.setCurrentPeriodPerformance(currentPeriod);
+
+        dto.setReviewContext(reviewContext);
+
         return dto;
     }
 }

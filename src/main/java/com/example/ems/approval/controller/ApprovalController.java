@@ -342,4 +342,32 @@ public class ApprovalController {
         ApprovalTaskDto resp = approvalWorkflowEngineService.rejectTask(user, taskId, comment);
         return ResponseEntity.ok(ApiResponse.success("Task rejected successfully", resp));
     }
+
+    @Operation(summary = "Execute Generic Approval Action", description = "Executes an action (APPROVE, REJECT, HOLD) on an approval task or workflow instance.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Approval action executed successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApprovalTaskDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request or action", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping(value = "/{approvalId}/action", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> handleApprovalAction(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String approvalId,
+            @RequestBody ApprovalGenericActionRequest request) {
+        User user = resolveUser(authHeader);
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+
+        if (request == null || request.getAction() == null || request.getAction().trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error("Action is required in request payload (e.g. APPROVE, REJECT, HOLD)", "VAL_001"));
+        }
+
+        try {
+            ApprovalTaskDto resp = approvalWorkflowEngineService.executeApprovalAction(user, approvalId, request.getAction(), request.getRemarks());
+            return ResponseEntity.ok(ApiResponse.success("Approval action executed successfully", resp));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_002"));
+        }
+    }
 }

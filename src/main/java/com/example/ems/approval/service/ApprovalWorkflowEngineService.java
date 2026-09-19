@@ -6,6 +6,7 @@ import com.example.ems.approval.event.ApprovalWorkflowCompletedEvent;
 import com.example.ems.approval.event.ApprovalChangesRequestedEvent;
 import com.example.ems.approval.event.ApprovalWorkflowRejectedEvent;
 import com.example.ems.approval.event.ApprovalWorkflowCancelledEvent;
+import com.example.ems.approval.event.ApprovalActionRequiredEvent;
 import com.example.ems.approval.repository.*;
 import com.example.ems.auth.entity.User;
 import com.example.ems.employee.entity.Employee;
@@ -159,6 +160,27 @@ public class ApprovalWorkflowEngineService {
                         step2.setApproverType(ApproverType.ROLE);
                         step2.setApproverConfig("FINANCE");
                         defaultDef.addStep(step2);
+                    } else if (workflowType == WorkflowType.EMPLOYEE_EXIT) {
+                        step1.setStepName("Manager Exit Approval");
+                        step1.setApproverType(ApproverType.DIRECT_MANAGER);
+                    } else if (workflowType == WorkflowType.FNF_APPROVAL) {
+                        step1.setStepName("Finance Manager Approval");
+                        step1.setApproverType(ApproverType.ROLE);
+                        step1.setApproverConfig("FINANCE_MANAGER");
+
+                        ApprovalWorkflowStep step2 = new ApprovalWorkflowStep();
+                        step2.setStepOrder(2);
+                        step2.setStepName("HR Manager Approval");
+                        step2.setApproverType(ApproverType.ROLE);
+                        step2.setApproverConfig("HR_MANAGER");
+                        defaultDef.addStep(step2);
+
+                        ApprovalWorkflowStep step3 = new ApprovalWorkflowStep();
+                        step3.setStepOrder(3);
+                        step3.setStepName("Company Admin Approval");
+                        step3.setApproverType(ApproverType.ROLE);
+                        step3.setApproverConfig("COMPANY_ADMIN");
+                        defaultDef.addStep(step3);
                     }
 
                     return definitionRepository.save(defaultDef);
@@ -262,7 +284,20 @@ public class ApprovalWorkflowEngineService {
         task.setAssignedAt(now);
         task.setDueAt(dueAt);
 
-        taskRepository.save(task);
+        ApprovalTask savedTask = taskRepository.save(task);
+
+        eventPublisher.publishEvent(new ApprovalActionRequiredEvent(
+                this,
+                savedTask.getApprovalTaskId(),
+                instance.getWorkflowInstanceId(),
+                instance.getWorkflowType(),
+                instance.getBusinessReferenceType(),
+                instance.getBusinessReferenceId(),
+                instance.getOrganization() != null ? instance.getOrganization().getId() : null,
+                stepOrder,
+                step.getStepName(),
+                approver.getId()
+        ));
     }
 
     @Transactional(readOnly = true)
@@ -662,6 +697,93 @@ public class ApprovalWorkflowEngineService {
         }
         ApprovalTask currentTask = tasks.get(0);
         return requestChanges(currentUser, currentTask.getApprovalTaskId(), comment);
+    }
+
+    @Transactional
+    public ApprovalTaskDto holdTask(User currentUser, String approvalTaskId, String comment) {
+        Employee actor = resolveEmployeeForUser(currentUser);
+        Long orgId = resolveOrganizationId(currentUser);
+
+        ApprovalTask task = taskRepository.findByApprovalTaskIdWithLock(approvalTaskId)
+                .orElseGet(() -> taskRepository.findByApprovalTaskId(approvalTaskId)
+                        .orElseThrow(() -> new IllegalArgumentException("Approval task not found with ID: " + approvalTaskId)));
+
+        if (!orgId.equals(task.getWorkflowInstance().getOrganization().getId())) {
+            throw new IllegalArgumentException("Approval task does not belong to user's organization");
+        }
+
+        boolean isSuperAdmin = currentUser.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName());
+        if (!actor.getId().equals(task.getApprover().getId()) && !isSuperAdmin) {
+            throw new IllegalArgumentException("Access Denied: Only assigned approver or organization Super Admin can hold this task");
+        }
+
+        if (task.getStatus() != ApprovalStatus.PENDING) {
+            throw new IllegalStateException("Task is not in PENDING status");
+        }
+
+        task.setStatus(ApprovalStatus.HOLD);
+        taskRepository.save(task);
+
+        ApprovalAction actionRecord = new ApprovalAction();
+        actionRecord.setApprovalTask(task);
+        actionRecord.setActor(actor);
+        actionRecord.setAction(ApprovalStatus.HOLD);
+        actionRecord.setComment(comment != null ? comment : "On Hold");
+        actionRepository.save(actionRecord);
+
+        return mapToTaskDto(task);
+    }
+
+    @Transactional
+    public ApprovalTaskDto executeApprovalAction(User currentUser, String approvalId, String action, String remarks) {
+        if (action == null || action.trim().isEmpty()) {
+            throw new IllegalArgumentException("Approval action is required");
+        }
+        String normalizedAction = action.trim().toUpperCase();
+
+        Optional<ApprovalTask> taskOpt = taskRepository.findByApprovalTaskId(approvalId);
+        if (taskOpt.isEmpty()) {
+            try {
+                Long numId = Long.parseLong(approvalId);
+                taskOpt = taskRepository.findById(numId);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        String targetTaskId;
+        if (taskOpt.isPresent()) {
+            targetTaskId = taskOpt.get().getApprovalTaskId();
+        } else {
+            ApprovalWorkflowInstance instance = null;
+            try {
+                instance = getInstance(currentUser, approvalId);
+            } catch (Exception ignored) {}
+
+            if (instance == null) {
+                try {
+                    Long numId = Long.parseLong(approvalId);
+                    instance = instanceRepository.findById(numId).orElse(null);
+                } catch (NumberFormatException ignored) {}
+            }
+
+            if (instance != null) {
+                List<ApprovalTask> tasks = taskRepository.findByWorkflowInstanceIdAndStepOrder(instance.getId(), instance.getCurrentStep());
+                if (!tasks.isEmpty()) {
+                    targetTaskId = tasks.get(0).getApprovalTaskId();
+                } else {
+                    throw new IllegalStateException("No pending task found for approval instance: " + approvalId);
+                }
+            } else {
+                throw new IllegalArgumentException("Approval task or instance not found with ID: " + approvalId);
+            }
+        }
+
+        return switch (normalizedAction) {
+            case "APPROVE" -> approveTask(currentUser, targetTaskId, remarks);
+            case "REJECT" -> rejectTask(currentUser, targetTaskId, remarks);
+            case "HOLD", "ON_HOLD" -> holdTask(currentUser, targetTaskId, remarks);
+            case "REQUEST_CHANGES" -> requestChanges(currentUser, targetTaskId, remarks);
+            default -> throw new IllegalArgumentException("Unsupported approval action: " + action + ". Supported actions: APPROVE, REJECT, HOLD, REQUEST_CHANGES");
+        };
     }
 }
 

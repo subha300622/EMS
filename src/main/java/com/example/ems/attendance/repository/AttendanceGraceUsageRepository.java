@@ -44,4 +44,6 @@ public interface AttendanceGraceUsageRepository extends JpaRepository<Attendance
     List<AttendanceGraceUsage> findByOrganizationIdAndEmployeeIdAndAttendanceDateBetweenOrderByAttendanceDateDesc(
             Long organizationId, Long employeeId, LocalDate startDate, LocalDate endDate
     );
+
+    List<AttendanceGraceUsage> findByEmployeeId(Long employeeId);
 }

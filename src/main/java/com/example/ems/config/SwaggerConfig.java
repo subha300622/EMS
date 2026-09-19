@@ -106,7 +106,15 @@ public class SwaggerConfig {
                                                 new Tag().name("Offboarding Template Management").description(
                                                                 "Endpoints for configuring organization Offboarding Templates, clearance checklists, asset return policies, document handover requirements, knowledge transfer, and exit interviews."),
                                                 new Tag().name("Exit Requests").description(
-                                                                "Offboarding Exit Request Approval APIs.")));
+                                                                "Offboarding Exit Request Approval APIs."),
+                                                new Tag().name("Enterprise Performance Reviews").description(
+                                                                "Enterprise Performance Review workflows, ratings, approvals, calibrations, and immutable snapshots."),
+                                                new Tag().name("Performance Reports & Analytics").description(
+                                                                "Performance review completion reports, rating distribution matrices, and cycle analytics."),
+                                                new Tag().name("Full & Final Settlement (F&F)").description(
+                                                                "F&F Calculation Engine, Approvals, Payment Release & Statement APIs."),
+                                                new Tag().name("F&F Settlement Reports").description(
+                                                                "Financial and Operational Reporting for Full & Final Settlements.")));
         }
 
         private OpenApiCustomizer filterByTagsCustomizer(Set<String> allowedTags, List<String> excludes,
@@ -273,7 +281,9 @@ public class SwaggerConfig {
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Payroll Processing",
                                                 "Finance Onboarding",
-                                                "Expense Management"), null, false))
+                                                "Expense Management",
+                                                "Full & Final Settlement (F&F)",
+                                                "F&F Settlement Reports"), null, false))
                                 .build();
         }
 
@@ -284,6 +294,7 @@ public class SwaggerConfig {
                                 .pathsToMatch("/api/v1/**")
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Performance Reviews",
+                                                "Enterprise Performance Reviews",
                                                 "Increment Policies",
                                                 "Goal Management",
                                                 "Appraisals"), List.of("/reports/", "/dashboard/", "/analytics/"),
@@ -301,6 +312,8 @@ public class SwaggerConfig {
                                                 "/api/v1/performance/**/analytics/**")
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Performance Reviews",
+                                                "Enterprise Performance Reviews",
+                                                "Performance Reports & Analytics",
                                                 "Increment Policies",
                                                 "Goal Management",
                                                 "Appraisals"), null, false))
@@ -327,7 +340,9 @@ public class SwaggerConfig {
                                                 "Training Management",
                                                 "Notification Management",
                                                 "Offboarding Template Management",
-                                                "Exit Requests"), null, false))
+                                                "Exit Requests",
+                                                "Full & Final Settlement (F&F)",
+                                                "F&F Settlement Reports"), null, false))
                                 .build();
         }
 

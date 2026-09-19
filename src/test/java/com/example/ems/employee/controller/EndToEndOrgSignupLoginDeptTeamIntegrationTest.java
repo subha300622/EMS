@@ -94,6 +94,11 @@ public class EndToEndOrgSignupLoginDeptTeamIntegrationTest {
 
                 // Clean up any dependent payroll/assignment records before deleting employees
                 try {
+                        jdbcTemplate.execute("DELETE FROM exit_fnf_audits");
+                        jdbcTemplate.execute("DELETE FROM exit_fnf_settlements");
+                        jdbcTemplate.execute("DELETE FROM exit_clearances");
+                        jdbcTemplate.execute("DELETE FROM employee_exits");
+
                         jdbcTemplate.execute("DELETE FROM payroll_items WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");
                         jdbcTemplate.execute("DELETE FROM payroll_employees WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");
                         jdbcTemplate.execute("DELETE FROM payroll_runs WHERE organization_id IN (SELECT id FROM organizations WHERE name = '" + TEST_ORG_NAME + "')");

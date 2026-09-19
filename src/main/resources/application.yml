@@ -39,6 +39,8 @@ spring:
   data:
     redis:
       url: ${REDIS_URL}
+      repositories:
+        enabled: false
   cache:
     type: simple
   kafka:

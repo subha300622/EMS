@@ -76,6 +76,22 @@ public class ApproverResolver {
                         ? requester.getOrganization().getId()
                         : (context != null && context.get("organizationId") instanceof Long ? (Long) context.get("organizationId") : null);
 
+                String config = step.getApproverConfig() != null ? step.getApproverConfig().toUpperCase() : "";
+
+                if (config.contains("HR")) {
+                    if (targetOrgId != null) {
+                        List<Employee> hrEmps = employeeRepository.findByOrganizationIdAndDepartment(targetOrgId, "HR");
+                        if (hrEmps != null && !hrEmps.isEmpty()) yield hrEmps.get(0);
+                        List<Employee> humanResourcesEmps = employeeRepository.findByOrganizationIdAndDepartment(targetOrgId, "Human Resources");
+                        if (humanResourcesEmps != null && !humanResourcesEmps.isEmpty()) yield humanResourcesEmps.get(0);
+                    }
+                } else if (config.contains("ADMIN")) {
+                    if (targetOrgId != null) {
+                        List<Employee> adminEmps = employeeRepository.findByOrganizationIdAndDepartment(targetOrgId, "Administration");
+                        if (adminEmps != null && !adminEmps.isEmpty()) yield adminEmps.get(0);
+                    }
+                }
+
                 if (context != null && context.containsKey("financeApproverId")) {
                     Object finIdObj = context.get("financeApproverId");
                     if (finIdObj instanceof Long) {

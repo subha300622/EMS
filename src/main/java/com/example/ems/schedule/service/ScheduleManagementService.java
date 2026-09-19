@@ -129,9 +129,14 @@ public class ScheduleManagementService {
                 emp = employeeRepository.findById(numericId).orElse(null);
             } catch (NumberFormatException ignored) {}
 
-            // If not found by numeric ID, try code / employeeId string
+            // If not found by numeric ID, try code / employeeId string scoped to tenant
             if (emp == null) {
-                emp = employeeRepository.findByEmployeeId(employeeIdInput).orElse(null);
+                if (orgId != null) {
+                    emp = employeeRepository.findByEmployeeIdAndOrganizationId(employeeIdInput, orgId).orElse(null);
+                }
+                if (emp == null) {
+                    emp = employeeRepository.findByEmployeeId(employeeIdInput).orElse(null);
+                }
             }
         }
 

@@ -9,5 +9,6 @@ public enum ApprovalStatus {
     COMPLETED,
     CANCELLED,
     EXPIRED,
-    FAILED
+    FAILED,
+    HOLD
 }

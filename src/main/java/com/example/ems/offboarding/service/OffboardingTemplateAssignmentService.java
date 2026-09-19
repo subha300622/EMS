@@ -1,6 +1,7 @@
 package com.example.ems.offboarding.service;
 
 import com.example.ems.common.exception.ResourceNotFoundException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.offboarding.dto.EmployeeTemplateAssignmentRequest;
@@ -195,7 +196,7 @@ public class OffboardingTemplateAssignmentService {
                 return true;
             }
             return list.stream().anyMatch(val -> val != null && val.trim().equalsIgnoreCase(employeeValue.trim()));
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             String raw = jsonCriterion.replace("[", "").replace("]", "").replace("\"", "");
             String[] tokens = raw.split(",");
             for (String t : tokens) {
@@ -214,7 +215,7 @@ public class OffboardingTemplateAssignmentService {
         try {
             List<String> list = objectMapper.readValue(jsonCriterion, new TypeReference<List<String>>() {});
             return list != null && !list.isEmpty();
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
             return true;
         }
     }

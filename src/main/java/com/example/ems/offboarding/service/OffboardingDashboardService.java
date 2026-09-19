@@ -179,6 +179,7 @@ public class OffboardingDashboardService {
                 case "ACTIVE" -> activeCount++;
                 case "COMPLETED" -> completedCount++;
                 case "SCHEDULED" -> scheduledCount++;
+                default -> { /* other statuses not counted */ }
             }
 
             // Voluntary vs Involuntary classification

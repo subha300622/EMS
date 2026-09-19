@@ -124,6 +124,28 @@ public class AppraisalEvaluationController {
         return ResponseEntity.ok(ApiResponse.success("Employee appraisals retrieved successfully", list));
     }
 
+    @Operation(summary = "Get Employee Pre-Review Performance Summary", description = "Retrieves aggregated performance overview (past appraisals, attendance, leaves, goals, KPI context) prior to review")
+    @GetMapping("/employees/{employeeId}/performance-summary")
+    public ResponseEntity<ApiResponse<EmployeePerformanceSummaryDto>> getEmployeePerformanceSummary(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable Long employeeId) {
+        User user = resolveUser(authHeader);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
+        }
+        boolean hasPerm = hasPermission(user, "APPRAISAL_VIEW")
+                || hasPermission(user, "APPRAISAL_REVIEW")
+                || hasPermission(user, "APPRAISAL_CONFIGURATION_MANAGE");
+        Employee reviewerEmployee = resolveEmployee(user);
+        boolean isSelfOrManager = reviewerEmployee != null && (reviewerEmployee.getId().equals(employeeId) || roleService.hasPermission(user.getWorkEmail(), "employee.update"));
+        if (!hasPerm && !isSelfOrManager) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Missing permissions to view performance summary", "AUTH_002"));
+        }
+
+        EmployeePerformanceSummaryDto summary = evaluationService.getEmployeePerformanceSummary(employeeId);
+        return ResponseEntity.ok(ApiResponse.success("Performance summary retrieved successfully", summary));
+    }
+
     @Operation(summary = "Save Employee Self-Assessment")
     @PostMapping("/{appraisalId}/self-assessment")
     public ResponseEntity<ApiResponse<SelfAssessmentDto>> saveSelfAssessment(
