@@ -137,7 +137,6 @@ public class ConcurrentLeaveBalanceRaceConditionTest {
         List<Throwable> unexpectedErrors = Collections.synchronizedList(new ArrayList<>());
 
         for (int i = 0; i < concurrentThreads; i++) {
-            final int threadIdx = i;
             executor.submit(() -> {
                 readyLatch.countDown();
                 try {
