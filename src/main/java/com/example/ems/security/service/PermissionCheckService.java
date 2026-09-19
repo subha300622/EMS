@@ -54,7 +54,10 @@ public class PermissionCheckService {
         // 2. Check via RoleService using authenticated email (dynamic Cache/DB source of truth)
         String email = getAuthenticatedUserEmail();
         if (email != null && roleService != null) {
-            return roleService.hasPermission(email, permission);
+            Optional<User> userOpt = userRepository.findByWorkEmail(email);
+            if (userOpt.isPresent() && userOpt.get().getRole() != null) {
+                return roleService.hasPermission(email, permission);
+            }
         }
 
         // 3. Fallback to GrantedAuthorities

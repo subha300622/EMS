@@ -10,7 +10,6 @@ import com.example.ems.leave.entity.*;
 import com.example.ems.leave.service.*;
 import com.example.ems.security.dto.AuthPrincipal;
 import com.example.ems.security.service.JwtService;
-import com.example.ems.security.service.PermissionCheckService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -54,19 +53,18 @@ public class LeaveController {
     @Autowired
     private JwtService jwtService;
 
-    @Autowired
-    private PermissionCheckService permissionCheckService;
-
     private User resolveUser(String authHeader) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.getPrincipal() instanceof AuthPrincipal principal) {
-            if (principal.getWorkEmail() != null) {
-                User u = userRepository.findByWorkEmail(principal.getWorkEmail()).orElse(null);
+            if (principal.getEmail() != null) {
+                User u = userRepository.findByWorkEmail(principal.getEmail()).orElse(null);
                 if (u != null) return u;
             }
             if (principal.getUserId() != null) {
-                User u = userRepository.findById(principal.getUserId()).orElse(null);
-                if (u != null) return u;
+                try {
+                    User u = userRepository.findById(Long.parseLong(principal.getUserId())).orElse(null);
+                    if (u != null) return u;
+                } catch (NumberFormatException ignored) {}
             }
         }
         if (authHeader != null && authHeader.startsWith("Bearer ")) {

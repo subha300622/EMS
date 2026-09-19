@@ -46,12 +46,18 @@ public class AttendancePolicyService {
      * Resolves the active attendance policy for the given organization.
      * If no active policy is configured in the database, returns a programmatic system default policy.
      */
-    @Transactional(readOnly = true)
+    @Transactional
     public AttendancePolicy getActivePolicy(Long organizationId) {
         if (organizationId != null) {
             List<AttendancePolicy> activePolicies = attendancePolicyRepository.findActivePoliciesForOrganization(organizationId);
             if (!activePolicies.isEmpty()) {
                 return activePolicies.get(0);
+            }
+            Organization org = organizationRepository.findById(organizationId).orElse(null);
+            if (org != null) {
+                AttendancePolicy defaultPolicy = createSystemDefaultPolicy(organizationId);
+                defaultPolicy.setOrganization(org);
+                return attendancePolicyRepository.save(defaultPolicy);
             }
         }
         return createSystemDefaultPolicy(organizationId);

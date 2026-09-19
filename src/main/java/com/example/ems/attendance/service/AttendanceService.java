@@ -87,6 +87,9 @@ public class AttendanceService {
     @Autowired
     private Clock clock;
 
+    @Autowired(required = false)
+    private com.example.ems.security.service.PermissionCheckService permissionCheckService;
+
     // ── Internal Security / Employee Resolver ───────────────────────────────
 
     public Employee resolveCurrentEmployee() {
@@ -131,12 +134,19 @@ public class AttendanceService {
         if (employee == null && email != null) {
             Optional<Employee> fallback = employeeRepository.findByEmail(email);
             if (fallback.isPresent()) {
-                employee = fallback.get();
+                Employee fallbackEmp = fallback.get();
+                if (organizationId == null || (fallbackEmp.getOrganization() != null && organizationId.equals(fallbackEmp.getOrganization().getId()))) {
+                    employee = fallbackEmp;
+                }
             }
         }
 
         if (employee == null) {
             throw new AttendanceNotFoundException("Authenticated employee not found within the current organization context.");
+        }
+
+        if (organizationId != null && employee.getOrganization() != null && !organizationId.equals(employee.getOrganization().getId())) {
+            throw new AttendanceNotFoundException("Authenticated employee does not belong to the active organization context.");
         }
 
         String status = employee.getStatus();
@@ -440,11 +450,22 @@ public class AttendanceService {
     }
 
     public AttendanceCoreResponse getAttendanceByIdCore(Long id) {
-        Employee employee = resolveCurrentEmployee();
-        Long organizationId = employee.getOrganization() != null ? employee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
+        Employee currentEmployee = resolveCurrentEmployee();
+        Long organizationId = currentEmployee.getOrganization() != null ? currentEmployee.getOrganization().getId() : (TenantContext.getOrganizationId() != null ? TenantContext.getOrganizationId() : 1L);
 
-        Attendance attendance = attendanceRepository.findByIdAndEmployeeIdAndOrganizationId(id, employee.getId(), organizationId)
-                .orElseThrow(() -> new AttendanceNotFoundException("Attendance record not found with ID: " + id));
+        boolean hasTeamOrAdmin = permissionCheckService != null && 
+                (permissionCheckService.hasPermission("attendance.team.read") 
+                 || permissionCheckService.hasPermission("attendance.manage") 
+                 || permissionCheckService.hasPermission("attendance.admin"));
+
+        Attendance attendance;
+        if (hasTeamOrAdmin) {
+            attendance = attendanceRepository.findByIdAndOrganizationId(id, organizationId)
+                    .orElseThrow(() -> new AttendanceNotFoundException("Attendance record not found with ID: " + id));
+        } else {
+            attendance = attendanceRepository.findByIdAndEmployeeIdAndOrganizationId(id, currentEmployee.getId(), organizationId)
+                    .orElseThrow(() -> new AttendanceNotFoundException("Attendance record not found with ID: " + id));
+        }
 
         return mapToCoreResponse(attendance);
     }
@@ -486,10 +507,24 @@ public class AttendanceService {
     @Transactional(readOnly = true)
     public AttendanceDaySummaryDto getAttendanceDaySummary(Long employeeId, LocalDate date) {
         Long orgId = (TenantContext.getOrganizationId() != null) ? TenantContext.getOrganizationId() : 1L;
-        Employee employee = (employeeId != null)
-                ? employeeRepository.findByIdAndOrganizationId(employeeId, orgId)
-                        .orElseThrow(() -> new AttendanceNotFoundException("Employee not found with ID: " + employeeId))
-                : resolveCurrentEmployee();
+        Employee currentEmployee = resolveCurrentEmployee();
+        Employee employee;
+        if (employeeId != null) {
+            employee = employeeRepository.findByIdAndOrganizationId(employeeId, orgId)
+                    .orElseThrow(() -> new AttendanceNotFoundException("Employee not found with ID: " + employeeId));
+
+            if (!employee.getId().equals(currentEmployee.getId())) {
+                boolean hasTeamOrAdmin = permissionCheckService != null && 
+                        (permissionCheckService.hasPermission("attendance.team.read") 
+                         || permissionCheckService.hasPermission("attendance.manage") 
+                         || permissionCheckService.hasPermission("attendance.admin"));
+                if (!hasTeamOrAdmin) {
+                    throw new org.springframework.security.access.AccessDeniedException("Access Denied: Requires attendance.team.read or attendance.admin to view another employee's attendance summary.");
+                }
+            }
+        } else {
+            employee = currentEmployee;
+        }
 
         AttendancePolicy policy = attendancePolicyService.getActivePolicy(orgId);
         Attendance attendance = attendanceRepository.findByEmployeeIdAndDateAndOrganizationId(employee.getId(), date, orgId)
