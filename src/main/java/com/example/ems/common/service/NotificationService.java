@@ -113,19 +113,38 @@ public class NotificationService {
             String message = String.format("Request #%s requires your approval at stage '%s'.",
                     event.getBusinessReferenceId(), stageName);
 
-            Notification notif = new Notification();
-            notif.setUser(approverUser);
-            notif.setTitle(title);
-            notif.setMessage(message);
-            notif.setType("APPROVAL");
-            notif.setPriority("HIGH");
-            notif.setRead(false);
-            notif.setCreatedAt(LocalDateTime.now());
+            String idempotencyKey = String.format("APPROVAL:%s:%d:%d",
+                    event.getApprovalTaskId(),
+                    event.getStageOrder() != null ? event.getStageOrder() : 1,
+                    approverUser.getId());
 
-            Notification saved = notificationRepository.save(notif);
-            log.info("Created approval in-app notification #{} for user {} (task: {})",
-                    saved.getId(), approverUser.getWorkEmail(), event.getApprovalTaskId());
-            return saved;
+            // 1. In-memory / DB pre-check for quick short-circuit
+            if (notificationRepository.existsByIdempotencyKey(idempotencyKey)) {
+                log.info("Approval notification already exists for idempotencyKey {}: safe no-op", idempotencyKey);
+                return notificationRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
+            }
+
+            // 2. Atomic INSERT ... ON CONFLICT (idempotency_key) DO NOTHING
+            LocalDateTime now = LocalDateTime.now();
+            int rowsAffected = notificationRepository.insertNotificationIfNotExists(
+                    approverUser.getId(),
+                    title,
+                    message,
+                    "APPROVAL",
+                    "HIGH",
+                    false,
+                    now,
+                    idempotencyKey
+            );
+
+            if (rowsAffected > 0) {
+                log.info("Created approval in-app notification for user {} (task: {}, key: {})",
+                        approverUser.getWorkEmail(), event.getApprovalTaskId(), idempotencyKey);
+            } else {
+                log.info("Concurrent duplicate approval notification prevented by ON CONFLICT for key {}: safe no-op", idempotencyKey);
+            }
+
+            return notificationRepository.findByIdempotencyKey(idempotencyKey).orElse(null);
         } catch (Exception e) {
             log.error("Failed to create approval notification for task {}: {}",
                     event.getApprovalTaskId(), e.getMessage(), e);

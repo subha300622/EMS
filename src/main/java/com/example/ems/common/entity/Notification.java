@@ -36,6 +36,9 @@ public class Notification {
 
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "idempotency_key", length = 150)
+    private String idempotencyKey;
+
     public Notification() {}
 
     public Notification(Long id, User user, String title, String message, String type, String priority, boolean isRead, LocalDateTime createdAt) {
@@ -111,5 +114,13 @@ public class Notification {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getIdempotencyKey() {
+        return idempotencyKey;
+    }
+
+    public void setIdempotencyKey(String idempotencyKey) {
+        this.idempotencyKey = idempotencyKey;
     }
 }

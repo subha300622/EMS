@@ -21,7 +21,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -146,5 +149,92 @@ public class ApprovalNotificationIntegrationTest {
         );
 
         assertDoesNotThrow(() -> notificationService.createApprovalNotification(invalidEvent));
+    }
+
+    @Test
+    public void testIdempotencyKeyDeduplication_Sequential() {
+        String uniqueTaskId = "TASK-IDEMP-" + System.currentTimeMillis();
+        ApprovalActionRequiredEvent event = new ApprovalActionRequiredEvent(
+                this,
+                uniqueTaskId,
+                "WFI-" + uniqueTaskId,
+                WorkflowType.LEAVE_APPROVAL,
+                "LEAVE",
+                "LV-IDEMP-01",
+                org.getId(),
+                1,
+                "Stage 1",
+                testEmployee.getId()
+        );
+
+        // First execution creates notification
+        Notification first = notificationService.createApprovalNotification(event);
+        assertNotNull(first);
+        assertNotNull(first.getId());
+        String expectedKey = "APPROVAL:" + uniqueTaskId + ":1:" + testUser.getId();
+        assertEquals(expectedKey, first.getIdempotencyKey());
+
+        // Second duplicate execution returns existing notification (safe no-op)
+        Notification second = notificationService.createApprovalNotification(event);
+        assertNotNull(second);
+        assertEquals(first.getId(), second.getId(), "Duplicate call must return the existing notification instance");
+
+        // Verify exactly one notification exists with that idempotency key
+        assertTrue(notificationRepository.existsByIdempotencyKey(expectedKey));
+    }
+
+    @Test
+    public void testIdempotencyKeyDeduplication_ConcurrentRace() throws Exception {
+        String uniqueTaskId = "TASK-CONC-" + System.currentTimeMillis();
+        ApprovalActionRequiredEvent event = new ApprovalActionRequiredEvent(
+                this,
+                uniqueTaskId,
+                "WFI-" + uniqueTaskId,
+                WorkflowType.EXPENSE_APPROVAL,
+                "EXPENSE",
+                "EXP-CONC-01",
+                org.getId(),
+                1,
+                "Stage 1",
+                testEmployee.getId()
+        );
+
+        String expectedKey = "APPROVAL:" + uniqueTaskId + ":1:" + testUser.getId();
+
+        int threadCount = 10;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch startLatch = new CountDownLatch(1);
+        CountDownLatch doneLatch = new CountDownLatch(threadCount);
+
+        AtomicInteger successCount = new AtomicInteger(0);
+        List<Future<?>> futures = new ArrayList<>();
+
+        for (int i = 0; i < threadCount; i++) {
+            futures.add(executor.submit(() -> {
+                try {
+                    startLatch.await();
+                    Notification notif = notificationService.createApprovalNotification(event);
+                    if (notif != null && notif.getId() != null) {
+                        successCount.incrementAndGet();
+                    }
+                } catch (Exception e) {
+                    fail("Concurrent notification creation must be safely absorbed and not throw: " + e.getMessage());
+                } finally {
+                    doneLatch.countDown();
+                }
+            }));
+        }
+
+        startLatch.countDown(); // Fire all 10 threads concurrently
+        assertTrue(doneLatch.await(15, TimeUnit.SECONDS));
+        executor.shutdown();
+
+        // Every thread received a valid notification reference (either created or existing duplicate)
+        assertEquals(threadCount, successCount.get());
+
+        // Exactly ONE notification was persisted with this idempotency key in DB
+        Notification savedInDb = notificationRepository.findByIdempotencyKey(expectedKey).orElse(null);
+        assertNotNull(savedInDb);
+        assertEquals(testUser.getId(), savedInDb.getUser().getId());
     }
 }
