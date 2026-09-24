@@ -82,9 +82,11 @@ public class CustomPermissionSystemIntegrationTest {
     private String platformAdminToken;
     private String orgAdminToken;
     private String regularUserToken;
+    private String uniqueSuffix;
 
     @BeforeEach
     void setUp() {
+        uniqueSuffix = String.valueOf(System.currentTimeMillis());
         mockMvc = MockMvcBuilders.standaloneSetup(
                 permissionMasterController,
                 permissionGroupController,
@@ -155,10 +157,10 @@ public class CustomPermissionSystemIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "name": "candidate.create",
+                                  "name": "candidate.create.%s",
                                   "description": "Create new candidates"
                                 }
-                                """))
+                                """.formatted(uniqueSuffix)))
                 .andExpect(status().isForbidden());
 
         // 2. Platform Admin creates permission -> Success
@@ -167,18 +169,18 @@ public class CustomPermissionSystemIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "name": "candidate.create",
+                                  "name": "candidate.create.%s",
                                   "description": "Create new candidates"
                                 }
-                                """))
+                                """.formatted(uniqueSuffix)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.data.name").value("candidate.create"));
+                .andExpect(jsonPath("$.data.name").value("candidate.create." + uniqueSuffix));
 
         // 3. List Permissions
         mockMvc.perform(get("/api/v1/permissions")
                         .header("Authorization", "Bearer " + orgAdminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data", hasItem(hasEntry("name", "candidate.create"))));
+                .andExpect(jsonPath("$.data", hasItem(hasEntry("name", "candidate.create." + uniqueSuffix))));
     }
 
     @Test

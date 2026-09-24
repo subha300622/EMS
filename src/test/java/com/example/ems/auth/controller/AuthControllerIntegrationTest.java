@@ -248,7 +248,8 @@ public class AuthControllerIntegrationTest {
     public void testPlatformAdminLoginWithDefaultCredentials() throws Exception {
         LoginRequest loginRequest = new LoginRequest();
         loginRequest.setEmail("platform_admin@gmail.com");
-        loginRequest.setPassword("pladmin@123");
+        String seededPassword = environment.getProperty("app.seed.admin-password", "Admin@123");
+        loginRequest.setPassword(seededPassword);
 
         mockMvc.perform(post("/api/v1/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)

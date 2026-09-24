@@ -71,6 +71,9 @@ public class LeaveService {
     @Autowired
     private LeaveEncashmentRepository leaveEncashmentRepository;
 
+    @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogService auditLogService;
+
     // == 1. LEAVE TYPES ============================================================
     @Transactional
     public LeaveType createLeaveType(Employee admin, LeaveTypeRequest request) {
@@ -378,8 +381,22 @@ public class LeaveService {
                 savedLeave, "APPLIED", employee, null, "PENDING", "Leave request submitted"
         ));
 
-        // Publish Domain Event
         String empCode = employee != null ? (employee.getEmployeeId() != null ? employee.getEmployeeId() : employee.getId().toString()) : "UNKNOWN";
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(orgId)
+                    .userId(empCode)
+                    .module(com.example.ems.audit.enums.AuditModule.LEAVE)
+                    .action(com.example.ems.audit.enums.AuditAction.APPLY)
+                    .entityType("Leave")
+                    .recordId(String.valueOf(savedLeave.getId()))
+                    .newValue(savedLeave)
+                    .details("Leave request submitted: " + leaveType.getName() + " (" + savedLeave.getDurationDays() + " days)")
+                    .build());
+        }
+
+        // Publish Domain Event
         eventPublisher.publishEvent(new LeaveRequestedEvent(
                 savedLeave.getId(),
                 empCode,
@@ -407,7 +424,11 @@ public class LeaveService {
         Leave leave = getLeaveById(leaveId)
                 .orElseThrow(() -> new IllegalArgumentException("Leave request not found: " + leaveId));
 
-        if (employee != null && employee.getOrganization() != null && leave.getOrganization() != null) {
+        if (employee == null) {
+            throw new IllegalArgumentException("Employee is required to update leave request");
+        }
+
+        if (employee.getOrganization() != null && leave.getOrganization() != null) {
             if (!employee.getOrganization().getId().equals(leave.getOrganization().getId())) {
                 throw new IllegalArgumentException("Leave request not found: " + leaveId);
             }
@@ -497,6 +518,20 @@ public class LeaveService {
         historyRepository.save(new LeaveRequestHistory(
                 saved, "CANCELLED", actor, oldStatus, "CANCELLED", "Leave request cancelled"
         ));
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(saved.getOrganization() != null ? saved.getOrganization().getId() : (actor != null && actor.getOrganization() != null ? actor.getOrganization().getId() : null))
+                    .userId(actor != null ? actor.getEmployeeId() : "SYSTEM")
+                    .module(com.example.ems.audit.enums.AuditModule.LEAVE)
+                    .action(com.example.ems.audit.enums.AuditAction.CANCEL)
+                    .entityType("Leave")
+                    .recordId(String.valueOf(saved.getId()))
+                    .oldValue(oldStatus)
+                    .newValue("CANCELLED")
+                    .details("Cancelled leave for " + (saved.getEmployee() != null ? saved.getEmployee().getFullName() : saved.getId()))
+                    .build());
+        }
 
         String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
         Long cancelOrgId = saved.getOrganization() != null ? saved.getOrganization().getId() : (actor != null && actor.getOrganization() != null ? actor.getOrganization().getId() : null);
@@ -680,6 +715,20 @@ public class LeaveService {
                 saved, "APPROVED", approver, oldStatus, "APPROVED", "Approved directly"
         ));
 
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(saved.getOrganization() != null ? saved.getOrganization().getId() : (approver != null && approver.getOrganization() != null ? approver.getOrganization().getId() : null))
+                    .userId(approver != null ? approver.getEmployeeId() : "SYSTEM")
+                    .module(com.example.ems.audit.enums.AuditModule.LEAVE)
+                    .action(com.example.ems.audit.enums.AuditAction.APPROVE)
+                    .entityType("Leave")
+                    .recordId(String.valueOf(saved.getId()))
+                    .oldValue(oldStatus)
+                    .newValue("APPROVED")
+                    .details("Approved leave for " + (saved.getEmployee() != null ? saved.getEmployee().getFullName() : saved.getId()))
+                    .build());
+        }
+
         String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
         String leaveTypeName = saved.getLeaveType() != null ? saved.getLeaveType().getName() : "LEAVE";
         Long approverOrgId = saved.getOrganization() != null ? saved.getOrganization().getId() : (approver != null && approver.getOrganization() != null ? approver.getOrganization().getId() : null);
@@ -720,6 +769,20 @@ public class LeaveService {
         historyRepository.save(new LeaveRequestHistory(
                 leave, "REJECTED", approver, oldStatus, "REJECTED", "Rejected directly"
         ));
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(saved.getOrganization() != null ? saved.getOrganization().getId() : (approver != null && approver.getOrganization() != null ? approver.getOrganization().getId() : null))
+                    .userId(approver != null ? approver.getEmployeeId() : "SYSTEM")
+                    .module(com.example.ems.audit.enums.AuditModule.LEAVE)
+                    .action(com.example.ems.audit.enums.AuditAction.REJECT)
+                    .entityType("Leave")
+                    .recordId(String.valueOf(saved.getId()))
+                    .oldValue(oldStatus)
+                    .newValue("REJECTED")
+                    .details("Rejected leave for " + (saved.getEmployee() != null ? saved.getEmployee().getFullName() : saved.getId()))
+                    .build());
+        }
 
         String empCode = saved.getEmployee() != null ? (saved.getEmployee().getEmployeeId() != null ? saved.getEmployee().getEmployeeId() : saved.getEmployee().getId().toString()) : "UNKNOWN";
         Long rejectOrgId = saved.getOrganization() != null ? saved.getOrganization().getId() : (approver != null && approver.getOrganization() != null ? approver.getOrganization().getId() : null);

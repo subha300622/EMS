@@ -102,4 +102,97 @@ public class EmployeeCacheService extends BaseCacheService {
         // Invalidate HR Dashboard
         hrDashboardCacheService.evictAllDashboard();
     }
+
+    /**
+     * Evicts specific employee profile and timeline caches.
+     */
+    public void evictProfileAndTimeline(Long employeeId) {
+        if (employeeId != null) {
+            evict(keyById(employeeId), CacheCategory.PROFILE);
+            evict(keyTimeline(employeeId), CacheCategory.REPORT);
+        }
+    }
+
+    /**
+     * Evicts general employee list and search caches across L1 and L2.
+     */
+    public void evictGeneralListsAndSearch() {
+        evict(keyAll(), CacheCategory.LIST);
+        clearL1(CacheCategory.LIST);
+        clearL1(CacheCategory.DEFAULT);
+    }
+
+    /**
+     * Evicts department employee roster list cache.
+     */
+    public void evictDepartment(String department) {
+        if (department != null && !department.isBlank()) {
+            evict(keyDepartment(department), CacheCategory.LIST);
+        }
+    }
+
+    /**
+     * Evicts manager direct-report list cache.
+     */
+    public void evictManagerReports(Long managerId) {
+        if (managerId != null) {
+            evict(keyManager(managerId), CacheCategory.LIST);
+        }
+    }
+
+    /**
+     * Evicts HR dashboard caches.
+     */
+    public void evictHrDashboard() {
+        hrDashboardCacheService.evictAllDashboard();
+    }
+
+    /**
+     * Evicts manager dashboard caches for a specific manager ID.
+     */
+    public void evictManagerDashboard(Long managerId) {
+        if (managerId != null) {
+            managerDashboardCacheService.evictDashboardCache(managerId);
+        }
+    }
+
+    /**
+     * Evicts caches for generic employee lifecycle transitions (join, activate, suspend, terminate).
+     */
+    public void evictEmployeeLifecycle(Long employeeId) {
+        log.info("[Cache] Evicting lifecycle caches for employee: {}", employeeId);
+        evictProfileAndTimeline(employeeId);
+        evictGeneralListsAndSearch();
+        evictHrDashboard();
+    }
+
+    /**
+     * Evicts caches affected by a manager change (employee, old manager direct reports/dashboard,
+     * new manager direct reports/dashboard, general lists, and HR dashboard).
+     */
+    public void evictManagerChange(Long employeeId, Long oldManagerId, Long newManagerId) {
+        log.info("[Cache] Evicting manager change caches for employee: {}, oldManager: {}, newManager: {}",
+                employeeId, oldManagerId, newManagerId);
+        evictProfileAndTimeline(employeeId);
+        evictGeneralListsAndSearch();
+        evictManagerReports(oldManagerId);
+        evictManagerReports(newManagerId);
+        evictManagerDashboard(oldManagerId);
+        evictManagerDashboard(newManagerId);
+        evictHrDashboard();
+    }
+
+    /**
+     * Evicts caches affected by a department transfer (employee, old department roster,
+     * new department roster, general lists, and HR dashboard).
+     */
+    public void evictDepartmentTransfer(Long employeeId, String oldDepartment, String newDepartment) {
+        log.info("[Cache] Evicting department transfer caches for employee: {}, oldDept: {}, newDept: {}",
+                employeeId, oldDepartment, newDepartment);
+        evictProfileAndTimeline(employeeId);
+        evictGeneralListsAndSearch();
+        evictDepartment(oldDepartment);
+        evictDepartment(newDepartment);
+        evictHrDashboard();
+    }
 }

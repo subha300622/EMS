@@ -312,7 +312,14 @@ public class AttendanceConcurrencyAndRaceTest {
         AtomicBoolean activeBreakOpen = new AtomicBoolean(false);
 
         when(attendanceRepository.findByEmployeeIdAndDateAndOrganizationId(eq(10L), any(LocalDate.class), eq(ORG_ID)))
-                .thenReturn(Optional.of(attendance));
+                .thenAnswer(i -> {
+                    Attendance att = new Attendance();
+                    att.setId(101L);
+                    att.setEmployee(employee);
+                    att.setOrganization(organization);
+                    att.setStatus(activeBreakOpen.get() ? AttendanceStatus.ON_BREAK : AttendanceStatus.WORKING);
+                    return Optional.of(att);
+                });
 
         when(attendanceBreakRepository.existsByAttendanceIdAndBreakEndTimeIsNull(101L))
                 .thenAnswer(i -> activeBreakOpen.get());

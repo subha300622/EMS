@@ -28,6 +28,9 @@ import com.example.ems.organization.entity.Organization;
 import com.example.ems.organization.repository.OrganizationRepository;
 import java.time.LocalTime;
 
+import com.example.ems.attendance.exception.DuplicateCheckInException;
+import org.springframework.dao.DataIntegrityViolationException;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.example.ems.attendance.repository.AttendanceLogRepository;
 
@@ -146,23 +149,37 @@ public class AttendanceConcurrencyTest {
                     attendanceService.checkIn(employee, "Punched in via Concurrency Test");
                     successCounter.incrementAndGet();
                     return "SUCCESS";
-                } catch (IllegalArgumentException e) {
-                    if (e.getMessage() != null && (e.getMessage().contains("Already checked in")
-                            || e.getMessage().contains("Duplicate swipe detected"))) {
-                        collisionCounter.incrementAndGet();
-                        return "COLLISION";
-                    }
-                    return "ERROR: " + e.getMessage();
+                } catch (DuplicateCheckInException e) {
+                    // Service-layer duplicate guard fired — expected for losing threads
+                    collisionCounter.incrementAndGet();
+                    return "COLLISION:service:" + e.getMessage();
                 } catch (Exception e) {
-                    if (e.getMessage() != null && (e.getMessage().contains("Already checked in")
-                            || e.getMessage().contains("Duplicate swipe detected")
-                            || e.getMessage().contains("uk_attendance")
-                            || e.getMessage().contains("duplicate")
-                            || e.getMessage().contains("DataIntegrityViolationException"))) {
-                        collisionCounter.incrementAndGet();
-                        return "COLLISION";
+                    // DB-level constraint violation or any exception whose cause chain
+                    // contains a DataIntegrityViolationException counts as a collision
+                    Throwable cause = e;
+                    boolean isConstraintViolation = false;
+                    while (cause != null) {
+                        if (cause instanceof DataIntegrityViolationException
+                                || cause instanceof DuplicateCheckInException) {
+                            isConstraintViolation = true;
+                            break;
+                        }
+                        // Also match by message for legacy wrapper exceptions
+                        if (cause.getMessage() != null && (
+                                cause.getMessage().contains("Already checked in")
+                                || cause.getMessage().contains("duplicate key")
+                                || cause.getMessage().contains("uk_attendance")
+                                || cause.getMessage().contains("unique constraint"))) {
+                            isConstraintViolation = true;
+                            break;
+                        }
+                        cause = cause.getCause();
                     }
-                    return "ERROR: " + e.getClass().getName() + " - " + e.getMessage();
+                    if (isConstraintViolation) {
+                        collisionCounter.incrementAndGet();
+                        return "COLLISION:db:" + e.getClass().getSimpleName();
+                    }
+                    return "ERROR:" + e.getClass().getName() + ":" + e.getMessage();
                 } finally {
                     endLatch.countDown();
                 }

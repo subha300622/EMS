@@ -108,6 +108,9 @@ public class AuthController {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogService auditLogService;
+
     @Autowired
     private EmployeeRepository employeeRepository;
 
@@ -164,6 +167,11 @@ public class AuthController {
         String email = request.getEmail() != null ? request.getEmail().trim() : null;
         Optional<User> optUser = userRepository.findByWorkEmail(email);
         if (optUser.isEmpty() || !passwordEncoder.matches(request.getPassword(), optUser.get().getPassword())) {
+            if (auditLogService != null) {
+                auditLogService.failure(com.example.ems.audit.enums.AuditModule.AUTH,
+                        com.example.ems.audit.enums.AuditAction.LOGIN,
+                        "User", email, null, null, "Invalid credentials for: " + email);
+            }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Invalid credentials", "AUTH_001"));
         }
@@ -172,6 +180,12 @@ public class AuthController {
 
         // ── Block SUSPENDED / INACTIVE accounts ───────────────────────────────
         if (user.getStatus() != null && !user.getStatus().equalsIgnoreCase("ACTIVE")) {
+            if (auditLogService != null) {
+                auditLogService.failure(com.example.ems.audit.enums.AuditModule.AUTH,
+                        com.example.ems.audit.enums.AuditAction.LOGIN,
+                        "User", user.getUserId(), null, null,
+                        "Login blocked: Account status is " + user.getStatus());
+            }
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error(
                             "Your account is " + user.getStatus().toLowerCase()
@@ -224,6 +238,12 @@ public class AuthController {
         LoginResponse.LoginData loginData = new LoginResponse.LoginData(tokenData, userData);
         LoginResponse responseBody = new LoginResponse(true, "Login successful",
                 Instant.now().truncatedTo(ChronoUnit.SECONDS).toString(), loginData);
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.enums.AuditModule.AUTH,
+                    com.example.ems.audit.enums.AuditAction.LOGIN,
+                    "User", user.getUserId(), null, null, "User logged in successfully");
+        }
 
         return ResponseEntity.ok(responseBody);
     }

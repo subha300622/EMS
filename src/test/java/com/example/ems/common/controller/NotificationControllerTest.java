@@ -23,9 +23,11 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -103,7 +105,7 @@ public class NotificationControllerTest {
     public void testMarkAsReadSuccess() throws Exception {
         doNothing().when(managerNotificationService).markAsRead(currentUser, 1L);
 
-        mockMvc.perform(put("/api/v1/notifications/1/read")
+        mockMvc.perform(patch("/api/v1/notifications/1/read")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -113,7 +115,7 @@ public class NotificationControllerTest {
     public void testMarkAllAsReadSuccess() throws Exception {
         when(managerNotificationService.markAllAsRead(currentUser)).thenReturn(5);
 
-        mockMvc.perform(put("/api/v1/notifications/read-all")
+        mockMvc.perform(patch("/api/v1/notifications/read-all")
                 .header("Authorization", AUTH_HEADER))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -182,5 +184,168 @@ public class NotificationControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.unreadCount").value(5))
                 .andExpect(jsonPath("$.data.stats.total").value(100));
+    }
+
+    @Test
+    public void testGetNotificationFeedUnauthorizedMissingHeader() throws Exception {
+        mockMvc.perform(get("/api/v1/notifications"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testGetNotificationFeedUnauthorizedInvalidToken() throws Exception {
+        when(jwtService.validateAccessToken("invalid-token")).thenReturn(false);
+
+        mockMvc.perform(get("/api/v1/notifications")
+                        .header("Authorization", "Bearer invalid-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testGetNotificationFeedUnauthorizedUserNotFound() throws Exception {
+        when(jwtService.validateAccessToken("unknown-token")).thenReturn(true);
+        when(jwtService.getEmailFromToken("unknown-token")).thenReturn("notfound@example.com");
+        when(userRepository.findByWorkEmail("notfound@example.com")).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/v1/notifications")
+                        .header("Authorization", "Bearer unknown-token"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testGetNotificationFeedDefaultParams() throws Exception {
+        Page<NotificationDto> emptyPage = new PageImpl<>(List.of(), PageRequest.of(0, 20), 0);
+        when(managerNotificationService.getNotificationFeed(eq(currentUser), eq(0), eq(20), eq("ALL"), eq("ALL")))
+                .thenReturn(emptyPage);
+
+        mockMvc.perform(get("/api/v1/notifications")
+                        .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.content").isArray());
+    }
+
+    @Test
+    public void testGetUnreadCountUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/notifications/unread-count"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testMarkAsReadUnauthorized() throws Exception {
+        mockMvc.perform(patch("/api/v1/notifications/1/read"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testMarkAsReadNotFound() throws Exception {
+        doThrow(new IllegalArgumentException("Notification not found with ID: 99"))
+                .when(managerNotificationService).markAsRead(currentUser, 99L);
+
+        mockMvc.perform(patch("/api/v1/notifications/99/read")
+                        .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("NOTIF_001"))
+                .andExpect(jsonPath("$.error.message").value("Notification not found with ID: 99"));
+    }
+
+    @Test
+    public void testMarkAsReadForbidden() throws Exception {
+        doThrow(new IllegalArgumentException("Unauthorized to access this notification"))
+                .when(managerNotificationService).markAsRead(currentUser, 1L);
+
+        mockMvc.perform(patch("/api/v1/notifications/1/read")
+                        .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("NOTIF_001"))
+                .andExpect(jsonPath("$.error.message").value("Unauthorized to access this notification"));
+    }
+
+    @Test
+    public void testMarkAllAsReadUnauthorized() throws Exception {
+        mockMvc.perform(patch("/api/v1/notifications/read-all"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testDeleteNotificationUnauthorized() throws Exception {
+        mockMvc.perform(delete("/api/v1/notifications/1"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testDeleteNotificationNotFound() throws Exception {
+        doThrow(new IllegalArgumentException("Notification not found with ID: 99"))
+                .when(managerNotificationService).deleteNotification(currentUser, 99L);
+
+        mockMvc.perform(delete("/api/v1/notifications/99")
+                        .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("NOTIF_002"))
+                .andExpect(jsonPath("$.error.message").value("Notification not found with ID: 99"));
+    }
+
+    @Test
+    public void testDeleteNotificationForbidden() throws Exception {
+        doThrow(new IllegalArgumentException("Unauthorized to access this notification"))
+                .when(managerNotificationService).deleteNotification(currentUser, 1L);
+
+        mockMvc.perform(delete("/api/v1/notifications/1")
+                        .header("Authorization", AUTH_HEADER))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("NOTIF_002"))
+                .andExpect(jsonPath("$.error.message").value("Unauthorized to access this notification"));
+    }
+
+    @Test
+    public void testGetPreferencesUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/notifications/preferences"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testUpdatePreferencesUnauthorized() throws Exception {
+        mockMvc.perform(put("/api/v1/notifications/preferences")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testGetStatsUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/notifications/stats"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
+    }
+
+    @Test
+    public void testGetPageDataUnauthorized() throws Exception {
+        mockMvc.perform(get("/api/v1/notifications/page-data"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.error.code").value("AUTH_014"));
     }
 }

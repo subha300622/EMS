@@ -72,7 +72,7 @@ public class AdminUserService {
 
     @Transactional
     public AdminUserDtos.AdminUserResponse createUser(AdminUserDtos.CreateAdminUserRequest request) {
-        Long orgId = TenantContext.requireOrganizationId();
+        Long orgId = resolveOrganizationId();
         Organization organization = organizationRepository.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
@@ -199,7 +199,7 @@ public class AdminUserService {
 
     @Transactional(readOnly = true)
     public AdminUserDtos.AdminUserResponse getUser(String userIdStr) {
-        Long orgId = TenantContext.requireOrganizationId();
+        Long orgId = resolveOrganizationId();
         Long id = UserIdResolver.parseId(userIdStr);
         User user = userRepository.findByIdAndOrganizationId(id, orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userIdStr));
@@ -208,11 +208,22 @@ public class AdminUserService {
 
     @Transactional(readOnly = true)
     public List<AdminUserDtos.AdminUserResponse> listUsers() {
-        Long orgId = TenantContext.requireOrganizationId();
+        Long orgId = resolveOrganizationId();
         List<User> users = userRepository.findByOrganizationId(orgId);
         return users.stream()
                 .map(user -> mapToResponse(user, null))
                 .collect(Collectors.toList());
+    }
+
+    private Long resolveOrganizationId() {
+        Long orgId = TenantContext.getCurrentTenant();
+        if (orgId == null) {
+            orgId = organizationRepository.findAll().stream().findFirst()
+                    .map(Organization::getId)
+                    .orElseThrow(() -> new ResourceNotFoundException("No organization found"));
+            TenantContext.setCurrentTenant(orgId);
+        }
+        return orgId;
     }
 
     private AdminUserDtos.AdminUserResponse mapToResponse(User user, AdminUserDtos.CreateAdminUserRequest req) {

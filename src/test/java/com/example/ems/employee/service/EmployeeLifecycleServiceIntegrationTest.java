@@ -78,7 +78,6 @@ public class EmployeeLifecycleServiceIntegrationTest {
     private Employee employeeOrgB;
 
     private User adminUserA;
-    private User adminUserB;
 
     @BeforeEach
     void setUp() {
@@ -127,7 +126,7 @@ public class EmployeeLifecycleServiceIntegrationTest {
         });
 
         adminUserA = createUser("admin.a." + ts + "@tenanta.com", tenantA, adminRole);
-        adminUserB = createUser("admin.b." + ts + "@tenantb.com", tenantB, adminRole);
+        createUser("admin.b." + ts + "@tenantb.com", tenantB, adminRole);
 
         authenticateAs(adminUserA);
     }

@@ -88,3 +88,8 @@ spec:
                 secretKeyRef:
                   name: ems-secret
                   key: RAZORPAY_KEY_SECRET
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ems-secret
+                  key: JWT_SECRET

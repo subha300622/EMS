@@ -126,12 +126,10 @@ public class SignupService {
             // 6. Provision Default Tenant Roles from Platform Templates
             tenantRoleProvisioningService.provisionTenantRoles(savedOrg.getId());
 
-            // Load provisioned SUPER_ADMIN or ADMIN Role for the tenant admin user creation
+            // Load provisioned SUPER_ADMIN Role for the tenant admin user creation
             Role adminRole = roleRepository.findByOrganizationIdAndName(savedOrg.getId(), "SUPER_ADMIN")
-                    .or(() -> roleRepository.findByOrganizationIdAndName(savedOrg.getId(), "ADMIN"))
                     .orElseGet(() -> {
                         Role template = roleRepository.findByNameAndIsPlatformTemplateTrue("SUPER_ADMIN")
-                                .or(() -> roleRepository.findByNameAndIsPlatformTemplateTrue("ADMIN"))
                                 .orElseGet(() -> {
                                     Role defaultRole = new Role();
                                     defaultRole.setName("SUPER_ADMIN");
@@ -141,11 +139,11 @@ public class SignupService {
                                     return roleRepository.save(defaultRole);
                                 });
                         Role tr = new Role();
-                        tr.setName(template.getName());
-                        tr.setDescription(template.getDescription());
+                        tr.setName("SUPER_ADMIN");
+                        tr.setDescription(template.getDescription() != null ? template.getDescription() : "Tenant Super Admin");
                         tr.setOrganization(savedOrg);
                         tr.setPlatformTemplate(false);
-                        tr.setSystemRole(template.isSystemRole());
+                        tr.setSystemRole(true);
                         if (template.getPermissions() != null) {
                             tr.setPermissions(new HashSet<>(template.getPermissions()));
                         } else {

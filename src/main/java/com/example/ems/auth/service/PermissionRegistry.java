@@ -7,6 +7,12 @@ public final class PermissionRegistry {
         private PermissionRegistry() {
         }
 
+        // Role & Permission Management
+        public static final String ROLE_MANAGE = "role.manage";
+        public static final String ROLE_VIEW = "role.view";
+        public static final String PERMISSION_MANAGE = "permission.manage";
+        public static final String USER_ROLE_ASSIGN = "user.role.assign";
+
         // Attendance
         public static final String ATTENDANCE_READ = "attendance.read";
         public static final String ATTENDANCE_MANAGE = "attendance.manage";

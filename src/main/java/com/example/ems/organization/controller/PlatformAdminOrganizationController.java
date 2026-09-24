@@ -257,10 +257,10 @@ public class PlatformAdminOrganizationController {
         ResponseEntity<?> accessError = validateAccess(authHeader, "organization.update");
         if (accessError != null) return accessError;
 
-        String status = body != null ? body.status() : null;
-        if (status == null || status.trim().isEmpty()) {
+        if (body == null || body.status() == null || body.status().trim().isEmpty()) {
             return ResponseEntity.badRequest().body(ErrorResponse.error("Status is required", "ORG_002"));
         }
+        String status = body.status();
 
         User user = resolveUser(authHeader);
         try {

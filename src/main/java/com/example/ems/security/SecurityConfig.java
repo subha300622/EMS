@@ -52,6 +52,7 @@ public class SecurityConfig {
     }
 
     @Bean
+    @org.springframework.context.annotation.Primary
     public CorsConfigurationSource corsConfigurationSource(
             @Value("${app.frontend-url:http://localhost:3000}") String frontendUrl) {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -93,6 +94,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/signup",
+                                "/api/v1/admin/users",
+                                "/api/v1/admin/users/**",
                                 "/api/v1/auth/email/verify",
                                 "/api/v1/auth/check-organization",
                                 "/api/v1/auth/forgot-password",

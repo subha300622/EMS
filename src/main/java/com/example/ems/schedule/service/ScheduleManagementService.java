@@ -26,6 +26,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import com.example.ems.holiday.repository.HolidayRepository;
 import com.example.ems.schedule.entity.ScheduleException;
@@ -145,7 +146,7 @@ public class ScheduleManagementService {
         }
 
         // Validate organization membership if employee organization is populated
-        if (emp.getOrganization() != null && !orgId.equals(emp.getOrganization().getId())) {
+        if (emp.getOrganization() != null && !Objects.equals(orgId, emp.getOrganization().getId())) {
             throw new IllegalArgumentException("Employee does not belong to the authenticated organization");
         }
 

@@ -48,6 +48,15 @@ public class SessionAuthenticationProvider implements AuthenticationProvider {
         if (principal.getRole() != null && !principal.getRole().isBlank()) {
             String roleWithPrefix = principal.getRole().startsWith("ROLE_") ? principal.getRole() : "ROLE_" + principal.getRole();
             authorities.add(new SimpleGrantedAuthority(roleWithPrefix));
+
+            if ("SUPER_ADMIN".equalsIgnoreCase(principal.getRole()) || "ROLE_SUPER_ADMIN".equalsIgnoreCase(principal.getRole())) {
+                // Tenant SUPER_ADMIN has full permissions across all tenant domains and roles
+                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_HR"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_MANAGER"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_EMPLOYEE"));
+                authorities.add(new SimpleGrantedAuthority("ROLE_FINANCE"));
+            }
         }
 
         // Hydrate granular effective permissions for the user

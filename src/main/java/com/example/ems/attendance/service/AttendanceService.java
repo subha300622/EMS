@@ -79,6 +79,9 @@ public class AttendanceService {
     private AttendanceGraceService attendanceGraceService;
 
     @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogService auditLogService;
+
+    @Autowired(required = false)
     private AttendancePermissionRepository attendancePermissionRepository;
 
     @Autowired
@@ -823,7 +826,20 @@ public class AttendanceService {
         attendance.setServerTime(nowInstant);
 
         try {
-            return attendanceRepository.save(attendance);
+            Attendance saved = attendanceRepository.save(attendance);
+            if (auditLogService != null) {
+                auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                        .companyId(organizationId)
+                        .userId(employee.getEmployeeId() != null ? employee.getEmployeeId() : String.valueOf(employee.getId()))
+                        .module(com.example.ems.audit.enums.AuditModule.ATTENDANCE)
+                        .action(com.example.ems.audit.enums.AuditAction.CHECK_IN)
+                        .entityType("Attendance")
+                        .recordId(String.valueOf(saved.getId()))
+                        .newValue(saved)
+                        .details("Check-in recorded for " + employee.getFullName())
+                        .build());
+            }
+            return saved;
         } catch (DataIntegrityViolationException e) {
             log.warn("Duplicate check-in attempt detected for employeeId={}", employee.getId());
             throw new DuplicateCheckInException("Already checked in today");
@@ -922,7 +938,20 @@ public class AttendanceService {
             attendance.setNotes(notes);
         }
 
-        return attendanceRepository.save(attendance);
+        Attendance saved = attendanceRepository.save(attendance);
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(organizationId)
+                    .userId(employee.getEmployeeId() != null ? employee.getEmployeeId() : String.valueOf(employee.getId()))
+                    .module(com.example.ems.audit.enums.AuditModule.ATTENDANCE)
+                    .action(com.example.ems.audit.enums.AuditAction.CHECK_OUT)
+                    .entityType("Attendance")
+                    .recordId(String.valueOf(saved.getId()))
+                    .newValue(saved)
+                    .details("Check-out recorded for " + employee.getFullName() + ". Total working minutes: " + saved.getTotalWorkingMinutes())
+                    .build());
+        }
+        return saved;
     }
 
     public Optional<Attendance> getTodayAttendance(Employee employee) {

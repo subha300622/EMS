@@ -51,6 +51,13 @@ jobs:
         run: chmod +x mvnw
 
       - name: Build & Run Tests
+        env:
+          # JWT_SECRET is required at startup (no fallback in production config).
+          # In CI we inject a test-only value via a GitHub Actions secret.
+          # Add JWT_SECRET to your repository secrets:
+          # Settings → Secrets and variables → Actions → New repository secret
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          AES_ENCRYPTION_KEY: ${{ secrets.AES_ENCRYPTION_KEY }}
         run: ./mvnw clean verify --batch-mode -Dsurefire.useFile=false
 
       # Optional: Upload test reports if build fails

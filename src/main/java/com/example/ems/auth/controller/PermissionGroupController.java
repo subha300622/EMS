@@ -52,6 +52,9 @@ public class PermissionGroupController {
     @Autowired
     private RoleService roleService;
 
+    @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogService auditLogService;
+
     private User resolveUser(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
@@ -135,7 +138,7 @@ public class PermissionGroupController {
         group.setName(name.trim());
         group.setDescription(description);
 
-        if (request.permissionIds() != null && !request.permissionIds().isEmpty()) {
+        if (request != null && request.permissionIds() != null && !request.permissionIds().isEmpty()) {
             Set<Permission> perms = new HashSet<>();
             for (Long pId : request.permissionIds()) {
                 Permission p = permissionRepository.findById(pId)
@@ -146,6 +149,17 @@ public class PermissionGroupController {
         }
 
         PermissionGroup created = permissionGroupRepository.save(group);
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE_PERMISSION)
+                    .action(com.example.ems.audit.enums.AuditAction.CREATE)
+                    .entityType("PermissionGroup")
+                    .recordId(String.valueOf(created.getId()))
+                    .permission("permission.manage")
+                    .details("Created permission group: " + created.getName())
+                    .build());
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Permission group created successfully", created));
@@ -189,6 +203,18 @@ public class PermissionGroupController {
 
         PermissionGroup updated = permissionGroupRepository.save(group);
         roleService.evictAllUserPermissionsCache();
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE_PERMISSION)
+                    .action(com.example.ems.audit.enums.AuditAction.UPDATE)
+                    .entityType("PermissionGroup")
+                    .recordId(String.valueOf(updated.getId()))
+                    .permission("permission.manage")
+                    .details("Updated permission group: " + updated.getName())
+                    .build());
+        }
+
         return ResponseEntity.ok(ApiResponse.success("Permission group updated successfully", updated));
     }
 
@@ -223,6 +249,18 @@ public class PermissionGroupController {
 
         permissionGroupRepository.deleteById(groupId);
         roleService.evictAllUserPermissionsCache();
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE_PERMISSION)
+                    .action(com.example.ems.audit.enums.AuditAction.DELETE)
+                    .entityType("PermissionGroup")
+                    .recordId(String.valueOf(groupId))
+                    .permission("permission.manage")
+                    .details("Deleted permission group ID: " + groupId)
+                    .build());
+        }
+
         return ResponseEntity.ok(ApiResponse.success("Permission group deleted successfully", null));
     }
 
@@ -282,6 +320,18 @@ public class PermissionGroupController {
         }
         roleService.evictAllUserPermissionsCache();
 
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE_PERMISSION)
+                    .action(com.example.ems.audit.enums.AuditAction.ASSIGN)
+                    .entityType("PermissionGroup")
+                    .recordId(String.valueOf(groupId))
+                    .permission("permission.manage")
+                    .newValue(permissionIds)
+                    .details("Added permissions to group: " + group.getName())
+                    .build());
+        }
+
         return ResponseEntity.ok(ApiResponse.success("Permissions added to group successfully", group.getPermissions()));
     }
 
@@ -320,6 +370,17 @@ public class PermissionGroupController {
         group.getPermissions().remove(permission);
         permissionGroupRepository.save(group);
         roleService.evictAllUserPermissionsCache();
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE_PERMISSION)
+                    .action(com.example.ems.audit.enums.AuditAction.REMOVE)
+                    .entityType("PermissionGroup")
+                    .recordId(String.valueOf(groupId))
+                    .permission("permission.manage")
+                    .details("Removed permission '" + permission.getName() + "' from group: " + group.getName())
+                    .build());
+        }
 
         return ResponseEntity.ok(ApiResponse.success("Permission removed from group successfully", null));
     }

@@ -24,6 +24,9 @@ public class PermissionService {
     @Autowired
     private PermissionRepository permissionRepository;
 
+    @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogService auditLogService;
+
     public Permission createPermission(PermissionRequest request) {
         if (permissionRepository.existsByName(request.getName())) {
             throw new IllegalArgumentException("Permission with name '" + request.getName() + "' already exists");
@@ -31,7 +34,18 @@ public class PermissionService {
         Permission permission = new Permission();
         permission.setName(request.getName());
         permission.setDescription(request.getDescription());
-        return permissionRepository.save(permission);
+        Permission saved = permissionRepository.save(permission);
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE_PERMISSION)
+                    .action(com.example.ems.audit.enums.AuditAction.CREATE)
+                    .entityType("Permission")
+                    .recordId(String.valueOf(saved.getId()))
+                    .permission("permission.manage")
+                    .details("Created permission: " + saved.getName())
+                    .build());
+        }
+        return saved;
     }
 
     public List<Permission> getAllPermissions() {
@@ -49,7 +63,18 @@ public class PermissionService {
             }
             permission.setName(request.getName());
             permission.setDescription(request.getDescription());
-            return permissionRepository.save(permission);
+            Permission saved = permissionRepository.save(permission);
+            if (auditLogService != null) {
+                auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                        .module(com.example.ems.audit.enums.AuditModule.ROLE_PERMISSION)
+                        .action(com.example.ems.audit.enums.AuditAction.UPDATE)
+                        .entityType("Permission")
+                        .recordId(String.valueOf(saved.getId()))
+                        .permission("permission.manage")
+                        .details("Updated permission: " + saved.getName())
+                        .build());
+            }
+            return saved;
         });
     }
 
@@ -60,6 +85,16 @@ public class PermissionService {
     public boolean deletePermission(Long id) {
         if (permissionRepository.existsById(id)) {
             permissionRepository.deleteById(id);
+            if (auditLogService != null) {
+                auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                        .module(com.example.ems.audit.enums.AuditModule.ROLE_PERMISSION)
+                        .action(com.example.ems.audit.enums.AuditAction.DELETE)
+                        .entityType("Permission")
+                        .recordId(String.valueOf(id))
+                        .permission("permission.manage")
+                        .details("Deleted permission ID: " + id)
+                        .build());
+            }
             return true;
         }
         return false;

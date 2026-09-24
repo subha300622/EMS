@@ -57,6 +57,9 @@ public class PayrollRunService {
     @Autowired(required = false)
     private ApprovalFacade approvalFacade;
 
+    @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogService auditLogService;
+
     @Autowired
     public PayrollRunService(PayrollRunRepository payrollRunRepository,
                              PayrollEmployeeRepository payrollEmployeeRepository,
@@ -414,8 +417,24 @@ public class PayrollRunService {
 
         if (hasFailures) {
             run.setStatus(PayrollRunStatus.FAILED);
+            if (auditLogService != null) {
+                auditLogService.failure(com.example.ems.audit.enums.AuditModule.PAYROLL,
+                        com.example.ems.audit.enums.AuditAction.PROCESS,
+                        "PayrollRun", String.valueOf(run.getId()), null, run, "Payroll run processing failed for some employees");
+            }
         } else {
             run.setStatus(PayrollRunStatus.CALCULATED);
+            if (auditLogService != null) {
+                auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                        .companyId(organizationId)
+                        .module(com.example.ems.audit.enums.AuditModule.PAYROLL)
+                        .action(com.example.ems.audit.enums.AuditAction.PROCESS)
+                        .entityType("PayrollRun")
+                        .recordId(String.valueOf(run.getId()))
+                        .newValue(run)
+                        .details("Processed payroll run #" + run.getId() + " (" + processedEmployees + "/" + totalEmployees + " employees)")
+                        .build());
+            }
         }
 
         run = payrollRunRepository.save(run);

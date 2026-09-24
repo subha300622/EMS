@@ -51,6 +51,38 @@ public class RoleService {
     @Autowired
     private CacheManager cacheManager;
 
+    @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogService auditLogService;
+
+    private static final Set<String> ALL_TENANT_AUTHORITIES = Set.of(
+            "ASSET_APPROVE", "ASSET_ASSIGN", "ASSET_CATEGORY_CREATE", "ASSET_CATEGORY_DELETE",
+            "ASSET_CATEGORY_UPDATE", "ASSET_CATEGORY_VIEW", "ASSET_CREATE", "ASSET_DELETE",
+            "ASSET_DISPOSE", "ASSET_HISTORY_VIEW", "ASSET_LOCATION_CREATE", "ASSET_LOCATION_DELETE",
+            "ASSET_LOCATION_UPDATE", "ASSET_LOCATION_VIEW", "ASSET_MAINTENANCE_CANCEL",
+            "ASSET_MAINTENANCE_COMPLETE", "ASSET_MAINTENANCE_CREATE", "ASSET_MAINTENANCE_START",
+            "ASSET_MAINTENANCE_VIEW", "ASSET_REJECT", "ASSET_REQUEST_CREATE", "ASSET_RETIRE",
+            "ASSET_RETURN", "ASSET_TRANSFER", "ASSET_UPDATE", "ASSET_VIEW",
+            "attendance.admin", "attendance.manage", "attendance.permission.approve",
+            "attendance.permission.create", "attendance.permission.read", "attendance.permission.reject",
+            "attendance.self.checkin", "attendance.self.checkout", "attendance.self.read", "attendance.team.read",
+            "BONUS_ADJUST", "BONUS_CREATE", "BONUS_PAYROLL_POST", "BONUS_POLICY_MANAGE", "BONUS_VIEW",
+            "CLEARANCE_ACTION", "CLEARANCE_MANAGE", "CLEARANCE_VIEW",
+            "COMPENSATION_CONFIG_MANAGE", "COMPENSATION_CONFIG_VIEW",
+            "DOCUMENT_APPROVE", "DOCUMENT_REJECT",
+            "EXIT_APPROVE", "EXIT_CREATE", "EXIT_REJECT", "EXIT_VIEW",
+            "EXPENSE_APPROVE", "EXPENSE_REIMBURSE", "EXPENSE_REJECT", "EXPENSE_VIEW",
+            "FNF_CALCULATE", "FNF_FINALIZE", "FNF_PAYMENT", "FNF_REPORT_VIEW", "FNF_VIEW",
+            "GOAL_ASSIGN", "GOAL_CONFIG_EDIT", "GOAL_CONFIG_VIEW", "GOAL_VIEW",
+            "INCENTIVE_ADJUST", "INCENTIVE_CREATE", "INCENTIVE_PAYROLL_POST", "INCENTIVE_POLICY_MANAGE", "INCENTIVE_VIEW",
+            "leave.admin", "leave.approve", "leave.manage", "leave.reject",
+            "leave.self.cancel", "leave.self.create", "leave.self.read", "leave.team.read",
+            "offboarding.analytics.read", "offboarding.request.create", "offboarding.request.read",
+            "offboarding.template.manage", "OFFBOARDING_TEMPLATE_MANAGE", "OFFBOARDING_TEMPLATE_VIEW", "OFFBOARDING_VIEW",
+            "ONBOARDING_APPROVE", "ONBOARDING_REJECT",
+            "OVERTIME_ADJUST", "OVERTIME_CREATE", "OVERTIME_POLICY_MANAGE", "OVERTIME_VIEW",
+            "SCHEDULE_APPROVE", "SCHEDULE_REJECT"
+    );
+
     @Transactional(readOnly = true)
     @Cacheable(value = "userPermissions", key = "#userId")
     public List<String> getPermissionsForUserId(String userId) {
@@ -61,7 +93,18 @@ public class RoleService {
         if (optUser.isEmpty()) {
             return Collections.emptyList();
         }
-        return getEffectivePermissions(optUser.get()).stream()
+        User user = optUser.get();
+        if ((user.getRole() != null && "SUPER_ADMIN".equalsIgnoreCase(user.getRole().getName()))
+                || "SUPER_ADMIN".equalsIgnoreCase(user.getRequestedRole())) {
+            Set<String> perms = permissionRepository.findAll().stream()
+                    .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                    .map(Permission::getName)
+                    .filter(name -> name != null && !name.startsWith("platform.") && !name.startsWith("PLATFORM_"))
+                    .collect(Collectors.toSet());
+            perms.addAll(ALL_TENANT_AUTHORITIES);
+            return new ArrayList<>(perms);
+        }
+        return getEffectivePermissions(user).stream()
                 .map(Permission::getName)
                 .collect(Collectors.toList());
     }
@@ -121,6 +164,13 @@ public class RoleService {
         if (user == null || user.getRole() == null) {
             return new HashSet<>();
         }
+        if ("SUPER_ADMIN".equalsIgnoreCase(user.getRole().getName())
+                || "SUPER_ADMIN".equalsIgnoreCase(user.getRequestedRole())) {
+            return permissionRepository.findAll().stream()
+                    .filter(p -> Boolean.TRUE.equals(p.getActive()))
+                    .filter(p -> p.getName() != null && !p.getName().startsWith("platform.") && !p.getName().startsWith("PLATFORM_"))
+                    .collect(Collectors.toSet());
+        }
         Set<Permission> perms = user.getRole().getPermissions();
         if (perms == null || perms.isEmpty()) {
             // Try to find the default tenant EMPLOYEE role first, then fallback to template
@@ -154,6 +204,9 @@ public class RoleService {
         if (user.getRole() != null) {
             String roleName = user.getRole().getName();
             if ("SUPER_ADMIN".equalsIgnoreCase(roleName)) {
+                if (permissionName.startsWith("platform.") || permissionName.startsWith("PLATFORM_")) {
+                    return false;
+                }
                 return true;
             }
             if ("PLATFORM_ADMIN".equalsIgnoreCase(roleName)) {
@@ -167,6 +220,9 @@ public class RoleService {
             }
         }
         if ("SUPER_ADMIN".equalsIgnoreCase(user.getRequestedRole())) {
+            if (permissionName.startsWith("platform.") || permissionName.startsWith("PLATFORM_")) {
+                return false;
+            }
             return true;
         }
         if ("PLATFORM_ADMIN".equalsIgnoreCase(user.getRequestedRole())) {
@@ -190,7 +246,7 @@ public class RoleService {
     }
 
     public boolean hasRoleManagementPermission(String email) {
-        return hasPermission(email, "role.manage");
+        return hasPermission(email, PermissionRegistry.ROLE_MANAGE);
     }
 
     public boolean isSuperAdmin(String email) {
@@ -345,7 +401,19 @@ public class RoleService {
         role.setSystemRole(false);
         role.setVersion(1);
         processAndCalculateEffectivePermissions(role, request);
-        return roleRepository.save(role);
+        Role saved = roleRepository.save(role);
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(organizationId)
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE)
+                    .action(com.example.ems.audit.enums.AuditAction.CREATE)
+                    .entityType("Role")
+                    .recordId(String.valueOf(saved.getId()))
+                    .permission(PermissionRegistry.ROLE_MANAGE)
+                    .details("Created tenant role: " + saved.getName())
+                    .build());
+        }
+        return saved;
     }
 
     @Transactional
@@ -375,6 +443,17 @@ public class RoleService {
         processAndCalculateEffectivePermissions(role, request);
         Role saved = roleRepository.save(role);
         evictRolePermissionsCache(id);
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(organizationId)
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE)
+                    .action(com.example.ems.audit.enums.AuditAction.UPDATE)
+                    .entityType("Role")
+                    .recordId(String.valueOf(saved.getId()))
+                    .permission(PermissionRegistry.ROLE_MANAGE)
+                    .details("Updated tenant role: " + saved.getName())
+                    .build());
+        }
         return saved;
     }
 
@@ -399,6 +478,17 @@ public class RoleService {
 
         evictRolePermissionsCache(id);
         roleRepository.delete(role);
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(organizationId)
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE)
+                    .action(com.example.ems.audit.enums.AuditAction.DELETE)
+                    .entityType("Role")
+                    .recordId(String.valueOf(id))
+                    .permission(PermissionRegistry.ROLE_MANAGE)
+                    .details("Deleted tenant role: " + role.getName())
+                    .build());
+        }
     }
 
     // ── Tenant-scoped convenience methods (resolve orgId from TenantContext) ──────
@@ -589,6 +679,17 @@ public class RoleService {
         user.setRequestedRole(role.getName());
         userRepository.save(user);
         evictUserPermissionsCache(user.getUserId());
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(user.getOrganization() != null ? user.getOrganization().getId() : null)
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE)
+                    .action(com.example.ems.audit.enums.AuditAction.ASSIGN)
+                    .entityType("UserRole")
+                    .recordId(String.valueOf(userId))
+                    .permission(PermissionRegistry.USER_ROLE_ASSIGN)
+                    .details("Assigned role '" + role.getName() + "' to user " + user.getWorkEmail())
+                    .build());
+        }
         return true;
     }
 
@@ -627,6 +728,19 @@ public class RoleService {
         role.setPermissions(permissionSet);
         roleRepository.save(role);
         evictRolePermissionsCache(roleId);
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(role.getOrganization() != null ? role.getOrganization().getId() : TenantContext.getOrganizationId())
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE)
+                    .action(com.example.ems.audit.enums.AuditAction.UPDATE)
+                    .entityType("Role")
+                    .recordId(String.valueOf(roleId))
+                    .permission(PermissionRegistry.ROLE_MANAGE)
+                    .newValue(permissionNames)
+                    .details("Updated permissions for role: " + role.getName())
+                    .build());
+        }
         return true;
     }
 
@@ -648,6 +762,19 @@ public class RoleService {
         role.setPermissions(permissionSet);
         roleRepository.save(role);
         evictRolePermissionsCache(roleId);
+
+        if (auditLogService != null) {
+            auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                    .companyId(role.getOrganization() != null ? role.getOrganization().getId() : TenantContext.getOrganizationId())
+                    .module(com.example.ems.audit.enums.AuditModule.ROLE)
+                    .action(com.example.ems.audit.enums.AuditAction.UPDATE)
+                    .entityType("Role")
+                    .recordId(String.valueOf(roleId))
+                    .permission(PermissionRegistry.ROLE_MANAGE)
+                    .newValue(permissionIds)
+                    .details("Updated permission IDs for role: " + role.getName())
+                    .build());
+        }
         return true;
     }
 
@@ -668,6 +795,17 @@ public class RoleService {
         if (removed) {
             roleRepository.save(role);
             evictRolePermissionsCache(roleId);
+            if (auditLogService != null) {
+                auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                        .companyId(role.getOrganization() != null ? role.getOrganization().getId() : TenantContext.getOrganizationId())
+                        .module(com.example.ems.audit.enums.AuditModule.ROLE)
+                        .action(com.example.ems.audit.enums.AuditAction.REVOKE)
+                        .entityType("Role")
+                        .recordId(String.valueOf(roleId))
+                        .permission(PermissionRegistry.ROLE_MANAGE)
+                        .details("Revoked permission '" + permission.getName() + "' from role: " + role.getName())
+                        .build());
+            }
             return true;
         }
         return false;
@@ -702,6 +840,18 @@ public class RoleService {
             role.setPermissions(newEffective);
             roleRepository.save(role);
             evictRolePermissionsCache(roleId);
+
+            if (auditLogService != null) {
+                auditLogService.success(com.example.ems.audit.dto.AuditLogEvent.builder()
+                        .companyId(role.getOrganization() != null ? role.getOrganization().getId() : TenantContext.getOrganizationId())
+                        .module(com.example.ems.audit.enums.AuditModule.ROLE)
+                        .action(com.example.ems.audit.enums.AuditAction.REMOVE)
+                        .entityType("RoleGroup")
+                        .recordId(String.valueOf(roleId))
+                        .permission(PermissionRegistry.ROLE_MANAGE)
+                        .details("Removed permission group '" + group.getName() + "' from role: " + role.getName())
+                        .build());
+            }
         }
     }
 

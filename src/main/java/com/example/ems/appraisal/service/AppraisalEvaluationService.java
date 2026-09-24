@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -489,6 +490,9 @@ public class AppraisalEvaluationService {
 
     @Transactional(readOnly = true)
     public List<AppraisalResultResponseDto> getPendingReviews(User currentUser) {
+        if (currentUser == null) {
+            return Collections.emptyList();
+        }
         Long orgId = TenantContext.requireOrganizationId();
         List<Appraisal> activeAppraisals = appraisalRepository.findByOrganizationId(orgId).stream()
                 .filter(a -> a.getStatus() == AppraisalStatus.STAGE_REVIEW || a.getStatus() == AppraisalStatus.CREATED || a.getStatus() == AppraisalStatus.SELF_ASSESSMENT)
@@ -496,7 +500,7 @@ public class AppraisalEvaluationService {
 
         List<AppraisalReviewStage> stages = reviewStageRepository.findByOrganizationIdOrderByStageOrderAsc(orgId);
 
-        boolean isPlatformAdmin = currentUser != null && currentUser.getRole() != null &&
+        boolean isPlatformAdmin = currentUser.getRole() != null &&
                 ("PLATFORM_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()) || "SUPER_ADMIN".equalsIgnoreCase(currentUser.getRole().getName()));
 
         return activeAppraisals.stream()
@@ -618,8 +622,12 @@ public class AppraisalEvaluationService {
                     } else if (r.getApprovedAt() != null) {
                         cycleYear = r.getApprovedAt().getYear();
                     }
-                    Double finalScore = r.getFinalScore() != null ? r.getFinalScore().doubleValue()
-                            : (r.getCalculatedScore() != null ? r.getCalculatedScore().doubleValue() : null);
+                    Double finalScore = null;
+                    if (r.getFinalScore() != null) {
+                        finalScore = r.getFinalScore().doubleValue();
+                    } else if (r.getCalculatedScore() != null) {
+                        finalScore = r.getCalculatedScore().doubleValue();
+                    }
                     String ratingBand = r.getRatingBand() != null ? r.getRatingBand() : "NOT_RATED";
                     LocalDateTime completedTime = r.getApprovedAt() != null ? r.getApprovedAt() : r.getSubmittedAt();
                     return new EmployeePerformanceSummaryDto.PreviousAppraisalDto(

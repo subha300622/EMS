@@ -8,6 +8,7 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.PermissionRepository;
 import com.example.ems.auth.repository.RoleRepository;
 import com.example.ems.auth.repository.UserRepository;
+import java.util.stream.Collectors;
 import com.example.ems.auth.service.PermissionRegistry;
 import com.example.ems.employee.entity.Employee;
 import com.example.ems.employee.entity.Department;
@@ -263,9 +264,34 @@ public class DatabaseSeeder implements ApplicationRunner {
         System.out.println(
                 "DatabaseSeeder: Seeding permissions, system permission groups, roles, and core configuration...");
 
-        // 1. Seed Permissions from PermissionRegistry
+        // 1. Seed Permissions from PermissionRegistry and controller authorities
         Map<String, Permission> permissionMap = new HashMap<>();
-        for (String permName : PermissionRegistry.ALL_PERMISSIONS) {
+        Set<String> allSeededNames = new LinkedHashSet<>(PermissionRegistry.ALL_PERMISSIONS);
+        allSeededNames.addAll(Arrays.asList(
+                "ASSET_APPROVE", "ASSET_ASSIGN", "ASSET_CATEGORY_CREATE", "ASSET_CATEGORY_DELETE",
+                "ASSET_CATEGORY_UPDATE", "ASSET_CATEGORY_VIEW", "ASSET_CREATE", "ASSET_DELETE",
+                "ASSET_DISPOSE", "ASSET_HISTORY_VIEW", "ASSET_LOCATION_CREATE", "ASSET_LOCATION_DELETE",
+                "ASSET_LOCATION_UPDATE", "ASSET_LOCATION_VIEW", "ASSET_MAINTENANCE_CANCEL",
+                "ASSET_MAINTENANCE_COMPLETE", "ASSET_MAINTENANCE_CREATE", "ASSET_MAINTENANCE_START",
+                "ASSET_MAINTENANCE_VIEW", "ASSET_REJECT", "ASSET_REQUEST_CREATE", "ASSET_RETIRE",
+                "ASSET_RETURN", "ASSET_TRANSFER", "ASSET_UPDATE", "ASSET_VIEW",
+                "attendance.admin", "attendance.self.checkin", "attendance.self.checkout",
+                "BONUS_ADJUST", "BONUS_CREATE", "BONUS_PAYROLL_POST", "BONUS_POLICY_MANAGE", "BONUS_VIEW",
+                "CLEARANCE_ACTION", "CLEARANCE_MANAGE", "CLEARANCE_VIEW",
+                "COMPENSATION_CONFIG_MANAGE", "COMPENSATION_CONFIG_VIEW",
+                "DOCUMENT_APPROVE", "DOCUMENT_REJECT",
+                "EXIT_APPROVE", "EXIT_CREATE", "EXIT_REJECT", "EXIT_VIEW",
+                "EXPENSE_APPROVE", "EXPENSE_REIMBURSE", "EXPENSE_REJECT", "EXPENSE_VIEW",
+                "FNF_CALCULATE", "FNF_FINALIZE", "FNF_PAYMENT", "FNF_REPORT_VIEW", "FNF_VIEW",
+                "GOAL_ASSIGN", "GOAL_CONFIG_EDIT", "GOAL_CONFIG_VIEW", "GOAL_VIEW",
+                "INCENTIVE_ADJUST", "INCENTIVE_CREATE", "INCENTIVE_PAYROLL_POST", "INCENTIVE_POLICY_MANAGE", "INCENTIVE_VIEW",
+                "leave.admin", "leave.self.cancel", "leave.self.create",
+                "OFFBOARDING_TEMPLATE_MANAGE", "OFFBOARDING_TEMPLATE_VIEW", "OFFBOARDING_VIEW",
+                "ONBOARDING_APPROVE", "ONBOARDING_REJECT",
+                "OVERTIME_ADJUST", "OVERTIME_CREATE", "OVERTIME_POLICY_MANAGE", "OVERTIME_VIEW",
+                "SCHEDULE_APPROVE", "SCHEDULE_REJECT"
+        ));
+        for (String permName : allSeededNames) {
             Permission permission = permissionRepository.findByName(permName)
                     .orElseGet(() -> {
                         Permission p = new Permission();
@@ -482,10 +508,10 @@ public class DatabaseSeeder implements ApplicationRunner {
                 "FINANCE_ADMIN", "EMPLOYEE_SELF_SERVICE", "EXPENSES", "DOCUMENTS", "SUPPORT",
                 "REPORTS", "TEAM", "SETTINGS", "AUDIT", "RECRUITMENT"));
 
-        roleGroupsMap.put("SUPER_ADMIN", Arrays.asList(
-                "LEAVE_ADMIN", "ATTENDANCE_ADMIN", "PERFORMANCE_ADMIN", "HR_ADMIN", "PAYROLL_ADMIN",
-                "FINANCE_ADMIN", "EMPLOYEE_SELF_SERVICE", "EXPENSES", "DOCUMENTS", "SUPPORT",
-                "REPORTS", "TEAM", "SETTINGS", "AUDIT", "ORGANIZATION", "RECRUITMENT"));
+        List<String> allTenantGroupCodes = groupMap.keySet().stream()
+                .filter(k -> !"PLATFORM".equalsIgnoreCase(k))
+                .collect(Collectors.toList());
+        roleGroupsMap.put("SUPER_ADMIN", allTenantGroupCodes);
 
         roleGroupsMap.put("PLATFORM_ADMIN", Arrays.asList(
                 "PLATFORM", "ORGANIZATION", "AUDIT", "REPORTS", "SETTINGS",
@@ -511,6 +537,15 @@ public class DatabaseSeeder implements ApplicationRunner {
                 if (pg != null) {
                     selGroups.add(pg);
                     effectivePerms.addAll(pg.getPermissions());
+                }
+            }
+
+            if ("SUPER_ADMIN".equalsIgnoreCase(roleName)) {
+                // Ensure SUPER_ADMIN template role includes all non-platform active permissions
+                for (Permission p : permissionMap.values()) {
+                    if (p.getName() != null && !p.getName().startsWith("platform.") && !p.getName().startsWith("PLATFORM_")) {
+                        effectivePerms.add(p);
+                    }
                 }
             }
 

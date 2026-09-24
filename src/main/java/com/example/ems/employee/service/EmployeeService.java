@@ -1009,14 +1009,19 @@ public class EmployeeService {
 
     // ── Employee Role Management ───────────────────────────────────────────────
 
+    private Employee resolveScopedEmployee(Long employeeId, User currentUser) {
+        if (isPlatformAdmin(currentUser)) {
+            return employeeRepository.findById(employeeId)
+                    .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+        }
+        Organization org = getAuthenticatedOrganization(currentUser);
+        return employeeRepository.findByIdAndOrganizationId(employeeId, org.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+    }
+
     public EmployeeRolesResponse getEmployeeRoles(Long employeeId, User currentUserOverride) {
         User currentUser = currentUserOverride != null ? currentUserOverride : getAuthenticatedUser();
-        boolean platAdmin = isPlatformAdmin(currentUser);
-        Organization org = platAdmin ? null : getAuthenticatedOrganization(currentUser);
-
-        Employee employee = platAdmin
-                ? employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId))
-                : employeeRepository.findByIdAndOrganizationId(employeeId, org.getId()).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+        Employee employee = resolveScopedEmployee(employeeId, currentUser);
 
         List<EmployeeRole> activeRoles = employeeRoleRepository.findByEmployeeIdAndStatus(employee.getId(), "ACTIVE");
         List<EmployeeRolesResponse.EmployeeRoleDto> roleDtos = activeRoles.stream()
@@ -1029,12 +1034,7 @@ public class EmployeeService {
     @Transactional
     public EmployeeRolesResponse assignRoleToEmployee(Long employeeId, Long roleId, User currentUserOverride) {
         User currentUser = currentUserOverride != null ? currentUserOverride : getAuthenticatedUser();
-        boolean platAdmin = isPlatformAdmin(currentUser);
-        Organization org = platAdmin ? null : getAuthenticatedOrganization(currentUser);
-
-        Employee employee = platAdmin
-                ? employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId))
-                : employeeRepository.findByIdAndOrganizationId(employeeId, org.getId()).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+        Employee employee = resolveScopedEmployee(employeeId, currentUser);
 
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> new IllegalArgumentException("Role not found with ID: " + roleId));
@@ -1080,12 +1080,7 @@ public class EmployeeService {
     @Transactional
     public EmployeeRolesResponse assignBulkRolesToEmployee(Long employeeId, List<Long> roleIds, User currentUserOverride) {
         User currentUser = currentUserOverride != null ? currentUserOverride : getAuthenticatedUser();
-        boolean platAdmin = isPlatformAdmin(currentUser);
-        Organization org = platAdmin ? null : getAuthenticatedOrganization(currentUser);
-
-        Employee employee = platAdmin
-                ? employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId))
-                : employeeRepository.findByIdAndOrganizationId(employeeId, org.getId()).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+        Employee employee = resolveScopedEmployee(employeeId, currentUser);
 
         if (roleIds == null || roleIds.isEmpty()) {
             throw new IllegalArgumentException("Role IDs list cannot be empty.");
@@ -1144,12 +1139,7 @@ public class EmployeeService {
     @Transactional
     public EmployeeRolesResponse changeEmployeeRoles(Long employeeId, ChangeEmployeeRoleRequest request, User currentUserOverride) {
         User currentUser = currentUserOverride != null ? currentUserOverride : getAuthenticatedUser();
-        boolean platAdmin = isPlatformAdmin(currentUser);
-        Organization org = platAdmin ? null : getAuthenticatedOrganization(currentUser);
-
-        Employee employee = platAdmin
-                ? employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId))
-                : employeeRepository.findByIdAndOrganizationId(employeeId, org.getId()).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+        Employee employee = resolveScopedEmployee(employeeId, currentUser);
 
         if (request.getRoleIds() == null || request.getRoleIds().isEmpty()) {
             throw new IllegalArgumentException("Role IDs list cannot be empty.");
@@ -1230,12 +1220,7 @@ public class EmployeeService {
     @Transactional
     public EmployeeRolesResponse removeEmployeeRole(Long employeeId, Long roleId, User currentUserOverride) {
         User currentUser = currentUserOverride != null ? currentUserOverride : getAuthenticatedUser();
-        boolean platAdmin = isPlatformAdmin(currentUser);
-        Organization org = platAdmin ? null : getAuthenticatedOrganization(currentUser);
-
-        Employee employee = platAdmin
-                ? employeeRepository.findById(employeeId).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId))
-                : employeeRepository.findByIdAndOrganizationId(employeeId, org.getId()).orElseThrow(() -> new IllegalArgumentException("Employee not found with ID: " + employeeId));
+        Employee employee = resolveScopedEmployee(employeeId, currentUser);
 
         EmployeeRole activeRole = employeeRoleRepository.findByEmployeeIdAndRoleIdAndStatus(employeeId, roleId, "ACTIVE")
                 .orElseThrow(() -> new IllegalArgumentException("Employee does not have this active role assignment."));

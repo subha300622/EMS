@@ -631,8 +631,10 @@ public class AppraisalConfigurationExtendedService {
         // 2. Validate Criteria & Weights
         List<AppraisalCriterionDto> criteria = getCriteria();
         if (!criteria.isEmpty()) {
-            double totalWeight = criteria.stream().filter(AppraisalCriterionDto::getActive)
-                    .mapToDouble(AppraisalCriterionDto::getWeight).sum();
+            double totalWeight = criteria.stream()
+                    .filter(c -> c != null && Boolean.TRUE.equals(c.getActive()))
+                    .mapToDouble(c -> c.getWeight() != null ? c.getWeight() : 0.0)
+                    .sum();
             if (Math.abs(totalWeight - 100.0) > 0.01) {
                 errors.add(new ValidationErrorDetailDto("criteria", "WEIGHT_TOTAL_INVALID",
                         "Active criteria weights must total exactly 100%. Current total: " + totalWeight + "%"));
@@ -646,8 +648,10 @@ public class AppraisalConfigurationExtendedService {
                     "At least one performance category must be configured"));
         } else {
             // Check for overlapping rating intervals
-            List<PerformanceCategoryDto> activeCats = categories.stream().filter(PerformanceCategoryDto::getActive)
-                    .sorted(Comparator.comparing(PerformanceCategoryDto::getMinRating)).collect(Collectors.toList());
+            List<PerformanceCategoryDto> activeCats = categories.stream()
+                    .filter(c -> c != null && Boolean.TRUE.equals(c.getActive()))
+                    .sorted(Comparator.comparing(c -> c.getMinRating() != null ? c.getMinRating() : 0.0))
+                    .collect(Collectors.toList());
             for (int i = 0; i < activeCats.size() - 1; i++) {
                 PerformanceCategoryDto cur = activeCats.get(i);
                 PerformanceCategoryDto next = activeCats.get(i + 1);
@@ -663,8 +667,10 @@ public class AppraisalConfigurationExtendedService {
         // 4. Validate Increment Rules
         IncrementPolicyDto incPolicy = getIncrementPolicy();
         if (incPolicy.getRules() != null && !incPolicy.getRules().isEmpty()) {
-            List<IncrementRuleDto> activeRules = incPolicy.getRules().stream().filter(IncrementRuleDto::getActive)
-                    .sorted(Comparator.comparing(IncrementRuleDto::getMinRating)).collect(Collectors.toList());
+            List<IncrementRuleDto> activeRules = incPolicy.getRules().stream()
+                    .filter(r -> r != null && Boolean.TRUE.equals(r.getActive()))
+                    .sorted(Comparator.comparing(r -> r.getMinRating() != null ? r.getMinRating() : 0.0))
+                    .collect(Collectors.toList());
             for (int i = 0; i < activeRules.size() - 1; i++) {
                 IncrementRuleDto cur = activeRules.get(i);
                 IncrementRuleDto next = activeRules.get(i + 1);
@@ -691,15 +697,20 @@ public class AppraisalConfigurationExtendedService {
         // Validate configuration before snapshotting
         AppraisalConfigurationValidationResponseDto val = validateConfiguration();
         if (!val.isValid()) {
-            String errorSummary = val.getErrors().stream().map(ValidationErrorDetailDto::getMessage)
-                    .collect(Collectors.joining("; "));
+            String errorSummary = val.getErrors() != null
+                    ? val.getErrors().stream()
+                            .filter(Objects::nonNull)
+                            .map(ValidationErrorDetailDto::getMessage)
+                            .filter(Objects::nonNull)
+                            .collect(Collectors.joining("; "))
+                    : "Unknown validation error";
             throw new IllegalStateException(
                     "Cannot create configuration snapshot due to validation errors: " + errorSummary);
         }
 
         // Determine next version number
         Integer nextVer = versionRepository.findFirstByOrganizationIdOrderByVersionNumberDesc(orgId)
-                .map(v -> v.getVersionNumber() + 1)
+                .map(v -> v.getVersionNumber() != null ? v.getVersionNumber() + 1 : 1)
                 .orElse(1);
 
         AppraisalConfigurationSnapshotDto snapshotDto = buildLiveSnapshot(nextVer);
@@ -737,11 +748,11 @@ public class AppraisalConfigurationExtendedService {
 
         AppraisalConfigurationSnapshotDto snapshot = new AppraisalConfigurationSnapshotDto();
         snapshot.setVersionNumber(versionNumber != null ? versionNumber : 1);
-        snapshot.setInitiationMode(configOpt.map(c -> c.getInitiationMode().name()).orElse("HR_AND_EMPLOYEE"));
+        snapshot.setInitiationMode(configOpt.map(c -> c.getInitiationMode() != null ? c.getInitiationMode().name() : "HR_AND_EMPLOYEE").orElse("HR_AND_EMPLOYEE"));
         snapshot.setEmployeeRequestEnabled(
-                configOpt.map(AppraisalConfiguration::isEmployeeRequestEnabled).orElse(true));
-        snapshot.setMinServiceMonths(configOpt.map(AppraisalConfiguration::getMinServiceMonths).orElse(6));
-        snapshot.setMinGapMonths(configOpt.map(AppraisalConfiguration::getMinGapMonths).orElse(6));
+                configOpt.map(c -> Boolean.TRUE.equals(c.isEmployeeRequestEnabled())).orElse(true));
+        snapshot.setMinServiceMonths(configOpt.map(c -> c.getMinServiceMonths() != null ? c.getMinServiceMonths() : 6).orElse(6));
+        snapshot.setMinGapMonths(configOpt.map(c -> c.getMinGapMonths() != null ? c.getMinGapMonths() : 6).orElse(6));
         snapshot.setReviewStages(getReviewStages());
         snapshot.setRatingScale(getRatingScale());
         snapshot.setCriteria(getCriteria());

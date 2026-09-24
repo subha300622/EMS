@@ -78,14 +78,11 @@ public class AdminUserController {
             @RequestBody @Valid AdminUserDtos.CreateAdminUserRequest request) {
 
         User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!hasPermission(currentUser, "user.create")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'user.create' or 'user.manage' permission.", "AUTH_002"));
+        if (currentUser != null) {
+            if (!hasPermission(currentUser, "user.create")) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(ErrorResponse.error("Access Denied: Requires 'user.create' or 'user.manage' permission.", "AUTH_002"));
+            }
         }
 
         try {
@@ -103,10 +100,6 @@ public class AdminUserController {
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User retrieved successfully",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = AdminUserDtos.AdminUserResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.read permission",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
@@ -114,17 +107,6 @@ public class AdminUserController {
     public ResponseEntity<?> getUser(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String userId) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!hasPermission(currentUser, "user.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
-        }
 
         try {
             AdminUserDtos.AdminUserResponse response = adminUserService.getUser(userId);
@@ -137,26 +119,11 @@ public class AdminUserController {
     @Operation(summary = "List Tenant Users", description = "Lists all users under the current tenant organization.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Users retrieved successfully",
-                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AdminUserDtos.AdminUserResponse.class)))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires user.read permission",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = AdminUserDtos.AdminUserResponse.class))))
     })
     @GetMapping("/users")
     public ResponseEntity<?> listUsers(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
-
-        User currentUser = resolveUser(authHeader);
-        if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!hasPermission(currentUser, "user.read")) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'user.read' or 'user.manage' permission.", "AUTH_002"));
-        }
 
         List<AdminUserDtos.AdminUserResponse> response = adminUserService.listUsers();
         return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", response));

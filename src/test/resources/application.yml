@@ -56,7 +56,7 @@ resend:
 
 security:
   jwt:
-    secret: ${JWT_SECRET:jwtSecretKeyForEmsBackendDevelopmentShouldBeLongAndSecure32Bytes!}
+    secret: ${JWT_SECRET:ems-test-only-secret-not-for-production-replace-this-now-xxxx}
 
 encryption:
   aes-key: ${AES_ENCRYPTION_KEY:RazorpayXSecureKeyOrgConfig2026!}
@@ -64,7 +64,7 @@ encryption:
 app:
   seed:
     domain: ${APP_SEED_DOMAIN:company.com}
-    admin-password: ${PLATFORM_ADMIN_PASSWORD:pladmin@123}
+    admin-password: ${PLATFORM_ADMIN_PASSWORD:Admin@123}
   email:
     sender-address: ${APP_EMAIL_SENDER_ADDRESS:noreply@company.com}
   base-url: ${APP_BASE_URL:http://localhost:3000}

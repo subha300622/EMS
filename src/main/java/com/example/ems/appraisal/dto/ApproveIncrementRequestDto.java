@@ -3,15 +3,9 @@ package com.example.ems.appraisal.dto;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class ApproveIncrementRequestDto {
 
     @NotNull(message = "Approved increment percentage is required")
@@ -26,4 +20,26 @@ public class ApproveIncrementRequestDto {
     private LocalDate effectiveDate;
 
     private String remarks;
+
+    public ApproveIncrementRequestDto() {}
+
+    public ApproveIncrementRequestDto(Double approvedIncrementPercentage, Double bonusPercentage,
+                                    LocalDate effectiveDate, String remarks) {
+        this.approvedIncrementPercentage = approvedIncrementPercentage;
+        this.bonusPercentage = bonusPercentage;
+        this.effectiveDate = effectiveDate;
+        this.remarks = remarks;
+    }
+
+    public Double getApprovedIncrementPercentage() { return approvedIncrementPercentage; }
+    public void setApprovedIncrementPercentage(Double approvedIncrementPercentage) { this.approvedIncrementPercentage = approvedIncrementPercentage; }
+
+    public Double getBonusPercentage() { return bonusPercentage; }
+    public void setBonusPercentage(Double bonusPercentage) { this.bonusPercentage = bonusPercentage; }
+
+    public LocalDate getEffectiveDate() { return effectiveDate; }
+    public void setEffectiveDate(LocalDate effectiveDate) { this.effectiveDate = effectiveDate; }
+
+    public String getRemarks() { return remarks; }
+    public void setRemarks(String remarks) { this.remarks = remarks; }
 }

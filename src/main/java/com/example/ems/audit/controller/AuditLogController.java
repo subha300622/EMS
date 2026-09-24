@@ -43,6 +43,12 @@ public class AuditLogController {
     @Autowired
     private AuditLogService auditLogService;
 
+    @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogQueryService auditLogQueryService;
+
+    @Autowired(required = false)
+    private com.example.ems.audit.service.AuditLogExportService auditLogExportService;
+
     @Autowired
     private UserRepository userRepository;
 
@@ -75,14 +81,14 @@ public class AuditLogController {
             return List.of();
         }
         String roleName = user.getRole().getName();
-        if ("SUPER_ADMIN".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName)) {
+        if ("SUPER_ADMIN".equalsIgnoreCase(roleName) || "ADMIN".equalsIgnoreCase(roleName) || "PLATFORM_ADMIN".equalsIgnoreCase(roleName)) {
             return null; // unrestricted
         }
         if ("FINANCE".equalsIgnoreCase(roleName)) {
-            return List.of("Payroll", "Expenses", "Finance Reports", "Payroll Settings", "Increment", "F&F Settlement");
+            return List.of("Payroll", "Expenses", "Finance Reports", "Payroll Settings", "Increment", "F&F Settlement", "PAYROLL", "EXPENSE", "FINANCE");
         }
-        if ("HR".equalsIgnoreCase(roleName)) {
-            return List.of("Employee", "Recruitment", "Leave", "Onboarding", "Offboarding");
+        if ("HR".equalsIgnoreCase(roleName) || "HR_MANAGER".equalsIgnoreCase(roleName)) {
+            return List.of("Employee", "Recruitment", "Leave", "Onboarding", "Offboarding", "EMPLOYEE", "LEAVE", "ATTENDANCE", "RECRUITMENT");
         }
         return List.of();
     }
@@ -108,6 +114,10 @@ public class AuditLogController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime to,
             @RequestParam(required = false) Severity severity,
             @RequestParam(required = false) Boolean flagged,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) String recordId,
+            @RequestParam(required = false) String entityType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String[] sort) {
@@ -138,6 +148,23 @@ public class AuditLogController {
         }
         Pageable pageable = PageRequest.of(page, size, sortObj);
 
+        // If new enterprise filters are provided and queryService is available, use DTO query
+        if (auditLogQueryService != null && (status != null || departmentId != null || recordId != null)) {
+            com.example.ems.audit.dto.AuditLogFilterRequest filterRequest = new com.example.ems.audit.dto.AuditLogFilterRequest();
+            filterRequest.setSearch(search);
+            filterRequest.setModule(module);
+            filterRequest.setAction(action);
+            filterRequest.setUserId(user);
+            filterRequest.setStartDate(from);
+            filterRequest.setEndDate(to);
+            filterRequest.setStatus(status);
+            filterRequest.setDepartmentId(departmentId);
+            filterRequest.setRecordId(recordId);
+            filterRequest.setEntityType(entityType);
+            Page<com.example.ems.audit.dto.AuditLogResponse> responsePage = auditLogQueryService.getLogs(filterRequest, currentUser, pageable);
+            return ResponseEntity.ok(ApiResponse.success("Audit logs retrieved successfully", responsePage));
+        }
+
         Page<AuditLog> pageResult = auditLogService.getFilteredLogs(
                 search, module, action, user, date, from, to, severity, flagged, allowedModules, pageable);
         return ResponseEntity.ok(ApiResponse.success("Audit logs retrieved successfully", pageResult));
@@ -166,11 +193,67 @@ public class AuditLogController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'audit.read' permission.", "AUTH_002"));
         }
+
+        if (auditLogQueryService != null) {
+            try {
+                com.example.ems.audit.dto.AuditLogDetailResponse detail = auditLogQueryService.getLogById(id, currentUser);
+                return ResponseEntity.ok(ApiResponse.success("Audit log details retrieved successfully", detail));
+            } catch (java.util.NoSuchElementException e) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(ErrorResponse.error("Audit log not found with ID: " + id, "AUD_001"));
+            }
+        }
+
         return auditLogService.getLogById(id)
                 .<ResponseEntity<?>>map(
                         log -> ResponseEntity.ok(ApiResponse.success("Audit log details retrieved successfully", log)))
                 .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
                         .body(ErrorResponse.error("Audit log not found with ID: " + id, "AUD_001")));
+    }
+
+    @GetMapping(value = "/employees/{employeeId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get Audit History for a Specific Employee")
+    public ResponseEntity<?> getEmployeeAuditHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @PathVariable String employeeId) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser, "audit.read")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires 'audit.read' permission.", "AUTH_002"));
+        }
+
+        if (auditLogQueryService != null) {
+            List<com.example.ems.audit.dto.AuditLogResponse> history = auditLogQueryService.getEmployeeAuditHistory(employeeId, currentUser);
+            return ResponseEntity.ok(ApiResponse.success("Employee audit history retrieved successfully", history));
+        } else {
+            List<AuditLog> history = auditLogService.getLogsByEntity("Employee", employeeId);
+            return ResponseEntity.ok(ApiResponse.success("Employee audit history retrieved successfully", history));
+        }
+    }
+
+    @GetMapping(value = "/my-activity", produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Get Current User Activity Audit Logs")
+    public ResponseEntity<?> getMyActivity(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
+        if (auditLogQueryService != null) {
+            Page<com.example.ems.audit.dto.AuditLogResponse> myLogs = auditLogQueryService.getMyActivity(currentUser, pageable);
+            return ResponseEntity.ok(ApiResponse.success("My activity retrieved successfully", myLogs));
+        } else {
+            String uid = currentUser.getUserId() != null ? currentUser.getUserId() : currentUser.getWorkEmail();
+            List<AuditLog> logs = auditLogService.getLogsByUser(uid);
+            return ResponseEntity.ok(ApiResponse.success("My activity retrieved successfully", logs));
+        }
     }
 
     @GetMapping(value = "/export", produces = { "text/csv", MediaType.APPLICATION_OCTET_STREAM_VALUE })
@@ -183,7 +266,13 @@ public class AuditLogController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.export permission",
                     content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<?> exportLogs(@RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> exportLogs(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(required = false) String module,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Long departmentId,
+            @RequestParam(required = false) String search) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
@@ -192,8 +281,21 @@ public class AuditLogController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ErrorResponse.error("Access Denied: Requires 'audit.export' permission.", "AUTH_002"));
         }
-        Collection<String> allowedModules = getAllowedModulesForUser(currentUser);
-        byte[] data = auditLogService.exportLogsToCsv(allowedModules);
+
+        byte[] data;
+        if (auditLogExportService != null) {
+            com.example.ems.audit.dto.AuditLogFilterRequest filterRequest = new com.example.ems.audit.dto.AuditLogFilterRequest();
+            filterRequest.setModule(module);
+            filterRequest.setAction(action);
+            filterRequest.setStatus(status);
+            filterRequest.setDepartmentId(departmentId);
+            filterRequest.setSearch(search);
+            data = auditLogExportService.exportAuditLogsCsv(filterRequest, currentUser);
+        } else {
+            Collection<String> allowedModules = getAllowedModulesForUser(currentUser);
+            data = auditLogService.exportLogsToCsv(allowedModules);
+        }
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDispositionFormData("attachment", "audit_logs.csv");

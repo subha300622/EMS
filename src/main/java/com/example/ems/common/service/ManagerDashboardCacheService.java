@@ -165,9 +165,9 @@ public class ManagerDashboardCacheService extends BaseCacheService {
     /**
      * Evicts all dashboard cache entries for a manager.
      */
-    public void evictDashboardCache(Employee manager) {
-        if (manager == null) return;
-        Long mid = manager.getId();
+    public void evictDashboardCache(Long managerId) {
+        if (managerId == null) return;
+        Long mid = managerId;
         evict(keySummary(mid), CacheCategory.DASHBOARD);
         evict(keyComposition(mid), CacheCategory.DASHBOARD_CHART);
         evict(keyPerformance(mid), CacheCategory.DASHBOARD_CHART);
@@ -193,5 +193,10 @@ public class ManagerDashboardCacheService extends BaseCacheService {
         
         // Evict aggregated dashboards (with common widget requests or clean all using wildcards)
         evict(keyAgg(mid, null), CacheCategory.DASHBOARD);
+    }
+
+    public void evictDashboardCache(Employee manager) {
+        if (manager == null) return;
+        evictDashboardCache(manager.getId());
     }
 }

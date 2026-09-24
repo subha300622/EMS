@@ -44,26 +44,31 @@ public class NotificationController {
     // ── 1. GET PAGINATED NOTIFICATION FEED ────────────────────────────────────
     @Operation(summary = "Get Notification Feed")
     @GetMapping
-public ResponseEntity<?> getNotificationFeed(
+    public ResponseEntity<?> getNotificationFeed(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(name = "page", defaultValue = "0") int page,
             @RequestParam(name = "size", defaultValue = "20") int size,
             @RequestParam(name = "type", defaultValue = "ALL") String type,
-            @RequestParam(name = "status", defaultValue = "ALL") String status) {
+            @RequestParam(name = "status", defaultValue = "ALL") String status,
+            @RequestParam(name = "isRead", required = false) Boolean isRead) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
+        String effectiveStatus = status;
+        if (isRead != null) {
+            effectiveStatus = isRead ? "READ" : "UNREAD";
+        }
         return ResponseEntity.ok(ApiResponse.success("Notification feed retrieved successfully",
-                managerNotificationService.getNotificationFeed(currentUser, page, size, type, status)));
+                managerNotificationService.getNotificationFeed(currentUser, page, size, type, effectiveStatus)));
     }
 
 
     // ── 3. GET UNREAD NOTIFICATIONS COUNT ─────────────────────────────────────
     @Operation(summary = "Get Unread Notifications Count")
     @GetMapping("/unread-count")
-public ResponseEntity<?> getUnreadCount(
+    public ResponseEntity<?> getUnreadCount(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -76,8 +81,8 @@ public ResponseEntity<?> getUnreadCount(
 
     // ── 4. MARK SPECIFIC NOTIFICATION AS READ ─────────────────────────────────
     @Operation(summary = "Mark Specific Notification as Read")
-    @PutMapping("/{id}/read")
-public ResponseEntity<?> markAsRead(
+    @PatchMapping("/{id}/read")
+    public ResponseEntity<?> markAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("id") Long id) {
         User currentUser = resolveUser(authHeader);
@@ -96,8 +101,8 @@ public ResponseEntity<?> markAsRead(
 
     // ── 5. MARK ALL NOTIFICATIONS AS READ ─────────────────────────────────────
     @Operation(summary = "Mark All Notifications as Read")
-    @PutMapping("/read-all")
-public ResponseEntity<?> markAllAsRead(
+    @PatchMapping("/read-all")
+    public ResponseEntity<?> markAllAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {

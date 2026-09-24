@@ -491,11 +491,11 @@ public ResponseEntity<?> assignAsset(
                     .body(ErrorResponse.error("Asset not found with ID: " + id, "ASS_001"));
         }
 
-        Long employeeId = payload != null ? payload.employeeId() : null;
-        if (employeeId == null) {
+        if (payload == null || payload.employeeId() == null) {
             return ResponseEntity.badRequest()
                     .body(ErrorResponse.error("Employee ID is required", "ASS_002"));
         }
+        Long employeeId = payload.employeeId();
 
         Employee employee = employeeRepository.findById(employeeId).orElse(null);
         if (employee == null) {

@@ -30,6 +30,9 @@ public class PermissionCheckService {
     @Autowired
     private EmployeeRepository employeeRepository;
 
+    @Autowired(required = false)
+    private org.springframework.context.ApplicationEventPublisher eventPublisher;
+
     /**
      * Answers: Does the currently authenticated caller have this permission?
      */
@@ -75,6 +78,7 @@ public class PermissionCheckService {
      */
     public void requirePermission(String permission) {
         if (!hasPermission(permission)) {
+            publishSecurityAuditDenied(permission, "INSUFFICIENT_PERMISSION: Missing '" + permission + "'");
             throw new AccessDeniedException("Access Denied: Requires '" + permission + "' permission");
         }
     }
@@ -94,7 +98,9 @@ public class PermissionCheckService {
      */
     public void requireAnyPermission(String... permissions) {
         if (!hasAnyPermission(permissions)) {
-            throw new AccessDeniedException("Access Denied: Requires one of " + Arrays.toString(permissions) + " permissions");
+            String permsStr = Arrays.toString(permissions);
+            publishSecurityAuditDenied(permsStr, "INSUFFICIENT_PERMISSION: Missing any of " + permsStr);
+            throw new AccessDeniedException("Access Denied: Requires one of " + permsStr + " permissions");
         }
     }
 
@@ -116,7 +122,18 @@ public class PermissionCheckService {
      */
     public void requireSelfOrPermission(Long employeeId, String permission) {
         if (!isSelfOrHasPermission(employeeId, permission)) {
+            publishSecurityAuditDenied(permission, "UNAUTHORIZED_TARGET: Not authorized for employee #" + employeeId);
             throw new AccessDeniedException("Access Denied: You are not authorized to perform this operation on employee #" + employeeId);
+        }
+    }
+
+    private void publishSecurityAuditDenied(String permission, String failureReason) {
+        if (eventPublisher != null) {
+            try {
+                eventPublisher.publishEvent(com.example.ems.security.event.SecurityAuditEvent.denied(permission, failureReason));
+            } catch (Exception e) {
+                // Log and don't suppress the subsequent AccessDeniedException
+            }
         }
     }
 
