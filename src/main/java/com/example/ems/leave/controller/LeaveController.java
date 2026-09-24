@@ -374,9 +374,28 @@ public class LeaveController {
         return ResponseEntity.ok(ApiResponse.success("Leave request updated successfully", leave));
     }
 
+    @Operation(summary = "Get Pending Leaves for Manager's Direct Reports")
+    @PreAuthorize("hasAuthority('leave.team.read') or hasAuthority('leave.approve') or hasAuthority('leave.manage')")
+    @GetMapping("/manager/pending")
+    public ResponseEntity<?> getPendingLeavesForManager(
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size) {
+        User user = resolveUser(authHeader);
+        if (user == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
+
+        Employee manager = resolveEmployee(user);
+        if (manager == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ApiResponse.error("Employee profile not found", "EMP_404"));
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(page, size);
+        org.springframework.data.domain.Page<LeaveApprovalResponseDto> pendingPage =
+                leaveService.getManagerLeaveApprovals(manager, "PENDING", null, null, null, pageable);
+        return ResponseEntity.ok(ApiResponse.success("Pending leave requests retrieved successfully", pendingPage.getContent()));
+    }
+
     @Operation(summary = "Approve Leave Request")
     @PreAuthorize("hasAuthority('leave.approve')")
-    @PostMapping("/requests/{leaveRequestId}/approve")
+    @PostMapping(value = {"/requests/{leaveRequestId}/approve", "/{leaveRequestId}/approve"})
     public ResponseEntity<ApiResponse<ManagerApprovalActionResponseDto>> approveLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long leaveRequestId,
@@ -396,7 +415,7 @@ public class LeaveController {
 
     @Operation(summary = "Reject Leave Request")
     @PreAuthorize("hasAuthority('leave.reject')")
-    @PostMapping("/requests/{leaveRequestId}/reject")
+    @PostMapping(value = {"/requests/{leaveRequestId}/reject", "/{leaveRequestId}/reject"})
     public ResponseEntity<ApiResponse<ManagerApprovalActionResponseDto>> rejectLeaveRequest(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long leaveRequestId,

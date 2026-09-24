@@ -72,6 +72,10 @@ public final class PermissionRegistry {
         public static final String EMPLOYEE_LEAVE_CREATE = "employee.leave.create";
         public static final String EMPLOYEE_LEAVE_READ = "employee.leave.read";
         public static final String EMPLOYEE_LEAVE_CANCEL = "employee.leave.cancel";
+        public static final String EMPLOYEE_DASHBOARD_READ = "employee.dashboard.read";
+        public static final String EMPLOYEE_DASHBOARD_VIEW = "employee.dashboard.view";
+        public static final String EMPLOYEE_COMPENSATION_READ = "employee.compensation.read";
+        public static final String EMPLOYEE_ACTION_CENTER_READ = "employee.action-center.read";
 
         // Performance Management
         public static final String PERFORMANCE_READ = "performance.read";
@@ -107,11 +111,15 @@ public final class PermissionRegistry {
         public static final String OFFBOARDING_ANALYTICS_READ = "offboarding.analytics.read";
         public static final String OFFBOARDING_TEMPLATE_READ = "offboarding.template.read";
         public static final String OFFBOARDING_TEMPLATE_MANAGE = "offboarding.template.manage";
-        public static final String OFFBOARDING_REQUEST_CREATE = "offboarding.request.create";
-        public static final String OFFBOARDING_REQUEST_APPROVE = "offboarding.request.approve";
-        public static final String OFFBOARDING_REQUEST_REJECT = "offboarding.request.reject";
+        // Finance Manager Management
+        public static final String FINANCE_TEAM_VIEW = "finance.team.view";
+        public static final String FINANCE_EXPENSE_APPROVE = "finance.expense.approve";
+        public static final String FINANCE_SALARY_VIEW = "finance.salary.view";
+        public static final String FINANCE_PAYROLL_VIEW = "finance.payroll.view";
 
         public static final List<String> ALL_PERMISSIONS = List.of(
+                        // Finance Manager
+                        "finance.team.view", "finance.expense.approve", "finance.salary.view", "finance.payroll.view",
                         // Offboarding Management
                         "offboarding.request.read", "offboarding.analytics.read", "offboarding.template.read",
                         "offboarding.template.manage", "offboarding.request.create", "offboarding.request.approve",
@@ -147,7 +155,7 @@ public final class PermissionRegistry {
                         "document.self.read", "expense.self.read", "performance.self.read", "goal.self.read",
                         "asset.self.read",
                         // Enterprise Self-Service Permissions
-                        "employee.dashboard.read",
+                        "employee.dashboard.read", "employee.dashboard.view", "employee.compensation.read", "employee.action-center.read",
                         "employee.profile.read", "employee.profile.update",
                         "employee.onboarding.read", "employee.onboarding.update", "employee.onboarding.document.upload",
                         "employee.onboarding.document.read", "employee.onboarding.submit",
