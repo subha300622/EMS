@@ -90,6 +90,13 @@ public class EmployeeDashboardSecurityTest {
 
     private com.example.ems.auth.entity.Permission getOrCreatePermission(String name) {
         return permissionRepository.findByName(name)
+                .map(p -> {
+                    if (!Boolean.TRUE.equals(p.getActive())) {
+                        p.setActive(true);
+                        return permissionRepository.save(p);
+                    }
+                    return p;
+                })
                 .orElseGet(() -> {
                     com.example.ems.auth.entity.Permission p = new com.example.ems.auth.entity.Permission();
                     p.setName(name);
@@ -129,24 +136,25 @@ public class EmployeeDashboardSecurityTest {
         var permTraining = getOrCreatePermission("employee.training.read");
         var permAction = getOrCreatePermission("employee.action-center.read");
 
-        Role empRole = roleRepository.findByName("EMPLOYEE_PORTAL_TEST_ROLE")
-                .orElseGet(() -> {
-                    Role r = new Role();
-                    r.setName("EMPLOYEE_PORTAL_TEST_ROLE");
-                    r.setPermissions(new java.util.HashSet<>(Set.of(
-                            permDashboard, permAttendance, permLeave, permComp,
-                            permPerf, permDoc, permTraining, permAction
-                    )));
-                    return roleRepository.save(r);
-                });
+        Role empRole = new Role();
+        empRole.setName("EMPLOYEE_PORTAL_ROLE_" + System.currentTimeMillis());
+        empRole.setPermissions(new java.util.HashSet<>(Set.of(
+                permDashboard, permAttendance, permLeave, permComp,
+                permPerf, permDoc, permTraining, permAction
+        )));
+        empRole.setDirectPermissions(new java.util.HashSet<>(Set.of(
+                permDashboard, permAttendance, permLeave, permComp,
+                permPerf, permDoc, permTraining, permAction
+        )));
+        empRole = roleRepository.save(empRole);
 
-        Role noPermRole = roleRepository.findByName("NO_PORTAL_PERM_ROLE")
-                .orElseGet(() -> {
-                    Role r = new Role();
-                    r.setName("NO_PORTAL_PERM_ROLE");
-                    r.setPermissions(new java.util.HashSet<>());
-                    return roleRepository.save(r);
-                });
+        var dummyPerm = getOrCreatePermission("dummy.permission");
+
+        Role noPermRole = new Role();
+        noPermRole.setName("NO_PORTAL_ROLE_" + System.currentTimeMillis());
+        noPermRole.setPermissions(new java.util.HashSet<>(Set.of(dummyPerm)));
+        noPermRole.setDirectPermissions(new java.util.HashSet<>(Set.of(dummyPerm)));
+        noPermRole = roleRepository.save(noPermRole);
 
         org = new Organization();
         org.setName("Portal Org " + System.currentTimeMillis());
@@ -167,6 +175,13 @@ public class EmployeeDashboardSecurityTest {
         empB.setEmployeeId("EMP-BS-" + System.currentTimeMillis());
         empB.setOrganization(org);
         empB = employeeRepository.save(empB);
+
+        Employee empNoPerm = new Employee();
+        empNoPerm.setFullName("No Perm User");
+        empNoPerm.setEmail("noperm@portal.com");
+        empNoPerm.setEmployeeId("EMP-NP-" + System.currentTimeMillis());
+        empNoPerm.setOrganization(org);
+        empNoPerm = employeeRepository.save(empNoPerm);
 
         LeaveType lt = leaveTypeRepository.findByName("Casual Leave")
                 .orElseGet(() -> {
@@ -191,6 +206,7 @@ public class EmployeeDashboardSecurityTest {
         userA.setWorkEmail("sarah.jenkins@portal.com");
         userA.setFullName("Sarah Jenkins");
         userA.setRole(empRole);
+        userA.setOrganization(org);
         userA.setOrganizationId(org.getId());
         userA.setStatus("ACTIVE");
         userA = userRepository.save(userA);
@@ -211,10 +227,11 @@ public class EmployeeDashboardSecurityTest {
 
         // User with no permissions
         User userNoPerm = new User();
-        userNoPerm.setUserId("EMP-NP-" + System.currentTimeMillis());
-        userNoPerm.setWorkEmail("noperm@portal.com");
-        userNoPerm.setFullName("No Perm User");
+        userNoPerm.setUserId(empNoPerm.getEmployeeId());
+        userNoPerm.setWorkEmail(empNoPerm.getEmail());
+        userNoPerm.setFullName(empNoPerm.getFullName());
         userNoPerm.setRole(noPermRole);
+        userNoPerm.setOrganization(org);
         userNoPerm.setOrganizationId(org.getId());
         userNoPerm.setStatus("ACTIVE");
         userNoPerm = userRepository.save(userNoPerm);

@@ -95,7 +95,7 @@ public class FinanceManagerDashboardController {
             description = "Returns finance and workforce details for a specific employee within the manager's reporting scope."
     )
     @GetMapping("/team/{employeeId}")
-    public ResponseEntity<?> getTeamMember(@PathVariable Long employeeId) {
+    public ResponseEntity<?> getTeamMember(@PathVariable("employeeId") Long employeeId) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
@@ -148,7 +148,7 @@ public class FinanceManagerDashboardController {
     )
     @PostMapping("/expenses/{expenseId}/approve")
     public ResponseEntity<?> approveExpense(
-            @PathVariable Long expenseId,
+            @PathVariable("expenseId") Long expenseId,
             @RequestBody(required = false) Map<String, String> body) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -173,7 +173,7 @@ public class FinanceManagerDashboardController {
     )
     @PostMapping("/expenses/{expenseId}/reject")
     public ResponseEntity<?> rejectExpense(
-            @PathVariable Long expenseId,
+            @PathVariable("expenseId") Long expenseId,
             @RequestBody(required = false) Map<String, String> body) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)

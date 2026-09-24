@@ -23,7 +23,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -60,7 +59,6 @@ public class EmployeeDashboardController {
             @ApiResponse(responseCode = "403", description = "Forbidden - Missing dashboard permission",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @PreAuthorize("hasAuthority('employee.dashboard.read') or hasAuthority('employee.dashboard.view')")
     @GetMapping("/dashboard")
     public ResponseEntity<?> getDashboard() {
         if (isNotAuthenticated()) {
@@ -75,7 +73,6 @@ public class EmployeeDashboardController {
     // == 2. ATTENDANCE APIS ====================================================
 
     @Operation(summary = "Get Attendance Summary", description = "Monthly attendance summary with working days, present days, percentage, and trend direction.")
-    @PreAuthorize("hasAuthority('employee.attendance.read') or hasAuthority('attendance.self.read') or hasAuthority('employee.dashboard.read')")
     @GetMapping("/attendance/summary")
     public ResponseEntity<?> getAttendanceSummary() {
         if (isNotAuthenticated()) {
@@ -92,7 +89,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get Attendance History", description = "Retrieves attendance records for the authenticated employee for a specified month.")
-    @PreAuthorize("hasAuthority('employee.attendance.read') or hasAuthority('attendance.self.read') or hasAuthority('employee.dashboard.read')")
     @GetMapping("/attendance")
     public ResponseEntity<?> getAttendanceHistory(@RequestParam(value = "month", required = false) String month) {
         if (isNotAuthenticated()) {
@@ -111,7 +107,6 @@ public class EmployeeDashboardController {
     // == 3. LEAVE BALANCE & LEAVE APIS =========================================
 
     @Operation(summary = "Get Leave Balance", description = "Breakdown of available leave balances by type according to canonical leave rules.")
-    @PreAuthorize("hasAuthority('employee.leave.read') or hasAuthority('leave.self.read') or hasAuthority('employee.dashboard.read')")
     @GetMapping("/leave-balance")
     public ResponseEntity<?> getLeaveBalance() {
         if (isNotAuthenticated()) {
@@ -128,7 +123,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Leaves", description = "Retrieves leave requests belonging to the authenticated employee.")
-    @PreAuthorize("hasAuthority('employee.leave.read') or hasAuthority('leave.self.read')")
     @GetMapping("/leave")
     public ResponseEntity<?> getMyLeaves() {
         if (isNotAuthenticated()) {
@@ -141,7 +135,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Leave by ID", description = "Retrieves a single leave request by ID, strictly verifying ownership.")
-    @PreAuthorize("hasAuthority('employee.leave.read') or hasAuthority('leave.self.read')")
     @GetMapping("/leave/{id}")
     public ResponseEntity<?> getMyLeaveById(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -154,7 +147,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Apply Leave", description = "Submits a leave request for the authenticated employee.")
-    @PreAuthorize("hasAuthority('employee.leave.create') or hasAuthority('leave.self.create')")
     @PostMapping("/leave")
     public ResponseEntity<?> applyMyLeave(@RequestBody @Valid LeaveRequest request) {
         if (isNotAuthenticated()) {
@@ -169,7 +161,6 @@ public class EmployeeDashboardController {
     // == 4. COMPENSATION API ===================================================
 
     @Operation(summary = "Get Current CTC Compensation", description = "Retrieves authorized salary and CTC compensation information for the employee.")
-    @PreAuthorize("hasAuthority('employee.compensation.read') or hasAuthority('employee.payslip.read') or hasAuthority('employee.dashboard.read')")
     @GetMapping("/compensation/current")
     public ResponseEntity<?> getCurrentCompensation() {
         if (isNotAuthenticated()) {
@@ -188,7 +179,6 @@ public class EmployeeDashboardController {
     // == 5. PERFORMANCE APIS ===================================================
 
     @Operation(summary = "Get Performance Summary", description = "Retrieves the latest official performance appraisal summary.")
-    @PreAuthorize("hasAuthority('employee.performance.read') or hasAuthority('performance.self.read') or hasAuthority('employee.dashboard.read')")
     @GetMapping("/performance/summary")
     public ResponseEntity<?> getPerformanceSummary() {
         if (isNotAuthenticated()) {
@@ -205,7 +195,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Performance Reviews", description = "Retrieves all performance reviews belonging to the employee.")
-    @PreAuthorize("hasAuthority('employee.performance.read') or hasAuthority('performance.self.read')")
     @GetMapping({"/performance", "/performance/self-reviews"})
     public ResponseEntity<?> getMyPerformanceReviews() {
         if (isNotAuthenticated()) {
@@ -218,7 +207,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Self-Review by ID", description = "Retrieves a single performance review/self-review by ID, verifying ownership.")
-    @PreAuthorize("hasAuthority('employee.performance.read') or hasAuthority('performance.self.read')")
     @GetMapping("/performance/self-reviews/{id}")
     public ResponseEntity<?> getMyPerformanceReviewById(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -231,7 +219,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Submit Self-Review", description = "Submits an employee self-evaluation review within an active appraisal cycle.")
-    @PreAuthorize("hasAuthority('employee.performance.self-review.submit') or hasAuthority('employee.performance.read')")
     @PostMapping("/performance/self-reviews/{id}/submit")
     public ResponseEntity<?> submitMySelfReview(@PathVariable("id") Long id,
                                                 @RequestBody @Valid EnterpriseSelfReviewRequest request) {
@@ -247,7 +234,6 @@ public class EmployeeDashboardController {
     // == 6. DOCUMENTS APIS =====================================================
 
     @Operation(summary = "Get My Documents", description = "Retrieves uploaded and pending documents overview for authenticated employee.")
-    @PreAuthorize("hasAuthority('employee.document.read') or hasAuthority('document.self.read')")
     @GetMapping("/documents")
     public ResponseEntity<?> getMyDocuments() {
         if (isNotAuthenticated()) {
@@ -260,7 +246,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Upload Document", description = "Uploads a document file for the authenticated employee.")
-    @PreAuthorize("hasAuthority('employee.document.upload') or hasAuthority('document.self.upload')")
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMyDocument(
             @RequestParam("file") MultipartFile file,
@@ -281,7 +266,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get Document Details", description = "Retrieves document metadata, strictly enforcing employee ownership.")
-    @PreAuthorize("hasAuthority('employee.document.read') or hasAuthority('document.self.read')")
     @GetMapping("/documents/{id}")
     public ResponseEntity<?> getMyDocumentDetails(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -296,7 +280,6 @@ public class EmployeeDashboardController {
     // == 7. TRAINING APIS ======================================================
 
     @Operation(summary = "Get My Trainings", description = "Retrieves assigned courses and training progress for the employee.")
-    @PreAuthorize("hasAuthority('employee.training.read') or hasAuthority('employee.dashboard.read')")
     @GetMapping("/training")
     public ResponseEntity<?> getMyTrainings() {
         if (isNotAuthenticated()) {
@@ -309,7 +292,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Training Details", description = "Retrieves assigned course details, validating employee assignment.")
-    @PreAuthorize("hasAuthority('employee.training.read') or hasAuthority('employee.dashboard.read')")
     @GetMapping("/training/{id}")
     public ResponseEntity<?> getMyTrainingDetails(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -322,7 +304,6 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Complete Training", description = "Marks an assigned training module as completed for the employee.")
-    @PreAuthorize("hasAuthority('employee.training.complete') or hasAuthority('employee.training.read')")
     @PostMapping("/training/{id}/complete")
     public ResponseEntity<?> completeMyTraining(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -337,7 +318,6 @@ public class EmployeeDashboardController {
     // == 8. ACTION CENTER ======================================================
 
     @Operation(summary = "Get Action Center", description = "Aggregates actionable items across leaves, documents, performance appraisals, and trainings.")
-    @PreAuthorize("hasAuthority('employee.dashboard.read') or hasAuthority('employee.dashboard.view') or hasAuthority('employee.action-center.read')")
     @GetMapping("/action-center")
     public ResponseEntity<?> getActionCenter() {
         if (isNotAuthenticated()) {
