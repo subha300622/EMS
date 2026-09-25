@@ -116,8 +116,25 @@ public final class PermissionRegistry {
         public static final String FINANCE_EXPENSE_APPROVE = "finance.expense.approve";
         public static final String FINANCE_SALARY_VIEW = "finance.salary.view";
         public static final String FINANCE_PAYROLL_VIEW = "finance.payroll.view";
+        // Support Ticket Permissions
+        public static final String SUPPORT_TICKET_CREATE = "SUPPORT_TICKET_CREATE";
+        public static final String SUPPORT_TICKET_VIEW = "SUPPORT_TICKET_VIEW";
+        public static final String SUPPORT_TICKET_REVIEW = "SUPPORT_TICKET_REVIEW";
+        public static final String SUPPORT_TICKET_ASSIGN = "SUPPORT_TICKET_ASSIGN";
+        public static final String SUPPORT_TICKET_REASSIGN = "SUPPORT_TICKET_REASSIGN";
+        public static final String SUPPORT_TICKET_PRIORITY_UPDATE = "SUPPORT_TICKET_PRIORITY_UPDATE";
+        public static final String SUPPORT_TICKET_SLA_MANAGE = "SUPPORT_TICKET_SLA_MANAGE";
+        public static final String SUPPORT_TICKET_ESCALATE = "SUPPORT_TICKET_ESCALATE";
+        public static final String SUPPORT_TICKET_RESOLVE = "SUPPORT_TICKET_RESOLVE";
+        public static final String SUPPORT_TICKET_CLOSE = "SUPPORT_TICKET_CLOSE";
+        public static final String SUPPORT_TICKET_REPORT = "SUPPORT_TICKET_REPORT";
 
         public static final List<String> ALL_PERMISSIONS = List.of(
+                        // Support Ticket
+                        "SUPPORT_TICKET_CREATE", "SUPPORT_TICKET_VIEW", "SUPPORT_TICKET_REVIEW",
+                        "SUPPORT_TICKET_ASSIGN", "SUPPORT_TICKET_REASSIGN", "SUPPORT_TICKET_PRIORITY_UPDATE",
+                        "SUPPORT_TICKET_SLA_MANAGE", "SUPPORT_TICKET_ESCALATE", "SUPPORT_TICKET_RESOLVE",
+                        "SUPPORT_TICKET_CLOSE", "SUPPORT_TICKET_REPORT",
                         // Finance Manager
                         "finance.team.view", "finance.expense.approve", "finance.salary.view", "finance.payroll.view",
                         // Offboarding Management

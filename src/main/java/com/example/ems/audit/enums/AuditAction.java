@@ -34,5 +34,9 @@ public enum AuditAction {
     VIEW,
     READ,
     DEACTIVATE,
-    REACTIVATE
+    REACTIVATE,
+    RESOLVE,
+    CLOSE,
+    ESCALATE,
+    REVIEW
 }

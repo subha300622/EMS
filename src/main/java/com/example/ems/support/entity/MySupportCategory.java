@@ -1,5 +1,6 @@
 package com.example.ems.support.entity;
 
+import com.example.ems.organization.entity.Organization;
 import jakarta.persistence.*;
 import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDateTime;
@@ -12,6 +13,10 @@ public class MySupportCategory {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    private Organization organization;
 
     @Column(nullable = false, unique = true)
     private String name;
@@ -98,4 +103,7 @@ public class MySupportCategory {
 
     public LocalDateTime getDeletedAt() { return deletedAt; }
     public void setDeletedAt(LocalDateTime deletedAt) { this.deletedAt = deletedAt; }
+
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 }

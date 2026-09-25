@@ -148,6 +148,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             authenticationEntryPoint.commence(request, response, e);
         } finally {
             TenantContext.clear();
+            SecurityContextHolder.clearContext();
         }
     }
 

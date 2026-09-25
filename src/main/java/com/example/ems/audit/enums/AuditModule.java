@@ -20,5 +20,5 @@ public enum AuditModule {
     SETTINGS,
     ROLE,
     ROLE_PERMISSION,
-    SYSTEM, AUTH
+    SYSTEM, AUTH, SUPPORT
 }

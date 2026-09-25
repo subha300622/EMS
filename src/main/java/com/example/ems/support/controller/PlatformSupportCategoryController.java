@@ -111,15 +111,15 @@ public class PlatformSupportCategoryController {
     })
     public ResponseEntity<?> getCategories(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int limit,
-            @RequestParam(required = false) String search,
-            @RequestParam(required = false) String status,
-            @RequestParam(required = false) String createdBy,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdTo,
-            @RequestParam(required = false) String sortBy,
-            @RequestParam(required = false) String order) {
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "limit", defaultValue = "10") int limit,
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "status", required = false) String status,
+            @RequestParam(value = "createdBy", required = false) String createdBy,
+            @RequestParam(value = "createdFrom", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdFrom,
+            @RequestParam(value = "createdTo", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdTo,
+            @RequestParam(value = "sortBy", required = false) String sortBy,
+            @RequestParam(value = "order", required = false) String order) {
 
         User user = resolveUser(authHeader);
         if (user == null) return unauthorizedResponse();
@@ -161,7 +161,7 @@ public class PlatformSupportCategoryController {
     })
     public ResponseEntity<?> getCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
         User user = resolveUser(authHeader);
         if (user == null) return unauthorizedResponse();
         if (!checkPermission(user, "support.category.view")) return forbiddenResponse("support.category.view");
@@ -216,7 +216,7 @@ public class PlatformSupportCategoryController {
     })
     public ResponseEntity<?> updateCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long id,
+            @PathVariable("id") Long id,
             @Valid @RequestBody PlatformCategoryRequest req) {
         User user = resolveUser(authHeader);
         if (user == null) return unauthorizedResponse();
@@ -244,8 +244,8 @@ public class PlatformSupportCategoryController {
     })
     public ResponseEntity<?> changeStatus(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long id,
-            @RequestParam String status) {
+            @PathVariable("id") Long id,
+            @RequestParam("status") String status) {
         User user = resolveUser(authHeader);
         if (user == null) return unauthorizedResponse();
         if (!checkPermission(user, "support.category.update")) return forbiddenResponse("support.category.update");
@@ -271,7 +271,7 @@ public class PlatformSupportCategoryController {
     })
     public ResponseEntity<?> deleteCategory(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long id) {
+            @PathVariable("id") Long id) {
         User user = resolveUser(authHeader);
         if (user == null) return unauthorizedResponse();
         if (!checkPermission(user, "support.category.delete")) return forbiddenResponse("support.category.delete");

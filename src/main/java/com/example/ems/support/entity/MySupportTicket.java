@@ -95,6 +95,58 @@ public class MySupportTicket {
 
     private LocalDateTime closedAt;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "assigned_to_id")
+    private Employee assignedTo;
+
+    @Column(name = "estimated_hours")
+    private Double estimatedHours;
+
+    @Column(name = "actual_hours")
+    private Double actualHours = 0.0;
+
+    @Column(name = "sla_hours")
+    private Integer slaHours;
+
+    @Column(name = "due_date")
+    private LocalDateTime dueDate;
+
+    @Column(name = "is_overdue", nullable = false)
+    private boolean isOverdue = false;
+
+    @Column(name = "is_escalated", nullable = false)
+    private boolean isEscalated = false;
+
+    @Column(name = "escalation_level", nullable = false)
+    private int escalationLevel = 0;
+
+    @Column(name = "source")
+    private String source = "WEB";
+
+    @Column(name = "rejection_reason", length = 1000)
+    private String rejectionReason;
+
+    @Column(name = "rejected_by")
+    private String rejectedBy;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
+
+    @Column(name = "duplicate_of_ticket_id")
+    private Long duplicateOfTicketId;
+
+    @Column(name = "resolution", length = 5000)
+    private String resolution;
+
+    @Column(name = "resolved_by")
+    private String resolvedBy;
+
+    @Column(name = "closed_by")
+    private String closedBy;
+
+    @Column(name = "closure_comment", length = 1000)
+    private String closureComment;
+
     public MySupportTicket() {}
 
     public Long getId() { return id; }
@@ -189,4 +241,55 @@ public class MySupportTicket {
 
     public LocalDateTime getClosedAt() { return closedAt; }
     public void setClosedAt(LocalDateTime closedAt) { this.closedAt = closedAt; }
+
+    public Employee getAssignedTo() { return assignedTo; }
+    public void setAssignedTo(Employee assignedTo) { this.assignedTo = assignedTo; }
+
+    public Double getEstimatedHours() { return estimatedHours; }
+    public void setEstimatedHours(Double estimatedHours) { this.estimatedHours = estimatedHours; }
+
+    public Double getActualHours() { return actualHours != null ? actualHours : 0.0; }
+    public void setActualHours(Double actualHours) { this.actualHours = actualHours; }
+
+    public Integer getSlaHours() { return slaHours; }
+    public void setSlaHours(Integer slaHours) { this.slaHours = slaHours; }
+
+    public LocalDateTime getDueDate() { return dueDate; }
+    public void setDueDate(LocalDateTime dueDate) { this.dueDate = dueDate; }
+
+    public boolean isOverdue() { return isOverdue; }
+    public void setOverdue(boolean overdue) { isOverdue = overdue; }
+
+    public boolean isEscalated() { return isEscalated; }
+    public void setEscalated(boolean escalated) { isEscalated = escalated; }
+
+    public int getEscalationLevel() { return escalationLevel; }
+    public void setEscalationLevel(int escalationLevel) { this.escalationLevel = escalationLevel; }
+
+    public String getSource() { return source; }
+    public void setSource(String source) { this.source = source; }
+
+    public String getRejectionReason() { return rejectionReason; }
+    public void setRejectionReason(String rejectionReason) { this.rejectionReason = rejectionReason; }
+
+    public String getRejectedBy() { return rejectedBy; }
+    public void setRejectedBy(String rejectedBy) { this.rejectedBy = rejectedBy; }
+
+    public LocalDateTime getRejectedAt() { return rejectedAt; }
+    public void setRejectedAt(LocalDateTime rejectedAt) { this.rejectedAt = rejectedAt; }
+
+    public Long getDuplicateOfTicketId() { return duplicateOfTicketId; }
+    public void setDuplicateOfTicketId(Long duplicateOfTicketId) { this.duplicateOfTicketId = duplicateOfTicketId; }
+
+    public String getResolution() { return resolution; }
+    public void setResolution(String resolution) { this.resolution = resolution; }
+
+    public String getResolvedBy() { return resolvedBy; }
+    public void setResolvedBy(String resolvedBy) { this.resolvedBy = resolvedBy; }
+
+    public String getClosedBy() { return closedBy; }
+    public void setClosedBy(String closedBy) { this.closedBy = closedBy; }
+
+    public String getClosureComment() { return closureComment; }
+    public void setClosureComment(String closureComment) { this.closureComment = closureComment; }
 }

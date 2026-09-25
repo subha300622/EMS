@@ -48,7 +48,7 @@ public class AuditDataSanitizer {
                 if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
                     rootNode = objectMapper.readTree(trimmed);
                 } else {
-                    return trimmed;
+                    return objectMapper.writeValueAsString(trimmed);
                 }
             } else if (data instanceof JsonNode jsonNode) {
                 rootNode = jsonNode.deepCopy();

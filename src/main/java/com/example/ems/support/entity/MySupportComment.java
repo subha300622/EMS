@@ -15,7 +15,7 @@ public class MySupportComment {
     @JoinColumn(name = "ticket_id", nullable = false)
     private MySupportTicket ticket;
 
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false, length = 5000)
     private String commentText;
 
     private String createdBy;

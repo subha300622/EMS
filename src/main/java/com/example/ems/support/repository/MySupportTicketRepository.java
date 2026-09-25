@@ -52,4 +52,17 @@ public interface MySupportTicketRepository extends JpaRepository<MySupportTicket
            "OR (t.resolvedAt IS NULL AND :now > t.slaResolutionDueAt))")
     long countBreachedTicketsByPriority(@Param("priority") SupportTicketPriority priority,
                                         @Param("now") LocalDateTime now);
+
+    Optional<MySupportTicket> findByIdAndOrganizationIdAndIsDeletedFalse(Long id, Long organizationId);
+    Optional<MySupportTicket> findByIdAndOrganizationId(Long id, Long organizationId);
+
+    long countByOrganizationIdAndIsDeletedFalse(Long organizationId);
+    long countByOrganizationIdAndStatusAndIsDeletedFalse(Long organizationId, SupportTicketStatus status);
+    long countByOrganizationIdAndPriorityAndIsDeletedFalse(Long organizationId, SupportTicketPriority priority);
+    long countByOrganizationIdAndIsOverdueTrueAndIsDeletedFalse(Long organizationId);
+    long countByOrganizationIdAndIsEscalatedTrueAndIsDeletedFalse(Long organizationId);
+
+    @Query("SELECT t FROM MySupportTicket t WHERE t.isDeleted = false AND t.status NOT IN :excludedStatuses AND t.dueDate IS NOT NULL AND t.dueDate < :now")
+    List<MySupportTicket> findOverdueCandidateTickets(@Param("excludedStatuses") List<SupportTicketStatus> excludedStatuses,
+                                                      @Param("now") LocalDateTime now);
 }
