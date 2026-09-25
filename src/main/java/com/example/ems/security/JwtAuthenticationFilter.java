@@ -50,6 +50,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         this.userRepository = userRepository;
     }
 
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
@@ -114,31 +116,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         && !path.startsWith("/v3/api-docs") && !path.startsWith("/swagger-ui")) {
                     response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     response.setContentType("application/json");
-                    response.getWriter().write("{\"success\":false,\"errorCode\":\"BAD_REQUEST\",\"message\":\"Missing required organization context for " + method + " operation.\"}");
+                    com.example.ems.common.dto.ErrorResponse err = com.example.ems.common.dto.ErrorResponse.error(
+                            "Missing required organization context for " + method + " operation.", "BAD_REQUEST");
+                    response.getWriter().write(objectMapper.writeValueAsString(err));
                     return;
                 }
 
                 if (isPlatformAdmin) {
-                    // Platform Admin: Platform-level scope. Can explicitly target a tenant context via header.
-                    if (headerOrgId != null) {
-                        TenantContext.setCurrentTenant(headerOrgId);
+                    // Platform Admin: Platform-level scope. Can explicitly target a tenant context via header or fallback to user's org.
+                    Long effectiveOrgId = (headerOrgId != null) ? headerOrgId : userOrgId;
+                    if (effectiveOrgId != null) {
+                        TenantContext.setCurrentTenant(effectiveOrgId);
+                        request.setAttribute("organizationId", effectiveOrgId);
                     }
                 } else {
                     // Tenant User (SUPER_ADMIN, ADMIN, etc.): Bound strictly to userOrgId from JWT
                     if (headerOrgId != null && userOrgId != null && !headerOrgId.equals(userOrgId)) {
                         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                         response.setContentType("application/json");
-                        response.getWriter().write("{\"success\":false,\"errorCode\":\"AUTH_003\",\"message\":\"Cross-tenant access forbidden: Header organization ID (" + headerOrgId + ") does not match user's authorized organization (" + userOrgId + ").\"}");
+                        com.example.ems.common.dto.ErrorResponse err = com.example.ems.common.dto.ErrorResponse.error(
+                                "Cross-tenant access forbidden: Header organization ID (" + headerOrgId + ") does not match user's authorized organization (" + userOrgId + ").", "AUTH_003");
+                        err.setOrganizationId(userOrgId);
+                        response.getWriter().write(objectMapper.writeValueAsString(err));
                         return;
                     }
                     Long effectiveOrgId = (userOrgId != null) ? userOrgId : headerOrgId;
                     if (effectiveOrgId != null) {
                         TenantContext.setCurrentTenant(effectiveOrgId);
+                        request.setAttribute("organizationId", effectiveOrgId);
                     }
                 }
             } else if (headerOrgId != null) {
                 // If no token is provided, set header org if present (for unauthenticated multi-tenant public flows if any)
                 TenantContext.setCurrentTenant(headerOrgId);
+                request.setAttribute("organizationId", headerOrgId);
             }
 
             filterChain.doFilter(request, response);

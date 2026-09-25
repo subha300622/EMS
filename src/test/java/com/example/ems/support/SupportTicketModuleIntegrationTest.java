@@ -24,6 +24,8 @@ import com.example.ems.support.dto.*;
 import com.example.ems.support.entity.*;
 import com.example.ems.support.repository.*;
 import com.example.ems.support.scheduler.SupportEscalationScheduler;
+import com.example.ems.common.dto.ApiResponse;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -127,6 +129,7 @@ public class SupportTicketModuleIntegrationTest {
 
         private MySupportCategory categoryPayroll;
         private MySupportCategory categoryIT;
+        private MySupportCategory categoryOrgB;
 
         private com.example.ems.auth.entity.Permission getOrCreatePermission(String name) {
                 return permissionRepository.findByName(name)
@@ -303,6 +306,12 @@ public class SupportTicketModuleIntegrationTest {
                 categoryIT.setIcon("laptop");
                 categoryIT.setOrganization(orgA);
                 categoryIT = categoryRepository.save(categoryIT);
+
+                categoryOrgB = new MySupportCategory();
+                categoryOrgB.setName("Org B Support " + System.currentTimeMillis());
+                categoryOrgB.setIcon("building");
+                categoryOrgB.setOrganization(orgB);
+                categoryOrgB = categoryRepository.save(categoryOrgB);
         }
 
         @AfterEach
@@ -328,17 +337,20 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(createJson))
                                 .andExpect(status().isCreated())
-                                .andExpect(jsonPath("$.id").isNotEmpty())
-                                .andExpect(jsonPath("$.ticketNumber", startsWith("ST-")))
-                                .andExpect(jsonPath("$.subject").value("Unable to access payroll module"))
-                                .andExpect(jsonPath("$.priority").value("HIGH"))
-                                .andExpect(jsonPath("$.status").value("NEW"))
-                                .andExpect(jsonPath("$.isOverdue").value(false))
-                                .andExpect(jsonPath("$.isEscalated").value(false))
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.organizationId").isNotEmpty())
+                                .andExpect(jsonPath("$.data.id").isNotEmpty())
+                                .andExpect(jsonPath("$.data.ticketNumber", startsWith("ST-")))
+                                .andExpect(jsonPath("$.data.subject").value("Unable to access payroll module"))
+                                .andExpect(jsonPath("$.data.priority").value("HIGH"))
+                                .andExpect(jsonPath("$.data.status").value("NEW"))
+                                .andExpect(jsonPath("$.data.isOverdue").value(false))
+                                .andExpect(jsonPath("$.data.isEscalated").value(false))
                                 .andReturn().getResponse().getContentAsString();
 
-                SupportTicketDetailResponse ticketDetail = objectMapper.readValue(createResStr,
-                                SupportTicketDetailResponse.class);
+                ApiResponse<SupportTicketDetailResponse> createApiResp = objectMapper.readValue(createResStr,
+                                new TypeReference<ApiResponse<SupportTicketDetailResponse>>() {});
+                SupportTicketDetailResponse ticketDetail = createApiResp.getData();
                 Long ticketId = ticketDetail.getId();
                 assertNotNull(ticketId);
 
@@ -346,9 +358,9 @@ public class SupportTicketModuleIntegrationTest {
                 mockMvc.perform(get("/api/v1/support/tickets/" + ticketId)
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.id").value(ticketId))
-                                .andExpect(jsonPath("$.category.name").value(categoryPayroll.getName()))
-                                .andExpect(jsonPath("$.status").value("NEW"));
+                                .andExpect(jsonPath("$.data.id").value(ticketId))
+                                .andExpect(jsonPath("$.data.category.name").value(categoryPayroll.getName()))
+                                .andExpect(jsonPath("$.data.status").value("NEW"));
 
                 // 3. Manager Review: ACCEPT Ticket (POST
                 // /api/v1/support/tickets/{ticketId}/review)
@@ -363,11 +375,11 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(acceptReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value("NEW"))
-                                .andExpect(jsonPath("$.estimatedHours").value(4.0))
-                                .andExpect(jsonPath("$.slaHours").value(4))
-                                .andExpect(jsonPath("$.category.id").value(categoryIT.getId()))
-                                .andExpect(jsonPath("$.category.name").value(categoryIT.getName()));
+                                .andExpect(jsonPath("$.data.status").value("NEW"))
+                                .andExpect(jsonPath("$.data.estimatedHours").value(4.0))
+                                .andExpect(jsonPath("$.data.slaHours").value(4))
+                                .andExpect(jsonPath("$.data.category.id").value(categoryIT.getId()))
+                                .andExpect(jsonPath("$.data.category.name").value(categoryIT.getName()));
 
                 // 4. Assign Engineer (PUT /api/v1/support/tickets/{ticketId}/assignment) ->
                 // status becomes IN_PROGRESS
@@ -378,12 +390,11 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(assignReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
-                                .andExpect(jsonPath("$.assignedTo.id").value(engineerA1.getId()))
-                                .andExpect(jsonPath("$.assignedTo.name").value(engineerA1.getFullName()));
+                                .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"))
+                                .andExpect(jsonPath("$.data.assignedTo.id").value(engineerA1.getId()))
+                                .andExpect(jsonPath("$.data.assignedTo.name").value(engineerA1.getFullName()));
 
-                // 5. Reassign Ticket (PUT /api/v1/support/tickets/{ticketId}/assignment) with
-                // reason
+                // 5. Reassign Ticket
                 SupportTicketAssignRequest reassignReq = new SupportTicketAssignRequest(engineerA2.getId(),
                                 "Engineer unavailable for the remaining SLA window.");
 
@@ -392,7 +403,7 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(reassignReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.assignedTo.id").value(engineerA2.getId()));
+                                .andExpect(jsonPath("$.data.assignedTo.id").value(engineerA2.getId()));
 
                 // 6. Update Priority (PATCH /api/v1/support/tickets/{ticketId}/priority)
                 SupportTicketPriorityUpdateRequest priorityReq = new SupportTicketPriorityUpdateRequest(
@@ -403,8 +414,8 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(priorityReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.priority").value("CRITICAL"))
-                                .andExpect(jsonPath("$.slaHours").value(2));
+                                .andExpect(jsonPath("$.data.priority").value("CRITICAL"))
+                                .andExpect(jsonPath("$.data.slaHours").value(2));
 
                 // 7. Add Comment (POST /api/v1/support/tickets/{ticketId}/comments)
                 SupportTicketCommentRequest commentReq = new SupportTicketCommentRequest(
@@ -415,14 +426,14 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(commentReq)))
                                 .andExpect(status().isCreated())
-                                .andExpect(jsonPath("$.comment")
+                                .andExpect(jsonPath("$.data.comment")
                                                 .value("I have started investigating the payroll access issue."));
 
                 // Get Comments (GET /api/v1/support/tickets/{ticketId}/comments)
                 mockMvc.perform(get("/api/v1/support/tickets/" + ticketId + "/comments")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(1))));
+                                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(1))));
 
                 // 8. Add Work Log (POST /api/v1/support/tickets/{ticketId}/work-logs)
                 LocalDateTime startLog = LocalDateTime.now().minusHours(2);
@@ -435,15 +446,15 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(workLogReq)))
                                 .andExpect(status().isCreated())
-                                .andExpect(jsonPath("$.actualHours").value(1.5))
-                                .andExpect(jsonPath("$.engineerId").value(engineerA1.getId()))
-                                .andExpect(jsonPath("$.engineerName").value(engineerA1.getFullName()));
+                                .andExpect(jsonPath("$.data.actualHours").value(1.5))
+                                .andExpect(jsonPath("$.data.engineerId").value(engineerA1.getId()))
+                                .andExpect(jsonPath("$.data.engineerName").value(engineerA1.getFullName()));
 
                 // Get Work Logs (GET /api/v1/support/tickets/{ticketId}/work-logs)
                 mockMvc.perform(get("/api/v1/support/tickets/" + ticketId + "/work-logs")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$", hasSize(1)));
+                                .andExpect(jsonPath("$.data", hasSize(1)));
 
                 // 9. Manual Escalation (POST /api/v1/support/tickets/{ticketId}/escalate)
                 SupportTicketEscalateRequest escalateReq = new SupportTicketEscalateRequest(
@@ -454,8 +465,8 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(escalateReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.isEscalated").value(true))
-                                .andExpect(jsonPath("$.escalationLevel").value(1));
+                                .andExpect(jsonPath("$.data.isEscalated").value(true))
+                                .andExpect(jsonPath("$.data.escalationLevel").value(1));
 
                 // 10. Resolve Ticket (POST /api/v1/support/tickets/{ticketId}/resolve)
                 SupportTicketResolveRequest resolveReq = new SupportTicketResolveRequest(
@@ -466,8 +477,8 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(resolveReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value("RESOLVED"))
-                                .andExpect(jsonPath("$.actualHours").value(2.5));
+                                .andExpect(jsonPath("$.data.status").value("RESOLVED"))
+                                .andExpect(jsonPath("$.data.actualHours").value(2.5));
 
                 // 11. Close Ticket (POST /api/v1/support/tickets/{ticketId}/close)
                 SupportTicketCloseRequest closeReq = new SupportTicketCloseRequest("Issue confirmed resolved.");
@@ -477,22 +488,22 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(closeReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value("CLOSED"));
+                                .andExpect(jsonPath("$.data.status").value("CLOSED"));
 
                 // 12. Check Status History (GET /api/v1/support/tickets/{ticketId}/history)
                 mockMvc.perform(get("/api/v1/support/tickets/" + ticketId + "/history")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(3))))
-                                .andExpect(jsonPath("$[0].toStatus").value("NEW"));
+                                .andExpect(jsonPath("$.data", hasSize(greaterThanOrEqualTo(3))))
+                                .andExpect(jsonPath("$.data[0].toStatus").value("NEW"));
 
                 // 13. Check Escalation History (GET
                 // /api/v1/support/tickets/{ticketId}/escalations)
                 mockMvc.perform(get("/api/v1/support/tickets/" + ticketId + "/escalations")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$", hasSize(1)))
-                                .andExpect(jsonPath("$[0].level").value(1));
+                                .andExpect(jsonPath("$.data", hasSize(1)))
+                                .andExpect(jsonPath("$.data[0].level").value(1));
         }
 
         @Test
@@ -510,7 +521,8 @@ public class SupportTicketModuleIntegrationTest {
                                 .content(objectMapper.writeValueAsString(req1)))
                                 .andExpect(status().isCreated())
                                 .andReturn().getResponse().getContentAsString();
-                Long t1Id = objectMapper.readValue(res1, SupportTicketDetailResponse.class).getId();
+                Long t1Id = objectMapper.readValue(res1,
+                                new TypeReference<ApiResponse<SupportTicketDetailResponse>>() {}).getData().getId();
 
                 // Reject ticket 1
                 SupportTicketReviewRequest rejectReq = new SupportTicketReviewRequest();
@@ -522,7 +534,7 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(rejectReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value("REJECTED"));
+                                .andExpect(jsonPath("$.data.status").value("REJECTED"));
 
                 // Create ticket 2 and ticket 3 to test DUPLICATE
                 CreateSupportTicketRequest req2 = new CreateSupportTicketRequest();
@@ -535,7 +547,8 @@ public class SupportTicketModuleIntegrationTest {
                                 .content(objectMapper.writeValueAsString(req2)))
                                 .andExpect(status().isCreated())
                                 .andReturn().getResponse().getContentAsString();
-                Long t2Id = objectMapper.readValue(res2, SupportTicketDetailResponse.class).getId();
+                Long t2Id = objectMapper.readValue(res2,
+                                new TypeReference<ApiResponse<SupportTicketDetailResponse>>() {}).getData().getId();
 
                 CreateSupportTicketRequest req3 = new CreateSupportTicketRequest();
                 req3.setSubject("Duplicate ticket");
@@ -547,7 +560,8 @@ public class SupportTicketModuleIntegrationTest {
                                 .content(objectMapper.writeValueAsString(req3)))
                                 .andExpect(status().isCreated())
                                 .andReturn().getResponse().getContentAsString();
-                Long t3Id = objectMapper.readValue(res3, SupportTicketDetailResponse.class).getId();
+                Long t3Id = objectMapper.readValue(res3,
+                                new TypeReference<ApiResponse<SupportTicketDetailResponse>>() {}).getData().getId();
 
                 // Mark ticket 3 duplicate of ticket 2
                 SupportTicketReviewRequest dupReq = new SupportTicketReviewRequest();
@@ -560,7 +574,7 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(dupReq)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.status").value("DUPLICATE"));
+                                .andExpect(jsonPath("$.data.status").value("DUPLICATE"));
         }
 
         @Test
@@ -569,8 +583,10 @@ public class SupportTicketModuleIntegrationTest {
                 mockMvc.perform(get("/api/v1/support/sla")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.enabled").value(true))
-                                .andExpect(jsonPath("$.rules", hasSize(4)));
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.organizationId").isNotEmpty())
+                                .andExpect(jsonPath("$.data.enabled").value(true))
+                                .andExpect(jsonPath("$.data.rules", hasSize(4)));
 
                 // PUT /api/v1/support/sla
                 SupportSlaConfigDto slaUpdate = new SupportSlaConfigDto(true, List.of(
@@ -584,13 +600,15 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(slaUpdate)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.rules[0].slaHours").value(1));
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data.rules[0].slaHours").value(1));
 
                 // GET /api/v1/support/sla/escalations
                 mockMvc.perform(get("/api/v1/support/sla/escalations")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.rules", hasSize(greaterThanOrEqualTo(1))));
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data.rules", hasSize(greaterThanOrEqualTo(1))));
 
                 // PUT /api/v1/support/sla/escalations
                 SupportEscalationRulesDto escUpdate = new SupportEscalationRulesDto(List.of(
@@ -603,8 +621,9 @@ public class SupportTicketModuleIntegrationTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(escUpdate)))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.rules", hasSize(3)))
-                                .andExpect(jsonPath("$.rules[0].triggerAfterMinutes").value(20));
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data.rules", hasSize(3)))
+                                .andExpect(jsonPath("$.data.rules[0].triggerAfterMinutes").value(20));
         }
 
         @Test
@@ -622,20 +641,24 @@ public class SupportTicketModuleIntegrationTest {
                                 .content(objectMapper.writeValueAsString(reqA)))
                                 .andExpect(status().isCreated())
                                 .andReturn().getResponse().getContentAsString();
-                Long tAId = objectMapper.readValue(resA, SupportTicketDetailResponse.class).getId();
+                Long tAId = objectMapper.readValue(resA,
+                                new TypeReference<ApiResponse<SupportTicketDetailResponse>>() {}).getData().getId();
 
                 // Org A Dashboard
                 mockMvc.perform(get("/api/v1/support/dashboard")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.total").value(greaterThanOrEqualTo(1)))
-                                .andExpect(jsonPath("$.critical").value(greaterThanOrEqualTo(1)));
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.organizationId").isNotEmpty())
+                                .andExpect(jsonPath("$.data.total").value(greaterThanOrEqualTo(1)))
+                                .andExpect(jsonPath("$.data.critical").value(greaterThanOrEqualTo(1)));
 
                 // Org B Dashboard should be 0 tickets for Org B
                 mockMvc.perform(get("/api/v1/support/dashboard")
                                 .header("Authorization", "Bearer " + tokenUserB))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.total").value(0));
+                                .andExpect(jsonPath("$.success").value(true))
+                                .andExpect(jsonPath("$.data.total").value(0));
 
                 // Cross-tenant access: User B cannot access Org A's ticket (404/AccessDenied)
                 mockMvc.perform(get("/api/v1/support/tickets/" + tAId)
@@ -741,7 +764,8 @@ public class SupportTicketModuleIntegrationTest {
                                 .content(objectMapper.writeValueAsString(validReq)))
                                 .andExpect(status().isCreated())
                                 .andReturn().getResponse().getContentAsString();
-                Long testTicketId = objectMapper.readValue(createdRes, SupportTicketDetailResponse.class).getId();
+                Long testTicketId = objectMapper.readValue(createdRes,
+                                new TypeReference<ApiResponse<SupportTicketDetailResponse>>() {}).getData().getId();
 
                 // 5. Attempt to Resolve NEW ticket (409 Conflict)
                 SupportTicketResolveRequest resolveReq = new SupportTicketResolveRequest("Resolved early", 1.0);
@@ -801,11 +825,364 @@ public class SupportTicketModuleIntegrationTest {
                 mockMvc.perform(get("/api/v1/support/tickets?status=IN_PROGRESS")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))));
+                                .andExpect(jsonPath("$.data.content", hasSize(greaterThanOrEqualTo(1))));
 
                 mockMvc.perform(get("/api/v1/support/tickets?priority=HIGH")
                                 .header("Authorization", "Bearer " + tokenUserA))
                                 .andExpect(status().isOk())
-                                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))));
+                                .andExpect(jsonPath("$.data.content", hasSize(greaterThanOrEqualTo(1))));
+        }
+
+        @Test
+        void testComprehensiveSupportTicketValidations() throws Exception {
+                // ==========================================
+                // 1. CREATE TICKET VALIDATIONS
+                // ==========================================
+
+                // 1a. Missing subject (null)
+                CreateSupportTicketRequest reqNullSubj = new CreateSupportTicketRequest();
+                reqNullSubj.setDescription("Valid description");
+                reqNullSubj.setCategoryId(categoryPayroll.getId());
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqNullSubj)))
+                                .andExpect(status().isBadRequest());
+
+                // 1b. Blank subject
+                CreateSupportTicketRequest reqBlankSubj = new CreateSupportTicketRequest();
+                reqBlankSubj.setSubject("   ");
+                reqBlankSubj.setDescription("Valid description");
+                reqBlankSubj.setCategoryId(categoryPayroll.getId());
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqBlankSubj)))
+                                .andExpect(status().isBadRequest());
+
+                // 1c. Subject exceeding 250 characters
+                CreateSupportTicketRequest reqLongSubj = new CreateSupportTicketRequest();
+                reqLongSubj.setSubject("A".repeat(251));
+                reqLongSubj.setDescription("Valid description");
+                reqLongSubj.setCategoryId(categoryPayroll.getId());
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqLongSubj)))
+                                .andExpect(status().isBadRequest());
+
+                // 1d. Missing description (null)
+                CreateSupportTicketRequest reqNullDesc = new CreateSupportTicketRequest();
+                reqNullDesc.setSubject("Valid subject");
+                reqNullDesc.setCategoryId(categoryPayroll.getId());
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqNullDesc)))
+                                .andExpect(status().isBadRequest());
+
+                // 1e. Blank description
+                CreateSupportTicketRequest reqBlankDesc = new CreateSupportTicketRequest();
+                reqBlankDesc.setSubject("Valid subject");
+                reqBlankDesc.setDescription("   ");
+                reqBlankDesc.setCategoryId(categoryPayroll.getId());
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqBlankDesc)))
+                                .andExpect(status().isBadRequest());
+
+                // 1f. Missing categoryId
+                CreateSupportTicketRequest reqNullCat = new CreateSupportTicketRequest();
+                reqNullCat.setSubject("Valid subject");
+                reqNullCat.setDescription("Valid description");
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqNullCat)))
+                                .andExpect(status().isBadRequest());
+
+                // 1g. Non-existent categoryId
+                CreateSupportTicketRequest reqNonExistCat = new CreateSupportTicketRequest();
+                reqNonExistCat.setSubject("Valid subject");
+                reqNonExistCat.setDescription("Valid description");
+                reqNonExistCat.setCategoryId(999999999L);
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqNonExistCat)))
+                                .andExpect(status().isBadRequest());
+
+                // 1h. Category belonging to Org B used by Org A (Cross-tenant category validation)
+                CreateSupportTicketRequest reqCrossTenantCat = new CreateSupportTicketRequest();
+                reqCrossTenantCat.setSubject("Valid subject");
+                reqCrossTenantCat.setDescription("Valid description");
+                reqCrossTenantCat.setCategoryId(categoryOrgB.getId());
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqCrossTenantCat)))
+                                .andExpect(status().isBadRequest());
+
+                // 1i. Invalid priority enum
+                CreateSupportTicketRequest reqInvalidPri = new CreateSupportTicketRequest();
+                reqInvalidPri.setSubject("Valid subject");
+                reqInvalidPri.setDescription("Valid description");
+                reqInvalidPri.setCategoryId(categoryPayroll.getId());
+                reqInvalidPri.setPriority("SUPER_URGENT");
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(reqInvalidPri)))
+                                .andExpect(status().isBadRequest());
+
+                // ==========================================
+                // 2. REVIEW VALIDATIONS
+                // ==========================================
+                // Create a valid NEW ticket in Org A
+                CreateSupportTicketRequest validTicketReq = new CreateSupportTicketRequest();
+                validTicketReq.setSubject("Ticket for Review Validations");
+                validTicketReq.setDescription("Testing all review edge cases");
+                validTicketReq.setCategoryId(categoryPayroll.getId());
+                validTicketReq.setPriority("MEDIUM");
+                String createdRes = mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validTicketReq)))
+                                .andExpect(status().isCreated())
+                                .andReturn().getResponse().getContentAsString();
+                Long reviewTicketId = objectMapper.readValue(createdRes,
+                                new TypeReference<ApiResponse<SupportTicketDetailResponse>>() {}).getData().getId();
+
+                // Create a valid ticket in Org B for cross-tenant testing
+                CreateSupportTicketRequest orgBTicketReq = new CreateSupportTicketRequest();
+                orgBTicketReq.setSubject("Org B Ticket");
+                orgBTicketReq.setDescription("Org B Ticket Description");
+                orgBTicketReq.setCategoryId(categoryOrgB.getId());
+                String orgBRes = mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserB)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(orgBTicketReq)))
+                                .andExpect(status().isCreated())
+                                .andReturn().getResponse().getContentAsString();
+                Long orgBTicketId = objectMapper.readValue(orgBRes,
+                                new TypeReference<ApiResponse<SupportTicketDetailResponse>>() {}).getData().getId();
+
+                // 2a. Action is blank
+                SupportTicketReviewRequest revBlankAction = new SupportTicketReviewRequest();
+                revBlankAction.setAction("   ");
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revBlankAction)))
+                                .andExpect(status().isBadRequest());
+
+                // 2b. Action is invalid
+                SupportTicketReviewRequest revInvalidAction = new SupportTicketReviewRequest();
+                revInvalidAction.setAction("DISMISS");
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revInvalidAction)))
+                                .andExpect(status().isBadRequest());
+
+                // 2c. ACCEPT with missing priority
+                SupportTicketReviewRequest revAcceptNoPri = new SupportTicketReviewRequest();
+                revAcceptNoPri.setAction("ACCEPT");
+                revAcceptNoPri.setEstimatedHours(4.0);
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revAcceptNoPri)))
+                                .andExpect(status().isBadRequest());
+
+                // 2d. ACCEPT with invalid priority
+                SupportTicketReviewRequest revAcceptBadPri = new SupportTicketReviewRequest();
+                revAcceptBadPri.setAction("ACCEPT");
+                revAcceptBadPri.setPriority("SUPER_CRITICAL");
+                revAcceptBadPri.setEstimatedHours(4.0);
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revAcceptBadPri)))
+                                .andExpect(status().isBadRequest());
+
+                // 2e. ACCEPT with null estimatedHours
+                SupportTicketReviewRequest revAcceptNullHours = new SupportTicketReviewRequest();
+                revAcceptNullHours.setAction("ACCEPT");
+                revAcceptNullHours.setPriority("HIGH");
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revAcceptNullHours)))
+                                .andExpect(status().isBadRequest());
+
+                // 2f. ACCEPT with zero / negative estimatedHours
+                SupportTicketReviewRequest revAcceptZeroHours = new SupportTicketReviewRequest();
+                revAcceptZeroHours.setAction("ACCEPT");
+                revAcceptZeroHours.setPriority("HIGH");
+                revAcceptZeroHours.setEstimatedHours(0.0);
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revAcceptZeroHours)))
+                                .andExpect(status().isBadRequest());
+
+                // 2g. REJECT with missing / blank reason
+                SupportTicketReviewRequest revRejectBlankReason = new SupportTicketReviewRequest();
+                revRejectBlankReason.setAction("REJECT");
+                revRejectBlankReason.setReason("   ");
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revRejectBlankReason)))
+                                .andExpect(status().isBadRequest());
+
+                // 2h. DUPLICATE with missing duplicateOfTicketId
+                SupportTicketReviewRequest revDupNoTarget = new SupportTicketReviewRequest();
+                revDupNoTarget.setAction("DUPLICATE");
+                revDupNoTarget.setReason("Duplicate issue");
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revDupNoTarget)))
+                                .andExpect(status().isBadRequest());
+
+                // 2i. DUPLICATE referencing itself
+                SupportTicketReviewRequest revDupSelf = new SupportTicketReviewRequest();
+                revDupSelf.setAction("DUPLICATE");
+                revDupSelf.setDuplicateOfTicketId(reviewTicketId);
+                revDupSelf.setReason("Duplicate of itself");
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revDupSelf)))
+                                .andExpect(status().isBadRequest());
+
+                // 2j. DUPLICATE referencing cross-tenant ticket from Org B -> 404
+                SupportTicketReviewRequest revDupCrossTenant = new SupportTicketReviewRequest();
+                revDupCrossTenant.setAction("DUPLICATE");
+                revDupCrossTenant.setDuplicateOfTicketId(orgBTicketId);
+                revDupCrossTenant.setReason("Duplicate from another org");
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(revDupCrossTenant)))
+                                .andExpect(status().isNotFound());
+
+                // ==========================================
+                // 3. COMMENT VALIDATIONS
+                // ==========================================
+
+                // 3a. Blank comment
+                SupportTicketCommentRequest commBlank = new SupportTicketCommentRequest("   ", false);
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/comments")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(commBlank)))
+                                .andExpect(status().isBadRequest());
+
+                // 3b. Comment on non-existent ticket -> 404
+                SupportTicketCommentRequest commValid = new SupportTicketCommentRequest("Legitimate comment", false);
+                mockMvc.perform(post("/api/v1/support/tickets/999999999/comments")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(commValid)))
+                                .andExpect(status().isNotFound());
+
+                // 3c. Comment on cross-tenant ticket (User A commenting on Org B's ticket) -> 404
+                mockMvc.perform(post("/api/v1/support/tickets/" + orgBTicketId + "/comments")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(commValid)))
+                                .andExpect(status().isNotFound());
+
+                // ==========================================
+                // 4. PRIORITY UPDATE VALIDATIONS
+                // ==========================================
+
+                // 4a. Blank priority
+                SupportTicketPriorityUpdateRequest priBlank = new SupportTicketPriorityUpdateRequest("   ", "Reason");
+                mockMvc.perform(patch("/api/v1/support/tickets/" + reviewTicketId + "/priority")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(priBlank)))
+                                .andExpect(status().isBadRequest());
+
+                // 4b. Invalid priority enum
+                SupportTicketPriorityUpdateRequest priInvalid = new SupportTicketPriorityUpdateRequest("TOP_PRIORITY", "Reason");
+                mockMvc.perform(patch("/api/v1/support/tickets/" + reviewTicketId + "/priority")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(priInvalid)))
+                                .andExpect(status().isBadRequest());
+
+                // 4c. Blank reason
+                SupportTicketPriorityUpdateRequest priNoReason = new SupportTicketPriorityUpdateRequest("HIGH", "   ");
+                mockMvc.perform(patch("/api/v1/support/tickets/" + reviewTicketId + "/priority")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(priNoReason)))
+                                .andExpect(status().isBadRequest());
+
+                // 4d. Priority update on non-existent ticket -> 404
+                SupportTicketPriorityUpdateRequest priValid = new SupportTicketPriorityUpdateRequest("HIGH", "Legitimate adjustment");
+                mockMvc.perform(patch("/api/v1/support/tickets/999999999/priority")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(priValid)))
+                                .andExpect(status().isNotFound());
+
+                // 4e. Priority update on cross-tenant ticket (Org B's ticket updated by Org A) -> 404
+                mockMvc.perform(patch("/api/v1/support/tickets/" + orgBTicketId + "/priority")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(priValid)))
+                                .andExpect(status().isNotFound());
+
+                // ==========================================
+                // 5. ESCALATION VALIDATIONS
+                // ==========================================
+
+                // 5a. Blank reason
+                SupportTicketEscalateRequest escBlank = new SupportTicketEscalateRequest("   ");
+                mockMvc.perform(post("/api/v1/support/tickets/" + reviewTicketId + "/escalate")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(escBlank)))
+                                .andExpect(status().isBadRequest());
+
+                // 5b. Escalate non-existent ticket -> 404
+                SupportTicketEscalateRequest escValid = new SupportTicketEscalateRequest("SLA breach imminent");
+                mockMvc.perform(post("/api/v1/support/tickets/999999999/escalate")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(escValid)))
+                                .andExpect(status().isNotFound());
+
+                // 5c. Escalate cross-tenant ticket -> 404
+                mockMvc.perform(post("/api/v1/support/tickets/" + orgBTicketId + "/escalate")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(escValid)))
+                                .andExpect(status().isNotFound());
+
+                // ==========================================
+                // 6. SECURITY / AUTH NEGATIVE VALIDATIONS
+                // ==========================================
+
+                // 6a. 401 Unauthorized when no Authorization header
+                mockMvc.perform(get("/api/v1/support/tickets"))
+                                .andExpect(status().isUnauthorized());
+
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validTicketReq)))
+                                .andExpect(status().isUnauthorized());
+
+                // 6b. 401 Unauthorized when invalid / malformed token
+                mockMvc.perform(get("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer invalid-garbage-token"))
+                                .andExpect(status().isUnauthorized());
         }
 }

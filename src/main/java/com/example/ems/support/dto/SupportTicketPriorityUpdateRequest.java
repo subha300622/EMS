@@ -7,6 +7,7 @@ public class SupportTicketPriorityUpdateRequest {
     @NotBlank(message = "priority is required (CRITICAL, HIGH, MEDIUM, LOW)")
     private String priority;
 
+    @NotBlank(message = "Reason is required when changing priority")
     private String reason;
 
     public SupportTicketPriorityUpdateRequest() {}

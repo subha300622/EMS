@@ -1,6 +1,7 @@
 package com.example.ems.support.controller;
 
 import com.example.ems.auth.service.PermissionRegistry;
+import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.PermissionCheckService;
 import com.example.ems.support.dto.SupportEscalationRulesDto;
@@ -9,7 +10,6 @@ import com.example.ems.support.service.SupportSlaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -43,9 +43,9 @@ public class SupportSlaController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get SLA Configuration", description = "Retrieves the organization-level SLA rules")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "SLA configuration retrieved",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SLA configuration retrieved",
                     content = @Content(schema = @Schema(implementation = SupportSlaConfigDto.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
@@ -59,7 +59,7 @@ public class SupportSlaController {
                 PermissionRegistry.SUPPORT_TICKET_VIEW
         );
         SupportSlaConfigDto response = slaService.getSlaConfig();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("SLA configuration retrieved successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -67,11 +67,11 @@ public class SupportSlaController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update SLA Configuration", description = "Updates organization-level SLA rules")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "SLA configuration updated successfully",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SLA configuration updated successfully",
                     content = @Content(schema = @Schema(implementation = SupportSlaConfigDto.class))),
-            @ApiResponse(responseCode = "400", description = "Validation error",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_SLA_MANAGE",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_SLA_MANAGE",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping
@@ -82,7 +82,7 @@ public class SupportSlaController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_SLA_MANAGE);
         SupportSlaConfigDto response = slaService.updateSlaConfig(req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("SLA configuration updated successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ public class SupportSlaController {
                 PermissionRegistry.SUPPORT_TICKET_VIEW
         );
         SupportEscalationRulesDto response = slaService.getEscalationRules();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Escalation rules retrieved successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -115,6 +115,6 @@ public class SupportSlaController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_SLA_MANAGE);
         SupportEscalationRulesDto response = slaService.updateEscalationRules(req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Escalation rules updated successfully", response));
     }
 }

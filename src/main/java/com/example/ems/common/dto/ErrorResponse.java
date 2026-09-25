@@ -7,12 +7,16 @@ import java.util.List;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+import com.example.ems.security.context.TenantContext;
+
 public class ErrorResponse {
     @Schema(example = "false")
     private boolean success = false;
     @Schema(example = "string")
     private String timestamp;
     private String requestId;
+    @Schema(description = "Tenant Organization Identifier", example = "1")
+    private Long organizationId;
     private ErrorDetails error;
 
     // Root properties for backward compatibility
@@ -24,6 +28,7 @@ public class ErrorResponse {
     public ErrorResponse() {
         this.timestamp = Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
         this.requestId = getCorrelationId();
+        this.organizationId = TenantContext.getOrganizationId();
     }
 
     public ErrorResponse(boolean success, String message, String errorCode, String timestamp) {
@@ -32,6 +37,7 @@ public class ErrorResponse {
         this.errorCode = errorCode;
         this.timestamp = timestamp != null ? timestamp : Instant.now().truncatedTo(ChronoUnit.SECONDS).toString();
         this.requestId = getCorrelationId();
+        this.organizationId = TenantContext.getOrganizationId();
         this.error = new ErrorDetails(errorCode, message, new ArrayList<>());
     }
 
@@ -95,6 +101,17 @@ public class ErrorResponse {
 
     public void setRequestId(String requestId) {
         this.requestId = requestId;
+    }
+
+    public Long getOrganizationId() {
+        if (this.organizationId == null) {
+            this.organizationId = TenantContext.getOrganizationId();
+        }
+        return organizationId;
+    }
+
+    public void setOrganizationId(Long organizationId) {
+        this.organizationId = organizationId;
     }
 
     public ErrorDetails getError() {

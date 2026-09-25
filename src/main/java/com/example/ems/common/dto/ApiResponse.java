@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
 import org.slf4j.MDC;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -216,6 +217,12 @@ public class ApiResponse<T> {
     }
 
     public Long getOrganizationId() {
+        if (this.organizationId == null) {
+            this.organizationId = TenantContext.getOrganizationId();
+            if (this.organizationId != null && this.metadata != null) {
+                this.metadata.put("organizationId", this.organizationId);
+            }
+        }
         return organizationId;
     }
 
@@ -233,4 +240,5 @@ public class ApiResponse<T> {
     public void setMetadata(Map<String, Object> metadata) {
         this.metadata = metadata;
     }
+
 }

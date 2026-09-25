@@ -8,7 +8,7 @@ import com.example.ems.support.service.SupportTicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import com.example.ems.common.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -48,14 +48,10 @@ public class SupportTicketController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Create Support Ticket", description = "Creates a new support ticket in NEW status")
     @ApiResponses({
-            @ApiResponse(responseCode = "201", description = "Ticket created successfully",
-                    content = @Content(schema = @Schema(implementation = SupportTicketDetailResponse.class))),
-            @ApiResponse(responseCode = "400", description = "Validation error",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_CREATE permission",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Ticket created successfully", content = @Content(schema = @Schema(implementation = SupportTicketDetailResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_CREATE permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
     public ResponseEntity<?> createTicket(@Valid @RequestBody CreateSupportTicketRequest req) {
@@ -65,7 +61,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_CREATE);
         SupportTicketDetailResponse response = ticketService.createTicket(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Ticket created successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -73,10 +70,8 @@ public class SupportTicketController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Support Ticket Details", description = "Returns support ticket details by ID with SLA, assignment and status")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Ticket retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = SupportTicketDetailResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Ticket not found",
-                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket retrieved successfully", content = @Content(schema = @Schema(implementation = SupportTicketDetailResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{ticketId}")
     public ResponseEntity<?> getTicketById(@PathVariable("ticketId") Long ticketId) {
@@ -86,7 +81,7 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         SupportTicketDetailResponse response = ticketService.getTicketById(ticketId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Ticket retrieved successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -109,10 +104,12 @@ public class SupportTicketController {
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
 
         if (page < 0) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Page index must not be less than zero", "PAGE_INVALID"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Page index must not be less than zero", "PAGE_INVALID"));
         }
         if (size < 1 || size > 100) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error("Page size must be between 1 and 100", "SIZE_INVALID"));
+            return ResponseEntity.badRequest()
+                    .body(ErrorResponse.error("Page size must be between 1 and 100", "SIZE_INVALID"));
         }
 
         Sort sortObj = Sort.by(Sort.Direction.ASC, "dueDate");
@@ -120,13 +117,16 @@ public class SupportTicketController {
             String[] parts = sort.split(",");
             String sortProperty = parts[0].trim();
             Sort.Direction direction = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim()))
-                    ? Sort.Direction.DESC : Sort.Direction.ASC;
+                    ? Sort.Direction.DESC
+                    : Sort.Direction.ASC;
             sortObj = Sort.by(direction, sortProperty);
         }
 
         Pageable pageable = PageRequest.of(page, size, sortObj);
-        Page<SupportTicketDetailResponse> response = ticketService.getTickets(status, priority, timeFilter, specialFilter, pageable);
-        return ResponseEntity.ok(response);
+        Page<SupportTicketDetailResponse> tickets = ticketService.getTickets(status, priority, timeFilter,
+                specialFilter, pageable);
+        return ResponseEntity
+                .ok(ApiResponse.success("Tickets retrieved successfully", tickets));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -143,14 +143,15 @@ public class SupportTicketController {
         }
         permissionCheckService.requireAnyPermission(
                 PermissionRegistry.SUPPORT_TICKET_REVIEW,
-                PermissionRegistry.SUPPORT_TICKET_PRIORITY_UPDATE
-        );
+                PermissionRegistry.SUPPORT_TICKET_PRIORITY_UPDATE);
         SupportTicketDetailResponse response = ticketService.reviewTicket(ticketId, req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Ticket reviewed successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // 7, 8. Assign / Reassign Engineer (PUT /api/v1/support/tickets/{ticketId}/assignment)
+    // 7, 8. Assign / Reassign Engineer (PUT
+    // /api/v1/support/tickets/{ticketId}/assignment)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Assign or Reassign Engineer", description = "Assigns an engineer to the ticket or reassigns to another engineer with a reason")
     @PutMapping("/{ticketId}/assignment")
@@ -163,10 +164,10 @@ public class SupportTicketController {
         }
         permissionCheckService.requireAnyPermission(
                 PermissionRegistry.SUPPORT_TICKET_ASSIGN,
-                PermissionRegistry.SUPPORT_TICKET_REASSIGN
-        );
+                PermissionRegistry.SUPPORT_TICKET_REASSIGN);
         SupportTicketDetailResponse response = ticketService.assignTicket(ticketId, req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Ticket assigned successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -183,7 +184,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_PRIORITY_UPDATE);
         SupportTicketDetailResponse response = ticketService.updatePriority(ticketId, req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Ticket priority updated successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -200,7 +202,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         SupportTicketCommentResponse response = ticketService.addComment(ticketId, req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Comment added successfully", response));
     }
 
     @Operation(summary = "Get Comments", description = "Retrieves all comments associated with the ticket")
@@ -212,7 +215,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         List<SupportTicketCommentResponse> response = ticketService.getComments(ticketId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Comments retrieved successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -229,7 +233,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         SupportWorkLogResponse response = ticketService.addWorkLog(ticketId, req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Work log added successfully", response));
     }
 
     @Operation(summary = "Get Work Logs", description = "Returns the list of work logs recorded for the ticket")
@@ -241,7 +246,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         List<SupportWorkLogResponse> response = ticketService.getWorkLogs(ticketId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Work logs retrieved successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -258,7 +264,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_RESOLVE);
         SupportTicketDetailResponse response = ticketService.resolveTicket(ticketId, req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Ticket resolved successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -275,7 +282,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_CLOSE);
         SupportTicketDetailResponse response = ticketService.closeTicket(ticketId, req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Ticket closed successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -292,7 +300,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_ESCALATE);
         SupportTicketDetailResponse response = ticketService.manualEscalate(ticketId, req);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Ticket escalated successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -307,7 +316,8 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         List<SupportStatusHistoryResponse> response = ticketService.getStatusHistory(ticketId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity
+                .ok(ApiResponse.success("Status history retrieved successfully", response));
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
@@ -322,6 +332,7 @@ public class SupportTicketController {
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         List<SupportEscalationHistoryResponse> response = ticketService.getEscalationHistory(ticketId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(
+                ApiResponse.success("Escalation history retrieved successfully", response));
     }
 }

@@ -548,6 +548,10 @@ public class SupportTicketService {
             throw new IllegalStateException("Cannot change priority of ticket in " + ticket.getStatus() + " status");
         }
 
+        if (req.getReason() == null || req.getReason().isBlank()) {
+            throw new IllegalArgumentException("Reason is required when changing ticket priority");
+        }
+
         SupportTicketPriority newPriority;
         try {
             newPriority = SupportTicketPriority.valueOf(req.getPriority().toUpperCase());

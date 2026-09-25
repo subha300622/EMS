@@ -1,5 +1,8 @@
 package com.example.ems.security.context;
 
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
 /**
  * Thread-local context to store the current tenant (organization) ID.
  */
@@ -16,7 +19,28 @@ public class TenantContext {
     }
 
     public static Long getOrganizationId() {
-        return currentTenant.get();
+        Long tenantId = currentTenant.get();
+        if (tenantId != null) {
+            return tenantId;
+        }
+        try {
+            ServletRequestAttributes attributes =
+                    (ServletRequestAttributes)
+                            RequestContextHolder.getRequestAttributes();
+            if (attributes != null) {
+                jakarta.servlet.http.HttpServletRequest req = attributes.getRequest();
+                Object attr = req.getAttribute("organizationId");
+                if (attr instanceof Long l) return l;
+                if (attr instanceof Number n) return n.longValue();
+                if (attr instanceof String s && !s.isBlank()) return Long.parseLong(s);
+
+                String header = req.getHeader("X-Organization-Id");
+                if (header != null && !header.isBlank()) {
+                    return Long.parseLong(header.trim());
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     public static Long requireOrganizationId() {

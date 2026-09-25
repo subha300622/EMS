@@ -1,6 +1,7 @@
 package com.example.ems.support.controller;
 
 import com.example.ems.auth.service.PermissionRegistry;
+import com.example.ems.common.dto.ApiResponse;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.security.service.PermissionCheckService;
 import com.example.ems.support.dto.SupportDashboardSummaryResponse;
@@ -8,7 +9,6 @@ import com.example.ems.support.service.SupportTicketService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,11 +44,11 @@ public class SupportDashboardController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Support Dashboard Summary", description = "Returns aggregated tenant-scoped support metrics")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Support dashboard summary retrieved successfully",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Support dashboard summary retrieved successfully",
                     content = @Content(schema = @Schema(implementation = SupportDashboardSummaryResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Unauthorized",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_VIEW or SUPPORT_TICKET_REPORT",
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_VIEW or SUPPORT_TICKET_REPORT",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
@@ -62,6 +62,6 @@ public class SupportDashboardController {
                 PermissionRegistry.SUPPORT_TICKET_REPORT
         );
         SupportDashboardSummaryResponse response = ticketService.getDashboardSummary();
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Support dashboard retrieved successfully", response));
     }
 }
