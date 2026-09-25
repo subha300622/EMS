@@ -697,4 +697,115 @@ public class SupportTicketModuleIntegrationTest {
                 assertEquals(historyCountBefore, historyAfter.size(),
                                 "Scheduler must be idempotent and not create duplicate escalation history");
         }
+
+        @Test
+        void testSupportTicketNegativeValidationAndFilteringRules() throws Exception {
+                // 1. Invalid ticket ID (404 Not Found)
+                mockMvc.perform(get("/api/v1/support/tickets/999999999")
+                                .header("Authorization", "Bearer " + tokenUserA))
+                                .andExpect(status().isNotFound());
+
+                // 2. Create ticket with empty subject (400 Bad Request)
+                CreateSupportTicketRequest emptySubjReq = new CreateSupportTicketRequest();
+                emptySubjReq.setSubject("");
+                emptySubjReq.setDescription("Valid description");
+                emptySubjReq.setCategoryId(categoryPayroll.getId());
+                emptySubjReq.setPriority("HIGH");
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(emptySubjReq)))
+                                .andExpect(status().isBadRequest());
+
+                // 3. Create ticket with invalid priority (400 Bad Request)
+                CreateSupportTicketRequest invalidPriorityReq = new CreateSupportTicketRequest();
+                invalidPriorityReq.setSubject("Invalid Priority Ticket");
+                invalidPriorityReq.setDescription("Testing invalid priority");
+                invalidPriorityReq.setCategoryId(categoryPayroll.getId());
+                invalidPriorityReq.setPriority("URGENT"); // Unsupported priority
+                mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(invalidPriorityReq)))
+                                .andExpect(status().isBadRequest());
+
+                // 4. Create a valid NEW ticket to test state transition restrictions
+                CreateSupportTicketRequest validReq = new CreateSupportTicketRequest();
+                validReq.setSubject("State Machine Transition Test");
+                validReq.setDescription("Testing invalid transitions");
+                validReq.setCategoryId(categoryPayroll.getId());
+                validReq.setPriority("HIGH");
+                String createdRes = mockMvc.perform(post("/api/v1/support/tickets")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(validReq)))
+                                .andExpect(status().isCreated())
+                                .andReturn().getResponse().getContentAsString();
+                Long testTicketId = objectMapper.readValue(createdRes, SupportTicketDetailResponse.class).getId();
+
+                // 5. Attempt to Resolve NEW ticket (409 Conflict)
+                SupportTicketResolveRequest resolveReq = new SupportTicketResolveRequest("Resolved early", 1.0);
+                mockMvc.perform(post("/api/v1/support/tickets/" + testTicketId + "/resolve")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(resolveReq)))
+                                .andExpect(status().isConflict());
+
+                // 6. Review ticket with negative estimated hours (400 Bad Request)
+                SupportTicketReviewRequest negHoursReq = new SupportTicketReviewRequest();
+                negHoursReq.setAction("ACCEPT");
+                negHoursReq.setPriority("HIGH");
+                negHoursReq.setEstimatedHours(-5.0);
+                mockMvc.perform(post("/api/v1/support/tickets/" + testTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(negHoursReq)))
+                                .andExpect(status().isBadRequest());
+
+                // 7. Accept ticket and move to IN_PROGRESS
+                SupportTicketReviewRequest acceptReq = new SupportTicketReviewRequest();
+                acceptReq.setAction("ACCEPT");
+                acceptReq.setPriority("HIGH");
+                acceptReq.setEstimatedHours(3.0);
+                mockMvc.perform(post("/api/v1/support/tickets/" + testTicketId + "/review")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(acceptReq)))
+                                .andExpect(status().isOk());
+
+                SupportTicketAssignRequest assignReq = new SupportTicketAssignRequest(engineerA1.getId(), null);
+                mockMvc.perform(put("/api/v1/support/tickets/" + testTicketId + "/assignment")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(assignReq)))
+                                .andExpect(status().isOk());
+
+                // 8. Attempt to Close IN_PROGRESS ticket (409 Conflict)
+                SupportTicketCloseRequest closeReq = new SupportTicketCloseRequest("Closing directly from IN_PROGRESS");
+                mockMvc.perform(post("/api/v1/support/tickets/" + testTicketId + "/close")
+                                .header("Authorization", "Bearer " + tokenUserA)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(closeReq)))
+                                .andExpect(status().isConflict());
+
+                // 9. Add work log with invalid time where endedAt <= startedAt (400 Bad Request)
+                LocalDateTime now = LocalDateTime.now();
+                SupportWorkLogRequest invalidWorkLog = new SupportWorkLogRequest(now, now.minusHours(1), "Invalid timeframe");
+                mockMvc.perform(post("/api/v1/support/tickets/" + testTicketId + "/work-logs")
+                                .header("Authorization", "Bearer " + tokenEngineerA1)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(invalidWorkLog)))
+                                .andExpect(status().isBadRequest());
+
+                // 10. Filter checks
+                mockMvc.perform(get("/api/v1/support/tickets?status=IN_PROGRESS")
+                                .header("Authorization", "Bearer " + tokenUserA))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))));
+
+                mockMvc.perform(get("/api/v1/support/tickets?priority=HIGH")
+                                .header("Authorization", "Bearer " + tokenUserA))
+                                .andExpect(status().isOk())
+                                .andExpect(jsonPath("$.content", hasSize(greaterThanOrEqualTo(1))));
+        }
 }
