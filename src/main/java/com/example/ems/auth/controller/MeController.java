@@ -26,6 +26,9 @@ import com.example.ems.common.repository.NotificationRepository;
 import com.example.ems.employee.repository.AnnouncementRepository;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +57,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 
 @RestController
-@RequestMapping({"/api/v1/me", "/api/v1/auth/me"})
+@RequestMapping({ "/api/v1/me", "/api/v1/auth/me" })
 @CrossOrigin("*")
 @Tag(name = "Employee Self Service - Profile")
 public class MeController {
@@ -108,8 +111,14 @@ public class MeController {
     private ExitKtTaskRepository exitKtTaskRepository;
 
     @Operation(summary = "Get My Profile", description = "Retrieves the full HRMS profile of the currently authenticated user.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Profile retrieved successfully", content = @Content(schema = @Schema(implementation = HrmsProfileResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Employee profile not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/profile")
-public ResponseEntity<?> getMyProfile(
+    public ResponseEntity<?> getMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -119,7 +128,8 @@ public ResponseEntity<?> getMyProfile(
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.read' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -132,15 +142,21 @@ public ResponseEntity<?> getMyProfile(
         return ResponseEntity.ok(ApiResponse.success("Profile retrieved successfully", profileResponse));
     }
 
-    @Operation(summary = "Update My Profile",
-            description = "Updates editable self-service fields: phone, address, emergencyContact, and profileImage. " +
-                    "All fields are optional — only supplied (non-null) fields are updated. " +
-                    "Admin-only fields (fullName, department, designation, salary) are not accepted.")
+    @Operation(summary = "Update My Profile", description = "Updates editable self-service fields: phone, address, emergencyContact, and profileImage. "
+            +
+            "All fields are optional — only supplied (non-null) fields are updated. " +
+            "Admin-only fields (fullName, department, designation, salary) are not accepted.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Profile updated successfully", content = @Content(schema = @Schema(implementation = EmployeeProfileResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid profile update data", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/profile")
     @Transactional
-public ResponseEntity<?> updateMyProfile(
+    public ResponseEntity<?> updateMyProfile(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @Valid @RequestBody ProfileUpdateRequest body){
+            @Valid @RequestBody ProfileUpdateRequest body) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -149,7 +165,8 @@ public ResponseEntity<?> updateMyProfile(
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.profile.update")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.update' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.profile.update' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -160,7 +177,9 @@ public ResponseEntity<?> updateMyProfile(
 
         if (!body.hasAnyUpdate()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(ErrorResponse.error("No editable fields provided. Accepted fields: phone, address, emergencyContact, profileImage", "VAL_004"));
+                    .body(ErrorResponse.error(
+                            "No editable fields provided. Accepted fields: phone, address, emergencyContact, profileImage",
+                            "VAL_004"));
         }
 
         // Apply only supplied (non-null) fields
@@ -185,8 +204,14 @@ public ResponseEntity<?> updateMyProfile(
     }
 
     @Operation(summary = "Get My Dashboard Stats", description = "Retrieves active counts of pending leaves, pending expenses, assigned assets, pending reviews, and open tickets.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Dashboard statistics retrieved successfully", content = @Content(schema = @Schema(implementation = MyDashboardResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Employee profile not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Access denied", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/dashboard")
-public ResponseEntity<?> getMyDashboard(
+    public ResponseEntity<?> getMyDashboard(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -196,7 +221,8 @@ public ResponseEntity<?> getMyDashboard(
 
         if (!roleService.hasPermission(currentUser.getWorkEmail(), "employee.dashboard.read")) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'employee.dashboard.read' permission.", "AUTH_002"));
+                    .body(ErrorResponse.error("Access Denied: Requires 'employee.dashboard.read' permission.",
+                            "AUTH_002"));
         }
 
         Employee employee = employeeRepository.findByEmail(currentUser.getWorkEmail()).orElse(null);
@@ -206,8 +232,8 @@ public ResponseEntity<?> getMyDashboard(
         }
 
         // 1. Attendance Data
-        Optional<Attendance> optAttendance =
-                attendanceRepository.findByEmployeeIdAndDate(employee.getId(), LocalDate.now());
+        Optional<Attendance> optAttendance = attendanceRepository.findByEmployeeIdAndDate(employee.getId(),
+                LocalDate.now());
 
         String todayStatus = "Absent";
         String checkIn = null;
@@ -230,7 +256,7 @@ public ResponseEntity<?> getMyDashboard(
                 if (end != null) {
                     checkOut = end.format(timeFormatter);
                 }
-                
+
                 LocalTime start = att.getPunchInTime();
                 LocalTime effectiveEnd = (end != null) ? end : LocalTime.now();
                 if (!effectiveEnd.isBefore(start)) {
@@ -244,8 +270,7 @@ public ResponseEntity<?> getMyDashboard(
             }
         }
         MyDashboardResponse.AttendanceData attendanceData = new MyDashboardResponse.AttendanceData(
-                todayStatus, checkIn, checkOut, workingHours
-        );
+                todayStatus, checkIn, checkOut, workingHours);
 
         // 2. Leave Data
         long pendingLeavesCount = leaveRepository.findByEmployeeIdAndStatus(employee.getId(), "PENDING").size();
@@ -265,8 +290,7 @@ public ResponseEntity<?> getMyDashboard(
             // Fallback to a default
         }
         MyDashboardResponse.LeaveData leaveData = new MyDashboardResponse.LeaveData(
-                pendingLeavesCount, remainingLeaves
-        );
+                pendingLeavesCount, remainingLeaves);
 
         // 3. Expenses Data
         long pendingExpensesCount = expenseRepository.findByEmployeeId(employee.getId()).stream()
@@ -289,7 +313,8 @@ public ResponseEntity<?> getMyDashboard(
         } catch (Exception e) {
             // Fallback
         }
-        MyDashboardResponse.NotificationData notificationData = new MyDashboardResponse.NotificationData(unreadNotifications);
+        MyDashboardResponse.NotificationData notificationData = new MyDashboardResponse.NotificationData(
+                unreadNotifications);
 
         // 6. Announcements Data
         long unreadAnnouncements = 0;
@@ -298,17 +323,20 @@ public ResponseEntity<?> getMyDashboard(
         } catch (Exception e) {
             // Fallback
         }
-        MyDashboardResponse.AnnouncementData announcementData = new MyDashboardResponse.AnnouncementData(unreadAnnouncements);
+        MyDashboardResponse.AnnouncementData announcementData = new MyDashboardResponse.AnnouncementData(
+                unreadAnnouncements);
 
         // 7. Performance Data
         long pendingReviewsCount = reviewRepository.findByEmployeeId(employee.getId()).stream()
                 .filter(r -> !"FINALIZED".equalsIgnoreCase(r.getStatus()))
                 .count();
-        MyDashboardResponse.PerformanceData performanceData = new MyDashboardResponse.PerformanceData(pendingReviewsCount);
+        MyDashboardResponse.PerformanceData performanceData = new MyDashboardResponse.PerformanceData(
+                pendingReviewsCount);
 
         // 8. Support Data
         long openTicketsCount = supportTicketRepository.findByEmployeeEmail(employee.getEmail()).stream()
-                .filter(t -> t.getStatus() == SupportTicketStatus.OPEN || t.getStatus() == SupportTicketStatus.IN_PROGRESS)
+                .filter(t -> t.getStatus() == SupportTicketStatus.OPEN
+                        || t.getStatus() == SupportTicketStatus.IN_PROGRESS)
                 .count();
         MyDashboardResponse.SupportData supportData = new MyDashboardResponse.SupportData(openTicketsCount);
 
@@ -325,15 +353,18 @@ public ResponseEntity<?> getMyDashboard(
                 announcementData,
                 performanceData,
                 supportData,
-                profileData
-        );
+                profileData);
 
         return ResponseEntity.ok(ApiResponse.success("Dashboard statistics retrieved successfully", dashboardResponse));
     }
 
     @Operation(summary = "Get Current User Bootstrap Data", description = "Returns bootstrap summary containing user details, org summary, and assigned roles.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Bootstrap data retrieved successfully", content = @Content(schema = @Schema(implementation = BootstrapSummaryDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/bootstrap")
-public ResponseEntity<?> getMyBootstrap(
+    public ResponseEntity<?> getMyBootstrap(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -341,29 +372,34 @@ public ResponseEntity<?> getMyBootstrap(
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        Long orgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : currentUser.getOrganizationId();
-        String orgName = currentUser.getOrganization() != null ? currentUser.getOrganization().getName() : currentUser.getOrganizationName();
+        Long orgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId()
+                : currentUser.getOrganizationId();
+        String orgName = currentUser.getOrganization() != null ? currentUser.getOrganization().getName()
+                : currentUser.getOrganizationName();
 
         BootstrapSummaryDto.UserSummaryDto userSummary = new BootstrapSummaryDto.UserSummaryDto(
                 currentUser.getUserId(),
                 currentUser.getEmployeeId() != null ? currentUser.getEmployeeId() : currentUser.getUserId(),
                 currentUser.getFullName() != null ? currentUser.getFullName() : "",
                 currentUser.getWorkEmail() != null ? currentUser.getWorkEmail() : "",
-                currentUser.getStatus() != null ? currentUser.getStatus() : "ACTIVE"
-        );
+                currentUser.getStatus() != null ? currentUser.getStatus() : "ACTIVE");
         BootstrapSummaryDto.OrgSummaryDto orgSummary = new BootstrapSummaryDto.OrgSummaryDto(
                 orgId != null ? orgId.toString() : "",
-                orgName != null ? orgName : ""
-        );
-        List<String> roles = currentUser.getRole() != null ? List.of(currentUser.getRole().getName()) : Collections.emptyList();
+                orgName != null ? orgName : "");
+        List<String> roles = currentUser.getRole() != null ? List.of(currentUser.getRole().getName())
+                : Collections.emptyList();
 
         BootstrapSummaryDto data = new BootstrapSummaryDto(userSummary, orgSummary, roles);
         return ResponseEntity.ok(ApiResponse.success("Bootstrap data retrieved successfully", data));
     }
 
     @Operation(summary = "Get Current User Org Context", description = "Returns organization scope and boundary details for current user.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User organization context retrieved successfully", content = @Content(schema = @Schema(implementation = OrgContextSummaryDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/context")
-public ResponseEntity<?> getMyContext(
+    public ResponseEntity<?> getMyContext(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -371,15 +407,16 @@ public ResponseEntity<?> getMyContext(
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        Long orgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId() : currentUser.getOrganizationId();
-        String orgName = currentUser.getOrganization() != null ? currentUser.getOrganization().getName() : currentUser.getOrganizationName();
+        Long orgId = currentUser.getOrganization() != null ? currentUser.getOrganization().getId()
+                : currentUser.getOrganizationId();
+        String orgName = currentUser.getOrganization() != null ? currentUser.getOrganization().getName()
+                : currentUser.getOrganizationName();
 
         OrgContextSummaryDto data = new OrgContextSummaryDto(
                 currentUser.getUserId(),
                 orgId != null ? orgId.toString() : "",
                 orgName != null ? orgName : "",
-                "ORGANIZATION"
-        );
+                "ORGANIZATION");
         return ResponseEntity.ok(ApiResponse.success("User organization context retrieved successfully", data));
     }
 
@@ -482,7 +519,7 @@ public ResponseEntity<?> getMyContext(
                 exitSection.setExitInitiated(true);
                 exitSection.setExitStatus(ob.getStatus());
                 exitSection.setLastWorkingDay(
-                    ob.getRequestedLastWorkingDay() != null ? ob.getRequestedLastWorkingDay().toString() : null);
+                        ob.getRequestedLastWorkingDay() != null ? ob.getRequestedLastWorkingDay().toString() : null);
                 try {
                     long pendingKt = exitKtTaskRepository.countPendingByOffboardingId(employee.getId());
                     exitSection.setPendingKTTasks((int) pendingKt);
@@ -557,7 +594,8 @@ public ResponseEntity<?> getMyContext(
     }
 
     /**
-     * Builds the legacy flat EmployeeProfileResponse (used by PUT /profile update response).
+     * Builds the legacy flat EmployeeProfileResponse (used by PUT /profile update
+     * response).
      */
     private EmployeeProfileResponse buildProfileResponse(Employee employee) {
         EmployeeProfileResponse.ManagerProfileDto managerDto = null;
@@ -602,27 +640,42 @@ public ResponseEntity<?> getMyContext(
     }
 
     private int calculateProfileCompletion(Employee employee) {
-        if (employee == null) return 0;
+        if (employee == null)
+            return 0;
         int filledFields = 0;
         int totalFields = 10;
-        
-        if (employee.getFullName() != null && !employee.getFullName().isBlank()) filledFields++;
-        if (employee.getPhone() != null && !employee.getPhone().isBlank()) filledFields++;
-        if (employee.getGender() != null && !employee.getGender().isBlank()) filledFields++;
-        if (employee.getDob() != null) filledFields++;
-        if (employee.getAddress() != null && !employee.getAddress().isBlank()) filledFields++;
-        if (employee.getEmergencyContact() != null && !employee.getEmergencyContact().isBlank()) filledFields++;
-        if (employee.getDepartment() != null && !employee.getDepartment().isBlank()) filledFields++;
-        if (employee.getDesignation() != null && !employee.getDesignation().isBlank()) filledFields++;
-        if (employee.getJoiningDate() != null) filledFields++;
-        if (employee.getProfileImage() != null && !employee.getProfileImage().isBlank()) filledFields++;
-        
+
+        if (employee.getFullName() != null && !employee.getFullName().isBlank())
+            filledFields++;
+        if (employee.getPhone() != null && !employee.getPhone().isBlank())
+            filledFields++;
+        if (employee.getGender() != null && !employee.getGender().isBlank())
+            filledFields++;
+        if (employee.getDob() != null)
+            filledFields++;
+        if (employee.getAddress() != null && !employee.getAddress().isBlank())
+            filledFields++;
+        if (employee.getEmergencyContact() != null && !employee.getEmergencyContact().isBlank())
+            filledFields++;
+        if (employee.getDepartment() != null && !employee.getDepartment().isBlank())
+            filledFields++;
+        if (employee.getDesignation() != null && !employee.getDesignation().isBlank())
+            filledFields++;
+        if (employee.getJoiningDate() != null)
+            filledFields++;
+        if (employee.getProfileImage() != null && !employee.getProfileImage().isBlank())
+            filledFields++;
+
         return (filledFields * 100) / totalFields;
     }
 
     @Operation(summary = "Get Current User Roles and Effective Permissions", description = "Returns the authenticated user's assigned roles and effective permission strings.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User permissions retrieved successfully", content = @Content(schema = @Schema(implementation = UserPermissionsDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/permissions")
-public ResponseEntity<?> getMyPermissions(
+    public ResponseEntity<?> getMyPermissions(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -634,16 +687,14 @@ public ResponseEntity<?> getMyPermissions(
         if (currentUser.getRole() != null) {
             roles.add(new UserPermissionsDto.RoleSummaryDto(
                     currentUser.getRole().getId(),
-                    currentUser.getRole().getName()
-            ));
+                    currentUser.getRole().getName()));
         }
 
         List<String> effectivePermissions = roleService.getPermissionsForUserId(currentUser.getUserId());
 
         UserPermissionsDto responseData = new UserPermissionsDto(
                 roles,
-                effectivePermissions
-        );
+                effectivePermissions);
 
         return ResponseEntity.ok(ApiResponse.success("User permissions retrieved successfully", responseData));
     }

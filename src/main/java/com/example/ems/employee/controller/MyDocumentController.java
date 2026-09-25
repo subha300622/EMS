@@ -9,7 +9,11 @@ import com.example.ems.employee.entity.MyEmployeeDocument;
 import com.example.ems.employee.service.MyDocumentService;
 import com.example.ems.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import com.example.ems.common.dto.ErrorResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -221,6 +225,17 @@ public class MyDocumentController {
 
     // 8. Download Document
     @Operation(summary = "Download Document File", description = "Downloads the raw file data of a specific document.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document file downloaded successfully",
+                    content = @Content(mediaType = "application/octet-stream",
+                            schema = @Schema(type = "string", format = "binary"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Document not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{documentId}/download")
     public ResponseEntity<?> downloadDocument(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,

@@ -343,12 +343,13 @@ public ResponseEntity<?> getParticipants(
 
     @Operation(summary = "Remove Participant")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Participant removed successfully"),
+        @ApiResponse(responseCode = "200", description = "Participant removed successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Participant removed successfully\"}"))),
         @ApiResponse(responseCode = "400", description = "Bad Request"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @DeleteMapping("/{trainingId}/participants/{employeeId}")
-public ResponseEntity<?> removeParticipant(
+    public ResponseEntity<?> removeParticipant(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @PathVariable Long employeeId) {
@@ -476,12 +477,13 @@ public ResponseEntity<?> getMaterials(
 
     @Operation(summary = "Delete Training Material")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Material deleted successfully"),
+        @ApiResponse(responseCode = "200", description = "Material deleted successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Material deleted successfully\"}"))),
         @ApiResponse(responseCode = "400", description = "Bad Request"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @DeleteMapping("/{trainingId}/materials/{materialId}")
-public ResponseEntity<?> deleteMaterial(
+    public ResponseEntity<?> deleteMaterial(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @PathVariable Long materialId) {
@@ -504,7 +506,7 @@ public ResponseEntity<?> deleteMaterial(
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @PostMapping("/{trainingId}/feedback")
-public ResponseEntity<?> submitFeedback(
+    public ResponseEntity<?> submitFeedback(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId,
             @Valid @RequestBody FeedbackSubmitRequest request) {
@@ -520,12 +522,13 @@ public ResponseEntity<?> submitFeedback(
 
     @Operation(summary = "Get Feedback Summary")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Feedback summary retrieved successfully"),
+        @ApiResponse(responseCode = "200", description = "Feedback summary retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingFeedbackSummaryResponse.class))),
         @ApiResponse(responseCode = "400", description = "Bad Request"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @GetMapping("/{trainingId}/feedback")
-public ResponseEntity<?> getFeedbackSummary(
+    public ResponseEntity<?> getFeedbackSummary(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long trainingId) {
         User user = resolveUser(authHeader);

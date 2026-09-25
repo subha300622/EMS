@@ -119,7 +119,8 @@ public ResponseEntity<?> updateResource(
 
     @Operation(summary = "Delete Library Resource")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Library resource deleted successfully"),
+        @ApiResponse(responseCode = "200", description = "Library resource deleted successfully",
+            content = @Content(schema = @Schema(example = "{\"message\": \"Library resource deleted successfully\"}"))),
         @ApiResponse(responseCode = "400", description = "Bad Request"),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })

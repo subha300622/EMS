@@ -89,6 +89,10 @@ public class CustomRoleController {
 
     @GetMapping("/templates")
     @Operation(summary = "List platform role templates", description = "Lists available system role templates that can be viewed or cloned.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Platform role templates retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = RoleResponse.class))))
+    })
     public ResponseEntity<?> getPlatformTemplates() {
         List<Role> templates = roleService.getPlatformTemplates();
         List<RoleResponse> responseList = templates.stream()
@@ -99,6 +103,14 @@ public class CustomRoleController {
 
     @PostMapping("/clone/{templateId}")
     @Operation(summary = "Clone platform role template into tenant custom role")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Role cloned successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> cloneFromTemplate(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
             @PathVariable Long templateId,

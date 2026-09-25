@@ -9,6 +9,10 @@ import com.example.ems.onboarding.dto.OnboardingDocumentResponse;
 import com.example.ems.onboarding.dto.OnboardingDocumentVerifyRequest;
 import com.example.ems.onboarding.service.OnboardingDocumentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +84,12 @@ public class OnboardingDocumentController {
 
     @GetMapping("/{onboardingId}/documents")
     @Operation(summary = "Get Onboarding Documents List")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Documents retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = OnboardingDocumentResponse.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid onboarding ID format",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> getDocuments(
             @PathVariable String onboardingId) {
         Long parsedOnbId = parseOnboardingId(onboardingId);
@@ -89,6 +99,16 @@ public class OnboardingDocumentController {
 
     @PostMapping(value = "/{onboardingId}/documents/{documentId}/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload Onboarding Document File")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document uploaded successfully",
+                    content = @Content(schema = @Schema(implementation = OnboardingDocumentResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> uploadDocument(
             @PathVariable String onboardingId,
             @PathVariable String documentId,
@@ -117,6 +137,17 @@ public class OnboardingDocumentController {
 
     @GetMapping("/{onboardingId}/documents/{documentId}/download")
     @Operation(summary = "Download Onboarding Document File")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document file downloaded successfully",
+                    content = @Content(mediaType = "application/octet-stream",
+                            schema = @Schema(type = "string", format = "binary"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Document not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> downloadDocument(
             @PathVariable String onboardingId,
             @PathVariable String documentId) {
@@ -163,6 +194,16 @@ public class OnboardingDocumentController {
 
     @PatchMapping("/{onboardingId}/documents/{documentId}/verify")
     @Operation(summary = "Verify or Reject Onboarding Document")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document verification updated successfully",
+                    content = @Content(schema = @Schema(implementation = OnboardingDocumentResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Document conflict",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> verifyDocument(
             @PathVariable String onboardingId,
             @PathVariable String documentId,
@@ -193,6 +234,16 @@ public class OnboardingDocumentController {
 
     @DeleteMapping("/{onboardingId}/documents/{documentId}")
     @Operation(summary = "Delete or Reset Onboarding Document")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Document deleted successfully",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> deleteDocument(
             @PathVariable String onboardingId,
             @PathVariable String documentId) {

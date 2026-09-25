@@ -13,6 +13,7 @@ import com.example.ems.performance.dto.EnterprisePerformanceReviewResponse;
 import com.example.ems.performance.dto.EnterpriseSelfReviewRequest;
 import com.example.ems.security.service.PermissionCheckService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -73,6 +74,12 @@ public class EmployeeDashboardController {
     // == 2. ATTENDANCE APIS ====================================================
 
     @Operation(summary = "Get Attendance Summary", description = "Monthly attendance summary with working days, present days, percentage, and trend direction.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Attendance summary retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = EmployeeAttendanceDetailSummaryDto.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/attendance/summary")
     public ResponseEntity<?> getAttendanceSummary() {
         if (isNotAuthenticated()) {
@@ -89,6 +96,12 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get Attendance History", description = "Retrieves attendance records for the authenticated employee for a specified month.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Attendance history retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = AttendanceCoreResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/attendance")
     public ResponseEntity<?> getAttendanceHistory(@RequestParam(value = "month", required = false) String month) {
         if (isNotAuthenticated()) {
@@ -107,6 +120,12 @@ public class EmployeeDashboardController {
     // == 3. LEAVE BALANCE & LEAVE APIS =========================================
 
     @Operation(summary = "Get Leave Balance", description = "Breakdown of available leave balances by type according to canonical leave rules.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Leave balance retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = EmployeeLeaveBalanceDetailDto.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/leave-balance")
     public ResponseEntity<?> getLeaveBalance() {
         if (isNotAuthenticated()) {
@@ -123,6 +142,12 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Leaves", description = "Retrieves leave requests belonging to the authenticated employee.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Leave requests retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = Leave.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/leave")
     public ResponseEntity<?> getMyLeaves() {
         if (isNotAuthenticated()) {
@@ -135,6 +160,14 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Leave by ID", description = "Retrieves a single leave request by ID, strictly verifying ownership.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Leave request retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = Leave.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Leave request not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/leave/{id}")
     public ResponseEntity<?> getMyLeaveById(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -147,6 +180,14 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Apply Leave", description = "Submits a leave request for the authenticated employee.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Leave applied successfully",
+                    content = @Content(schema = @Schema(implementation = Leave.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/leave")
     public ResponseEntity<?> applyMyLeave(@RequestBody @Valid LeaveRequest request) {
         if (isNotAuthenticated()) {
@@ -161,6 +202,12 @@ public class EmployeeDashboardController {
     // == 4. COMPENSATION API ===================================================
 
     @Operation(summary = "Get Current CTC Compensation", description = "Retrieves authorized salary and CTC compensation information for the employee.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Compensation details retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = EmployeeCompensationSummaryDto.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/compensation/current")
     public ResponseEntity<?> getCurrentCompensation() {
         if (isNotAuthenticated()) {
@@ -179,6 +226,12 @@ public class EmployeeDashboardController {
     // == 5. PERFORMANCE APIS ===================================================
 
     @Operation(summary = "Get Performance Summary", description = "Retrieves the latest official performance appraisal summary.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Performance summary retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = EmployeePerformanceSummaryDto.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/performance/summary")
     public ResponseEntity<?> getPerformanceSummary() {
         if (isNotAuthenticated()) {
@@ -195,6 +248,12 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Performance Reviews", description = "Retrieves all performance reviews belonging to the employee.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Performance reviews retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = EnterprisePerformanceReviewResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping({"/performance", "/performance/self-reviews"})
     public ResponseEntity<?> getMyPerformanceReviews() {
         if (isNotAuthenticated()) {
@@ -207,6 +266,14 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Self-Review by ID", description = "Retrieves a single performance review/self-review by ID, verifying ownership.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Performance review retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = EnterprisePerformanceReviewResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Performance review not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/performance/self-reviews/{id}")
     public ResponseEntity<?> getMyPerformanceReviewById(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -219,6 +286,14 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Submit Self-Review", description = "Submits an employee self-evaluation review within an active appraisal cycle.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Self-review submitted successfully",
+                    content = @Content(schema = @Schema(implementation = EnterprisePerformanceReviewResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/performance/self-reviews/{id}/submit")
     public ResponseEntity<?> submitMySelfReview(@PathVariable("id") Long id,
                                                 @RequestBody @Valid EnterpriseSelfReviewRequest request) {
@@ -234,6 +309,12 @@ public class EmployeeDashboardController {
     // == 6. DOCUMENTS APIS =====================================================
 
     @Operation(summary = "Get My Documents", description = "Retrieves uploaded and pending documents overview for authenticated employee.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Documents overview retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = com.example.ems.employee.dto.MyDocumentsDashboardResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/documents")
     public ResponseEntity<?> getMyDocuments() {
         if (isNotAuthenticated()) {
@@ -246,6 +327,14 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Upload Document", description = "Uploads a document file for the authenticated employee.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Document uploaded successfully",
+                    content = @Content(schema = @Schema(implementation = MyDocumentUploadResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping(value = "/documents", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> uploadMyDocument(
             @RequestParam("file") MultipartFile file,
@@ -266,6 +355,14 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get Document Details", description = "Retrieves document metadata, strictly enforcing employee ownership.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Document details retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = MyDocumentDetailsResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Document not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/documents/{id}")
     public ResponseEntity<?> getMyDocumentDetails(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -280,6 +377,12 @@ public class EmployeeDashboardController {
     // == 7. TRAINING APIS ======================================================
 
     @Operation(summary = "Get My Trainings", description = "Retrieves assigned courses and training progress for the employee.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Trainings retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = com.example.ems.training.dto.TrainingAssignmentItemResponse.class)))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/training")
     public ResponseEntity<?> getMyTrainings() {
         if (isNotAuthenticated()) {
@@ -292,6 +395,14 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Get My Training Details", description = "Retrieves assigned course details, validating employee assignment.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Training details retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = com.example.ems.training.dto.EmployeeTrainingDetailResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Training not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/training/{id}")
     public ResponseEntity<?> getMyTrainingDetails(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -304,6 +415,14 @@ public class EmployeeDashboardController {
     }
 
     @Operation(summary = "Complete Training", description = "Marks an assigned training module as completed for the employee.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Training completed successfully",
+                    content = @Content(schema = @Schema(example = "{\"success\": true, \"message\": \"Training completed successfully\"}"))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Training assignment not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/training/{id}/complete")
     public ResponseEntity<?> completeMyTraining(@PathVariable("id") Long id) {
         if (isNotAuthenticated()) {
@@ -318,6 +437,12 @@ public class EmployeeDashboardController {
     // == 8. ACTION CENTER ======================================================
 
     @Operation(summary = "Get Action Center", description = "Aggregates actionable items across leaves, documents, performance appraisals, and trainings.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Action center retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = EmployeeActionCenterResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/action-center")
     public ResponseEntity<?> getActionCenter() {
         if (isNotAuthenticated()) {

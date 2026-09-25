@@ -35,6 +35,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import com.example.ems.training.dto.CompleteTrainingRequest;
 import com.example.ems.training.dto.TrainingAssignmentItemResponse;
+import com.example.ems.training.dto.MyTrainingItemResponse;
+import com.example.ems.training.dto.TrainingAssignmentDetailsResponse;
+import com.example.ems.training.dto.TeamProgressListResponse;
 
 @RestController
 @RequestMapping("/api/v1/training")
@@ -86,7 +89,9 @@ public class TrainingAssignmentController {
     // ── A. Catalog APIs (HR) ─────────────────────────────────────────────────
     @Operation(summary = "Create Course")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Training course created successfully"),
+        @ApiResponse(responseCode = "201", description = "Training course created successfully",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(example = "{\"id\": 1, \"message\": \"Training course created successfully\", \"status\": \"ACTIVE\"}"))),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "403", description = "Forbidden")
     })
@@ -142,7 +147,9 @@ public ResponseEntity<?> getCourseById(@PathVariable Long id) {
     // ── B. Assignment APIs (Manager/HR) ──────────────────────────────────────
     @Operation(summary = "Assign Training")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "201", description = "Training assigned successfully"),
+        @ApiResponse(responseCode = "201", description = "Training assigned successfully",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(example = "{\"assignmentId\": 1, \"message\": \"Training assigned successfully\", \"assignedCount\": 5, \"status\": \"ASSIGNED\", \"assignedOn\": \"2026-09-25\"}"))),
         @ApiResponse(responseCode = "400", description = "Bad Request"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "403", description = "Forbidden")
@@ -194,7 +201,8 @@ public ResponseEntity<?> assignTraining(
 
     @Operation(summary = "Get Assignment Details")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Assignment details retrieved successfully"),
+        @ApiResponse(responseCode = "200", description = "Assignment details retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TrainingAssignmentDetailsResponse.class))),
         @ApiResponse(responseCode = "404", description = "Not Found")
     })
     @GetMapping("/assignments/{id}")
@@ -245,7 +253,8 @@ public ResponseEntity<?> getEmployeeDetail(
     // ── C. Employee Training APIs ────────────────────────────────────────────
     @Operation(summary = "Get My Trainings")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "My trainings retrieved successfully"),
+        @ApiResponse(responseCode = "200", description = "My trainings retrieved successfully",
+            content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = MyTrainingItemResponse.class)))),
         @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     @GetMapping("/my")
@@ -263,7 +272,9 @@ public ResponseEntity<?> getMyTrainings(
 
     @Operation(summary = "Update Training Progress")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Progress updated successfully"),
+        @ApiResponse(responseCode = "200", description = "Progress updated successfully",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(example = "{\"message\": \"Progress updated successfully\", \"currentProgress\": 75, \"status\": \"IN_PROGRESS\"}"))),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "403", description = "Forbidden"),
         @ApiResponse(responseCode = "404", description = "Not Found")
@@ -297,7 +308,9 @@ public ResponseEntity<?> updateProgress(
 
     @Operation(summary = "Complete Training")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Training completed successfully"),
+        @ApiResponse(responseCode = "200", description = "Training completed successfully",
+            content = @Content(mediaType = "application/json",
+                schema = @Schema(example = "{\"message\": \"Training marked as completed successfully\", \"status\": \"COMPLETED\", \"progress\": 100}"))),
         @ApiResponse(responseCode = "400", description = "Bad Request"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "403", description = "Forbidden"),
@@ -373,7 +386,8 @@ public ResponseEntity<?> getTeamSummary(
 
     @Operation(summary = "Get Team Progress")
     @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Team progress retrieved successfully"),
+        @ApiResponse(responseCode = "200", description = "Team progress retrieved successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = TeamProgressListResponse.class))),
         @ApiResponse(responseCode = "400", description = "Bad Request"),
         @ApiResponse(responseCode = "401", description = "Unauthorized"),
         @ApiResponse(responseCode = "403", description = "Forbidden")

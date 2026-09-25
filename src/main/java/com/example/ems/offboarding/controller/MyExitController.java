@@ -402,6 +402,10 @@ public class MyExitController {
     }
 
     @Operation(summary = "Get Settlement Statement PDF", description = "Downloads settlement statement.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Settlement statement PDF stream", content = @Content(mediaType = MediaType.APPLICATION_PDF_VALUE, schema = @Schema(type = "string", format = "binary"))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping(value = "/settlement/statement", produces = MediaType.APPLICATION_PDF_VALUE)
     public ResponseEntity<?> getMySettlementStatement(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {

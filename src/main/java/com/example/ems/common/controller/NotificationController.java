@@ -9,6 +9,10 @@ import com.example.ems.common.service.ManagerNotificationService;
 import com.example.ems.security.service.JwtService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -43,6 +47,12 @@ public class NotificationController {
 
     // ── 1. GET PAGINATED NOTIFICATION FEED ────────────────────────────────────
     @Operation(summary = "Get Notification Feed")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Notification feed retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = NotificationDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     public ResponseEntity<?> getNotificationFeed(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -67,6 +77,12 @@ public class NotificationController {
 
     // ── 3. GET UNREAD NOTIFICATIONS COUNT ─────────────────────────────────────
     @Operation(summary = "Get Unread Notifications Count")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Unread count retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = UnreadCountDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/unread-count")
     public ResponseEntity<?> getUnreadCount(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -81,6 +97,14 @@ public class NotificationController {
 
     // ── 4. MARK SPECIFIC NOTIFICATION AS READ ─────────────────────────────────
     @Operation(summary = "Mark Specific Notification as Read")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Notification marked as read",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/{id}/read")
     public ResponseEntity<?> markAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -101,6 +125,12 @@ public class NotificationController {
 
     // ── 5. MARK ALL NOTIFICATIONS AS READ ─────────────────────────────────────
     @Operation(summary = "Mark All Notifications as Read")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "All notifications marked as read",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/read-all")
     public ResponseEntity<?> markAllAsRead(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
@@ -115,8 +145,16 @@ public class NotificationController {
 
     // ── 6. DELETE SPECIFIC NOTIFICATION ──────────────────────────────────────
     @Operation(summary = "Delete Specific Notification")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Notification deleted successfully",
+                    content = @Content(schema = @Schema(hidden = true))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @DeleteMapping("/{id}")
-public ResponseEntity<?> deleteNotification(
+    public ResponseEntity<?> deleteNotification(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable("id") Long id) {
         User currentUser = resolveUser(authHeader);
@@ -135,8 +173,14 @@ public ResponseEntity<?> deleteNotification(
 
     // ── 7. GET NOTIFICATION PREFERENCES ───────────────────────────────────────
     @Operation(summary = "Get Notification Preferences")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Notification preferences retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = NotificationPreferenceDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/preferences")
-public ResponseEntity<?> getPreferences(
+    public ResponseEntity<?> getPreferences(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -149,8 +193,14 @@ public ResponseEntity<?> getPreferences(
 
     // ── 8. UPDATE NOTIFICATION PREFERENCES ───────────────────────────────────────
     @Operation(summary = "Update Notification Preferences")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Notification preferences updated successfully",
+                    content = @Content(schema = @Schema(implementation = NotificationPreferenceDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/preferences")
-public ResponseEntity<?> updatePreferences(
+    public ResponseEntity<?> updatePreferences(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestBody NotificationPreferenceDto requestDto) {
         User currentUser = resolveUser(authHeader);
@@ -164,8 +214,14 @@ public ResponseEntity<?> updatePreferences(
 
     // ── 9. GET NOTIFICATION STATS ─────────────────────────────────────────────
     @Operation(summary = "Get Notification Stats")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Notification stats retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = NotificationStatsDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/stats")
-public ResponseEntity<?> getStats(
+    public ResponseEntity<?> getStats(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
@@ -178,8 +234,14 @@ public ResponseEntity<?> getStats(
 
     // ── 10. GET CONSOLIDATED PAGE LOAD DATA ───────────────────────────────────
     @Operation(summary = "Get Consolidated Page Load Data")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Page-load data retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = NotificationPageResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/page-data")
-public ResponseEntity<?> getPageData(
+    public ResponseEntity<?> getPageData(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {

@@ -18,6 +18,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
@@ -51,13 +53,17 @@ public class HolidayController {
             description = "Creates a new organization-wide holiday."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Holiday created successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid holiday input payload"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Holiday conflict on same date")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Holiday created successfully",
+                    content = @Content(schema = @Schema(implementation = HolidayResponseDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid holiday input payload",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Holiday conflict on same date",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
-public ResponseEntity<?> createHoliday(
+    public ResponseEntity<?> createHoliday(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @Valid @RequestBody HolidayCreateRequest request) {
 
@@ -85,12 +91,15 @@ public ResponseEntity<?> createHoliday(
             description = "Retrieves holiday by holiday ID for the authenticated organization."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday retrieved successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = HolidayResponseDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{holidayId}")
-public ResponseEntity<?> getHolidayById(
+    public ResponseEntity<?> getHolidayById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String holidayId) {
 
@@ -114,11 +123,13 @@ public ResponseEntity<?> getHolidayById(
             description = "Retrieves paginated list of organization-wide holidays with optional date filters."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holidays retrieved successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holidays retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = HolidayListResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-public ResponseEntity<?> listHolidays(
+    public ResponseEntity<?> listHolidays(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate fromDate,
@@ -141,14 +152,19 @@ public ResponseEntity<?> listHolidays(
             description = "Updates an existing holiday."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday updated successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid holiday input payload"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Holiday date conflict")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday updated successfully",
+                    content = @Content(schema = @Schema(implementation = HolidayResponseDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid holiday input payload",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Holiday date conflict",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping("/{holidayId}")
-public ResponseEntity<?> updateHoliday(
+    public ResponseEntity<?> updateHoliday(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String holidayId,
             @Valid @RequestBody HolidayUpdateRequest request) {
@@ -179,12 +195,15 @@ public ResponseEntity<?> updateHoliday(
             description = "Deactivates (soft deletes) a holiday."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday deactivated successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday deactivated successfully",
+                    content = @Content(schema = @Schema(implementation = HolidayResponseDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Holiday not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @DeleteMapping("/{holidayId}")
-public ResponseEntity<?> deleteHoliday(
+    public ResponseEntity<?> deleteHoliday(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String holidayId) {
 
@@ -208,11 +227,13 @@ public ResponseEntity<?> deleteHoliday(
             description = "Checks whether a given date is an active holiday for the organization."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday check completed"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday check completed",
+                    content = @Content(schema = @Schema(implementation = HolidayCheckResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/check")
-public ResponseEntity<?> checkHoliday(
+    public ResponseEntity<?> checkHoliday(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
 
@@ -231,11 +252,13 @@ public ResponseEntity<?> checkHoliday(
             description = "Retrieves active holiday calendar for a given year."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday calendar retrieved successfully"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Holiday calendar retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = HolidayCalendarResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/calendar")
-public ResponseEntity<?> getHolidayCalendar(
+    public ResponseEntity<?> getHolidayCalendar(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) Integer year) {
 

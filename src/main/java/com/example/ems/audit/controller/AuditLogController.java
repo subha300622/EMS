@@ -213,6 +213,14 @@ public class AuditLogController {
 
     @GetMapping(value = "/employees/{employeeId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get Audit History for a Specific Employee")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee audit history retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = com.example.ems.audit.dto.AuditLogResponse.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires audit.read permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> getEmployeeAuditHistory(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable String employeeId) {
@@ -236,6 +244,12 @@ public class AuditLogController {
 
     @GetMapping(value = "/my-activity", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Get Current User Activity Audit Logs")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "My activity retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = com.example.ems.audit.dto.AuditLogResponse.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
     public ResponseEntity<?> getMyActivity(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(defaultValue = "0") int page,

@@ -375,6 +375,13 @@ public class LeaveController {
     }
 
     @Operation(summary = "Get Pending Leaves for Manager's Direct Reports")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending leave requests retrieved successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                array = @io.swagger.v3.oas.annotations.media.ArraySchema(schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = LeaveApprovalResponseDto.class)))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Employee profile not found")
+    })
     @PreAuthorize("hasAuthority('leave.team.read') or hasAuthority('leave.approve') or hasAuthority('leave.manage')")
     @GetMapping("/manager/pending")
     public ResponseEntity<?> getPendingLeavesForManager(

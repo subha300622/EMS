@@ -199,7 +199,8 @@ public ResponseEntity<?> getHistory(
 
         @Operation(summary = "Delete Department", description = "Deletes a department belonging to the authenticated organization.")
         @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department deleted successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department deleted successfully",
+                content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"id\": \"1\"}"))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
@@ -233,7 +234,8 @@ public ResponseEntity<?> deleteDepartment(
 
         @Operation(summary = "Toggle Department Status", description = "Deactivates or activates a department status in the authenticated organization.")
         @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department status updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Department status updated successfully",
+                content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"success\": true, \"message\": \"Department status updated successfully\", \"data\": {\"id\": \"1\", \"status\": \"Active\"}}"))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),

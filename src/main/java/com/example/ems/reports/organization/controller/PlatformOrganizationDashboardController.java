@@ -85,7 +85,9 @@ public class PlatformOrganizationDashboardController {
 
     @Operation(summary = "Get organization growth trend chart data")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Growth trend loaded successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Growth trend loaded successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"success\": true, \"message\": \"Growth trend loaded successfully\", \"data\": {\"organizations\": {\"labels\": [\"Jan\", \"Feb\", \"Mar\"], \"values\": [10, 25, 40]}}}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",

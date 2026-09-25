@@ -215,16 +215,16 @@ public ResponseEntity<?> updateAnnouncement(
         }
     }
 
-    // ── 5. DELETE ANNOUNCEMENT ────────────────────────────────────────────────
     @Operation(summary = "Delete Company Announcement")
     @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement deleted successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement deleted successfully",
+            content = @Content(schema = @Schema(example = "{\"message\": \"Announcement deleted successfully\"}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
     })
     @DeleteMapping("/{id}")
-public ResponseEntity<?> deleteAnnouncement(
+    public ResponseEntity<?> deleteAnnouncement(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @PathVariable Long id) {
         User currentUser = resolveUser(authHeader);
@@ -249,7 +249,8 @@ public ResponseEntity<?> deleteAnnouncement(
     // ── 6. LIKE ANNOUNCEMENT ──────────────────────────────────────────────────
     @Operation(summary = "Like Company Announcement")
     @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement liked successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Announcement liked successfully",
+            content = @Content(schema = @Schema(example = "{\"likes\": 5}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")

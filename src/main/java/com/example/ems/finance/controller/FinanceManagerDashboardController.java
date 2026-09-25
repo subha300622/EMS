@@ -10,6 +10,7 @@ import com.example.ems.finance.dto.manager.ManagerTeamMemberDto;
 import com.example.ems.finance.service.FinanceManagerDashboardService;
 import com.example.ems.security.service.PermissionCheckService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -79,6 +80,12 @@ public class FinanceManagerDashboardController {
             summary = "Get Team Overview",
             description = "Returns the list of direct reports and workforce finance metrics for the authenticated manager."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ManagerTeamMemberDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/team")
     public ResponseEntity<?> getTeam() {
         if (isNotAuthenticated()) {
@@ -94,6 +101,14 @@ public class FinanceManagerDashboardController {
             summary = "Get Team Member Details",
             description = "Returns finance and workforce details for a specific employee within the manager's reporting scope."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team member details retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = ManagerTeamMemberDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/team/{employeeId}")
     public ResponseEntity<?> getTeamMember(@PathVariable("employeeId") Long employeeId) {
         if (isNotAuthenticated()) {
@@ -114,6 +129,12 @@ public class FinanceManagerDashboardController {
             summary = "Get Pending Finance Actions",
             description = "Returns pending actionable counts (leave approvals, expense approvals) for the manager's team."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending actions retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = ManagerPendingActionDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/pending-actions")
     public ResponseEntity<?> getPendingActions() {
         if (isNotAuthenticated()) {
@@ -129,6 +150,12 @@ public class FinanceManagerDashboardController {
             summary = "Get Pending Expenses Awaiting Manager Approval",
             description = "Returns all expense claims in pending status for direct reports of the authenticated manager."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending expenses retrieved successfully",
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = FinanceExpenseListItem.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/expenses/pending")
     public ResponseEntity<?> getPendingExpenses() {
         if (isNotAuthenticated()) {
@@ -146,6 +173,16 @@ public class FinanceManagerDashboardController {
             summary = "Approve Team Member Expense Claim",
             description = "Approves a pending expense claim belonging to a member of the manager's reporting hierarchy."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Expense claim approved successfully",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/expenses/{expenseId}/approve")
     public ResponseEntity<?> approveExpense(
             @PathVariable("expenseId") Long expenseId,
@@ -171,6 +208,16 @@ public class FinanceManagerDashboardController {
             summary = "Reject Team Member Expense Claim",
             description = "Rejects a pending expense claim belonging to a member of the manager's reporting hierarchy."
     )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Expense claim rejected successfully",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Expense not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/expenses/{expenseId}/reject")
     public ResponseEntity<?> rejectExpense(
             @PathVariable("expenseId") Long expenseId,

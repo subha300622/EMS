@@ -179,7 +179,8 @@ public class DepartmentTrainingController {
 
     @Operation(summary = "Remove department training assignment")
     @ApiResponses({
-        @ApiResponse(responseCode = "200", description = "Training assignment removed successfully"),
+        @ApiResponse(responseCode = "200", description = "Training assignment removed successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Department scope removed and employee coverage re-evaluated successfully\"}"))),
         @ApiResponse(responseCode = "400", description = "Invalid request",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
         @ApiResponse(responseCode = "401", description = "Unauthorized",

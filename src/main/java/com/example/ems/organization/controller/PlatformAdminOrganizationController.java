@@ -210,7 +210,8 @@ public class PlatformAdminOrganizationController {
 
     @Operation(summary = "Delete Organization")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization deleted successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization deleted successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"success\": true, \"message\": \"Organization deleted successfully\"}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
             content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden",
@@ -238,7 +239,8 @@ public class PlatformAdminOrganizationController {
 
     @Operation(summary = "Suspend or Activate Organization")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization status updated successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization status updated successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"success\": true, \"message\": \"Organization status updated successfully\"}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid status requested",
             content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
@@ -281,7 +283,8 @@ public class PlatformAdminOrganizationController {
 
     @Operation(summary = "Update Subscription")
     @io.swagger.v3.oas.annotations.responses.ApiResponses({
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Subscription updated successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Subscription updated successfully",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"success\": true, \"message\": \"Subscription updated successfully\"}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
             content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = ErrorResponse.class))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",

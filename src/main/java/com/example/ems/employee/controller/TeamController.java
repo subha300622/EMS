@@ -170,7 +170,8 @@ public ResponseEntity<?> updateTeam(
     // 5. Delete Team
     @Operation(summary = "Delete Team", description = "Soft deletes a team if no active members exist. Fails with TEAM_HAS_ACTIVE_MEMBERS if active members remain.")
     @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team deleted successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Team deleted successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"success\": true, \"message\": \"Team deleted successfully\", \"data\": {\"teamId\": \"1\", \"status\": \"DELETED\"}}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Not Found")
@@ -386,7 +387,8 @@ public ResponseEntity<?> bulkAddMembers(
     // 12. Remove Employee from Team
     @Operation(summary = "Remove Employee from Team", description = "Removes an employee from a team (unless employee is current Team Lead).")
     @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee removed from team successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Employee removed from team successfully",
+            content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"success\": true, \"message\": \"Employee removed from team successfully\", \"data\": {\"teamId\": \"1\", \"employeeId\": \"2\", \"status\": \"REMOVED\"}}"))),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Bad Request"),
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
     })

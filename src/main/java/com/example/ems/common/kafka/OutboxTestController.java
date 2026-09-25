@@ -44,6 +44,13 @@ public class OutboxTestController {
     /**
      * Publishes a test notification created event to verify the outbox pipeline.
      */
+    @io.swagger.v3.oas.annotations.Operation(summary = "Publish Test Event to Outbox")
+    @io.swagger.v3.oas.annotations.responses.ApiResponses(value = {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Domain event published to transactional outbox",
+            content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "application/json",
+                schema = @io.swagger.v3.oas.annotations.media.Schema(example = "{\"success\": true, \"message\": \"Domain event published to transactional outbox\", \"data\": {\"eventId\": \"uuid-123\", \"eventType\": \"NOTIFICATION_CREATED\", \"aggregateId\": \"1\", \"correlationId\": \"corr-123\"}}"))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping("/outbox")
     @Transactional
     public ResponseEntity<?> publishTestEvent(@RequestBody(required = false) @Valid PublishTestEventRequest body) {
