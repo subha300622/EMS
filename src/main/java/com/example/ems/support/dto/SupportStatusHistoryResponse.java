@@ -1,10 +1,20 @@
 package com.example.ems.support.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Support Ticket Status Transition History")
 public class SupportStatusHistoryResponse {
 
+    @Schema(description = "Previous status", example = "NEW")
     private String fromStatus;
+
+    @Schema(description = "New status", example = "IN_PROGRESS")
     private String toStatus;
+
+    @Schema(description = "User who changed the status", example = "support.manager@company.com")
     private String changedBy;
+
+    @Schema(description = "Timestamp of change", example = "2026-09-25T10:15:00Z")
     private String changedAt;
 
     public SupportStatusHistoryResponse() {}

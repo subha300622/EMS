@@ -44,18 +44,17 @@ public class SupportDashboardController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Support Dashboard Summary", description = "Returns aggregated tenant-scoped support metrics")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Support dashboard summary retrieved successfully",
-                    content = @Content(schema = @Schema(implementation = SupportDashboardSummaryResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Support dashboard summary retrieved successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_VIEW or SUPPORT_TICKET_REPORT",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-    public ResponseEntity<?> getDashboardSummary() {
+    public ResponseEntity<ApiResponse<SupportDashboardSummaryResponse>> getDashboardSummary() {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requireAnyPermission(
                 PermissionRegistry.SUPPORT_TICKET_VIEW,

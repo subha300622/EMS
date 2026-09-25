@@ -43,16 +43,15 @@ public class SupportSlaController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get SLA Configuration", description = "Retrieves the organization-level SLA rules")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SLA configuration retrieved",
-                    content = @Content(schema = @Schema(implementation = SupportSlaConfigDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SLA configuration retrieved successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping
-    public ResponseEntity<?> getSlaConfig() {
+    public ResponseEntity<ApiResponse<SupportSlaConfigDto>> getSlaConfig() {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requireAnyPermission(
                 PermissionRegistry.SUPPORT_TICKET_SLA_MANAGE,
@@ -67,18 +66,19 @@ public class SupportSlaController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update SLA Configuration", description = "Updates organization-level SLA rules")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SLA configuration updated successfully",
-                    content = @Content(schema = @Schema(implementation = SupportSlaConfigDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "SLA configuration updated successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_SLA_MANAGE",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PutMapping
-    public ResponseEntity<?> updateSlaConfig(@Valid @RequestBody SupportSlaConfigDto req) {
+    public ResponseEntity<ApiResponse<SupportSlaConfigDto>> updateSlaConfig(@Valid @RequestBody SupportSlaConfigDto req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_SLA_MANAGE);
         SupportSlaConfigDto response = slaService.updateSlaConfig(req);
@@ -89,11 +89,18 @@ public class SupportSlaController {
     // 16. Escalation Rules (GET /api/v1/support/sla/escalations)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Escalation Rules", description = "Retrieves tiered escalation rules for the organization")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Escalation rules retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing permission",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/escalations")
-    public ResponseEntity<?> getEscalationRules() {
+    public ResponseEntity<ApiResponse<SupportEscalationRulesDto>> getEscalationRules() {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requireAnyPermission(
                 PermissionRegistry.SUPPORT_TICKET_SLA_MANAGE,
@@ -107,11 +114,20 @@ public class SupportSlaController {
     // 17. Update Escalation Rules (PUT /api/v1/support/sla/escalations)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update Escalation Rules", description = "Updates tiered escalation rules for the organization")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Escalation rules updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_SLA_MANAGE",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/escalations")
-    public ResponseEntity<?> updateEscalationRules(@Valid @RequestBody SupportEscalationRulesDto req) {
+    public ResponseEntity<ApiResponse<SupportEscalationRulesDto>> updateEscalationRules(@Valid @RequestBody SupportEscalationRulesDto req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_SLA_MANAGE);
         SupportEscalationRulesDto response = slaService.updateEscalationRules(req);

@@ -1,35 +1,69 @@
 package com.example.ems.support.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 
+@Schema(description = "Support Ticket Details Response")
 public class SupportTicketDetailResponse {
 
+    @Schema(description = "Ticket ID", example = "101")
     private Long id;
+
+    @Schema(description = "Ticket tracking number", example = "TICK-2026-0001")
     private String ticketNumber;
+
+    @Schema(description = "Summary subject of the ticket", example = "VPN connection fails intermittently")
     private String subject;
+
+    @Schema(description = "Detailed issue description", example = "Unable to connect to internal VPN since morning.")
     private String description;
+
+    @Schema(description = "Assigned Support Category")
     private CategoryInfo category;
+
+    @Schema(description = "Priority level", example = "HIGH")
     private String priority;
+
+    @Schema(description = "Estimated hours to resolve", example = "4.0")
     private Double estimatedHours;
+
+    @Schema(description = "Actual hours logged", example = "1.5")
     private Double actualHours;
+
+    @Schema(description = "SLA resolution time in hours", example = "8")
     private Integer slaHours;
 
+    @Schema(description = "SLA Due Date", example = "2026-09-30T18:00:00Z")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private String dueDate;
 
+    @Schema(description = "Assigned support engineer")
     private UserInfo assignedTo;
+
+    @Schema(description = "Current ticket status", example = "IN_PROGRESS")
     private String status;
+
+    @Schema(description = "Whether the ticket has breached its SLA", example = "false")
     private Boolean isOverdue;
+
+    @Schema(description = "Whether the ticket is escalated", example = "false")
     private Boolean isEscalated;
+
+    @Schema(description = "Current escalation level (0 if unescalated)", example = "0")
     private Integer escalationLevel;
 
+    @Schema(description = "Creation timestamp", example = "2026-09-25T10:00:00Z")
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ssXXX")
     private String createdAt;
 
     public SupportTicketDetailResponse() {}
 
+    @Schema(description = "Category Information")
     public static class CategoryInfo {
+        @Schema(description = "Category ID", example = "1")
         private Long id;
+
+        @Schema(description = "Category Name", example = "IT & Infrastructure")
         private String name;
 
         public CategoryInfo() {}
@@ -44,8 +78,12 @@ public class SupportTicketDetailResponse {
         public void setName(String name) { this.name = name; }
     }
 
+    @Schema(description = "User Information")
     public static class UserInfo {
+        @Schema(description = "User ID", example = "42")
         private Long id;
+
+        @Schema(description = "User Full Name", example = "Jane Doe")
         private String name;
 
         public UserInfo() {}

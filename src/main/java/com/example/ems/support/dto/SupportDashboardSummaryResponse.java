@@ -1,20 +1,36 @@
 package com.example.ems.support.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 public class SupportDashboardSummaryResponse {
 
+    @Schema(description = "Total support tickets", example = "6")
     private long total;
 
+    @Schema(description = "New tickets count", example = "6")
     @JsonProperty("new")
     private long newCount;
 
+    @Schema(description = "In-progress tickets count", example = "0")
     private long inProgress;
+
+    @Schema(description = "Resolved tickets count", example = "0")
     private long resolved;
+
+    @Schema(description = "Closed tickets count", example = "0")
     private long closed;
+
+    @Schema(description = "Overdue tickets count", example = "0")
     private long overdue;
+
+    @Schema(description = "Escalated tickets count", example = "1")
     private long escalated;
+
+    @Schema(description = "Critical priority tickets count", example = "1")
     private long critical;
+
+    @Schema(description = "High priority tickets count", example = "3")
     private long high;
 
     public SupportDashboardSummaryResponse() {}

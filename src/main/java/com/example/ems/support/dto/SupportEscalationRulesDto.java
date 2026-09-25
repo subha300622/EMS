@@ -1,9 +1,11 @@
 package com.example.ems.support.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 public class SupportEscalationRulesDto {
 
+    @Schema(description = "List of tiered escalation rules")
     private List<EscalationRuleItem> rules;
 
     public SupportEscalationRulesDto() {}
@@ -13,8 +15,13 @@ public class SupportEscalationRulesDto {
     }
 
     public static class EscalationRuleItem {
+        @Schema(description = "Escalation tier level", example = "1")
         private Integer level;
+
+        @Schema(description = "Trigger threshold in minutes after overdue", example = "30")
         private Integer triggerAfterMinutes;
+
+        @Schema(description = "Escalation action taken", example = "NOTIFY_MANAGER")
         private String action;
 
         public EscalationRuleItem() {}

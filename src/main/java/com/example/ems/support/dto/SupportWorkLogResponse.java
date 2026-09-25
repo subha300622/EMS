@@ -1,14 +1,32 @@
 package com.example.ems.support.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Support Ticket Work Log Response")
 public class SupportWorkLogResponse {
 
+    @Schema(description = "Work log ID", example = "10")
     private Long id;
+
+    @Schema(description = "Engineer ID", example = "42")
     private Long engineerId;
+
+    @Schema(description = "Engineer Name", example = "Jane Doe")
     private String engineerName;
+
+    @Schema(description = "Work session start timestamp", example = "2026-09-25T10:00:00Z")
     private String startedAt;
+
+    @Schema(description = "Work session end timestamp", example = "2026-09-25T11:30:00Z")
     private String endedAt;
+
+    @Schema(description = "Actual hours logged", example = "1.5")
     private Double actualHours;
+
+    @Schema(description = "Work session description", example = "Analyzed network route diagnostics.")
     private String description;
+
+    @Schema(description = "Log creation timestamp", example = "2026-09-25T11:30:00Z")
     private String createdAt;
 
     public SupportWorkLogResponse() {}

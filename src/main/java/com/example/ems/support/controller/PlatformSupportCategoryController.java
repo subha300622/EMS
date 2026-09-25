@@ -425,31 +425,49 @@ public class PlatformSupportCategoryController {
     // ─────────────────────────────────────────────────────────────────────────────
     @GetMapping("/stats")
     @Operation(summary = "Get Category Dashboard Statistics")
-    public ResponseEntity<?> getStats(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Category stats retrieved successfully"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<ApiResponse<PlatformCategoryStatsResponse>> getStats(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User user = resolveUser(authHeader);
-        if (user == null) return unauthorizedResponse();
-        if (!checkPermission(user, "support.category.view")) return forbiddenResponse("support.category.view");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(user, "support.category.view")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Requires 'support.category.view' permission.", "AUTH_002"));
+        }
 
         try {
             PlatformCategoryStatsResponse stats = categoryService.getDashboardStats();
             return ResponseEntity.ok(ApiResponse.success("Category stats retrieved successfully", stats));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "CAT_001"));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage(), "CAT_001"));
         }
     }
 
     @GetMapping("/analytics")
     @Operation(summary = "Category Usage Analytics")
-    public ResponseEntity<?> getAnalytics(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+    @ApiResponses({
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Category usage analytics retrieved"),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<ApiResponse<List<PlatformCategoryAnalyticsResponse>>> getAnalytics(@RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
         User user = resolveUser(authHeader);
-        if (user == null) return unauthorizedResponse();
-        if (!checkPermission(user, "support.category.view")) return forbiddenResponse("support.category.view");
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ApiResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(user, "support.category.view")) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(ApiResponse.error("Access Denied: Requires 'support.category.view' permission.", "AUTH_002"));
+        }
 
         try {
             List<PlatformCategoryAnalyticsResponse> analytics = categoryService.getAnalytics();
             return ResponseEntity.ok(ApiResponse.success("Category usage analytics retrieved", analytics));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "CAT_009"));
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage(), "CAT_009"));
         }
     }
 }

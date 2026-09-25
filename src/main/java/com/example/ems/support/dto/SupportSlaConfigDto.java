@@ -1,10 +1,14 @@
 package com.example.ems.support.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
 public class SupportSlaConfigDto {
 
+    @Schema(description = "Whether SLA evaluation is enabled", example = "true")
     private boolean enabled = true;
+
+    @Schema(description = "List of SLA rules by priority")
     private List<SlaRuleItem> rules;
 
     public SupportSlaConfigDto() {}
@@ -15,7 +19,10 @@ public class SupportSlaConfigDto {
     }
 
     public static class SlaRuleItem {
+        @Schema(description = "Ticket priority", example = "CRITICAL")
         private String priority;
+
+        @Schema(description = "SLA resolution deadline in hours", example = "2")
         private Integer slaHours;
 
         public SlaRuleItem() {}

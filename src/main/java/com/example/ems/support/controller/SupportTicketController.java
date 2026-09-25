@@ -48,16 +48,16 @@ public class SupportTicketController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Create Support Ticket", description = "Creates a new support ticket in NEW status")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Ticket created successfully", content = @Content(schema = @Schema(implementation = SupportTicketDetailResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Ticket created successfully"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing SUPPORT_TICKET_CREATE permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @PostMapping
-    public ResponseEntity<?> createTicket(@Valid @RequestBody CreateSupportTicketRequest req) {
+    public ResponseEntity<ApiResponse<SupportTicketDetailResponse>> createTicket(@Valid @RequestBody CreateSupportTicketRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_CREATE);
         SupportTicketDetailResponse response = ticketService.createTicket(req);
@@ -70,14 +70,15 @@ public class SupportTicketController {
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Support Ticket Details", description = "Returns support ticket details by ID with SLA, assignment and status")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket retrieved successfully", content = @Content(schema = @Schema(implementation = SupportTicketDetailResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
     @GetMapping("/{ticketId}")
-    public ResponseEntity<?> getTicketById(@PathVariable("ticketId") Long ticketId) {
+    public ResponseEntity<ApiResponse<SupportTicketDetailResponse>> getTicketById(@PathVariable("ticketId") Long ticketId) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         SupportTicketDetailResponse response = ticketService.getTicketById(ticketId);
@@ -88,8 +89,13 @@ public class SupportTicketController {
     // 3. Ticket List / Filters (GET /api/v1/support/tickets)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Filtered Tickets", description = "Returns paginated list of tickets filtered by status, priority, timeFilter, and specialFilter")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Tickets retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid pagination parameters", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
-    public ResponseEntity<?> getTickets(
+    public ResponseEntity<ApiResponse<Page<SupportTicketDetailResponse>>> getTickets(
             @RequestParam(name = "status", required = false) String status,
             @RequestParam(name = "priority", required = false) String priority,
             @RequestParam(name = "timeFilter", required = false) String timeFilter,
@@ -99,17 +105,17 @@ public class SupportTicketController {
             @RequestParam(name = "sort", defaultValue = "dueDate,asc") String sort) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
 
         if (page < 0) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("Page index must not be less than zero", "PAGE_INVALID"));
+                    .body(ApiResponse.error("Page index must not be less than zero", "PAGE_INVALID"));
         }
         if (size < 1 || size > 100) {
             return ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("Page size must be between 1 and 100", "SIZE_INVALID"));
+                    .body(ApiResponse.error("Page size must be between 1 and 100", "SIZE_INVALID"));
         }
 
         Sort sortObj = Sort.by(Sort.Direction.ASC, "dueDate");
@@ -133,13 +139,20 @@ public class SupportTicketController {
     // 4, 5, 6. Manager Review (POST /api/v1/support/tickets/{ticketId}/review)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Manager Review Ticket", description = "Accepts, rejects, or marks ticket as duplicate")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket reviewed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing review permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{ticketId}/review")
-    public ResponseEntity<?> reviewTicket(
+    public ResponseEntity<ApiResponse<SupportTicketDetailResponse>> reviewTicket(
             @PathVariable("ticketId") Long ticketId,
             @Valid @RequestBody SupportTicketReviewRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requireAnyPermission(
                 PermissionRegistry.SUPPORT_TICKET_REVIEW,
@@ -150,17 +163,23 @@ public class SupportTicketController {
     }
 
     // ─────────────────────────────────────────────────────────────────────────────
-    // 7, 8. Assign / Reassign Engineer (PUT
-    // /api/v1/support/tickets/{ticketId}/assignment)
+    // 7, 8. Assign / Reassign Engineer (PUT /api/v1/support/tickets/{ticketId}/assignment)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Assign or Reassign Engineer", description = "Assigns an engineer to the ticket or reassigns to another engineer with a reason")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket assigned successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing assignment permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PutMapping("/{ticketId}/assignment")
-    public ResponseEntity<?> assignTicket(
+    public ResponseEntity<ApiResponse<SupportTicketDetailResponse>> assignTicket(
             @PathVariable("ticketId") Long ticketId,
             @Valid @RequestBody SupportTicketAssignRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requireAnyPermission(
                 PermissionRegistry.SUPPORT_TICKET_ASSIGN,
@@ -174,13 +193,20 @@ public class SupportTicketController {
     // 9. Update Priority (PATCH /api/v1/support/tickets/{ticketId}/priority)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Update Ticket Priority", description = "Updates ticket priority and recalculates remaining SLA without resetting elapsed time clock")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket priority updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing priority update permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/{ticketId}/priority")
-    public ResponseEntity<?> updatePriority(
+    public ResponseEntity<ApiResponse<SupportTicketDetailResponse>> updatePriority(
             @PathVariable("ticketId") Long ticketId,
             @Valid @RequestBody SupportTicketPriorityUpdateRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_PRIORITY_UPDATE);
         SupportTicketDetailResponse response = ticketService.updatePriority(ticketId, req);
@@ -192,13 +218,19 @@ public class SupportTicketController {
     // 10. Comments (POST & GET /api/v1/support/tickets/{ticketId}/comments)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Add Comment", description = "Adds a public or internal comment to a support ticket")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Comment added successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{ticketId}/comments")
-    public ResponseEntity<?> addComment(
+    public ResponseEntity<ApiResponse<SupportTicketCommentResponse>> addComment(
             @PathVariable("ticketId") Long ticketId,
             @Valid @RequestBody SupportTicketCommentRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         SupportTicketCommentResponse response = ticketService.addComment(ticketId, req);
@@ -207,11 +239,16 @@ public class SupportTicketController {
     }
 
     @Operation(summary = "Get Comments", description = "Retrieves all comments associated with the ticket")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Comments retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{ticketId}/comments")
-    public ResponseEntity<?> getComments(@PathVariable("ticketId") Long ticketId) {
+    public ResponseEntity<ApiResponse<List<SupportTicketCommentResponse>>> getComments(@PathVariable("ticketId") Long ticketId) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         List<SupportTicketCommentResponse> response = ticketService.getComments(ticketId);
@@ -223,13 +260,19 @@ public class SupportTicketController {
     // 11. Work Logs (POST & GET /api/v1/support/tickets/{ticketId}/work-logs)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Add Work Log", description = "Logs time spent by an engineer on a ticket and updates ticket total actual hours")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Work log added successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{ticketId}/work-logs")
-    public ResponseEntity<?> addWorkLog(
+    public ResponseEntity<ApiResponse<SupportWorkLogResponse>> addWorkLog(
             @PathVariable("ticketId") Long ticketId,
             @Valid @RequestBody SupportWorkLogRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         SupportWorkLogResponse response = ticketService.addWorkLog(ticketId, req);
@@ -238,11 +281,16 @@ public class SupportTicketController {
     }
 
     @Operation(summary = "Get Work Logs", description = "Returns the list of work logs recorded for the ticket")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Work logs retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{ticketId}/work-logs")
-    public ResponseEntity<?> getWorkLogs(@PathVariable("ticketId") Long ticketId) {
+    public ResponseEntity<ApiResponse<List<SupportWorkLogResponse>>> getWorkLogs(@PathVariable("ticketId") Long ticketId) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         List<SupportWorkLogResponse> response = ticketService.getWorkLogs(ticketId);
@@ -254,13 +302,20 @@ public class SupportTicketController {
     // 12. Resolve Ticket (POST /api/v1/support/tickets/{ticketId}/resolve)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Resolve Ticket", description = "Marks an IN_PROGRESS ticket as RESOLVED")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket resolved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing resolve permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{ticketId}/resolve")
-    public ResponseEntity<?> resolveTicket(
+    public ResponseEntity<ApiResponse<SupportTicketDetailResponse>> resolveTicket(
             @PathVariable("ticketId") Long ticketId,
             @Valid @RequestBody SupportTicketResolveRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_RESOLVE);
         SupportTicketDetailResponse response = ticketService.resolveTicket(ticketId, req);
@@ -272,13 +327,20 @@ public class SupportTicketController {
     // 13. Close Ticket (POST /api/v1/support/tickets/{ticketId}/close)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Close Ticket", description = "Closes a RESOLVED ticket with optional closure comment")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket closed successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing close permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{ticketId}/close")
-    public ResponseEntity<?> closeTicket(
+    public ResponseEntity<ApiResponse<SupportTicketDetailResponse>> closeTicket(
             @PathVariable("ticketId") Long ticketId,
             @RequestBody(required = false) SupportTicketCloseRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_CLOSE);
         SupportTicketDetailResponse response = ticketService.closeTicket(ticketId, req);
@@ -290,13 +352,20 @@ public class SupportTicketController {
     // 18. Manual Escalation (POST /api/v1/support/tickets/{ticketId}/escalate)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Manual Ticket Escalation", description = "Manually escalates a ticket, incrementing escalation level")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Ticket escalated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Missing escalate permission", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PostMapping("/{ticketId}/escalate")
-    public ResponseEntity<?> manualEscalate(
+    public ResponseEntity<ApiResponse<SupportTicketDetailResponse>> manualEscalate(
             @PathVariable("ticketId") Long ticketId,
             @Valid @RequestBody SupportTicketEscalateRequest req) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_ESCALATE);
         SupportTicketDetailResponse response = ticketService.manualEscalate(ticketId, req);
@@ -308,11 +377,16 @@ public class SupportTicketController {
     // 20. Ticket Status History (GET /api/v1/support/tickets/{ticketId}/history)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Ticket Status History", description = "Retrieves status transition history for the ticket")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Status history retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{ticketId}/history")
-    public ResponseEntity<?> getStatusHistory(@PathVariable("ticketId") Long ticketId) {
+    public ResponseEntity<ApiResponse<List<SupportStatusHistoryResponse>>> getStatusHistory(@PathVariable("ticketId") Long ticketId) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         List<SupportStatusHistoryResponse> response = ticketService.getStatusHistory(ticketId);
@@ -324,11 +398,16 @@ public class SupportTicketController {
     // 21. Escalation History (GET /api/v1/support/tickets/{ticketId}/escalations)
     // ─────────────────────────────────────────────────────────────────────────────
     @Operation(summary = "Get Ticket Escalation History", description = "Retrieves escalation events and actions for the ticket")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Escalation history retrieved successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Ticket not found", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{ticketId}/escalations")
-    public ResponseEntity<?> getEscalationHistory(@PathVariable("ticketId") Long ticketId) {
+    public ResponseEntity<ApiResponse<List<SupportEscalationHistoryResponse>>> getEscalationHistory(@PathVariable("ticketId") Long ticketId) {
         if (isNotAuthenticated()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Full authentication is required.", "AUTH_014"));
+                    .body(ApiResponse.error("Full authentication is required.", "AUTH_014"));
         }
         permissionCheckService.requirePermission(PermissionRegistry.SUPPORT_TICKET_VIEW);
         List<SupportEscalationHistoryResponse> response = ticketService.getEscalationHistory(ticketId);

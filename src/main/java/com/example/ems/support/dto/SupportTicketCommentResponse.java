@@ -1,11 +1,23 @@
 package com.example.ems.support.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Support Ticket Comment Response")
 public class SupportTicketCommentResponse {
 
+    @Schema(description = "Comment ID", example = "1")
     private Long id;
+
+    @Schema(description = "Comment text", example = "Investigating router configuration logs.")
     private String comment;
+
+    @Schema(description = "Whether comment is internal to support team", example = "false")
     private Boolean isInternal;
+
+    @Schema(description = "Author name/email", example = "support.agent@company.com")
     private String createdBy;
+
+    @Schema(description = "Creation timestamp", example = "2026-09-25T11:00:00Z")
     private String createdAt;
 
     public SupportTicketCommentResponse() {}
