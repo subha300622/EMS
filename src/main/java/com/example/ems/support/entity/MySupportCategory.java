@@ -16,6 +16,7 @@ public class MySupportCategory {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Organization organization;
 
     @Column(nullable = false, unique = true)
@@ -45,14 +46,30 @@ public class MySupportCategory {
     @Column(name = "updated_by")
     private String updatedBy;
 
-    @Column(name = "created_at", insertable = false, updatable = false)
+    @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
     @Column(name = "deleted_at")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private LocalDateTime deletedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+        if (updatedAt == null) {
+            updatedAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
 
     public MySupportCategory() {}
 

@@ -1,19 +1,30 @@
 package com.example.ems.support.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 
-@Schema(description = "Platform Category Dropdown Option")
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Schema(description = "Support Category Dropdown Option")
 public class PlatformCategoryOption {
-    @Schema(description = "Category ID", example = "1")
+
+    @Schema(description = "Category ID", example = "12")
     private Long id;
-    @Schema(description = "Category Name", example = "Technical Support")
+
+    @Schema(description = "Category Name", example = "Payroll Support")
     private String name;
-    @Schema(description = "Hex Color", example = "#3B82F6")
+
+    @Schema(hidden = true)
     private String color;
-    @Schema(description = "Icon identifier", example = "settings")
+
+    @Schema(hidden = true)
     private String icon;
 
     public PlatformCategoryOption() {}
+
+    public PlatformCategoryOption(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
 
     public PlatformCategoryOption(Long id, String name, String color, String icon) {
         this.id = id;

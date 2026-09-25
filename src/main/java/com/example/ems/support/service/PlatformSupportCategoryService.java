@@ -108,16 +108,19 @@ public class PlatformSupportCategoryService {
     public MySupportCategory createCategory(PlatformCategoryRequest req, String adminEmail) {
         validateUniqueness(req.getName(), null);
 
+        LocalDateTime now = LocalDateTime.now();
         MySupportCategory cat = new MySupportCategory();
         cat.setName(req.getName());
         cat.setDescription(req.getDescription());
-        cat.setIcon(req.getIcon());
-        cat.setColor(req.getColor());
         cat.setCreatedBy(adminEmail);
         cat.setUpdatedBy(adminEmail);
-        cat.setUpdatedAt(LocalDateTime.now());
+        cat.setCreatedAt(now);
+        cat.setUpdatedAt(now);
+        cat.setStatus(CategoryStatus.ACTIVE);
+        cat.setIsDefault(false);
+        cat.setIsSystem(false);
 
-        if (req.getStatus() != null) {
+        if (req.getStatus() != null && !req.getStatus().isBlank()) {
             cat.setStatus(CategoryStatus.valueOf(req.getStatus().toUpperCase()));
         }
 
@@ -135,14 +138,9 @@ public class PlatformSupportCategoryService {
 
         cat.setName(req.getName());
         cat.setDescription(req.getDescription());
-        cat.setIcon(req.getIcon());
-        cat.setColor(req.getColor());
+        // status, displayOrder, isDefault, and isSystem are not accepted in the update request
         cat.setUpdatedBy(adminEmail);
         cat.setUpdatedAt(LocalDateTime.now());
-
-        if (req.getStatus() != null) {
-            cat.setStatus(CategoryStatus.valueOf(req.getStatus().toUpperCase()));
-        }
 
         return categoryRepository.save(cat);
     }
@@ -241,7 +239,7 @@ public class PlatformSupportCategoryService {
         return categoryRepository.findAll().stream()
                 .filter(c -> c.getStatus() == CategoryStatus.ACTIVE)
                 .sorted(Comparator.comparing(MySupportCategory::getDisplayOrder, Comparator.nullsLast(Integer::compareTo)))
-                .map(c -> new PlatformCategoryOption(c.getId(), c.getName(), c.getColor(), c.getIcon()))
+                .map(c -> new PlatformCategoryOption(c.getId(), c.getName()))
                 .collect(Collectors.toList());
     }
 

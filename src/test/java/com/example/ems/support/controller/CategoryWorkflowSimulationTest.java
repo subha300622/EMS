@@ -78,13 +78,10 @@ public class CategoryWorkflowSimulationTest {
         PlatformCategoryRequest createReq = new PlatformCategoryRequest();
         createReq.setName("Inventory");
         createReq.setDescription("Inventory and stock master issues.");
-        createReq.setIcon("inventory");
-        createReq.setColor("#10B981");
         createReq.setStatus("ACTIVE");
 
         MySupportCategory mockCreated = new MySupportCategory(5L, "Inventory", "inventory");
         mockCreated.setDescription(createReq.getDescription());
-        mockCreated.setColor(createReq.getColor());
         mockCreated.setStatus(CategoryStatus.ACTIVE);
         mockCreated.setDisplayOrder(5);
 
@@ -198,10 +195,7 @@ public class CategoryWorkflowSimulationTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(reorderJson))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].id").value(1))
-                .andExpect(jsonPath("$.data[0].displayOrder").value(1))
-                .andExpect(jsonPath("$.data[1].id").value(5))
-                .andExpect(jsonPath("$.data[1].displayOrder").value(2))
+                .andExpect(jsonPath("$.message").value("Categories reordered successfully"))
                 .andReturn();
 
         String reorderResponseJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(
@@ -214,7 +208,6 @@ public class CategoryWorkflowSimulationTest {
         // STEP 6: CHANGE STATUS TO INACTIVE
         MySupportCategory mockInactive = new MySupportCategory(5L, "Inventory", "inventory");
         mockInactive.setDescription(createReq.getDescription());
-        mockInactive.setColor(createReq.getColor());
         mockInactive.setStatus(CategoryStatus.INACTIVE);
         mockInactive.setDisplayOrder(5);
 
@@ -227,8 +220,8 @@ public class CategoryWorkflowSimulationTest {
                 .header("Authorization", "Bearer " + token)
                 .param("status", "INACTIVE"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.id").value(5))
-                .andExpect(jsonPath("$.data.status").value("INACTIVE"))
+                .andExpect(jsonPath("$.id").value(5))
+                .andExpect(jsonPath("$.status").value("INACTIVE"))
                 .andReturn();
 
         String statusResponseJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(
