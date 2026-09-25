@@ -22,4 +22,10 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     long countByTeamIdAndStatus(Long teamId, String status);
 
     Optional<TeamMember> findByTeamIdAndIsTeamLeadTrueAndStatus(Long teamId, String status);
+
+    List<TeamMember> findByTeamIdInAndStatus(java.util.Collection<Long> teamIds, String status);
+
+    List<TeamMember> findByTeamIdIn(java.util.Collection<Long> teamIds);
+
+    boolean existsByTeamIdInAndEmployeeIdAndStatus(java.util.Collection<Long> teamIds, Long employeeId, String status);
 }

@@ -25,4 +25,8 @@ public interface TeamRepository extends JpaRepository<Team, Long>, JpaSpecificat
     List<Team> findByDepartmentIdAndOrganizationIdAndDeletedFalse(Long departmentId, Long organizationId);
 
     List<Team> findByOrganizationIdAndDeletedFalse(Long organizationId);
+
+    List<Team> findByTeamLeadIdAndOrganizationIdAndDeletedFalse(Long teamLeadId, Long organizationId);
+
+    List<Team> findByTeamLeadIdAndDeletedFalse(Long teamLeadId);
 }

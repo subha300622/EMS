@@ -77,6 +77,12 @@ public final class PermissionRegistry {
         public static final String EMPLOYEE_COMPENSATION_READ = "employee.compensation.read";
         public static final String EMPLOYEE_ACTION_CENTER_READ = "employee.action-center.read";
 
+        // Team Leader Dashboard
+        public static final String TEAM_DASHBOARD_READ = "team.dashboard.read";
+        public static final String TEAM_DASHBOARD_VIEW = "team.dashboard.view";
+        public static final String TEAM_MEMBER_READ = "team.member.read";
+        public static final String TEAM_LEAVE_RECOMMEND = "team.leave.recommend";
+
         // Performance Management
         public static final String PERFORMANCE_READ = "performance.read";
         public static final String PERFORMANCE_REVIEW = "performance.review";
@@ -137,6 +143,8 @@ public final class PermissionRegistry {
                         "SUPPORT_TICKET_CLOSE", "SUPPORT_TICKET_REPORT",
                         // Finance Manager
                         "finance.team.view", "finance.expense.approve", "finance.salary.view", "finance.payroll.view",
+                        // Team Leader Dashboard
+                        "team.dashboard.view", "team.dashboard.read", "team.member.read", "team.leave.recommend",
                         // Offboarding Management
                         "offboarding.request.read", "offboarding.analytics.read", "offboarding.template.read",
                         "offboarding.template.manage", "offboarding.request.create", "offboarding.request.approve",

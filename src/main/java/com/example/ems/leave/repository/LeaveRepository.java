@@ -22,6 +22,7 @@ public interface LeaveRepository extends JpaRepository<Leave, Long>, JpaSpecific
     List<Leave> findByEmployeeIdAndStatus(Long employeeId, String status);
     List<Leave> findByEmployeeIdAndLeaveTypeIdAndStatus(Long employeeId, Long leaveTypeId, String status);
     List<Leave> findByEmployeeIdInAndStatus(List<Long> employeeIds, String status);
+    List<Leave> findByEmployeeIdInAndStatusIn(java.util.Collection<Long> employeeIds, java.util.Collection<String> statuses);
 
     Optional<Leave> findByApprovalWorkflowInstanceId(String approvalWorkflowInstanceId);
 
