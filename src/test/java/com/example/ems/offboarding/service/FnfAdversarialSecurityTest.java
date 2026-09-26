@@ -34,6 +34,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -118,6 +119,8 @@ public class FnfAdversarialSecurityTest {
 
     @BeforeEach
     void setUp() {
+        SecurityContextHolder.clearContext();
+        TenantContext.clear();
         TenantContext.setCurrentTenant(10L);
 
         testOrg = new Organization();
@@ -220,6 +223,7 @@ public class FnfAdversarialSecurityTest {
     @AfterEach
     void tearDown() {
         TenantContext.clear();
+        SecurityContextHolder.clearContext();
     }
 
     private User createUser(Long id, String email, String empCode, String roleName) {

@@ -203,20 +203,20 @@ public class ExitAuthorizationService {
     }
 
     private boolean isPlatformAdmin(User user) {
-        if (hasAuthority("ROLE_PLATFORM_ADMIN") || hasAuthority("PLATFORM_ADMIN")) return true;
         if (user != null && user.getRole() != null) {
             String roleName = user.getRole().getName();
             return "PLATFORM_ADMIN".equalsIgnoreCase(roleName) || "ROLE_PLATFORM_ADMIN".equalsIgnoreCase(roleName);
         }
+        if (hasAuthority("ROLE_PLATFORM_ADMIN") || hasAuthority("PLATFORM_ADMIN")) return true;
         return false;
     }
 
     private boolean isSuperAdmin(User user) {
-        if (hasAuthority("ROLE_SUPER_ADMIN") || hasAuthority("SUPER_ADMIN")) return true;
         if (user != null && user.getRole() != null) {
             String roleName = user.getRole().getName();
             return "SUPER_ADMIN".equalsIgnoreCase(roleName) || "ROLE_SUPER_ADMIN".equalsIgnoreCase(roleName);
         }
+        if (hasAuthority("ROLE_SUPER_ADMIN") || hasAuthority("SUPER_ADMIN")) return true;
         return false;
     }
 
@@ -244,15 +244,7 @@ public class ExitAuthorizationService {
     private Set<String> collectAllAuthorities(User user) {
         Set<String> set = new HashSet<>();
 
-        // 1. From Spring Security context
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated()) {
-            for (GrantedAuthority ga : auth.getAuthorities()) {
-                set.add(ga.getAuthority().toUpperCase());
-            }
-        }
-
-        // 2. From User entity role & permissions
+        // 1. From User entity role & permissions if present
         if (user != null && user.getRole() != null) {
             Role role = user.getRole();
             if (role.getName() != null) {
@@ -272,6 +264,15 @@ public class ExitAuthorizationService {
                         set.add(p.getName().toUpperCase());
                     }
                 }
+            }
+            return set;
+        }
+
+        // 2. Fallback to Spring Security context only when user is null or has no role
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            for (GrantedAuthority ga : auth.getAuthorities()) {
+                set.add(ga.getAuthority().toUpperCase());
             }
         }
 
