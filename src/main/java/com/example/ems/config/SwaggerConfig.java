@@ -114,7 +114,11 @@ public class SwaggerConfig {
                                                 new Tag().name("Full & Final Settlement (F&F)").description(
                                                                 "F&F Calculation Engine, Approvals, Payment Release & Statement APIs."),
                                                 new Tag().name("F&F Settlement Reports").description(
-                                                                "Financial and Operational Reporting for Full & Final Settlements.")));
+                                                                "Financial and Operational Reporting for Full & Final Settlements."),
+                                                new Tag().name("Public Maintenance").description(
+                                                                "Public endpoint to query platform maintenance status."),
+                                                new Tag().name("Platform Maintenance").description(
+                                                                "Global Platform Admin Maintenance Mode Management APIs.")));
         }
 
         private OpenApiCustomizer filterByTagsCustomizer(Set<String> allowedTags, List<String> excludes,
@@ -350,13 +354,15 @@ public class SwaggerConfig {
         public GroupedOpenApi securityAdminApi() {
                 return GroupedOpenApi.builder()
                                 .group("Security & Administration")
-                                .pathsToMatch("/api/v1/**")
+                                .pathsToMatch("/api/v1/**", "/api/platform/**")
                                 .addOpenApiCustomizer(filterByTagsCustomizer(Set.of(
                                                 "Authentication & Security",
                                                 "Audit & Compliance",
                                                 "Permission Management",
                                                 "User Management",
-                                                "Approval Center"), null, false))
+                                                "Approval Center",
+                                                "Public Maintenance",
+                                                "Platform Maintenance"), null, false))
                                 .build();
         }
 
@@ -386,7 +392,8 @@ public class SwaggerConfig {
                                                 }
                                                 boolean hasOrgIdParam = operation.getParameters() != null && operation.getParameters().stream()
                                                         .anyMatch(p -> "X-Organization-Id".equalsIgnoreCase(p.getName()) || "organizationId".equalsIgnoreCase(p.getName()));
-                                                if (!hasOrgIdParam) {
+                                                boolean isPublic = operation.getTags() != null && operation.getTags().contains("Public Maintenance");
+                                                if (!hasOrgIdParam && !isPublic) {
                                                         operation.addParametersItem(new HeaderParameter()
                                                                 .name("X-Organization-Id")
                                                                 .description("Organization ID header (e.g. 9645). Mandatory for POST, PUT, DELETE, and PATCH operations.")

@@ -41,6 +41,8 @@ public final class PermissionRegistry {
         public static final String PLATFORM_DASHBOARD_SUBSCRIPTION_VIEW = "platform.dashboard.subscription.view";
         public static final String PLATFORM_REPORTS_SUBSCRIPTION_VIEW = "platform.reports.subscription.view";
         public static final String PLATFORM_REPORTS_SUBSCRIPTION_EXPORT = "platform.reports.subscription.export";
+        public static final String PLATFORM_MAINTENANCE_VIEW = "platform.maintenance.view";
+        public static final String PLATFORM_MAINTENANCE_MANAGE = "platform.maintenance.manage";
 
         // Platform Revenue
         public static final String PLATFORM_REVENUE_DASHBOARD_VIEW = "platform.revenue.dashboard.view";

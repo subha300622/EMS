@@ -100,4 +100,11 @@ public class RedisSessionCache implements SessionStore {
         // DB is the only authority for validation; cache does not validate
         return Optional.empty();
     }
+
+    @Override
+    public int revokeAllActiveSessions(java.time.LocalDateTime now) {
+        // Redis cache does not own session state; bulk revocation is handled by DatabaseSessionStore
+        return 0;
+    }
 }
+

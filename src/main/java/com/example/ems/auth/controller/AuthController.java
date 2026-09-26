@@ -123,6 +123,9 @@ public class AuthController {
     @Autowired
     private RoleService roleService;
 
+    @Autowired(required = false)
+    private com.example.ems.maintenance.service.MaintenanceService maintenanceService;
+
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
@@ -195,6 +198,22 @@ public class AuthController {
 
         // Role name for the token — defaults to EMPLOYEE if not yet upgraded
         String roleName = user.getRole() != null ? user.getRole().getName() : "EMPLOYEE";
+
+        // ── Maintenance Mode Check ───────────────────────────────
+        if (maintenanceService != null && maintenanceService.isMaintenanceActive()) {
+            boolean isPlatformAdmin = "PLATFORM_ADMIN".equalsIgnoreCase(roleName);
+            boolean allowAdmin = Boolean.TRUE.equals(maintenanceService.getCurrentConfig().getAllowAdminAccess());
+            if (!isPlatformAdmin || !allowAdmin) {
+                if (auditLogService != null) {
+                    auditLogService.failure(com.example.ems.audit.enums.AuditModule.AUTH,
+                            com.example.ems.audit.enums.AuditAction.LOGIN,
+                            "User", user.getUserId(), null, null,
+                            "Login blocked: Platform maintenance mode is active");
+                }
+                return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                        .body(maintenanceService.getBlockedResponse());
+            }
+        }
 
         if (user.getUserId() == null || user.getUserId().isBlank()) {
             user.setUserId("EMP" + String.format("%03d", user.getId()));

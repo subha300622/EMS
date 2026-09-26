@@ -71,7 +71,7 @@ public class PlatformOrganizationUserController {
     @Operation(summary = "List all users in the organization")
     public ResponseEntity<ApiResponse<List<User>>> getOrgUsers(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long orgId) {
+            @PathVariable("orgId") Long orgId) {
 
         User user = resolveUser(authHeader);
         if (user == null)
@@ -95,8 +95,8 @@ public class PlatformOrganizationUserController {
     @Operation(summary = "Get user details")
     public ResponseEntity<ApiResponse<User>> getOrgUserDetails(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long orgId,
-            @PathVariable Long userId) {
+            @PathVariable("orgId") Long orgId,
+            @PathVariable("userId") Long userId) {
 
         User user = resolveUser(authHeader);
         if (user == null)
@@ -128,8 +128,8 @@ public class PlatformOrganizationUserController {
     @Operation(summary = "Get user effective permissions")
     public ResponseEntity<ApiResponse<List<String>>> getOrgUserPermissions(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long orgId,
-            @PathVariable Long userId) {
+            @PathVariable("orgId") Long orgId,
+            @PathVariable("userId") Long userId) {
 
         User user = resolveUser(authHeader);
         if (user == null)
@@ -163,8 +163,8 @@ public class PlatformOrganizationUserController {
     @Operation(summary = "Override user's role assignment")
     public ResponseEntity<ApiResponse<User>> overrideUserRole(
             @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
-            @PathVariable Long orgId,
-            @PathVariable Long userId,
+            @PathVariable("orgId") Long orgId,
+            @PathVariable("userId") Long userId,
             @RequestBody OverrideUserRoleRequest req,
             HttpServletRequest servletRequest) {
 

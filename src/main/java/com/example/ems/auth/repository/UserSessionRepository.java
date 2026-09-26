@@ -16,4 +16,8 @@ public interface UserSessionRepository extends JpaRepository<UserSession, String
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<UserSession> findBySessionIdAndStatusAndSessionVersionAndSessionEpoch(String sessionId, String status, int sessionVersion, long sessionEpoch);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE UserSession s SET s.isRevoked = true, s.status = 'REVOKED', s.revokedAt = :now WHERE s.isRevoked = false")
+    int revokeAllActiveSessions(@org.springframework.data.repository.query.Param("now") java.time.LocalDateTime now);
 }

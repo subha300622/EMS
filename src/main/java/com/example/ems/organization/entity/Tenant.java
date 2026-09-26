@@ -1,6 +1,7 @@
 package com.example.ems.organization.entity;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.time.Instant;
 
 @Entity
@@ -13,6 +14,7 @@ public class Tenant {
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false)
+    @JsonIgnore
     private Organization organization;
 
     @Column(unique = true, nullable = false)

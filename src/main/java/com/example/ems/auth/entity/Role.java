@@ -2,6 +2,7 @@ package com.example.ems.auth.entity;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.HashSet;
 import java.util.Set;
 import com.example.ems.organization.entity.Organization;
@@ -33,6 +34,7 @@ public class Role {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "subscriptions", "tenant", "address", "settings", "activeSubscription"})
     private Organization organization;
 
     @Column(name = "is_platform_template", nullable = false)

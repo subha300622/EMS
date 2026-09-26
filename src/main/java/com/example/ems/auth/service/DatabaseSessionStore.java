@@ -5,6 +5,7 @@ import com.example.ems.auth.repository.UserSessionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,4 +44,10 @@ public class DatabaseSessionStore implements SessionStore {
     public Optional<UserSession> findBySessionIdAndStatusAndSessionVersionAndSessionEpoch(String sessionId, String status, int sessionVersion, long sessionEpoch) {
         return userSessionRepository.findBySessionIdAndStatusAndSessionVersionAndSessionEpoch(sessionId, status, sessionVersion, sessionEpoch);
     }
+
+    @Override
+    public int revokeAllActiveSessions(LocalDateTime now) {
+        return userSessionRepository.revokeAllActiveSessions(now);
+    }
 }
+

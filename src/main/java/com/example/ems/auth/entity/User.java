@@ -2,6 +2,7 @@ package com.example.ems.auth.entity;
 
 import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.example.ems.organization.entity.Organization;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -53,6 +54,7 @@ public class User {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", insertable = false, updatable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "subscriptions", "tenant", "address", "settings", "activeSubscription"})
     private Organization organization;
 
     @Column(name = "department_id")
@@ -100,6 +102,12 @@ public class User {
         }
         if (this.workEmail != null) {
             this.workEmail = this.workEmail.trim().toLowerCase();
+        }
+        if ("PLATFORM_ADMIN".equalsIgnoreCase(this.requestedRole)
+                || (this.role != null && "PLATFORM_ADMIN".equalsIgnoreCase(this.role.getName()))) {
+            this.organizationId = null;
+            this.organization = null;
+            this.organizationName = null;
         }
     }
 

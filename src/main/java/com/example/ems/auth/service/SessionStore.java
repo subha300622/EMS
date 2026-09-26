@@ -1,6 +1,7 @@
 package com.example.ems.auth.service;
 
 import com.example.ems.auth.entity.UserSession;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -11,4 +12,13 @@ public interface SessionStore {
     List<UserSession> findByUserIdAndIsRevokedFalse(String userId);
     void delete(String sessionId);
     Optional<UserSession> findBySessionIdAndStatusAndSessionVersionAndSessionEpoch(String sessionId, String status, int sessionVersion, long sessionEpoch);
+
+    /**
+     * Revokes all currently active sessions (mass invalidation).
+     * Used for platform-level events such as Maintenance Mode activation.
+     *
+     * @param now timestamp of revocation
+     * @return number of sessions revoked
+     */
+    int revokeAllActiveSessions(LocalDateTime now);
 }
