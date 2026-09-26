@@ -7,7 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MyAssetRepository extends JpaRepository<MyAsset, Long> {
@@ -28,7 +30,7 @@ public interface MyAssetRepository extends JpaRepository<MyAsset, Long> {
 
     List<MyAsset> findByAssignedToIdAndStatus(Long employeeId, String status);
 
-    java.util.Optional<MyAsset> findByAssetCode(String assetCode);
+    Optional<MyAsset> findByAssetCode(String assetCode);
 
     @Query("SELECT a FROM MyAsset a WHERE " +
            "(:status IS NULL OR " +
@@ -51,4 +53,32 @@ public interface MyAssetRepository extends JpaRepository<MyAsset, Long> {
         @Param("search") String search,
         Pageable pageable
     );
+
+    @Query("SELECT a FROM MyAsset a WHERE a.assignedTo.id IN :teamMemberIds " +
+           "AND (:status IS NULL OR a.status = :status) " +
+           "AND (:search = '' OR " +
+           "  LOWER(a.assetCode) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "  LOWER(a.assetName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "  LOWER(a.serialNumber) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "  LOWER(a.assignedTo.fullName) LIKE LOWER(CONCAT('%', :search, '%'))" +
+           ")")
+    Page<MyAsset> findByTeamMemberIdsAndFilters(
+        @Param("teamMemberIds") List<Long> teamMemberIds,
+        @Param("status") String status,
+        @Param("search") String search,
+        Pageable pageable
+    );
+
+    @Query("SELECT a.category, COUNT(a) FROM MyAsset a WHERE a.assignedTo.id IN :teamMemberIds GROUP BY a.category")
+    List<Object[]> countAssetsByCategory(@Param("teamMemberIds") List<Long> teamMemberIds);
+
+    @Query("SELECT COUNT(a) FROM MyAsset a WHERE a.assignedTo.id IN :teamMemberIds AND a.status IN ('ASSIGNED', 'RETURN_REQUESTED')")
+    long countTeamAssets(@Param("teamMemberIds") List<Long> teamMemberIds);
+
+    @Query("SELECT COALESCE(SUM(a.currentValue), 0) FROM MyAsset a WHERE a.assignedTo.id IN :teamMemberIds AND a.status IN ('ASSIGNED', 'RETURN_REQUESTED')")
+    BigDecimal sumTeamAssetValue(@Param("teamMemberIds") List<Long> teamMemberIds);
+
+    @Query("SELECT COUNT(DISTINCT a.assignedTo.id) FROM MyAsset a WHERE a.assignedTo.id IN :teamMemberIds AND a.status IN ('ASSIGNED', 'RETURN_REQUESTED')")
+    long countTeamMembersWithAssets(@Param("teamMemberIds") List<Long> teamMemberIds);
 }
+

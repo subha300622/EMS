@@ -8,4 +8,7 @@ import java.util.List;
 public interface MySupportCommentRepository extends JpaRepository<MySupportComment, Long> {
     List<MySupportComment> findByTicket(MySupportTicket ticket);
     List<MySupportComment> findByTicketId(Long ticketId);
+    List<MySupportComment> findByTicketIdOrderByCreatedAtAsc(Long ticketId);
+    List<MySupportComment> findByTicketIdAndIsInternalFalseOrderByCreatedAtAsc(Long ticketId);
+    long countByTicketId(Long ticketId);
 }

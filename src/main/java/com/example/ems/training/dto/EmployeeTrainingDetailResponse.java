@@ -1,14 +1,22 @@
 package com.example.ems.training.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 import java.time.LocalDate;
 import java.util.List;
 
+@Schema(description = "Employee Training Detail Response")
 public class EmployeeTrainingDetailResponse {
 
+    @Schema(description = "Employee ID", example = "1")
     private Long employeeId;
+    @Schema(description = "Employee full name", example = "John Doe")
     private String employeeName;
+    @Schema(description = "List of assigned course progress details")
     private List<CourseProgressDto> courses;
+    @Schema(description = "List of earned certifications")
     private List<CertificationDto> certifications;
+    @Schema(description = "Overall training completion status", example = "IN_PROGRESS")
     private String overallStatus;
 
     public EmployeeTrainingDetailResponse() {}

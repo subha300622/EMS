@@ -1,0 +1,49 @@
+package com.example.ems.audit.enums;
+
+public enum AuditAction {
+    CREATE,
+    UPDATE,
+    DELETE,
+
+    APPROVE,
+    REJECT,
+
+    SUBMIT,
+    APPLY,
+    CANCEL,
+
+    PROCESS,
+    GENERATE,
+    PAY,
+
+    UPLOAD,
+    DOWNLOAD,
+    EXPORT,
+
+    LOGIN,
+    LOGOUT,
+
+    ASSIGN,
+    REMOVE,
+    REVOKE,
+    RESET,
+
+    CHECK_IN,
+    CHECK_OUT,
+
+    VIEW,
+    READ,
+    DEACTIVATE,
+    REACTIVATE,
+    RESOLVE,
+    CLOSE,
+    ESCALATE,
+    REVIEW,
+
+    MAINTENANCE_ENABLED,
+    MAINTENANCE_DISABLED,
+    MAINTENANCE_UPDATED,
+    MAINTENANCE_SCHEDULE_STARTED,
+    MAINTENANCE_SCHEDULE_ENDED,
+    MAINTENANCE_ADMIN_ACCESS_USED
+}

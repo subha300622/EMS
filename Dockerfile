@@ -1,20 +1,35 @@
-# Java 21 LTS
-FROM eclipse-temurin:21-jdk
-
+# ==========================
+# Stage 1: Build
+# ==========================
+FROM eclipse-temurin:21-jdk AS builder
 
 WORKDIR /app
 
-# Copy project files
-COPY . .
+# Copy Maven wrapper and pom first (better layer caching)
+COPY .mvn .mvn
+COPY mvnw .
+COPY pom.xml .
 
-# Give permission to Maven wrapper
 RUN chmod +x mvnw
 
-# Build Spring Boot JAR
+# Download dependencies
+RUN ./mvnw dependency:go-offline
+
+# Copy source code
+COPY src src
+
+# Build application
 RUN ./mvnw clean package -DskipTests
 
-# Render provides PORT environment variable
+# ==========================
+# Stage 2: Runtime
+# ==========================
+FROM eclipse-temurin:21-jre
+
+WORKDIR /app
+
+COPY --from=builder /app/target/*.jar app.jar
+
 EXPOSE 8080
 
-# Start application
-CMD ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar target/*.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=${PORT:-8080} -jar app.jar"]

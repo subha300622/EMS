@@ -7,6 +7,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ArrayList;
 import com.example.ems.employee.entity.Employee;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "expenses")
@@ -64,13 +66,13 @@ public class Expense {
     private String expenseNumber;
 
     @Column(nullable = false, length = 255)
-    @org.hibernate.annotations.ColumnDefault("'INR'")
+    @ColumnDefault("'INR'")
     private String currency = "INR";
 
     private String projectCode;
 
     @Column(nullable = false, length = 255)
-    @org.hibernate.annotations.ColumnDefault("'NOT_PAID'")
+    @ColumnDefault("'NOT_PAID'")
     private String reimbursementStatus = "NOT_PAID";
 
     private LocalDateTime submittedAt;
@@ -78,15 +80,15 @@ public class Expense {
     private String expectedPaymentMonth;
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @org.hibernate.annotations.BatchSize(size = 50)
+    @BatchSize(size = 50)
     private List<MyExpenseReceipt> receipts = new ArrayList<>();
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @org.hibernate.annotations.BatchSize(size = 50)
+    @BatchSize(size = 50)
     private List<MyExpenseApprovalStep> approvalFlow = new ArrayList<>();
 
     @OneToMany(mappedBy = "expense", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @org.hibernate.annotations.BatchSize(size = 50)
+    @BatchSize(size = 50)
     private List<MyExpenseTimelineEvent> timelineEvents = new ArrayList<>();
 
     public Expense() {}

@@ -32,6 +32,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.onboarding.dto.OnboardingTimelineEventDto;
+import com.example.ems.onboarding.entity.OnboardingEventLog;
+import com.example.ems.onboarding.event.DocumentVerifiedEvent;
+import com.example.ems.onboarding.repository.OnboardingEventLogRepository;
 
 @Service
 public class OnboardingService {
@@ -43,7 +47,7 @@ public class OnboardingService {
     private ApplicationEventPublisher eventPublisher;
 
     @Autowired
-    private com.example.ems.onboarding.repository.OnboardingEventLogRepository onboardingEventLogRepository;
+    private OnboardingEventLogRepository onboardingEventLogRepository;
 
     @Autowired
     private OnboardingTaskRepository onboardingTaskRepository;
@@ -490,9 +494,23 @@ public class OnboardingService {
         return timeline;
     }
 
+    public List<OnboardingTimelineEventDto> getStructuredOnboardingTimeline(Long onboardingId) {
+        List<Map<String, Object>> raw = getOnboardingTimeline(onboardingId);
+        List<OnboardingTimelineEventDto> list = new ArrayList<>();
+        for (Map<String, Object> m : raw) {
+            list.add(new OnboardingTimelineEventDto(
+                    String.valueOf(m.get("date")),
+                    String.valueOf(m.get("type")),
+                    String.valueOf(m.get("title")),
+                    String.valueOf(m.get("description"))
+            ));
+        }
+        return list;
+    }
+
     @Transactional
     public void logEvent(Long onboardingId, String eventType, String eventData, String status, String errorMessage, int retryCount, String failureCategory, boolean replayFlag) {
-        com.example.ems.onboarding.entity.OnboardingEventLog log = new com.example.ems.onboarding.entity.OnboardingEventLog();
+        OnboardingEventLog log = new OnboardingEventLog();
         log.setOnboardingId(onboardingId);
         log.setEventType(eventType);
         log.setEventData(eventData);
@@ -501,13 +519,13 @@ public class OnboardingService {
         log.setRetryCount(retryCount);
         log.setFailureCategory(failureCategory);
         log.setReplayFlag(replayFlag);
-        log.setTimestamp(java.time.LocalDateTime.now());
+        log.setTimestamp(LocalDateTime.now());
         onboardingEventLogRepository.save(log);
     }
 
     @Transactional
     public void replayFailedEvent(Long eventId) {
-        com.example.ems.onboarding.entity.OnboardingEventLog log = onboardingEventLogRepository.findById(eventId)
+        OnboardingEventLog log = onboardingEventLogRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Event log not found with ID: " + eventId));
 
         if (!"FAILED".equalsIgnoreCase(log.getStatus())) {
@@ -548,7 +566,7 @@ public class OnboardingService {
         String notes = doc.getVerificationNotes();
 
         // Re-publish the DocumentVerifiedEvent to trigger listener replay
-        eventPublisher.publishEvent(new com.example.ems.onboarding.event.DocumentVerifiedEvent(this, documentId, status, notes));
+        eventPublisher.publishEvent(new DocumentVerifiedEvent(this, documentId, status, notes));
 
         // Save the updated log
         onboardingEventLogRepository.save(log);

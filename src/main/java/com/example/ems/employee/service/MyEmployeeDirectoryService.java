@@ -30,6 +30,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.ems.common.util.PasswordGeneratorUtil;
+import com.example.ems.employee.entity.Department;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 
 @Service
 public class MyEmployeeDirectoryService {
@@ -182,7 +187,7 @@ public class MyEmployeeDirectoryService {
             user.setRequestedRole("EMPLOYEE");
             Role role = roleRepository.findByName("EMPLOYEE").orElse(null);
             user.setRole(role);
-            user.setPassword(passwordEncoder.encode(email.split("@")[0] + "@2"));
+            user.setPassword(passwordEncoder.encode(PasswordGeneratorUtil.generateSecurePassword()));
             user.setLocation("Headquarters");
             user = userRepository.save(user);
             user.setUserId("EMP" + String.format("%03d", user.getId()));
@@ -257,8 +262,8 @@ public class MyEmployeeDirectoryService {
                 remoteEmployees,
                 onLeaveEmployees);
 
-        String lastUpdatedAt = java.time.format.DateTimeFormatter.ISO_INSTANT.format(
-                LocalDateTime.now().atZone(java.time.ZoneId.systemDefault()).toInstant());
+        String lastUpdatedAt = DateTimeFormatter.ISO_INSTANT.format(
+                LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
 
         return new EmployeeDirectoryDashboardResponse(teamSummary, directorySummary, lastUpdatedAt);
     }
@@ -461,7 +466,7 @@ public class MyEmployeeDirectoryService {
 
         Employee manager = emp.getManager();
         if (manager == null && emp.getDepartment() != null) {
-            Optional<com.example.ems.employee.entity.Department> deptOpt = departmentRepository
+            Optional<Department> deptOpt = departmentRepository
                     .findByName(emp.getDepartment());
             if (deptOpt.isPresent() && deptOpt.get().getManagerId() != null) {
                 manager = employeeRepository.findById(deptOpt.get().getManagerId()).orElse(null);
@@ -476,29 +481,38 @@ public class MyEmployeeDirectoryService {
 
         EmployeeProfileResponse.ContactProfileDto contactDto = new EmployeeProfileResponse.ContactProfileDto(
                 emp.getEmail(),
-                emp.getPhone());
+                emp.getPhone(),
+                emp.getEmergencyContact());
+
+        EmployeeProfileResponse.PersonalInfoDto personalInfoDto = new EmployeeProfileResponse.PersonalInfoDto(
+                emp.getGender(),
+                emp.getDob() != null ? emp.getDob().toString() : null,
+                emp.getAddress());
 
         EmployeeProfileResponse.WorkInformationDto workDto = new EmployeeProfileResponse.WorkInformationDto(
                 emp.getLocation(),
                 emp.getWorkMode(),
                 emp.getJoiningDate() != null ? emp.getJoiningDate().toString() : null,
+                emp.getEmploymentType(),
                 emp.getStatus());
 
         List<String> skills = skillRepository.findByEmployee(emp).stream()
                 .map(MyEmployeeSkill::getName)
                 .collect(Collectors.toList());
 
-        return new EmployeeProfileResponse(
-                emp.getId(),
-                emp.getEmployeeId(),
-                emp.getFullName(),
-                emp.getProfileImage(),
-                emp.getDesignation(),
-                emp.getDepartment(),
-                managerDto,
-                contactDto,
-                workDto,
-                skills);
+        EmployeeProfileResponse response = new EmployeeProfileResponse();
+        response.setEmployeeId(emp.getId());
+        response.setEmployeeCode(emp.getEmployeeId());
+        response.setFullName(emp.getFullName());
+        response.setProfileImage(emp.getProfileImage());
+        response.setDesignation(emp.getDesignation());
+        response.setDepartment(emp.getDepartment());
+        response.setManager(managerDto);
+        response.setContact(contactDto);
+        response.setPersonalInfo(personalInfoDto);
+        response.setWorkInformation(workDto);
+        response.setSkills(skills);
+        return response;
     }
 
     public EmployeeSearchResponse searchEmployees(String keyword, Integer limit) {
@@ -549,7 +563,7 @@ public class MyEmployeeDirectoryService {
 
         Employee manager = emp.getManager();
         if (manager == null && emp.getDepartment() != null) {
-            Optional<com.example.ems.employee.entity.Department> deptOpt = departmentRepository
+            Optional<Department> deptOpt = departmentRepository
                     .findByName(emp.getDepartment());
             if (deptOpt.isPresent() && deptOpt.get().getManagerId() != null) {
                 manager = employeeRepository.findById(deptOpt.get().getManagerId()).orElse(null);
@@ -580,13 +594,13 @@ public class MyEmployeeDirectoryService {
                 .filter(e -> e.getDepartment() != null && !e.getDepartment().isBlank())
                 .collect(Collectors.groupingBy(Employee::getDepartment, Collectors.counting()));
 
-        List<com.example.ems.employee.entity.Department> allDeps = departmentRepository.findAll();
-        for (com.example.ems.employee.entity.Department d : allDeps) {
+        List<Department> allDeps = departmentRepository.findAll();
+        for (Department d : allDeps) {
             depCounts.putIfAbsent(d.getName(), 0L);
         }
 
-        List<DepartmentListResponse.DepartmentItemDto> items = new java.util.ArrayList<>();
-        for (com.example.ems.employee.entity.Department d : allDeps) {
+        List<DepartmentListResponse.DepartmentItemDto> items = new ArrayList<>();
+        for (Department d : allDeps) {
             long count = depCounts.getOrDefault(d.getName(), 0L);
             if ("Engineering".equalsIgnoreCase(d.getName())) {
                 count = Math.max(count, 120);
@@ -619,8 +633,8 @@ public class MyEmployeeDirectoryService {
 
         msg = messageRepository.save(msg);
 
-        String sentAtStr = java.time.format.DateTimeFormatter.ISO_INSTANT.format(
-                msg.getSentAt().atZone(java.time.ZoneId.systemDefault()).toInstant());
+        String sentAtStr = DateTimeFormatter.ISO_INSTANT.format(
+                msg.getSentAt().atZone(ZoneId.systemDefault()).toInstant());
 
         return new SendMessageResponse(
                 msg.getId(),
@@ -633,10 +647,10 @@ public class MyEmployeeDirectoryService {
         Employee emp = employeeRepository.findById(employeeId)
                 .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
 
-        String lastActiveStr = java.time.format.DateTimeFormatter.ISO_INSTANT.format(
+        String lastActiveStr = DateTimeFormatter.ISO_INSTANT.format(
                 emp.getLastActiveAt() != null
-                        ? emp.getLastActiveAt().atZone(java.time.ZoneId.systemDefault()).toInstant()
-                        : LocalDateTime.now().atZone(java.time.ZoneId.systemDefault()).toInstant());
+                        ? emp.getLastActiveAt().atZone(ZoneId.systemDefault()).toInstant()
+                        : LocalDateTime.now().atZone(ZoneId.systemDefault()).toInstant());
 
         return new EmployeeAvailabilityResponse(
                 emp.getId(),

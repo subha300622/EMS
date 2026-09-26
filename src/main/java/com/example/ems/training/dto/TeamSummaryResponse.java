@@ -1,12 +1,21 @@
 package com.example.ems.training.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Team Training Summary Response")
 public class TeamSummaryResponse {
 
+    @Schema(description = "Total number of employees in the team", example = "10")
     private int totalEmployees;
+    @Schema(description = "Total number of trainings assigned", example = "25")
     private int totalAssigned;
+    @Schema(description = "Number of completed trainings", example = "18")
     private int completed;
+    @Schema(description = "Number of trainings in progress", example = "5")
     private int inProgress;
+    @Schema(description = "Number of overdue trainings", example = "2")
     private int overdue;
+    @Schema(description = "Compliance rate percentage", example = "72.00")
     private double complianceRate;
 
     public TeamSummaryResponse() {}

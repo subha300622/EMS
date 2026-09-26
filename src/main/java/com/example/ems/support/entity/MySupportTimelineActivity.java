@@ -18,6 +18,15 @@ public class MySupportTimelineActivity {
     @Column(nullable = false)
     private String event;
 
+    @Enumerated(EnumType.STRING)
+    private SupportTimelineAction action;
+
+    @Column(name = "old_value")
+    private String oldValue;
+
+    @Column(name = "new_value")
+    private String newValue;
+
     @Column(nullable = false)
     private String performedBy;
 
@@ -33,6 +42,17 @@ public class MySupportTimelineActivity {
         this.timestamp = timestamp;
     }
 
+    public MySupportTimelineActivity(Long id, MySupportTicket ticket, String event, SupportTimelineAction action, String oldValue, String newValue, String performedBy, LocalDateTime timestamp) {
+        this.id = id;
+        this.ticket = ticket;
+        this.event = event;
+        this.action = action;
+        this.oldValue = oldValue;
+        this.newValue = newValue;
+        this.performedBy = performedBy;
+        this.timestamp = timestamp;
+    }
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -41,6 +61,15 @@ public class MySupportTimelineActivity {
 
     public String getEvent() { return event; }
     public void setEvent(String event) { this.event = event; }
+
+    public SupportTimelineAction getAction() { return action; }
+    public void setAction(SupportTimelineAction action) { this.action = action; }
+
+    public String getOldValue() { return oldValue; }
+    public void setOldValue(String oldValue) { this.oldValue = oldValue; }
+
+    public String getNewValue() { return newValue; }
+    public void setNewValue(String newValue) { this.newValue = newValue; }
 
     public String getPerformedBy() { return performedBy; }
     public void setPerformedBy(String performedBy) { this.performedBy = performedBy; }

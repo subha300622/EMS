@@ -62,6 +62,12 @@ public class TeamAttendanceCalendarService {
 
                 if (r != null) {
                     status = r.getStatus() != null ? r.getStatus().toUpperCase() : "PRESENT";
+                    if (r.getPunchInTime() != null) {
+                        checkIn = r.getPunchInTime().format(timeFormatter);
+                    }
+                    if (r.getPunchOutTime() != null) {
+                        checkOut = r.getPunchOutTime().format(timeFormatter);
+                    }
                     if (status.contains("PRESENT") || status.contains("LATE")) {
                         present++;
                     } else if (status.contains("LEAVE")) {
@@ -71,8 +77,7 @@ public class TeamAttendanceCalendarService {
                     } else {
                         present++;
                     }
-                    checkIn = r.getPunchInTime() != null ? r.getPunchInTime().format(timeFormatter) : null;
-                    checkOut = r.getPunchOutTime() != null ? r.getPunchOutTime().format(timeFormatter) : null;
+
                 } else {
                     absent++;
                 }
@@ -169,10 +174,14 @@ public class TeamAttendanceCalendarService {
 
             if (r != null) {
                 status = r.getStatus() != null ? r.getStatus().toUpperCase() : "PRESENT";
-                checkIn = r.getPunchInTime() != null ? r.getPunchInTime().format(timeFormatter) : null;
-                checkOut = r.getPunchOutTime() != null ? r.getPunchOutTime().format(timeFormatter) : null;
+                if (r.getPunchInTime() != null) {
+                    checkIn = r.getPunchInTime().format(timeFormatter);
+                }
+                if (r.getPunchOutTime() != null) {
+                    checkOut = r.getPunchOutTime().format(timeFormatter);
+                }
             }
-
+           
             calendarDays.add(new EmployeeCalendarDto.EmployeeDayRecordDto(
                     date.toString(),
                     status,

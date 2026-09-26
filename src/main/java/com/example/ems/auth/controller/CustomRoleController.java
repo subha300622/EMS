@@ -1,0 +1,503 @@
+package com.example.ems.auth.controller;
+
+import com.example.ems.auth.dto.AssignPermissionGroupsRequest;
+import com.example.ems.auth.dto.AssignPermissionsRequest;
+import com.example.ems.auth.dto.AssignRoleToUserRequest;
+import com.example.ems.auth.dto.RoleRequest;
+import com.example.ems.auth.dto.RoleResponse;
+import com.example.ems.auth.entity.Permission;
+import com.example.ems.auth.entity.PermissionGroup;
+import com.example.ems.auth.entity.Role;
+import com.example.ems.auth.entity.User;
+import com.example.ems.auth.repository.UserRepository;
+import com.example.ems.auth.service.RoleService;
+import com.example.ems.common.dto.ApiResponse;
+import com.example.ems.common.dto.ErrorResponse;
+import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping(value = "/api/v1/roles", produces = MediaType.APPLICATION_JSON_VALUE)
+@CrossOrigin("*")
+@Tag(name = "Custom Role APIs", description = "Tenant Custom Role and Permission Management APIs")
+public class CustomRoleController {
+
+    @Autowired
+    private RoleService roleService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private JwtService jwtService;
+
+    private User resolveUser(String authHeader) {
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            if (jwtService.validateAccessToken(token)) {
+                String email = jwtService.getEmailFromToken(token);
+                return userRepository.findByWorkEmail(email).orElse(null);
+            }
+        }
+        return null;
+    }
+
+    private boolean checkPermission(User user) {
+        if (user == null) return false;
+        return roleService.hasPermission(user.getWorkEmail(), "role.manage")
+                || roleService.isSuperAdmin(user.getWorkEmail());
+    }
+
+    @GetMapping
+    @Operation(summary = "List organization custom roles", description = "Lists custom roles for the caller's organization context.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Organization custom roles retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = RoleResponse.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getOrganizationRoles(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        List<Role> roles = roleService.getTenantRoles();
+        List<RoleResponse> responseList = roles.stream()
+                .map(roleService::mapRoleToResponse)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(ApiResponse.success("Organization custom roles retrieved successfully", responseList));
+    }
+
+    @GetMapping("/templates")
+    @Operation(summary = "List platform role templates", description = "Lists available system role templates that can be viewed or cloned.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Platform role templates retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = RoleResponse.class))))
+    })
+    public ResponseEntity<?> getPlatformTemplates() {
+        List<Role> templates = roleService.getPlatformTemplates();
+        List<RoleResponse> responseList = templates.stream()
+                .map(roleService::mapRoleToResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success("Platform role templates retrieved successfully", responseList));
+    }
+
+    @PostMapping("/clone/{templateId}")
+    @Operation(summary = "Clone platform role template into tenant custom role")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Role cloned successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> cloneFromTemplate(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long templateId,
+            @RequestBody(required = false) RoleRequest request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        String name = request != null ? request.getName() : null;
+        String desc = request != null ? request.getDescription() : null;
+        Role cloned = roleService.cloneFromTemplate(templateId, name, desc);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Role cloned successfully", roleService.mapRoleToResponse(cloned)));
+    }
+
+    @GetMapping("/{roleId}")
+    @Operation(summary = "Get custom role by ID")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role retrieved successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getRoleById(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Role role = roleService.requireRoleOwnedByCurrentTenant(roleId);
+
+        return ResponseEntity.ok(ApiResponse.success("Role retrieved successfully", roleService.mapRoleToResponse(role)));
+    }
+
+    @PostMapping
+    @Operation(summary = "Create custom role", description = "Creates a new custom role scoped to caller's organization.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Custom role created successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> createCustomRole(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @Valid @RequestBody RoleRequest request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        Role created = roleService.createTenantRole(request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Custom role created successfully", roleService.mapRoleToResponse(created)));
+    }
+
+    @PutMapping("/{roleId}")
+    @Operation(summary = "Update custom role")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Custom role updated successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> updateCustomRole(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId,
+            @Valid @RequestBody RoleRequest request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        Role updated = roleService.updateTenantRole(roleId, request);
+        return ResponseEntity.ok(ApiResponse.success("Custom role updated successfully", roleService.mapRoleToResponse(updated)));
+    }
+
+    @DeleteMapping("/{roleId}")
+    @Operation(summary = "Delete custom role")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Custom role deleted successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> deleteCustomRole(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        roleService.deleteTenantRole(roleId);
+        return ResponseEntity.ok(ApiResponse.success("Custom role deleted successfully", null));
+    }
+
+    // ── Permissions Assignment to Role ──────────────────────────────────────────
+
+    @GetMapping("/{roleId}/permissions")
+    @Operation(summary = "Get role permissions")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role permissions retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = Permission.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getRolePermissions(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Role role = roleService.requireRoleOwnedByCurrentTenant(roleId);
+
+        return ResponseEntity.ok(ApiResponse.success("Role permissions retrieved successfully", role.getPermissions()));
+    }
+
+    @PostMapping("/{roleId}/permissions")
+    @Operation(summary = "Assign permissions to role")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permissions assigned to role successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> assignPermissionsToRole(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId,
+            @RequestBody @Valid AssignPermissionsRequest request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+
+        List<Long> permissionIds = request.getPermissionIds();
+        if (permissionIds != null && !permissionIds.isEmpty()) {
+            roleService.assignPermissionIdsToRole(roleId, permissionIds);
+        } else {
+            List<String> permissionNames = request.getPermissionNames() != null ? request.getPermissionNames() : request.getPermissions();
+            if (permissionNames != null && !permissionNames.isEmpty()) {
+                roleService.assignPermissionsToRole(roleId, permissionNames);
+            }
+        }
+
+        Role updated = roleService.getRoleById(roleId).orElseThrow();
+        return ResponseEntity.ok(ApiResponse.success("Permissions assigned to role successfully", roleService.mapRoleToResponse(updated)));
+    }
+
+    @DeleteMapping("/{roleId}/permissions/{permissionId}")
+    @Operation(summary = "Remove permission from role")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission removed from role successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role or permission not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> removePermissionFromRole(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId,
+            @PathVariable Long permissionId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        roleService.requireTenantMutableRole(roleId);
+        roleService.revokePermissionFromRole(roleId, permissionId);
+        return ResponseEntity.ok(ApiResponse.success("Permission removed from role successfully", null));
+    }
+
+    // ── Permission Group Assignment to Role ──────────────────────────────────────
+
+    @GetMapping("/{roleId}/permission-groups")
+    @Operation(summary = "Get role permission groups")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role permission groups retrieved successfully",
+                    content = @Content(mediaType = "application/json", array = @ArraySchema(schema = @Schema(implementation = PermissionGroup.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> getRolePermissionGroups(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+
+        Role role = roleService.requireRoleOwnedByCurrentTenant(roleId);
+
+        return ResponseEntity.ok(ApiResponse.success("Role permission groups retrieved successfully", role.getPermissionGroups()));
+    }
+
+    @PostMapping("/{roleId}/permission-groups")
+    @Operation(summary = "Assign permission groups to role")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission groups assigned to role successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = RoleResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> assignPermissionGroupsToRole(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId,
+            @RequestBody @Valid AssignPermissionGroupsRequest request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        Role role = roleService.requireTenantMutableRole(roleId);
+
+        List<Long> groupIds = request.permissionGroupIds();
+        if (groupIds != null) {
+            RoleRequest req = new RoleRequest();
+            req.setName(role.getName());
+            req.setDescription(role.getDescription());
+            req.setPermissionGroupIds(groupIds);
+            roleService.updateTenantRole(roleId, req);
+        }
+
+        Role updated = roleService.getRoleById(roleId).orElseThrow();
+        return ResponseEntity.ok(ApiResponse.success("Permission groups assigned to role successfully", roleService.mapRoleToResponse(updated)));
+    }
+
+    @DeleteMapping("/{roleId}/permission-groups/{groupId}")
+    @Operation(summary = "Remove permission group from role")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Permission group removed from role successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role or permission group not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> removePermissionGroupFromRole(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId,
+            @PathVariable Long groupId) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        Role role = roleService.requireTenantMutableRole(roleId);
+
+        roleService.removePermissionGroupFromRole(role.getId(), groupId);
+        return ResponseEntity.ok(ApiResponse.success("Permission group removed from role successfully", null));
+    }
+
+    // ── User Role Assignment ───────────────────────────────────────────────────
+
+    @PostMapping("/{roleId}/users")
+    @Operation(summary = "Assign role to employee/user", description = "Assigns the specified role to an employee within caller's organization.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Role assigned to user successfully",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid user ID or assignment failed",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden - Requires role.manage permission",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Role or user not found",
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    public ResponseEntity<?> assignRoleToUser(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @PathVariable Long roleId,
+            @RequestBody @Valid AssignRoleToUserRequest request) {
+
+        User currentUser = resolveUser(authHeader);
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+        }
+        if (!checkPermission(currentUser)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ErrorResponse.error("Access Denied: Requires role.manage permission", "AUTH_002"));
+        }
+
+        Role role = roleService.requireRoleOwnedByCurrentTenant(roleId);
+        Long orgId = roleService.currentOrganizationId();
+
+        String rawUserVal = request != null ? request.getEffectiveUserId() : null;
+        if (rawUserVal == null || rawUserVal.isBlank()) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error("Field 'userId' is required", "VAL_001"));
+        }
+
+        boolean assigned = false;
+        try {
+            Long uId = Long.parseLong(rawUserVal);
+            assigned = roleService.assignRoleById(uId, role.getId(), orgId);
+        } catch (NumberFormatException e) {
+            User targetUser = userRepository.findByUserId(rawUserVal)
+                    .or(() -> userRepository.findByWorkEmail(rawUserVal))
+                    .orElseThrow(() -> new IllegalArgumentException("User not found with ID: " + rawUserVal));
+            assigned = roleService.assignRoleById(targetUser.getId(), role.getId(), orgId);
+        }
+
+        if (!assigned) {
+            return ResponseEntity.badRequest().body(ErrorResponse.error("Could not assign role to user", "VAL_003"));
+        }
+
+        return ResponseEntity.ok(ApiResponse.success("Role assigned to user successfully", null));
+    }
+}
+

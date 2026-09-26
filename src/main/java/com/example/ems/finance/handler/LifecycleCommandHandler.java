@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
+import com.example.ems.employee.entity.Employee;
 
 @Component
 public class LifecycleCommandHandler implements FinanceCommandHandler {
@@ -26,7 +27,7 @@ public class LifecycleCommandHandler implements FinanceCommandHandler {
     private Long resolveFinanceOnboardingIdFromOnboardingId(Long onboardingId) {
         Onboarding onboarding = onboardingRepository.findById(onboardingId)
                 .orElseThrow(() -> new IllegalArgumentException("Onboarding record not found with ID: " + onboardingId));
-        com.example.ems.employee.entity.Employee employee = onboarding.getEmployee();
+        Employee employee = onboarding.getEmployee();
 
         return repository.findByEmployeeId(employee.getId())
                 .orElseGet(() -> {

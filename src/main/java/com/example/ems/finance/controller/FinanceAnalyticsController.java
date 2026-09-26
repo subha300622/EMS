@@ -4,10 +4,14 @@ import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
 import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
-import com.example.ems.common.dto.ErrorResponse;
+import com.example.ems.finance.dto.*;
 import com.example.ems.finance.entity.EmployeeFinanceOnboarding;
 import com.example.ems.finance.service.EmployeeFinanceOnboardingService;
 import com.example.ems.security.service.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.Map;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/finance/analytics")
@@ -37,15 +41,20 @@ public class FinanceAnalyticsController {
     @Autowired
     private RoleService roleService;
 
-    private User resolveUser(String authHeader) {
+    private String extractUsername(String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtService.validateAccessToken(token)) {
-                String email = jwtService.getEmailFromToken(token);
-                return userRepository.findByWorkEmail(email).orElse(null);
+                return jwtService.getEmailFromToken(token);
             }
         }
         return null;
+    }
+
+    private User resolveUser(String authHeader) {
+        String email = extractUsername(authHeader);
+        if (email == null) return null;
+        return userRepository.findByWorkEmail(email).orElse(null);
     }
 
     private boolean checkAccess(User user) {
@@ -59,22 +68,38 @@ public class FinanceAnalyticsController {
                 || roleService.hasPermission(user.getWorkEmail(), "expense.manage");
     }
 
+    @Operation(summary = "Get Finance Onboarding Reports", description = "Retrieves structured finance onboarding reports across all employees.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Finance onboarding report compiled"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/reports")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getReports(
+    public ResponseEntity<ApiResponse<List<FinanceOnboardingReportItem>>> getReports(
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
-        return ResponseEntity.ok(ApiResponse.success("Finance onboarding report compiled", service.getReportData()));
+        List<FinanceOnboardingReportItem> items = service.getStructuredReportData();
+        return ResponseEntity.ok(ApiResponse.success("Finance onboarding report compiled", items));
     }
 
+    @Operation(summary = "Export Finance Onboarding Report", description = "Exports finance onboarding records as a CSV document.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "CSV file stream",
+                    content = @Content(mediaType = "text/csv", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/reports/export")
     public ResponseEntity<String> exportReport(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
@@ -93,50 +118,61 @@ public class FinanceAnalyticsController {
                 .body(csv);
     }
 
+    @Operation(summary = "Get Pending Finance Reviews", description = "Retrieves pending employee finance onboarding reviews filtered by department or status.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending finance onboarding reviews retrieved"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @GetMapping("/pending-reviews")
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public ResponseEntity<ApiResponse<List<EmployeeFinanceOnboarding>>> getPendingReviews(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String status) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
         List<EmployeeFinanceOnboarding> list = service.getPendingReviews(department, status);
         return ResponseEntity.ok(ApiResponse.success("Pending finance onboarding reviews retrieved", list));
     }
 
+    @Operation(summary = "Calculate Structured CTC Breakup", description = "Calculates monthly and annual salary breakup (Basic, HRA, Allowances, PF) given annual or monthly CTC.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "CTC breakup calculated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid CTC input"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Forbidden")
+    })
     @PostMapping("/calculate-ctc")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Map<String, Object>>> calculateCtc(
+    public ResponseEntity<ApiResponse<CtcBreakupResponse>> calculateCtc(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody @Valid CalculateCtcRequest body) {
         User user = resolveUser(authHeader);
         if (user == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(ApiResponse.error("Unauthorized", "AUTH_014"));
         }
         if (!checkAccess(user)) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error("Access Denied: Requires finance privileges.", "AUTH_002"));
         }
 
         BigDecimal monthlyCtc;
-        if (body.containsKey("monthlyCtc")) {
-            monthlyCtc = new BigDecimal(body.get("monthlyCtc").toString());
-        } else if (body.containsKey("ctc")) {
-            BigDecimal annualCtc = new BigDecimal(body.get("ctc").toString());
+        if (body != null && body.monthlyCtc() != null) {
+            monthlyCtc = body.monthlyCtc();
+        } else if (body != null && body.ctc() != null) {
+            BigDecimal annualCtc = body.ctc();
             monthlyCtc = annualCtc.divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_UP);
         } else {
-            return (ResponseEntity) ResponseEntity.badRequest()
-                    .body(ErrorResponse.error("Either ctc (annual) or monthlyCtc must be provided", "VAL_001"));
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Either ctc (annual) or monthlyCtc must be provided", "VAL_001"));
         }
-        return ResponseEntity.ok(ApiResponse.success("CTC breakup calculated successfully", service.calculateCtcBreakup(monthlyCtc)));
+        return ResponseEntity.ok(ApiResponse.success("CTC breakup calculated successfully", service.calculateStructuredCtcBreakup(monthlyCtc)));
     }
 }
