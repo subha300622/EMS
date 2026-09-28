@@ -12,11 +12,14 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 
 
+import org.springframework.boot.test.context.SpringBootTest;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
 @DisplayName("Logging Configuration Tests")
 class LoggingConfigurationTest {
 
