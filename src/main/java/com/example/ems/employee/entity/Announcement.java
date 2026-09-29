@@ -2,6 +2,9 @@ package com.example.ems.employee.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "announcements")
@@ -26,15 +29,15 @@ public class Announcement {
     private boolean active = true;
 
     @Column(nullable = false, length = 50)
-    @org.hibernate.annotations.ColumnDefault("'GENERAL'")
+    @ColumnDefault("'GENERAL'")
     private String category = "GENERAL";
 
     @Column(nullable = false)
-    @org.hibernate.annotations.ColumnDefault("0")
+    @ColumnDefault("0")
     private int likes = 0;
 
     @Column(nullable = false)
-    @org.hibernate.annotations.ColumnDefault("0")
+    @ColumnDefault("0")
     private int views = 0;
 
     public Announcement() {}
@@ -67,8 +70,8 @@ public class Announcement {
     public void setViews(int views) { this.views = views; }
 
     @OneToMany(mappedBy = "announcement", cascade = CascadeType.ALL, orphanRemoval = true)
-    private java.util.List<AnnouncementComment> comments = new java.util.ArrayList<>();
+    private List<AnnouncementComment> comments = new ArrayList<>();
 
-    public java.util.List<AnnouncementComment> getComments() { return comments; }
-    public void setComments(java.util.List<AnnouncementComment> comments) { this.comments = comments; }
+    public List<AnnouncementComment> getComments() { return comments; }
+    public void setComments(List<AnnouncementComment> comments) { this.comments = comments; }
 }

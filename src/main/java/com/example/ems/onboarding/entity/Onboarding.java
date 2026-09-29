@@ -36,6 +36,21 @@ public class Onboarding {
     @Column(nullable = false)
     private int progress = 0;
 
+    @Column(name = "assigned_template_id")
+    private String assignedTemplateId;
+
+    @Column(name = "hr_owner_id")
+    private String hrOwnerId;
+
+    @Column(name = "buddy_id_string")
+    private String buddyIdString;
+
+    @Column(name = "it_contact_id")
+    private String itContactId;
+
+    @Column(name = "finance_contact_id")
+    private String financeContactId;
+
     @Version
     private Long optVersion;
 
@@ -44,6 +59,21 @@ public class Onboarding {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    public String getAssignedTemplateId() { return assignedTemplateId; }
+    public void setAssignedTemplateId(String assignedTemplateId) { this.assignedTemplateId = assignedTemplateId; }
+
+    public String getHrOwnerId() { return hrOwnerId; }
+    public void setHrOwnerId(String hrOwnerId) { this.hrOwnerId = hrOwnerId; }
+
+    public String getBuddyIdString() { return buddyIdString; }
+    public void setBuddyIdString(String buddyIdString) { this.buddyIdString = buddyIdString; }
+
+    public String getItContactId() { return itContactId; }
+    public void setItContactId(String itContactId) { this.itContactId = itContactId; }
+
+    public String getFinanceContactId() { return financeContactId; }
+    public void setFinanceContactId(String financeContactId) { this.financeContactId = financeContactId; }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

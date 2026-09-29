@@ -6,6 +6,7 @@ import com.example.ems.schedule.dto.DailyShiftDto;
 import com.example.ems.schedule.dto.EmployeeScheduleGridDto;
 import com.example.ems.schedule.entity.MyShift;
 import com.example.ems.schedule.entity.MyShiftTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
@@ -16,6 +17,9 @@ import java.util.Optional;
 @Component
 public class ScheduleGridBuilder {
 
+    @Value("${app.dicebear-avatar-url}")
+    private String dicebearAvatarUrl;
+
     public List<EmployeeScheduleGridDto> buildGrid(List<Employee> employees, List<MyShift> shifts, List<Leave> leaves, LocalDate startDate, LocalDate endDate) {
         List<EmployeeScheduleGridDto> grid = new ArrayList<>();
 
@@ -25,7 +29,7 @@ public class ScheduleGridBuilder {
             row.setName(emp.getFullName());
             row.setDesignation(emp.getDesignation());
             row.setDepartment(emp.getDepartment());
-            row.setAvatar(emp.getProfileImage() != null && !emp.getProfileImage().isBlank() ? emp.getProfileImage() : "https://api.dicebear.com/7.x/initials/svg?seed=" + java.net.URLEncoder.encode(emp.getFullName(), java.nio.charset.StandardCharsets.UTF_8));
+            row.setAvatar(emp.getProfileImage() != null && !emp.getProfileImage().isBlank() ? emp.getProfileImage() : dicebearAvatarUrl + java.net.URLEncoder.encode(emp.getFullName(), java.nio.charset.StandardCharsets.UTF_8));
 
             List<DailyShiftDto> dailyShifts = new ArrayList<>();
             for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {

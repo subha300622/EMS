@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface OffboardingTaskRepository extends JpaRepository<OffboardingTask, Long> {
     List<OffboardingTask> findByOffboardingId(Long offboardingId);
+    void deleteByOffboardingId(Long offboardingId);
 }

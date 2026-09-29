@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.*;
+import org.springframework.core.env.Environment;
 
 @Service
 public class ManagerDashboardService {
@@ -190,7 +191,7 @@ public class ManagerDashboardService {
     }
 
     @Autowired
-    private org.springframework.core.env.Environment environment;
+    private Environment environment;
 
     private boolean isDevProfile() {
         return Arrays.asList(environment.getActiveProfiles()).contains("dev");

@@ -32,6 +32,12 @@ public class OnboardingDocument {
     @Column(nullable = false)
     private LocalDateTime uploadedAt = LocalDateTime.now();
 
+    private String filePath;
+
+    private Long fileSize;
+
+    private String uploadedBy;
+
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -58,4 +64,13 @@ public class OnboardingDocument {
 
     public String getDocumentType() { return documentType; }
     public void setDocumentType(String documentType) { this.documentType = documentType; }
+
+    public String getFilePath() { return filePath; }
+    public void setFilePath(String filePath) { this.filePath = filePath; }
+
+    public Long getFileSize() { return fileSize; }
+    public void setFileSize(Long fileSize) { this.fileSize = fileSize; }
+
+    public String getUploadedBy() { return uploadedBy; }
+    public void setUploadedBy(String uploadedBy) { this.uploadedBy = uploadedBy; }
 }

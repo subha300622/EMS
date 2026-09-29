@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.time.temporal.ChronoUnit;
 
 @Service
 public class TeamOnboardingService {
@@ -594,7 +595,7 @@ public class TeamOnboardingService {
 
         double avgCompletionTimeDays = completedList.isEmpty() ? 14.0 :
                 completedList.stream()
-                        .mapToLong(o -> java.time.temporal.ChronoUnit.DAYS.between(o.getJoiningDate(), o.getCompletionDate()))
+                        .mapToLong(o -> ChronoUnit.DAYS.between(o.getJoiningDate(), o.getCompletionDate()))
                         .average()
                         .orElse(14.0);
 

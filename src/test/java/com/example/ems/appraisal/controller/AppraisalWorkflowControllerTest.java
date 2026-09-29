@@ -18,7 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -49,8 +48,6 @@ public class AppraisalWorkflowControllerTest {
     @Autowired
     private IncrementRepository incrementRepository;
 
-    @Autowired
-    private SalaryRevisionRepository revisionRepository;
 
     private Employee employee;
     private Employee manager;

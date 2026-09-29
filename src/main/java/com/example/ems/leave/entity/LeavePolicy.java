@@ -1,5 +1,7 @@
 package com.example.ems.leave.entity;
 
+import com.example.ems.organization.entity.Organization;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 @Entity
@@ -23,53 +25,31 @@ public class LeavePolicy {
 
     private String status = "ACTIVE"; // ACTIVE, INACTIVE
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "organization_id")
+    @JsonIgnore
+    private Organization organization;
+
     public LeavePolicy() {}
 
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
+    public LeaveType getLeaveType() { return leaveType; }
+    public void setLeaveType(LeaveType leaveType) { this.leaveType = leaveType; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public Integer getCarryingLimit() { return carryingLimit; }
+    public void setCarryingLimit(Integer carryingLimit) { this.carryingLimit = carryingLimit; }
 
-    public LeaveType getLeaveType() {
-        return leaveType;
-    }
+    public String getAccrualType() { return accrualType; }
+    public void setAccrualType(String accrualType) { this.accrualType = accrualType; }
 
-    public void setLeaveType(LeaveType leaveType) {
-        this.leaveType = leaveType;
-    }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public Integer getCarryingLimit() {
-        return carryingLimit;
-    }
-
-    public void setCarryingLimit(Integer carryingLimit) {
-        this.carryingLimit = carryingLimit;
-    }
-
-    public String getAccrualType() {
-        return accrualType;
-    }
-
-    public void setAccrualType(String accrualType) {
-        this.accrualType = accrualType;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
+    public Organization getOrganization() { return organization; }
+    public void setOrganization(Organization organization) { this.organization = organization; }
 }

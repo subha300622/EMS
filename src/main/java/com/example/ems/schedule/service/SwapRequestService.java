@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.example.ems.employee.repository.EmployeeRepository;
 
 @Service
 public class SwapRequestService {
@@ -32,7 +33,7 @@ public class SwapRequestService {
     private MyScheduleTimelineEventRepository timelineRepository;
 
     @Autowired
-    private com.example.ems.employee.repository.EmployeeRepository employeeRepository;
+    private EmployeeRepository employeeRepository;
 
     public List<ShiftSwapRequestDto> getSwapRequests(List<MyScheduleChangeRequest> changeRequests) {
         return changeRequests.stream().map(this::mapToDto).collect(Collectors.toList());

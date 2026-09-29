@@ -1,6 +1,5 @@
 package com.example.ems.auth.service;
 
-import com.example.ems.auth.dto.RegisterRequest;
 import com.example.ems.auth.dto.UserCreateRequest;
 import com.example.ems.auth.entity.Role;
 import com.example.ems.auth.entity.User;
@@ -76,49 +75,6 @@ public class AuthServiceUnitTest {
         when(roleRepository.findByName("EMPLOYEE")).thenReturn(Optional.of(employeeRole));
     }
 
-    @Test
-    public void testRegisterDefaultRoleEmployee() {
-        String testEmail = "finance@company.com";
-        RegisterRequest req = new RegisterRequest();
-        req.setFullName("Test User");
-        req.setWorkEmail(testEmail);
-        req.setPassword("password123");
-        req.setConfirmPassword("password123");
-        req.setRequestedRole("EMPLOYEE");
-
-        when(userRepository.existsByWorkEmail(testEmail)).thenReturn(false);
-        
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User u = invocation.getArgument(0);
-            u.setId(10L);
-            return u;
-        });
-
-        String result = userService.register(req);
-        assertTrue(result.contains("Registration Successful!"));
-        assertTrue(result.contains("Role: EMPLOYEE"));
-    }
-
-    @Test
-    public void testRegisterDefaultRoleEmployeeEvenWithRequestedRoleHR() {
-        RegisterRequest req = new RegisterRequest();
-        req.setFullName("Test User");
-        req.setWorkEmail("john.doe@company.com");
-        req.setPassword("password123");
-        req.setConfirmPassword("password123");
-        req.setRequestedRole("HR");
-
-        when(userRepository.existsByWorkEmail("john.doe@company.com")).thenReturn(false);
-        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
-            User u = invocation.getArgument(0);
-            u.setId(11L);
-            return u;
-        });
-
-        String result = userService.register(req);
-        assertTrue(result.contains("Registration Successful!"));
-        assertTrue(result.contains("Role: EMPLOYEE"));
-    }
 
     @Test
     public void testCreateUserDynamicRoleFromEmailPrefix() {

@@ -5,6 +5,8 @@ import com.example.ems.employee.repository.EmployeeRepository;
 import com.example.ems.expense.dto.*;
 import com.example.ems.expense.entity.*;
 import com.example.ems.expense.repository.*;
+import com.example.ems.approval.entity.WorkflowType;
+import com.example.ems.approval.service.ApprovalWorkflowEngineService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.context.event.EventListener;
@@ -22,6 +24,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.example.ems.auth.entity.User;
+import com.example.ems.auth.repository.UserRepository;
 
 @Service
 @Transactional
@@ -49,7 +53,10 @@ public class MyExpenseService {
     private EmployeeRepository employeeRepository;
 
     @Autowired
-    private com.example.ems.auth.repository.UserRepository userRepository;
+    private ApprovalWorkflowEngineService approvalWorkflowEngineService;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @EventListener(ContextRefreshedEvent.class)
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -107,7 +114,7 @@ public class MyExpenseService {
         // 3. Seed 24 Mock claims for employee if empty
         Optional<Employee> mockEmployeeOpt = employeeRepository.findAll().stream()
                 .filter(e -> {
-                    com.example.ems.auth.entity.User u = userRepository.findByWorkEmail(e.getEmail()).orElse(null);
+                    User u = userRepository.findByWorkEmail(e.getEmail()).orElse(null);
                     return u != null && u.getRole() != null && "EMPLOYEE".equalsIgnoreCase(u.getRole().getName());
                 })
                 .findFirst();
@@ -310,8 +317,8 @@ public class MyExpenseService {
 
     @Transactional(readOnly = true)
     public MyExpenseListResponse getMyExpenses(Employee employee, String status, String category, LocalDate fromDate, LocalDate toDate, Pageable pageable) {
-        com.example.ems.expense.entity.ExpenseStatus statusEnum = (status != null && !status.trim().isEmpty())
-                ? com.example.ems.expense.entity.ExpenseStatus.valueOf(status.trim().toUpperCase())
+        ExpenseStatus statusEnum = (status != null && !status.trim().isEmpty())
+                ? ExpenseStatus.valueOf(status.trim().toUpperCase())
                 : null;
         Page<Expense> page = expenseRepository.findByFilters(employee.getId(), statusEnum, category, fromDate, toDate, pageable);
 
@@ -426,6 +433,14 @@ public class MyExpenseService {
         // Approval Flow level 1
         approvalStepRepository.save(new MyExpenseApprovalStep(saved, 1, "MANAGER", "PENDING", null, null));
 
+        // Trigger Generic Approval Engine
+        try {
+            approvalWorkflowEngineService.startWorkflow(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", saved.getId().toString(), employee, null);
+        } catch (Exception e) {
+            // Workflow log or fallback
+            System.err.println("Approval Engine workflow start error: " + e.getMessage());
+        }
+
         return new CreateExpenseResponse(
                 saved.getId(),
                 saved.getExpenseNumber(),
@@ -439,8 +454,8 @@ public class MyExpenseService {
         Expense exp = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new IllegalArgumentException("Expense claim not found with ID: " + expenseId));
 
-        if (!"DRAFT".equals(exp.getStatus()) && !"REJECTED".equals(exp.getStatus())) {
-            throw new IllegalStateException("Expense claims can only be updated when in DRAFT or REJECTED status.");
+        if (!"DRAFT".equals(exp.getStatus()) && !"REJECTED".equals(exp.getStatus()) && !"CHANGES_REQUESTED".equals(exp.getStatus())) {
+            throw new IllegalStateException("Expense claims can only be updated when in DRAFT, REJECTED, or CHANGES_REQUESTED status.");
         }
 
         exp.setTitle(request.getTitle());
@@ -471,6 +486,36 @@ public class MyExpenseService {
         );
     }
 
+    public CreateExpenseResponse resubmitExpense(Long expenseId, Employee employee) {
+        Expense exp = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new IllegalArgumentException("Expense claim not found with ID: " + expenseId));
+
+        if (!"CHANGES_REQUESTED".equals(exp.getStatus()) && !"DRAFT".equals(exp.getStatus()) && !"REJECTED".equals(exp.getStatus())) {
+            throw new IllegalStateException("Only expenses in CHANGES_REQUESTED, DRAFT, or REJECTED status can be resubmitted.");
+        }
+
+        exp.setStatus("PENDING_MANAGER_APPROVAL");
+        exp.setSubmittedAt(LocalDateTime.now());
+        exp.setUpdatedAt(LocalDateTime.now());
+        Expense saved = expenseRepository.save(exp);
+
+        timelineEventRepository.save(new MyExpenseTimelineEvent(saved, "RESUBMITTED", employee.getFullName()));
+
+        try {
+            approvalWorkflowEngineService.resubmitWorkflowByBusinessRef(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", saved.getId().toString(), employee, null);
+        } catch (Exception e) {
+            System.err.println("Approval Engine resubmit error: " + e.getMessage());
+        }
+
+        return new CreateExpenseResponse(
+                saved.getId(),
+                saved.getExpenseNumber(),
+                saved.getStatus(),
+                saved.getSubmittedAt(),
+                "Expense claim resubmitted successfully"
+        );
+    }
+
     public WithdrawExpenseResponse withdrawExpense(Long expenseId, WithdrawExpenseRequest request, Employee employee) {
         Expense exp = expenseRepository.findById(expenseId)
                 .orElseThrow(() -> new IllegalArgumentException("Expense claim not found with ID: " + expenseId));
@@ -478,7 +523,8 @@ public class MyExpenseService {
         boolean canWithdraw = "SUBMITTED".equals(exp.getStatus()) 
                 || "PENDING_MANAGER_APPROVAL".equals(exp.getStatus()) 
                 || "PENDING_FINANCE_APPROVAL".equals(exp.getStatus()) 
-                || "PENDING".equals(exp.getStatus());
+                || "PENDING".equals(exp.getStatus())
+                || "CHANGES_REQUESTED".equals(exp.getStatus());
 
         if (!canWithdraw) {
             throw new IllegalStateException("Expense claims can only be withdrawn before approval.");
@@ -487,6 +533,13 @@ public class MyExpenseService {
         exp.setStatus("WITHDRAWN");
         exp.setUpdatedAt(LocalDateTime.now());
         Expense saved = expenseRepository.save(exp);
+
+        // Cancel Approval Engine Workflow
+        try {
+            approvalWorkflowEngineService.cancelWorkflowByBusinessRef(WorkflowType.EXPENSE_APPROVAL, "EXPENSE", saved.getId().toString(), request.getReason());
+        } catch (Exception e) {
+            System.err.println("Approval Engine cancel error: " + e.getMessage());
+        }
 
         // Timeline Event
         timelineEventRepository.save(new MyExpenseTimelineEvent(saved, "WITHDRAWN", employee.getFullName() + " (" + request.getReason() + ")"));

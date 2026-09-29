@@ -1,14 +1,16 @@
 package com.example.ems.security;
 
+import com.example.ems.auth.service.SafeRedisService;
 import com.example.ems.security.service.JwtService;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -21,8 +23,10 @@ import java.util.Map;
 @Order(2)
 public class RateLimitingFilter extends OncePerRequestFilter {
 
+    private static final Logger log = LoggerFactory.getLogger(RateLimitingFilter.class);
+
     @Autowired
-    private StringRedisTemplate redisTemplate;
+    private SafeRedisService safeRedisService;
 
     @Autowired
     private JwtService jwtService;
@@ -35,13 +39,14 @@ public class RateLimitingFilter extends OncePerRequestFilter {
 
         String path = request.getRequestURI();
         
-        // Exclude auth-related endpoints and Swagger UI resources from rate limiting
-        if (path.contains("/api/v1/auth/") || 
+        // Exclude auth-related endpoints (except signup) and Swagger UI resources from rate limiting
+        if ((path.contains("/api/v1/auth/") && !path.contains("/signup")) || 
             path.contains("/swagger-ui") || 
             path.contains("/v3/api-docs")) {
             filterChain.doFilter(request, response);
             return;
         }
+
 
         String clientIp = request.getHeader("X-Forwarded-For");
         if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
@@ -63,21 +68,16 @@ public class RateLimitingFilter extends OncePerRequestFilter {
         String targetIdentifier = (email != null) ? email : clientIp;
         String redisKey = "rate:limit:" + targetIdentifier;
 
-        Long currentCount = null;
-        try {
-            currentCount = redisTemplate.opsForValue().increment(redisKey);
-        } catch (Exception e) {
-            filterChain.doFilter(request, response);
-            return;
-        }
+        Long currentCount = safeRedisService.increment(redisKey);
         
         if (currentCount == null) {
+            log.warn("Redis is unavailable. Rate limiting is degraded to soft mode (request allowed) for identifier: {}", targetIdentifier);
             filterChain.doFilter(request, response);
             return;
         }
 
         if (currentCount == 1) {
-            redisTemplate.expire(redisKey, Duration.ofSeconds(60));
+            safeRedisService.expire(redisKey, Duration.ofSeconds(60));
         }
 
         if (currentCount > 100) {

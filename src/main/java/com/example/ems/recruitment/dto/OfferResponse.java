@@ -1,65 +1,106 @@
 package com.example.ems.recruitment.dto;
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import com.example.ems.recruitment.entity.Offer;
-
+import com.example.ems.recruitment.entity.OfferStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class OfferResponse {
-    @Schema(example = "1")
+
     private Long id;
-    @Schema(example = "120000.00")
-    private BigDecimal offeredSalary;
-    @Schema(example = "2026-06-19")
-    private LocalDate startDate;
-    @Schema(example = "ACTIVE")
-    private String status;
-    private CandidateResponse candidate;
-    private JobResponse job;
-    @Schema(example = "2026-06-19T10:00:00")
+    private Long organizationId;
+    private Long applicationId;
+    private String candidateName;
+    private String candidateEmail;
+    private String jobTitle;
+    private String offerNumber;
+    private String designation;
+    private BigDecimal annualSalary;
+    private LocalDate joiningDate;
+    private Integer probationMonths;
+    private OfferStatus status;
+    private String acceptanceToken;
     private LocalDateTime sentAt;
-    @Schema(example = "2026-06-19T10:00:00")
+    private LocalDateTime acceptedAt;
+    private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
     public OfferResponse() {}
 
     public OfferResponse(Offer offer) {
         this.id = offer.getId();
-        this.offeredSalary = offer.getOfferedSalary();
-        this.startDate = offer.getStartDate();
+        this.organizationId = offer.getOrganizationId();
+        if (offer.getApplication() != null) {
+            this.applicationId = offer.getApplication().getId();
+            if (offer.getApplication().getCandidate() != null) {
+                this.candidateName = offer.getApplication().getCandidate().getFullName();
+                this.candidateEmail = offer.getApplication().getCandidate().getEmail();
+            }
+            if (offer.getApplication().getJob() != null) {
+                this.jobTitle = offer.getApplication().getJob().getTitle();
+            }
+        }
+        this.offerNumber = offer.getOfferNumber();
+        this.designation = offer.getDesignation();
+        this.annualSalary = offer.getAnnualSalary();
+        this.joiningDate = offer.getJoiningDate();
+        this.probationMonths = offer.getProbationMonths();
         this.status = offer.getStatus();
+        this.acceptanceToken = offer.getAcceptanceToken();
         this.sentAt = offer.getSentAt();
+        this.acceptedAt = offer.getAcceptedAt();
+        this.createdAt = offer.getCreatedAt();
         this.updatedAt = offer.getUpdatedAt();
-        if (offer.getCandidate() != null) {
-            this.candidate = new CandidateResponse(offer.getCandidate());
-        }
-        if (offer.getJob() != null) {
-            this.job = new JobResponse(offer.getJob());
-        }
     }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
-    public BigDecimal getOfferedSalary() { return offeredSalary; }
-    public void setOfferedSalary(BigDecimal offeredSalary) { this.offeredSalary = offeredSalary; }
+    public Long getOrganizationId() { return organizationId; }
+    public void setOrganizationId(Long organizationId) { this.organizationId = organizationId; }
 
-    public LocalDate getStartDate() { return startDate; }
-    public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
+    public Long getApplicationId() { return applicationId; }
+    public void setApplicationId(Long applicationId) { this.applicationId = applicationId; }
 
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
+    public String getCandidateName() { return candidateName; }
+    public void setCandidateName(String candidateName) { this.candidateName = candidateName; }
 
-    public CandidateResponse getCandidate() { return candidate; }
-    public void setCandidate(CandidateResponse candidate) { this.candidate = candidate; }
+    public String getCandidateEmail() { return candidateEmail; }
+    public void setCandidateEmail(String candidateEmail) { this.candidateEmail = candidateEmail; }
 
-    public JobResponse getJob() { return job; }
-    public void setJob(JobResponse job) { this.job = job; }
+    public String getJobTitle() { return jobTitle; }
+    public void setJobTitle(String jobTitle) { this.jobTitle = jobTitle; }
+
+    public String getOfferNumber() { return offerNumber; }
+    public void setOfferNumber(String offerNumber) { this.offerNumber = offerNumber; }
+
+    public String getDesignation() { return designation; }
+    public void setDesignation(String designation) { this.designation = designation; }
+
+    public BigDecimal getAnnualSalary() { return annualSalary; }
+    public void setAnnualSalary(BigDecimal annualSalary) { this.annualSalary = annualSalary; }
+
+    public LocalDate getJoiningDate() { return joiningDate; }
+    public void setJoiningDate(LocalDate joiningDate) { this.joiningDate = joiningDate; }
+
+    public Integer getProbationMonths() { return probationMonths; }
+    public void setProbationMonths(Integer probationMonths) { this.probationMonths = probationMonths; }
+
+    public OfferStatus getStatus() { return status; }
+    public void setStatus(OfferStatus status) { this.status = status; }
+
+    public String getAcceptanceToken() { return acceptanceToken; }
+    public void setAcceptanceToken(String acceptanceToken) { this.acceptanceToken = acceptanceToken; }
 
     public LocalDateTime getSentAt() { return sentAt; }
     public void setSentAt(LocalDateTime sentAt) { this.sentAt = sentAt; }
+
+    public LocalDateTime getAcceptedAt() { return acceptedAt; }
+    public void setAcceptedAt(LocalDateTime acceptedAt) { this.acceptedAt = acceptedAt; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public LocalDateTime getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }

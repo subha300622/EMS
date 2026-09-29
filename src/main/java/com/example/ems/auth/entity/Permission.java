@@ -17,12 +17,23 @@ public class Permission {
 
     private String description;
 
+    @Column(name = "active", nullable = false)
+    private Boolean active = true;
+
     public Permission() {}
 
     public Permission(Long id, String name, String description) {
         this.id = id;
         this.name = name;
         this.description = description;
+        this.active = true;
+    }
+
+    public Permission(Long id, String name, String description, Boolean active) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.active = active != null ? active : true;
     }
 
     public Long getId() {
@@ -47,5 +58,13 @@ public class Permission {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Boolean getActive() {
+        return active != null ? active : true;
+    }
+
+    public void setActive(Boolean active) {
+        this.active = active;
     }
 }

@@ -1,5 +1,9 @@
 package com.example.ems.finance.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import com.example.ems.finance.service.FinanceAssetCostReportService;
 import com.example.ems.finance.service.FinanceSettlementService;
@@ -15,6 +19,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
+import com.example.ems.expense.entity.Expense;
+import com.example.ems.expense.entity.MyExpenseReceipt;
+import com.example.ems.expense.repository.ExpenseRepository;
 
 @RestController
 @RequestMapping("/api/v1/files")
@@ -35,9 +42,18 @@ public class FileDownloadController {
     private FnfSettlementRepository settlementRepository;
 
     @Autowired
-    private com.example.ems.expense.repository.ExpenseRepository expenseRepository;
+    private ExpenseRepository expenseRepository;
 
     // ── Receipt folders download subpath ──────────────────────────────────────
+    @Operation(summary = "Download Receipt File", description = "Downloads binary receipt files (PDF/images) associated with expense claims.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Receipt file stream",
+                    content = @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary"))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Receipt file not found")
+    })
     @GetMapping("/receipts/{fileName:.+}")
     public ResponseEntity<?> downloadReceiptFolderFile(@PathVariable("fileName") String fileName) {
         return serveReceiptFile(fileName);
@@ -48,9 +64,9 @@ public class FileDownloadController {
             String idStr = fileName.substring(8, fileName.length() - 4);
             try {
                 Long expenseId = Long.parseLong(idStr);
-                Optional<com.example.ems.expense.entity.Expense> expOpt = expenseRepository.findById(expenseId);
+                Optional<Expense> expOpt = expenseRepository.findById(expenseId);
                 if (expOpt.isPresent()) {
-                    com.example.ems.expense.entity.Expense e = expOpt.get();
+                    Expense e = expOpt.get();
                     if (e.getAttachmentData() != null && e.getAttachmentData().length > 0) {
                         HttpHeaders headers = new HttpHeaders();
                         headers.setContentType(MediaType.parseMediaType(e.getAttachmentType() != null ? e.getAttachmentType() : "application/pdf"));
@@ -58,7 +74,7 @@ public class FileDownloadController {
                         headers.setContentLength(e.getAttachmentData().length);
                         return new ResponseEntity<>(e.getAttachmentData(), headers, HttpStatus.OK);
                     } else if (!e.getReceipts().isEmpty()) {
-                        com.example.ems.expense.entity.MyExpenseReceipt r = e.getReceipts().get(0);
+                        MyExpenseReceipt r = e.getReceipts().get(0);
                         HttpHeaders headers = new HttpHeaders();
                         headers.setContentType(MediaType.parseMediaType(r.getFileType() != null ? r.getFileType() : "application/pdf"));
                         headers.setContentDispositionFormData("attachment", r.getFileName());
@@ -74,6 +90,18 @@ public class FileDownloadController {
     }
 
     // ── F&F Statements and general files download path ────────────────────────
+    @Operation(summary = "Download General File or Report", description = "Downloads reports, CSV exports, or FNF settlement PDF documents.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "Report or document file stream",
+                    content = {
+                            @Content(mediaType = "application/pdf", schema = @Schema(type = "string", format = "binary")),
+                            @Content(mediaType = "text/csv", schema = @Schema(type = "string", format = "binary"))
+                    }
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "File not found")
+    })
     @GetMapping("/{fileName:.+}")
     public ResponseEntity<?> downloadGeneralFile(@PathVariable("fileName") String fileName) {
         // Receipt download direct fallback

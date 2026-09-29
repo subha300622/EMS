@@ -2,6 +2,7 @@ package com.example.ems.expense.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @Table(name = "expense_categories")
@@ -22,7 +23,7 @@ public class ExpenseCategory {
     private BigDecimal maxLimit;
 
     @Column(nullable = false)
-    @org.hibernate.annotations.ColumnDefault("true")
+    @ColumnDefault("true")
     private boolean requiresReceipt = true;
 
     public ExpenseCategory() {}

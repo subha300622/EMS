@@ -2,7 +2,6 @@ package com.example.ems.settings.service;
 
 import com.example.ems.settings.entity.SystemSetting;
 import com.example.ems.settings.repository.SystemSettingRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.time.LocalTime;
+import org.springframework.beans.factory.annotation.Value;
 
 @Service
 @Transactional
@@ -18,13 +19,18 @@ public class SystemSettingService {
     @Autowired
     private SystemSettingRepository systemSettingRepository;
 
-    @org.springframework.beans.factory.annotation.Value("${resend.from-email:EMS System <noreply@company.com>}")
+    @Value("${resend.from-email:EMS System <noreply@company.com>}")
     private String fromEmailProperty;
 
-    @org.springframework.beans.factory.annotation.Value("${app.email.sender-address:noreply@company.com}")
+    @Value("${app.email.sender-address:noreply@company.com}")
     private String defaultSenderAddress;
 
-    @PostConstruct
+    @Value("${integrations.slack-webhook:}")
+    private String slackWebhook;
+
+    @Value("${integrations.jira-base-url:}")
+    private String jiraBaseUrl;
+
     public void initDefaultSettings() {
         // Seed default system configurations if they do not exist
         Map<String, String[]> defaults = new HashMap<>();
@@ -44,8 +50,8 @@ public class SystemSettingService {
             }
         }
         defaults.put("email.sender_address", new String[]{senderEmail, "email"});
-        defaults.put("integrations.slack_webhook", new String[]{"https://hooks.slack.com/services/...", "integrations"});
-        defaults.put("integrations.jira_base_url", new String[]{"https://jira.enterprise.com", "integrations"});
+        defaults.put("integrations.slack_webhook", new String[]{slackWebhook != null ? slackWebhook : "", "integrations"});
+        defaults.put("integrations.jira_base_url", new String[]{jiraBaseUrl != null ? jiraBaseUrl : "", "integrations"});
         defaults.put("password-policy.min_length", new String[]{"8", "password-policy"});
         defaults.put("password-policy.require_special_char", new String[]{"true", "password-policy"});
 
@@ -82,5 +88,15 @@ public class SystemSettingService {
         return systemSettingRepository.findBySettingKey(key)
                 .map(SystemSetting::getSettingValue)
                 .orElse(defaultValue);
+    }
+
+    @Transactional(readOnly = true)
+    public LocalTime getOfficeStartTime() {
+        String val = getSettingValue("attendance.office_start_time", "09:30");
+        try {
+            return LocalTime.parse(val.trim());
+        } catch (Exception e) {
+            return LocalTime.of(9, 30);
+        }
     }
 }

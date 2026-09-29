@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 
 import jakarta.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 
 public class DepartmentRequest {
 
@@ -20,10 +21,10 @@ public class DepartmentRequest {
 
     private Long parentDepartmentId;
     private Long managerId;
-    private java.math.BigDecimal budget;
+    private BigDecimal budget;
     private String status = "ACTIVE";
     private String costCenter;
-    private java.math.BigDecimal utilizedBudget;
+    private BigDecimal utilizedBudget;
 
     public DepartmentRequest() {}
 
@@ -33,7 +34,7 @@ public class DepartmentRequest {
         this.description = description;
     }
 
-    public DepartmentRequest(String name, String code, String description, Long parentDepartmentId, Long managerId, java.math.BigDecimal budget, String status) {
+    public DepartmentRequest(String name, String code, String description, Long parentDepartmentId, Long managerId, BigDecimal budget, String status) {
         this.name = name;
         this.code = code;
         this.description = description;
@@ -83,11 +84,11 @@ public class DepartmentRequest {
         this.managerId = managerId;
     }
 
-    public java.math.BigDecimal getBudget() {
+    public BigDecimal getBudget() {
         return budget;
     }
 
-    public void setBudget(java.math.BigDecimal budget) {
+    public void setBudget(BigDecimal budget) {
         this.budget = budget;
     }
 
@@ -107,11 +108,11 @@ public class DepartmentRequest {
         this.costCenter = costCenter;
     }
 
-    public java.math.BigDecimal getUtilizedBudget() {
+    public BigDecimal getUtilizedBudget() {
         return utilizedBudget;
     }
 
-    public void setUtilizedBudget(java.math.BigDecimal utilizedBudget) {
+    public void setUtilizedBudget(BigDecimal utilizedBudget) {
         this.utilizedBudget = utilizedBudget;
     }
 }

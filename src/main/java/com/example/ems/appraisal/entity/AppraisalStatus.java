@@ -1,6 +1,14 @@
 package com.example.ems.appraisal.entity;
 
 public enum AppraisalStatus {
+    CREATED,
+    SELF_ASSESSMENT,
+    STAGE_REVIEW,
+    FINAL_REVIEW,
+    COMPLETED,
+    PUBLISHED,
+    CANCELLED,
+    // Legacy support values
     DRAFT,
     SUBMITTED,
     ELIGIBLE,
@@ -15,4 +23,3 @@ public enum AppraisalStatus {
     FINANCE_PENDING,
     CLOSED
 }
-

@@ -18,6 +18,8 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.example.ems.finance.dto.CtcBreakupResponse;
+import com.example.ems.finance.dto.FinanceOnboardingReportItem;
 
 @Service
 public class EmployeeFinanceOnboardingService {
@@ -288,6 +290,29 @@ public class EmployeeFinanceOnboardingService {
         return map;
     }
 
+    public CtcBreakupResponse calculateStructuredCtcBreakup(BigDecimal monthlyCtc) {
+        BigDecimal basic = monthlyCtc.multiply(BigDecimal.valueOf(0.5)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal hra = basic.multiply(BigDecimal.valueOf(0.4)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal allowances = monthlyCtc.subtract(basic).subtract(hra).setScale(2, RoundingMode.HALF_UP);
+
+        BigDecimal pf = basic.multiply(BigDecimal.valueOf(0.12)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal pt = BigDecimal.valueOf(200.00);
+        BigDecimal tax = monthlyCtc.multiply(BigDecimal.valueOf(0.10)).setScale(2, RoundingMode.HALF_UP);
+        BigDecimal netPay = monthlyCtc.subtract(pf).subtract(pt).subtract(tax).setScale(2, RoundingMode.HALF_UP);
+
+        return new CtcBreakupResponse(
+                monthlyCtc.multiply(BigDecimal.valueOf(12)),
+                monthlyCtc,
+                basic,
+                hra,
+                allowances,
+                pf,
+                pt,
+                tax,
+                netPay
+        );
+    }
+
     public Map<String, Object> getSalaryPreview(Long id) {
         EmployeeFinanceOnboarding ob = repository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Onboarding record not found with ID: " + id));
@@ -416,6 +441,31 @@ public class EmployeeFinanceOnboardingService {
             map.put("salaryStructureAssigned", ob.getSalaryStructureAssigned());
             map.put("payrollActivated", ob.getPayrollActivated());
             details.add(map);
+        }
+        return details;
+    }
+
+    public List<FinanceOnboardingReportItem> getStructuredReportData() {
+        List<EmployeeFinanceOnboarding> all = repository.findAll();
+        List<FinanceOnboardingReportItem> details = new ArrayList<>();
+
+        for (EmployeeFinanceOnboarding ob : all) {
+            Employee emp = ob.getEmployee();
+            if (emp == null) continue;
+
+            details.add(new FinanceOnboardingReportItem(
+                    ob.getId(),
+                    emp.getEmployeeId(),
+                    emp.getFullName(),
+                    emp.getEmail(),
+                    emp.getJoiningDate(),
+                    ob.getStatus(),
+                    "VERIFIED".equalsIgnoreCase(ob.getBankVerificationStatus()),
+                    "VERIFIED".equalsIgnoreCase(ob.getPanVerificationStatus()),
+                    "VERIFIED".equalsIgnoreCase(ob.getUanVerificationStatus()),
+                    ob.getSalaryStructureAssigned(),
+                    ob.getPayrollActivated()
+            ));
         }
         return details;
     }

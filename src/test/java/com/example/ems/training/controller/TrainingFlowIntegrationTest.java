@@ -21,7 +21,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest
+@SpringBootTest(classes = com.example.ems.EmsBackendApplication.class)
 @Transactional
 public class TrainingFlowIntegrationTest {
 
@@ -38,6 +38,7 @@ public class TrainingFlowIntegrationTest {
     private CertificationRepository certificationRepository;
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testFullLmsProductionFlow() {
         // Setup manager and employee relationship
         Employee manager = new Employee();

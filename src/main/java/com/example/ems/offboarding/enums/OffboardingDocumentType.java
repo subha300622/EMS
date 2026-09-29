@@ -1,0 +1,13 @@
+package com.example.ems.offboarding.enums;
+
+public enum OffboardingDocumentType {
+    RESIGNATION_LETTER,
+    NO_DUES_CERTIFICATE,
+    EXPERIENCE_LETTER,
+    RELIEVING_LETTER,
+    FINAL_SETTLEMENT_STATEMENT,
+    ASSET_RETURN_RECEIPT,
+    EXIT_INTERVIEW_FORM,
+    HANDOVER_DOCUMENT,
+    OTHER
+}

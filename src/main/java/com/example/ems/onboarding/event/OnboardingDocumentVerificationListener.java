@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
+import com.example.ems.onboarding.service.OnboardingService;
 
 @Component
 public class OnboardingDocumentVerificationListener {
@@ -26,7 +27,7 @@ public class OnboardingDocumentVerificationListener {
     private TeamOnboardingService teamOnboardingService;
 
     @Autowired
-    private com.example.ems.onboarding.service.OnboardingService onboardingService;
+    private OnboardingService onboardingService;
 
     @EventListener
     @Transactional
@@ -69,6 +70,8 @@ public class OnboardingDocumentVerificationListener {
                             finance.setUanVerificationStatus(status);
                             finance.setUanVerificationNotes(notes);
                             updated = true;
+                            break;
+                        default:
                             break;
                     }
 

@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import com.example.ems.common.logging.MaskingMessageConverter;
+import org.springframework.beans.factory.annotation.Value;
 
 @Component
 @Order(10) // Run after primary security filtering
@@ -28,7 +30,9 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
     private PostApiPayloadLogRepository logRepository;
 
     private static final Object fileLock = new Object();
-    private static final String LOG_FILE_PATH = "/home/subashini/Documents/ems-backend/post_api_payloads.log";
+
+    @Value("${ems.logging.post-api-path:post_api_payloads.log}")
+    private String logFilePath;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -72,12 +76,16 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
         String reqBody = getPayLoad(request.getContentAsByteArray(), request.getCharacterEncoding());
         if (reqBody.isBlank()) {
             reqBody = "[Empty]";
+        } else {
+            reqBody = MaskingMessageConverter.mask(reqBody);
         }
 
         // Extract response payload
         String respBody = getPayLoad(response.getContentAsByteArray(), response.getCharacterEncoding());
         if (respBody.isBlank()) {
             respBody = "[Empty]";
+        } else {
+            respBody = MaskingMessageConverter.mask(respBody);
         }
 
         // Extract authenticated user if available
@@ -126,7 +134,13 @@ public class PostApiPayloadLoggingFilter extends OncePerRequestFilter {
 
     private void writeToFile(LocalDateTime timestamp, String uri, String userEmail, int status, String reqBody, String respBody) {
         synchronized (fileLock) {
-            File logFile = new File(LOG_FILE_PATH);
+            File logFile = new File(logFilePath);
+            File parentDir = logFile.getParentFile();
+            if (parentDir != null && !parentDir.exists()) {
+                if (!parentDir.mkdirs()) {
+                    logger.warn("Failed to create log directory: " + parentDir.getAbsolutePath());
+                }
+            }
             try (FileWriter writer = new FileWriter(logFile, true)) {
                 writer.write("======================================================================\n");
                 writer.write("Timestamp:        " + timestamp.toString() + "\n");

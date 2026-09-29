@@ -1,25 +1,28 @@
 package com.example.ems.common.controller;
-import java.util.List;
-import com.example.ems.common.dto.ApprovalItemDto;
 
 import com.example.ems.auth.entity.User;
 import com.example.ems.auth.repository.UserRepository;
-import com.example.ems.auth.service.RoleService;
 import com.example.ems.common.dto.ApiResponse;
+import com.example.ems.common.dto.ApprovalItemDto;
 import com.example.ems.common.dto.ErrorResponse;
 import com.example.ems.common.service.ApprovalCenterService;
 import com.example.ems.security.service.JwtService;
-
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/approvals")
+@RequestMapping(value = "/api/v1/approvals", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin("*")
-@Tag(name = "Approval Center")
+@Tag(name = "Approval Center", description = "Unified inbox for multi-domain pending approvals (Leaves, Goals, Onboarding, Offboarding, Salary, Expenses)")
 public class ApprovalCenterController {
 
     @Autowired
@@ -29,127 +32,129 @@ public class ApprovalCenterController {
     private UserRepository userRepository;
 
     @Autowired
-    private RoleService roleService;
-
-    @Autowired
     private JwtService jwtService;
 
+    @Operation(summary = "Get Pending Approvals", description = "Retrieves all pending cross-domain approval items for the authenticated manager/HR user.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending approvals retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = ApprovalItemDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<ApprovalItemDto>>> getPendingApprovals(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> getPendingApprovals(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Pending approvals retrieved successfully",
                 approvalCenterService.getPendingApprovals()));
     }
 
+    @Operation(summary = "Get Pending Approvals Alias", description = "Alias endpoint for retrieving pending approval items.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending approvals retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = ApprovalItemDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/pending")
-    public ResponseEntity<ApiResponse<List<ApprovalItemDto>>> getPendingApprovalsAlias(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> getPendingApprovalsAlias(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         return getPendingApprovals(authHeader);
     }
 
+    @Operation(summary = "Get Approval History", description = "Retrieves previously approved or rejected historical items.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Approval history retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, array = @ArraySchema(schema = @Schema(implementation = ApprovalItemDto.class)))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/history")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<List<ApprovalItemDto>>> getApprovalHistory(
-            @RequestHeader(value = "Authorization", required = false) String authHeader){
+    public ResponseEntity<?> getApprovalHistory(
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         return ResponseEntity.ok(ApiResponse.success("Approval history retrieved successfully",
                 approvalCenterService.getApprovalHistory()));
     }
 
+    @Operation(summary = "Get Approval By ID", description = "Retrieves a specific cross-domain approval item by compound ID ({TYPE}-{ID}).")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Approval retrieved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApprovalItemDto.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Approval not found", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping("/{id}")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<ApprovalItemDto>> getApprovalById(
+    public ResponseEntity<?> getApprovalById(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String id){
+            @PathVariable String id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
         }
 
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
+        var approvalOpt = approvalCenterService.getApprovalById(id);
+        if (approvalOpt.isPresent()) {
+            return ResponseEntity.ok(ApiResponse.success("Approval retrieved successfully", approvalOpt.get()));
         }
-
-        return approvalCenterService.getApprovalById(id)
-                .map(item -> ResponseEntity.ok(ApiResponse.success("Approval retrieved successfully", item)))
-                .orElseGet(() -> (ResponseEntity) ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ErrorResponse.error("Approval not found with ID: " + id, "APP_003")));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ErrorResponse.error("Approval not found with ID: " + id, "APP_003"));
     }
 
+    @Operation(summary = "Approve Item", description = "Executes an approval action on a compound approval item ({TYPE}-{ID}).")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Item approved successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/{id}/approve")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> approveItem(
+    public ResponseEntity<?> approveItem(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String id){
+            @PathVariable String id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         try {
             approvalCenterService.approveItem(id, currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Item approved successfully", null));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to approve item: " + e.getMessage(), "APP_002"));
         }
     }
 
+    @Operation(summary = "Reject Item", description = "Executes a reject action on a compound approval item ({TYPE}-{ID}).")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Item rejected successfully", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ApiResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Validation error", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class))),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized request", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/{id}/reject")
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ResponseEntity<ApiResponse<Object>> rejectItem(
+    public ResponseEntity<?> rejectItem(
             @RequestHeader(value = "Authorization", required = false) String authHeader,
-            @PathVariable String id){
+            @PathVariable String id) {
         User currentUser = resolveUser(authHeader);
         if (currentUser == null) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(ErrorResponse.error("Unauthorized", "AUTH_014"));
-        }
-
-        if (!roleService.hasPermission(currentUser.getWorkEmail(), "team.read")) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(ErrorResponse.error("Access Denied: Requires 'team.read' permission.", "AUTH_002"));
         }
 
         try {
             approvalCenterService.rejectItem(id, currentUser.getWorkEmail());
             return ResponseEntity.ok(ApiResponse.success("Item rejected successfully", null));
         } catch (IllegalArgumentException e) {
-            return (ResponseEntity) ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
+            return ResponseEntity.badRequest().body(ErrorResponse.error(e.getMessage(), "APP_001"));
         } catch (Exception e) {
-            return (ResponseEntity) ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ErrorResponse.error("Failed to reject item: " + e.getMessage(), "APP_002"));
         }
     }

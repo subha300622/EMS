@@ -1,10 +1,17 @@
 package com.example.ems.training.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(description = "Team Risk Response")
 public class TeamRiskResponse {
 
+    @Schema(description = "Employee ID", example = "1")
     private Long employeeId;
+    @Schema(description = "Employee full name", example = "John Doe")
     private String employeeName;
+    @Schema(description = "Count of overdue trainings", example = "2")
     private int overdueCount;
+    @Schema(description = "Calculated risk level", example = "HIGH")
     private String riskLevel;
 
     public TeamRiskResponse() {}

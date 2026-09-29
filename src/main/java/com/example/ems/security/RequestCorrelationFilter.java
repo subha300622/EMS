@@ -28,6 +28,7 @@ public class RequestCorrelationFilter extends OncePerRequestFilter {
         }
 
         MDC.put(MDC_KEY, correlationId);
+        request.setAttribute("startTime", System.currentTimeMillis());
         response.setHeader(CORRELATION_HEADER_NAME, correlationId);
 
         try {
